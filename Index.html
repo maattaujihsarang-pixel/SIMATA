@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SIMATA | MA At-Taujih Sarang</title>
+
+<?!= include('style'); ?>
+
+</head>
+
+<body>
+  
+<div class="login-layout">
+
+    <section class="branding-panel">
+
+        <div class="branding-overlay"></div>
+
+        <div class="branding-content">
+
+            <h1>SIMATA</h1>
+
+            <h2>Sistem Informasi MA At-Taujih Sarang</h2>
+
+            <p>
+                Membangun pendidikan yang modern,
+                terintegrasi, dan mudah diakses.
+            </p>
+
+        </div>
+
+    </section>
+
+    <section class="login-panel">
+
+        <div class="card">
+
+            <img
+                class="school-logo"
+                src="https://lh3.googleusercontent.com/d/1tlvabViqrOOR5NvCTnX-zjZME_s2SF1Q"
+                alt="Logo">
+
+            <h1 class="title">
+                Selamat Datang
+            </h1>
+
+            <p class="subtitle">
+                Silakan masuk ke akun Anda.
+            </p>
+
+<form class="login-form" onsubmit="return false;">
+
+    <input
+        type="text"
+        id="username"
+        class="input-box"
+        placeholder="Username"
+        autocomplete="username"
+        oninput="clearUsernameError()">
+    
+<div id="usernameError" class="error-message"></div>
+
+<div class="input-group password-group">
+
+    <input
+        type="password"
+        id="password"
+        class="input-box"
+        placeholder="Password"
+        autocomplete="current-password"
+        oninput="clearPasswordError()">
+
+    <button
+        type="button"
+        class="toggle-password"
+        onclick="togglePassword()"
+        aria-label="Lihat Password">
+
+        👁
+
+    </button>
+
+</div>
+
+<div id="passwordError" class="error-message"></div>
+
+<button
+    id="loginButton"
+    class="login-button"
+    onclick="createRipple(event); login()"
+    type="button">
+
+    <span id="buttonText">
+        Masuk ke SIMATA
+    </span>
+
+</button>
+
+</form>
+
+<div class="login-footer">
+
+    © 2026 SIMATA • v0.1.1-dev
+
+</div>
+
+        </div>
+
+    </section>
+
+</div>
+
+<div id="toast" class="toast">
+
+    <div class="toast-icon" id="toastIcon">
+        ✔
+    </div>
+
+    <div class="toast-content">
+
+        <div id="toastTitle" class="toast-title">
+            Berhasil
+        </div>
+
+        <div id="toastMessage" class="toast-message">
+            Login berhasil.
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+
+function togglePassword() {
+
+    const pass = document.getElementById("password");
+
+    if (pass.type === "password") {
+        pass.type = "text";
+    } else {
+        pass.type = "password";
+    }
+
+}
+
+function login(){
+
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const button = document.getElementById("loginButton");
+    const buttonText = document.getElementById("buttonText");
+    const usernameError = document.getElementById("usernameError");
+    const passwordError = document.getElementById("passwordError");
+    
+
+// Bersihkan pesan sebelumnya
+usernameError.textContent = "";
+passwordError.textContent = "";
+
+document.getElementById("username").classList.remove("input-error");
+document.getElementById("password").classList.remove("input-error");
+
+if(username === ""){
+    usernameError.textContent = "⚠ Username wajib diisi.";
+    document.getElementById("username").classList.add("input-error");
+    return;
+}
+
+if(password === ""){
+    passwordError.textContent = "⚠ Password wajib diisi.";
+    document.getElementById("password").classList.add("input-error");
+    return;
+}
+
+    // Ubah tombol menjadi loading
+    button.disabled = true;
+    buttonText.textContent = "Memverifikasi...";
+
+    showLoading();
+
+    google.script.run
+    .withSuccessHandler(function(result){
+
+    hideLoading();
+
+    button.disabled = false;
+    buttonText.textContent = "Masuk ke SIMATA";
+
+    if(result.success){
+
+        showToast(
+            "success",
+            "Login Berhasil",
+            "Selamat datang, " + result.nama
+        );
+
+
+        setTimeout(function () {
+          window.location.href = window.location.pathname + "?page=dashboard";
+       }, 1200);
+
+    }else{
+
+        showToast(
+            "error",
+            "Login Gagal",
+            "Username atau Password salah."
+        );
+
+    }
+
+})
+.withFailureHandler(function(error){
+
+    hideLoading();
+
+
+    button.disabled = false;
+    buttonText.textContent = "Masuk ke SIMATA";   
+
+    showToast(
+        "error",
+        "Koneksi Gagal",
+        "Tidak dapat terhubung ke server."
+    );
+
+    console.error(error);
+
+})
+.checkLogin(username,password);
+
+}
+
+function clearUsernameError(){
+
+    document.getElementById("usernameError").textContent = "";
+    document.getElementById("username").classList.remove("input-error");
+
+}
+
+function clearPasswordError(){
+
+    document.getElementById("passwordError").textContent = "";
+    document.getElementById("password").classList.remove("input-error");
+
+}
+
+function showToast(type, title, message){
+
+    const toast = document.getElementById("toast");
+    const icon = document.getElementById("toastIcon");
+    const toastTitle = document.getElementById("toastTitle");
+    const toastMessage = document.getElementById("toastMessage");
+
+    toastTitle.textContent = title;
+    toastMessage.textContent = message;
+
+    if(type === "success"){
+
+        icon.innerHTML = "✔";
+        icon.style.background = "#E8F5E9";
+        icon.style.color = "#2E7D32";
+
+    }else{
+
+        icon.innerHTML = "✖";
+        icon.style.background = "#FDECEC";
+        icon.style.color = "#D32F2F";
+
+    }
+
+    toast.classList.add("show");
+
+
+    setTimeout(function(){
+
+      toast.classList.remove("show");
+
+},3000);
+}
+
+function showLoading() {
+    document.getElementById("loadingOverlay").classList.add("show");
+}
+
+function hideLoading() {
+    document.getElementById("loadingOverlay").classList.remove("show");
+}
+
+function createRipple(event){
+
+    const button = event.currentTarget;
+
+    const circle = document.createElement("span");
+
+    const diameter = Math.max(button.clientWidth, button.clientHeight);
+
+    const radius = diameter / 2;
+
+    circle.style.width = circle.style.height = diameter + "px";
+
+    circle.style.left =
+        (event.clientX - button.getBoundingClientRect().left - radius) + "px";
+
+    circle.style.top =
+        (event.clientY - button.getBoundingClientRect().top - radius) + "px";
+
+    circle.classList.add("ripple");
+
+    const ripple = button.getElementsByClassName("ripple")[0];
+
+    if(ripple){
+        ripple.remove();
+    }
+
+    button.appendChild(circle);
+
+}
+</script>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay">
+    <div class="spinner"></div>
+    <p>Memproses Login...</p>
+</div>
+
+</body>
+
+</html>

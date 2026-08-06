@@ -1,0 +1,4 @@
+const CONFIG = {
+  SPREADSHEET_ID: "1EJteMmqt0lyr492zYoNTMB5YfM7fFxo1AjODXg5LNWU",
+  SHEET_USERS: "Users"
+};

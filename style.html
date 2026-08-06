@@ -1,0 +1,754 @@
+<style>
+
+/* ==========================
+   GOOGLE FONT
+========================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+/* ==========================
+   ROOT COLOR
+========================== */
+
+:root{
+
+    --primary:#166534;
+    --secondary:#22C55E;
+    --accent:#FACC15;
+
+    --background:#EEF3F8;
+    --surface:#FFFFFF;
+
+    --text:#1F2937;
+    --text-light:#6B7280;
+
+    --radius:20px;
+
+    --shadow:
+        0 15px 40px rgba(15,23,42,.08);
+
+}
+
+/* ==========================
+   RESET
+========================== */
+
+*{
+
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+
+}
+
+/* ==========================
+   BODY
+========================== */
+
+body{
+
+    font-family:'Plus Jakarta Sans',sans-serif;
+    color:var(--text);
+    background:#eef3f8;
+    overflow-x:hidden;
+
+}
+
+/* ==========================
+   MAIN CONTAINER
+========================== */
+
+.container{
+
+    width:100%;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:40px;
+
+}
+
+/* ==========================
+   CARD
+========================== */
+
+.card{
+
+    width:100%;
+    max-width:520px;
+    background:var(--surface);
+
+    border-radius:24px;
+
+    padding:34px 40px;
+
+    box-shadow:var(--shadow);
+
+}
+
+/* ==========================
+   TITLE
+========================== */
+
+.title{
+
+    font-size:34px;
+    font-weight:700;
+    color:var(--primary);
+    text-align:center;
+
+}
+
+/* ==========================
+   SUBTITLE
+========================== */
+
+.subtitle{
+
+    text-align:center;
+    color:var(--text-light);
+    margin-top:10px;
+    line-height:1.6;
+    font-size:15px;
+
+}
+
+/* ==========================
+   SCHOOL LOGO
+========================== */
+
+.school-logo{
+
+    width:120px;
+    display:block;
+    margin:0 auto 20px;
+    transition:.35s ease;
+
+}
+
+.school-logo:hover{
+
+    transform:scale(1.05);
+
+}
+
+/* ==========================
+   LOGIN FORM
+========================== */
+
+.login-form{
+
+    margin-top:26px;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+
+}
+
+/* ==========================
+   INPUT
+========================== */
+
+.input-box{
+
+    width:100%;
+    padding:16px 18px;
+    border:2px solid #E5E7EB;
+    border-radius:12px;
+    outline:none;
+    font-size:15px;
+    transition:.3s;
+    background:#FAFAFA;
+    transition: all .25s ease;
+    height:56px;
+ mfont-size:15px;
+
+border-radius:14px;
+
+}
+
+.input-box:focus{
+
+    border-color:var(--primary);
+    background:white;
+    box-shadow:0 0 0 4px rgba(27,94,32,.12);
+
+}
+
+/* ==========================
+   BUTTON
+========================== */
+
+.login-button{
+
+    margin-top:10px;
+    padding:15px;
+    border:none;
+    border-radius:12px;
+    background:var(--primary);
+    color:white;
+    font-size:16px;
+    font-weight:600;
+    cursor:pointer;
+    transition:.3s;
+
+}
+
+.login-button:hover{
+
+    background:var(--secondary);
+    transform:translateY(-2px);
+
+}
+
+.login-button:active{
+
+    transform:scale(.98);
+
+}
+
+.password-group{
+    position: relative;
+}
+
+.toggle-password{
+    position:absolute;
+    right:16px;
+    top:50%;
+    transform:translateY(-50%);
+
+    border:none;
+    background:transparent;
+    outline:none;
+
+    cursor:pointer;
+
+    color:#94A3B8;
+    font-size:18px;
+
+    padding:0;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    transition:.25s;
+}
+
+.toggle-password:hover{
+    color:var(--primary);
+}
+
+.error-message{
+    color:#e53935;
+    font-size:13px;
+    margin-top:4px;
+    margin-bottom:6px;
+    min-height:0;
+    font-weight:500;
+}
+
+/* Input Error */
+.input-error{
+    border:1.5px solid #e53935 !important;
+    box-shadow:0 0 0 3px rgba(229,57,53,.10);
+}
+
+/* Input Normal */
+.input-box{
+    transition:all .25s ease;
+}
+
+/* ==========================
+   SPLIT LAYOUT
+========================== */
+
+.login-layout{
+    display:flex;
+    min-height:100vh;
+}
+
+.branding-panel{
+    flex:1;
+    background:linear-gradient(135deg,#166534,#22c55e);
+    color:#fff;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:60px;
+    position:relative;
+}
+
+.branding-content{
+    max-width:420px;
+    z-index:2;
+}
+
+.brand-logo{
+    width:110px;
+    margin-bottom:24px;
+}
+
+.branding-content h1{
+    font-size:54px;
+    font-weight:800;
+    margin-bottom:12px;
+}
+
+.branding-content h2{
+    font-size:22px;
+    font-weight:600;
+    margin-bottom:18px;
+}
+
+.branding-content p{
+    line-height:1.8;
+    opacity:.9;
+}
+
+.login-panel{
+    flex:1;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:48px;
+}
+
+.login-footer{
+
+    margin-top:34px;
+    text-align:center;
+    font-size:11px;
+    font-weight:500;
+    color:#94A3B8;
+    opacity:.55;
+    letter-spacing:.8px;
+    user-select:none;
+
+}
+
+/* ==========================
+   TOAST NOTIFICATION
+========================== */
+
+.toast{
+
+    position:fixed;
+    top:30px;
+    right:30px;
+    min-width:320px;
+    background:#FFFFFF;
+    border-radius:16px;
+    box-shadow:0 18px 40px rgba(0,0,0,.15);
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:18px 20px;
+    opacity:0;
+    visibility:hidden;
+    transform:translateY(-20px);
+    transition:.35s ease;
+    z-index:9999;
+
+}
+
+.toast.show{
+
+    opacity:1;
+    visibility:visible;
+    transform:translateY(0);
+
+}
+
+.toast-icon{
+
+    width:46px;
+    height:46px;
+    border-radius:50%;
+    background:#E8F5E9;
+    color:#2E7D32;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:22px;
+    font-weight:700;
+
+}
+
+.toast-title{
+
+    font-size:15px;
+    font-weight:700;
+    color:#263238;
+
+}
+
+.toast-message{
+
+    margin-top:3px;
+    font-size:13px;
+    color:#607D8B;
+
+}
+
+/* ==========================
+   MODERN LOADING
+========================== */
+
+.loading-overlay{
+    position: fixed;
+    inset: 0;
+    background: rgba(255,255,255,.75);
+    backdrop-filter: blur(5px);
+
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+
+    opacity:0;
+    visibility:hidden;
+
+    transition:.35s;
+    z-index:9999;
+}
+
+.loading-overlay.show{
+    opacity:1;
+    visibility:visible;
+}
+
+.spinner{
+    width:55px;
+    height:55px;
+
+    border:5px solid #e5e7eb;
+    border-top:5px solid #2563eb;
+    border-radius:50%;
+
+    animation:spin .8s linear infinite;
+}
+
+.loading-overlay p{
+    margin-top:18px;
+    color:#1f2937;
+    font-weight:600;
+    font-size:15px;
+}
+
+@keyframes spin{
+    to{
+        transform:rotate(360deg);
+    }
+}
+
+/* ==========================
+   RIPPLE BUTTON
+========================== */
+
+.login-button{
+    position: relative;
+    overflow: hidden;
+}
+
+.ripple{
+    position: absolute;
+    border-radius: 50%;
+    transform: scale(0);
+    animation: ripple .6s linear;
+    background: rgba(255,255,255,.45);
+    pointer-events: none;
+}
+
+@keyframes ripple{
+
+    to{
+        transform: scale(4);
+        opacity: 0;
+    }
+
+}
+
+/* =====================================================
+   DASHBOARD FOUNDATION
+   Sprint 2 - Commit 002
+===================================================== */
+
+.dashboard-page{
+    margin:0;
+    background:#f4f7fb;
+    font-family:'Poppins',sans-serif;
+}
+
+.dashboard-layout{
+    display:flex;
+    min-height:100vh;
+}
+
+/* ================= Sidebar ================= */
+
+.dashboard-layout .sidebar{
+
+    width:260px;
+    background:#0f172a;
+    color:#fff;
+    display:flex;
+    flex-direction:column;
+    flex-shrink:0;
+
+}
+
+/* Logo */
+
+.dashboard-layout .sidebar-logo{
+
+    padding:30px 20px;
+    text-align:center;
+    border-bottom:1px solid rgba(255,255,255,.08);
+
+}
+
+.dashboard-layout .sidebar-logo img{
+
+    width:80px;
+    margin-bottom:12px;
+
+}
+
+.dashboard-layout .sidebar-logo h2{
+
+    margin:0;
+    font-size:22px;
+    font-weight:700;
+
+}
+
+.dashboard-layout .sidebar-logo p{
+
+    margin-top:6px;
+    opacity:.7;
+    font-size:13px;
+
+}
+
+/* ================= Main ================= */
+
+.dashboard-layout .main{
+
+    flex:1;
+    display:flex;
+    flex-direction:column;
+
+}
+
+/* Content */
+
+.dashboard-layout .content{
+
+    flex:1;
+    padding:30px;
+
+}
+
+/* =====================================================
+   DASHBOARD SIDEBAR PREMIUM
+   Sprint 2 - Commit 003
+===================================================== */
+
+.dashboard-layout .sidebar-menu{
+    padding:20px 15px;
+    flex:1;
+}
+
+.dashboard-layout .sidebar-menu ul{
+    list-style:none;
+    margin:0;
+    padding:0;
+}
+
+.dashboard-layout .sidebar-menu li{
+    display:flex;
+    align-items:center;
+    gap:14px;
+
+    padding:14px 18px;
+    margin-bottom:8px;
+
+    border-radius:12px;
+
+    cursor:pointer;
+
+    transition:
+        background .25s ease,
+        transform .2s ease,
+        color .25s ease;
+}
+
+.dashboard-layout .sidebar-menu li:hover{
+    background:rgba(255,255,255,.08);
+    transform:translateX(5px);
+}
+
+.dashboard-layout .sidebar-menu li.active{
+    background:#2563eb;
+    color:#ffffff;
+
+    box-shadow:0 8px 20px rgba(37,99,235,.30);
+}
+
+.dashboard-layout .menu-icon{
+    width:24px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    font-size:18px;
+}
+
+.dashboard-layout .menu-text{
+    font-size:15px;
+    font-weight:500;
+}
+
+/* =====================================================
+   TOPBAR PREMIUM
+   Sprint 2 - Commit 003
+===================================================== */
+
+.dashboard-layout .topbar{
+    height:70px;
+    background:#ffffff;
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    padding:0 30px;
+
+    border-bottom:1px solid #e5e7eb;
+    box-shadow:0 2px 8px rgba(0,0,0,.05);
+}
+
+.dashboard-layout .topbar-left h1{
+    margin:0;
+    font-size:26px;
+    font-weight:700;
+    color:#1e293b;
+}
+
+.dashboard-layout .topbar-right{
+    display:flex;
+    align-items:center;
+    gap:24px;
+}
+
+.dashboard-layout .live-clock{
+    font-size:15px;
+    font-weight:600;
+    color:#64748b;
+}
+
+.dashboard-layout .user-profile{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.dashboard-layout .user-avatar{
+    width:46px;
+    height:46px;
+
+    border-radius:50%;
+
+    background:#2563eb;
+    color:#fff;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    font-weight:700;
+    font-size:16px;
+}
+
+.dashboard-layout .user-info{
+    display:flex;
+    flex-direction:column;
+}
+
+.dashboard-layout .user-name{
+    font-size:15px;
+    font-weight:600;
+    color:#1e293b;
+}
+
+.dashboard-layout .user-info small{
+    color:#64748b;
+    font-size:12px;
+}
+
+/* =====================================================
+   DASHBOARD CONTENT
+   Sprint 2 - Commit 004
+===================================================== */
+
+/* Welcome Card */
+
+.dashboard-layout .welcome-card{
+    background:#ffffff;
+    border-radius:18px;
+    padding:28px;
+    margin-bottom:28px;
+    box-shadow:0 8px 24px rgba(15,23,42,.08);
+}
+
+.dashboard-layout .welcome-card h2{
+    margin:0 0 8px;
+    font-size:28px;
+    color:#1e293b;
+}
+
+.dashboard-layout .welcome-card p{
+    margin:0;
+    color:#64748b;
+    line-height:1.7;
+}
+
+/* Statistics */
+
+.dashboard-layout .stats-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:20px;
+}
+
+.dashboard-layout .stat-card{
+    background:#ffffff;
+    border-radius:18px;
+    padding:24px;
+    box-shadow:0 8px 24px rgba(15,23,42,.08);
+
+    transition:
+        transform .25s ease,
+        box-shadow .25s ease;
+}
+
+.dashboard-layout .stat-card:hover{
+    transform:translateY(-6px);
+    box-shadow:0 16px 36px rgba(15,23,42,.12);
+}
+
+.dashboard-layout .stat-card h3{
+    margin:0;
+    font-size:36px;
+    font-weight:700;
+    color:#2563eb;
+}
+
+.dashboard-layout .stat-card p{
+    margin-top:10px;
+    color:#64748b;
+    font-size:15px;
+}
+</style>

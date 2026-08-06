@@ -1,0 +1,77 @@
+<script>
+
+document.addEventListener("DOMContentLoaded", initDashboard);
+
+function initDashboard(){
+
+    console.log("SIMATA Dashboard Loaded");
+
+    loadDashboard();
+
+}
+
+function loadDashboard(){
+
+    google.script.run
+        .withSuccessHandler(onDashboardLoaded)
+        .withFailureHandler(onDashboardError)
+        .getDashboardData();
+
+}
+
+<script>
+
+document.addEventListener("DOMContentLoaded", initDashboard);
+
+function initDashboard(){
+
+    console.log("SIMATA Dashboard Loaded");
+
+    loadDashboard();
+
+}
+
+function loadDashboard(){
+
+    google.script.run
+        .withSuccessHandler(onDashboardLoaded)
+        .withFailureHandler(onDashboardError)
+        .getDashboardData();
+
+}
+
+function onDashboardLoaded(data){
+
+    console.log(data);
+
+    if(!data.success) return;
+
+    // User
+    document.getElementById("userName").textContent = data.user.name;
+    document.getElementById("userRole").textContent = data.user.role;
+
+    // Statistics
+    document.getElementById("totalStudents").textContent = data.statistics.students;
+    document.getElementById("totalTeachers").textContent = data.statistics.teachers;
+    document.getElementById("todayAttendance").textContent = data.statistics.attendance;
+    document.getElementById("totalClasses").textContent = data.statistics.classes;
+
+}
+
+function onDashboardError(error){
+
+    console.error(error);
+
+    alert("Gagal memuat Dashboard.");
+
+}
+
+</script>
+
+function onDashboardError(error){
+
+    console.error(error);
+
+}
+
+</script>

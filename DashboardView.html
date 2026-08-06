@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>SIMATA Dashboard</title>
+
+  <?!= HtmlService.createHtmlOutputFromFile('style').getContent(); ?>
+</head>
+
+<body class="dashboard-page">
+
+<div class="dashboard-layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+
+    <div class="sidebar-logo">
+
+      <img src="LOGO_SEMENTARA" alt="Logo SIMATA">
+
+      <h2>SIMATA</h2>
+
+      <p>MA At-Taujih Sarang</p>
+
+    </div>
+
+   <nav class="sidebar-menu">
+
+  <ul>
+
+    <li class="active">
+      <span class="menu-icon">🏠</span>
+      <span class="menu-text">Dashboard</span>
+    </li>
+
+    <li>
+      <span class="menu-icon">📅</span>
+      <span class="menu-text">Absensi</span>
+    </li>
+
+    <li>
+      <span class="menu-icon">👨‍🏫</span>
+      <span class="menu-text">Guru</span>
+    </li>
+
+    <li>
+      <span class="menu-icon">🎓</span>
+      <span class="menu-text">Siswa</span>
+    </li>
+
+    <li>
+      <span class="menu-icon">📝</span>
+      <span class="menu-text">Nilai</span>
+    </li>
+
+    <li>
+      <span class="menu-icon">📊</span>
+      <span class="menu-text">Laporan</span>
+    </li>
+
+    <li>
+      <span class="menu-icon">⚙️</span>
+      <span class="menu-text">Pengaturan</span>
+    </li>
+
+  </ul>
+
+</nav>
+
+  </aside>
+
+  <!-- Main -->
+
+  <main class="main">
+
+  <header class="topbar">
+
+    <div class="topbar-left">
+        <h1>Dashboard</h1>
+    </div>
+
+    <div class="topbar-right">
+
+        <div id="liveClock" class="live-clock">
+            --:--:--
+        </div>
+
+        <div class="user-profile">
+
+            <div class="user-avatar">
+                IM
+            </div>
+
+            <div class="user-info">
+                <span class="user-name" id="userName">Loading...</span>
+                <small id="userRole">Loading...</small>
+            </div>
+
+        </div>
+
+    </div>
+
+  </header>
+
+  <section class="content">
+
+    <!-- Welcome -->
+
+    <div class="welcome-card">
+
+        <h2>Selamat Datang 👋</h2>
+
+        <p>
+            Selamat datang di Sistem Informasi MA At-Taujih Sarang (SIMATA).
+        </p>
+
+    </div>
+
+    <!-- Statistics -->
+
+    <div class="stats-grid">
+
+        <div class="stat-card">
+            <h3 id="totalStudents">0</h3>
+            <p>Jumlah Siswa</p>
+        </div>
+
+        <div class="stat-card">
+            <h3 id="totalTeachers">0</h3>
+            <p>Jumlah Guru</p>
+        </div>
+
+        <div class="stat-card">
+            <h3 id="todayAttendance">0</h3>
+            <p>Hadir Hari Ini</p>
+        </div>
+
+        <div class="stat-card">
+            <h3 id="totalClasses">0</h3>
+            <p>Jumlah Kelas</p>
+        </div>
+
+    </div>
+
+  </section>
+
+  </main>
+
+</div>
+
+<?!= HtmlService.createHtmlOutputFromFile('DashboardScript').getContent(); ?>
+
+</body>
+</html>
