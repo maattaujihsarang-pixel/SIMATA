@@ -162,7 +162,7 @@ body{
     background:#FAFAFA;
     transition: all .25s ease;
     height:56px;
- mfont-size:15px;
+    font-size:15px;
 
 border-radius:14px;
 
@@ -471,284 +471,1075 @@ border-radius:14px;
 }
 
 /* =====================================================
-   DASHBOARD FOUNDATION
-   Sprint 2 - Commit 002
+   SIMATA DASHBOARD
+   Sprint 2 — Tahap 2.5
+   Dashboard UI Redesign
+===================================================== */
+
+
+/* =====================================================
+   DASHBOARD PAGE
 ===================================================== */
 
 .dashboard-page{
+
     margin:0;
-    background:#f4f7fb;
-    font-family:'Poppins',sans-serif;
+    background:#F4F6F4;
+    color:#1F2937;
+    font-family:'Plus Jakarta Sans',sans-serif;
+    overflow-x:hidden;
+
 }
+
+
+/* =====================================================
+   DASHBOARD LAYOUT
+===================================================== */
 
 .dashboard-layout{
-    display:flex;
+
     min-height:100vh;
+    display:flex;
+
 }
 
-/* ================= Sidebar ================= */
+
+/* =====================================================
+   SIDEBAR
+===================================================== */
 
 .dashboard-layout .sidebar{
 
-    width:260px;
-    background:#0f172a;
-    color:#fff;
+    width:265px;
+    min-height:100vh;
+    flex-shrink:0;
     display:flex;
     flex-direction:column;
-    flex-shrink:0;
+    background:
+        linear-gradient(
+            180deg,
+            #0F2419 0%,
+            #12301F 100%
+        );
+
+    color:#FFFFFF;
+    position:relative;
+    overflow:hidden;
 
 }
 
-/* Logo */
+
+/* Decorative glow */
+
+.dashboard-layout .sidebar::before{
+
+    content:"";
+    position:absolute;
+    width:260px;
+    height:260px;
+    top:-140px;
+    right:-120px;
+    background:rgba(34,197,94,.12);
+    border-radius:50%;
+    pointer-events:none;
+
+}
+
+
+/* =====================================================
+   SIDEBAR LOGO
+===================================================== */
 
 .dashboard-layout .sidebar-logo{
 
-    padding:30px 20px;
+    padding:32px 24px 28px;
     text-align:center;
     border-bottom:1px solid rgba(255,255,255,.08);
+    position:relative;
+    z-index:1;
 
 }
+
 
 .dashboard-layout .sidebar-logo img{
 
-    width:80px;
-    margin-bottom:12px;
+    width:72px;
+    height:72px;
+    object-fit:contain;
+    display:block;
+    margin:0 auto 16px;
 
 }
+
 
 .dashboard-layout .sidebar-logo h2{
 
     margin:0;
     font-size:22px;
-    font-weight:700;
+    font-weight:800;
+    letter-spacing:.5px;
 
 }
+
 
 .dashboard-layout .sidebar-logo p{
 
-    margin-top:6px;
-    opacity:.7;
-    font-size:13px;
+    margin:6px 0 0;
+    color:rgba(255,255,255,.58);
+    font-size:11px;
+    font-weight:500;
+    letter-spacing:.3px;
 
 }
 
-/* ================= Main ================= */
-
-.dashboard-layout .main{
-
-    flex:1;
-    display:flex;
-    flex-direction:column;
-
-}
-
-/* Content */
-
-.dashboard-layout .content{
-
-    flex:1;
-    padding:30px;
-
-}
 
 /* =====================================================
-   DASHBOARD SIDEBAR PREMIUM
-   Sprint 2 - Commit 003
+   SIDEBAR MENU
 ===================================================== */
 
 .dashboard-layout .sidebar-menu{
-    padding:20px 15px;
+
     flex:1;
+    padding:24px 14px;
+    position:relative;
+    z-index:1;
+
 }
+
 
 .dashboard-layout .sidebar-menu ul{
+
     list-style:none;
-    margin:0;
     padding:0;
+    margin:0;
+
 }
 
+
 .dashboard-layout .sidebar-menu li{
+
+    min-height:50px;
     display:flex;
     align-items:center;
     gap:14px;
-
-    padding:14px 18px;
-    margin-bottom:8px;
-
+    padding:0 16px;
+    margin-bottom:6px;
     border-radius:12px;
+
+    color:rgba(255,255,255,.72);
 
     cursor:pointer;
 
     transition:
         background .25s ease,
-        transform .2s ease,
-        color .25s ease;
+        color .25s ease,
+        transform .25s ease;
+
 }
+
 
 .dashboard-layout .sidebar-menu li:hover{
-    background:rgba(255,255,255,.08);
-    transform:translateX(5px);
+
+    background:rgba(255,255,255,.07);
+    color:#FFFFFF;
+    transform:translateX(3px);
+
 }
+
 
 .dashboard-layout .sidebar-menu li.active{
-    background:#2563eb;
-    color:#ffffff;
 
-    box-shadow:0 8px 20px rgba(37,99,235,.30);
+    background:
+        linear-gradient(
+            90deg,
+            rgba(34,197,94,.22),
+            rgba(34,197,94,.08)
+        );
+
+    color:#FFFFFF;
+
+    box-shadow:
+        inset 3px 0 0 #22C55E;
+
 }
 
-.dashboard-layout .menu-icon{
-    width:24px;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-
-    font-size:18px;
-}
-
-.dashboard-layout .menu-text{
-    font-size:15px;
-    font-weight:500;
-}
 
 /* =====================================================
-   TOPBAR PREMIUM
-   Sprint 2 - Commit 003
+   MENU ICON
+===================================================== */
+
+.dashboard-layout .menu-icon{
+
+    width:21px;
+    height:21px;
+    flex-shrink:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+}
+
+
+.dashboard-layout .menu-icon svg{
+
+    width:19px;
+    height:19px;
+    fill:none;
+    stroke:currentColor;
+    stroke-width:1.8;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+
+}
+
+
+.dashboard-layout .sidebar-menu li.active .menu-icon{
+
+    color:#4ADE80;
+
+}
+
+
+.dashboard-layout .menu-text{
+
+    font-size:13px;
+    font-weight:600;
+    letter-spacing:.1px;
+
+}
+
+
+/* =====================================================
+   SIDEBAR FOOTER
+===================================================== */
+
+.dashboard-layout .sidebar-footer{
+
+    padding:18px 14px 24px;
+    border-top:1px solid rgba(255,255,255,.08);
+    position:relative;
+    z-index:1;
+
+}
+
+
+.dashboard-layout .logout-button{
+
+    width:100%;
+    min-height:48px;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:0 16px;
+    border:0;
+    border-radius:12px;
+    background:transparent;
+
+    color:rgba(255,255,255,.65);
+
+    font-family:inherit;
+    font-size:13px;
+
+    font-weight:600;
+
+    cursor:pointer;
+
+    transition:
+        background .25s ease,
+        color .25s ease;
+
+}
+
+
+.dashboard-layout .logout-button:hover{
+
+    background:rgba(250,204,21,.08);
+
+    color:#FACC15;
+
+}
+
+
+.dashboard-layout .logout-button .menu-icon{
+
+    color:currentColor;
+
+}
+
+
+.dashboard-layout .logout-button:disabled{
+
+    opacity:.55;
+    cursor:not-allowed;
+
+}
+
+
+/* =====================================================
+   MAIN
+===================================================== */
+
+.dashboard-layout .main{
+
+    min-width:0;
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    background:#F4F6F4;
+
+}
+
+
+/* =====================================================
+   TOPBAR
 ===================================================== */
 
 .dashboard-layout .topbar{
-    height:70px;
-    background:#ffffff;
 
+    min-height:78px;
     display:flex;
+    align-items:center;
     justify-content:space-between;
-    align-items:center;
+    gap:30px;
+    padding:0 34px;
+    background:#FFFFFF;
+    border-bottom:1px solid #E7EBE8;
 
-    padding:0 30px;
-
-    border-bottom:1px solid #e5e7eb;
-    box-shadow:0 2px 8px rgba(0,0,0,.05);
 }
 
-.dashboard-layout .topbar-left h1{
-    margin:0;
-    font-size:26px;
-    font-weight:700;
-    color:#1e293b;
-}
 
-.dashboard-layout .topbar-right{
-    display:flex;
-    align-items:center;
-    gap:24px;
-}
+.dashboard-layout .topbar-left{
 
-.dashboard-layout .live-clock{
-    font-size:15px;
-    font-weight:600;
-    color:#64748b;
-}
-
-.dashboard-layout .user-profile{
-    display:flex;
-    align-items:center;
-    gap:12px;
-}
-
-.dashboard-layout .user-avatar{
-    width:46px;
-    height:46px;
-
-    border-radius:50%;
-
-    background:#2563eb;
-    color:#fff;
-
-    display:flex;
-    justify-content:center;
-    align-items:center;
-
-    font-weight:700;
-    font-size:16px;
-}
-
-.dashboard-layout .user-info{
     display:flex;
     flex-direction:column;
+    gap:3px;
+
 }
 
-.dashboard-layout .user-name{
-    font-size:15px;
-    font-weight:600;
-    color:#1e293b;
+
+.dashboard-layout .topbar-label{
+
+    color:#789083;
+    font-size:9px;
+    font-weight:700;
+    letter-spacing:1.5px;
+
 }
 
-.dashboard-layout .user-info small{
-    color:#64748b;
-    font-size:12px;
+
+.dashboard-layout .topbar-left h1{
+
+    margin:0;
+    color:#17241C;
+    font-size:21px;
+    font-weight:750;
+    letter-spacing:-.4px;
+
 }
+
 
 /* =====================================================
-   DASHBOARD CONTENT
-   Sprint 2 - Commit 004
+   TOPBAR RIGHT
 ===================================================== */
 
-/* Welcome Card */
+.dashboard-layout .topbar-right{
+
+    display:flex;
+    align-items:center;
+    gap:28px;
+
+}
+
+
+/* =====================================================
+   LIVE CLOCK
+===================================================== */
+
+.dashboard-layout .live-clock{
+
+    display:flex;
+    align-items:center;
+    gap:8px;
+    color:#65766C;
+    font-size:12px;
+    font-weight:600;
+    letter-spacing:.3px;
+
+}
+
+
+.dashboard-layout .clock-dot{
+
+    width:7px;
+    height:7px;
+    border-radius:50%;
+    background:#22C55E;
+
+    box-shadow:
+        0 0 0 4px rgba(34,197,94,.10);
+
+}
+
+
+/* =====================================================
+   USER PROFILE
+===================================================== */
+
+.dashboard-layout .user-profile{
+
+    display:flex;
+    align-items:center;
+    gap:11px;
+
+}
+
+
+.dashboard-layout .user-avatar{
+
+    width:40px;
+    height:40px;
+    flex-shrink:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:50%;
+
+    background:
+        linear-gradient(
+            135deg,
+            #166534,
+            #22C55E
+        );
+
+    color:#FFFFFF;
+
+    font-size:12px;
+    font-weight:800;
+
+    box-shadow:
+        0 5px 14px rgba(22,101,52,.20);
+
+}
+
+
+.dashboard-layout .user-info{
+
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+
+}
+
+
+.dashboard-layout .user-name{
+
+    color:#1F2A23;
+
+    font-size:12px;
+
+    font-weight:700;
+
+}
+
+
+.dashboard-layout .user-info small{
+
+    color:#849188;
+    font-size:10px;
+    font-weight:500;
+
+}
+
+
+/* =====================================================
+   CONTENT
+===================================================== */
+
+.dashboard-layout .content{
+
+    flex:1;
+    padding:32px 34px 45px;
+
+}
+
+
+/* =====================================================
+   WELCOME CARD
+===================================================== */
 
 .dashboard-layout .welcome-card{
-    background:#ffffff;
-    border-radius:18px;
-    padding:28px;
-    margin-bottom:28px;
-    box-shadow:0 8px 24px rgba(15,23,42,.08);
+
+    min-height:185px;
+
+    position:relative;
+
+    overflow:hidden;
+    display:flex;
+    align-items:center;
+    padding:36px 38px;
+    margin-bottom:32px;
+    border-radius:22px;
+
+    background:
+        linear-gradient(
+            115deg,
+            #123C24 0%,
+            #166534 58%,
+            #1E7A3D 100%
+        );
+
+    color:#FFFFFF;
+
+    box-shadow:
+        0 16px 35px rgba(15,61,31,.16);
+
 }
+
+
+/* Decorative shapes */
+
+.dashboard-layout .welcome-card::before{
+
+    content:"";
+    position:absolute;
+    width:280px;
+    height:280px;
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:50%;
+    right:-80px;
+    top:-150px;
+
+}
+
+
+.dashboard-layout .welcome-card::after{
+
+    content:"";
+    position:absolute;
+    width:190px;
+    height:190px;
+    border:1px solid rgba(250,204,21,.13);
+    border-radius:50%;
+    right:55px;
+    bottom:-125px;
+
+}
+
+
+/* =====================================================
+   WELCOME CONTENT
+===================================================== */
+
+.dashboard-layout .welcome-content{
+
+    position:relative;
+    z-index:2;
+
+}
+
+
+.dashboard-layout .section-label{
+
+    display:block;
+    margin-bottom:8px;
+    color:#6B806F;
+    font-size:9px;
+    font-weight:800;
+    letter-spacing:1.7px;
+
+}
+
+
+.dashboard-layout .welcome-card .section-label{
+
+    color:rgba(255,255,255,.58);
+
+}
+
 
 .dashboard-layout .welcome-card h2{
+
     margin:0 0 8px;
-    font-size:28px;
-    color:#1e293b;
+    color:#FFFFFF;
+    font-size:29px;
+    font-weight:750;
+    letter-spacing:-.8px;
+
 }
+
 
 .dashboard-layout .welcome-card p{
+
+    max-width:620px;
     margin:0;
-    color:#64748b;
-    line-height:1.7;
+    color:rgba(255,255,255,.76);
+    font-size:12px;
+    line-height:1.8;
+
 }
 
-/* Statistics */
+
+/* =====================================================
+   WELCOME DECORATION
+===================================================== */
+
+.dashboard-layout .welcome-decoration{
+
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+
+}
+
+
+.dashboard-layout .decoration-circle{
+
+    position:absolute;
+    border-radius:50%;
+
+}
+
+
+.dashboard-layout .circle-one{
+
+    width:120px;
+    height:120px;
+    right:120px;
+    top:28px;
+    border:1px solid rgba(255,255,255,.08);
+
+}
+
+
+.dashboard-layout .circle-two{
+
+    width:60px;
+    height:60px;
+    right:160px;
+    top:58px;
+    background:rgba(250,204,21,.08);
+
+}
+
+
+/* =====================================================
+   SECTION HEADING
+===================================================== */
+
+.dashboard-layout .section-heading{
+
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    margin-bottom:17px;
+
+}
+
+
+.dashboard-layout .section-heading h2{
+
+    margin:0;
+    color:#1C2A21;
+    font-size:19px;
+    font-weight:750;
+    letter-spacing:-.4px;
+
+}
+
+
+/* =====================================================
+   STATISTICS GRID
+===================================================== */
 
 .dashboard-layout .stats-grid{
+
     display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:20px;
+
+    grid-template-columns:
+        repeat(4,minmax(0,1fr));
+
+    gap:18px;
+
 }
 
+
+/* =====================================================
+   STAT CARD
+===================================================== */
+
 .dashboard-layout .stat-card{
-    background:#ffffff;
+
+    min-height:142px;
+    display:flex;
+    align-items:center;
+    gap:17px;
+    padding:23px;
+    position:relative;
+    overflow:hidden;
+    background:#FFFFFF;
+    border:1px solid #E8EDE9;
     border-radius:18px;
-    padding:24px;
-    box-shadow:0 8px 24px rgba(15,23,42,.08);
+
+    box-shadow:
+        0 8px 24px rgba(25,45,33,.055);
 
     transition:
         transform .25s ease,
-        box-shadow .25s ease;
+        box-shadow .25s ease,
+        border-color .25s ease;
+
 }
+
+
+.dashboard-layout .stat-card::after{
+
+    content:"";
+    position:absolute;
+    width:80px;
+    height:80px;
+    right:-35px;
+    bottom:-35px;
+    border-radius:50%;
+    background:rgba(34,197,94,.045);
+
+}
+
 
 .dashboard-layout .stat-card:hover{
-    transform:translateY(-6px);
-    box-shadow:0 16px 36px rgba(15,23,42,.12);
+
+    transform:translateY(-4px);
+    border-color:#D7E6DB;
+    box-shadow:
+        0 15px 32px rgba(25,45,33,.09);
+
 }
 
-.dashboard-layout .stat-card h3{
-    margin:0;
-    font-size:36px;
-    font-weight:700;
-    color:#2563eb;
+
+/* =====================================================
+   STAT ICON
+===================================================== */
+
+.dashboard-layout .stat-icon{
+
+    width:48px;
+    height:48px;
+    flex-shrink:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:14px;
+    background:#EDF7EF;
+    color:#166534;
+
 }
 
-.dashboard-layout .stat-card p{
-    margin-top:10px;
-    color:#64748b;
-    font-size:15px;
+
+.dashboard-layout .stat-icon svg{
+
+    width:22px;
+    height:22px;
+    fill:none;
+    stroke:currentColor;
+    stroke-width:1.8;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+
 }
-</style>
+
+
+/* =====================================================
+   STAT DATA
+===================================================== */
+
+.dashboard-layout .stat-data{
+
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+
+}
+
+
+.dashboard-layout .stat-data span{
+
+    color:#7B8980;
+    font-size:10px;
+    font-weight:600;
+    line-height:1.4;
+
+}
+
+
+.dashboard-layout .stat-data strong{
+
+    color:#17251C;
+    font-size:28px;
+    font-weight:800;
+    line-height:1;
+    letter-spacing:-1px;
+
+}
+
+
+/* =====================================================
+   LOADING STATE
+===================================================== */
+
+.dashboard-layout .logout-button.loading{
+
+    pointer-events:none;
+
+}
+
+
+.dashboard-layout .logout-button.loading .menu-icon{
+
+    animation:
+        dashboardSpin .8s linear infinite;
+
+}
+
+
+@keyframes dashboardSpin{
+
+    to{
+        transform:rotate(360deg);
+    }
+
+}
+
+
+/* =====================================================
+   TABLET
+===================================================== */
+
+@media(max-width:1100px){
+
+    .dashboard-layout .sidebar{
+
+        width:235px;
+
+    }
+
+
+    .dashboard-layout .content{
+
+        padding:28px 25px 40px;
+
+    }
+
+
+    .dashboard-layout .topbar{
+
+        padding:0 25px;
+
+    }
+
+
+    .dashboard-layout .stats-grid{
+
+        grid-template-columns:
+            repeat(2,minmax(0,1fr));
+
+    }
+
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media(max-width:760px){
+
+    .dashboard-layout{
+
+        display:block;
+
+    }
+
+
+    .dashboard-layout .sidebar{
+
+        width:100%;
+        min-height:auto;
+
+    }
+
+
+    .dashboard-layout .sidebar-logo{
+
+        padding:20px;
+
+    }
+
+
+    .dashboard-layout .sidebar-logo img{
+
+        width:55px;
+        height:55px;
+        margin-bottom:9px;
+
+    }
+
+
+    .dashboard-layout .sidebar-logo h2{
+
+        font-size:19px;
+
+    }
+
+
+    .dashboard-layout .sidebar-menu{
+
+        padding:12px;
+
+    }
+
+
+    .dashboard-layout .sidebar-menu ul{
+
+        display:grid;
+
+        grid-template-columns:
+            repeat(2,1fr);
+
+        gap:5px;
+
+    }
+
+
+    .dashboard-layout .sidebar-menu li{
+
+        margin:0;
+        min-height:44px;
+        padding:0 12px;
+
+    }
+
+
+    .dashboard-layout .sidebar-footer{
+
+        padding:10px 12px 15px;
+
+    }
+
+
+    .dashboard-layout .logout-button{
+
+        min-height:44px;
+
+    }
+
+
+    .dashboard-layout .topbar{
+
+        min-height:70px;
+        padding:0 18px;
+
+    }
+
+
+    .dashboard-layout .topbar-right{
+
+        gap:12px;
+
+    }
+
+
+    .dashboard-layout .live-clock{
+
+        display:none;
+
+    }
+
+
+    .dashboard-layout .user-info{
+
+        display:none;
+
+    }
+
+
+    .dashboard-layout .content{
+
+        padding:22px 16px 35px;
+
+    }
+
+
+    .dashboard-layout .welcome-card{
+
+        min-height:170px;
+        padding:28px 25px;
+        margin-bottom:27px;
+
+    }
+
+
+    .dashboard-layout .welcome-card h2{
+
+        font-size:24px;
+
+    }
+
+
+    .dashboard-layout .stats-grid{
+
+        grid-template-columns:1fr;
+        gap:12px;
+
+    }
+
+
+    .dashboard-layout .stat-card{
+
+        min-height:105px;
+
+    }
+
+}
+
+
+/* =====================================================
+   SMALL MOBILE
+===================================================== */
+
+@media(max-width:420px){
+
+    .dashboard-layout .sidebar-menu ul{
+
+        grid-template-columns:1fr;
+
+    }
+
+
+    .dashboard-layout .topbar-left h1{
+
+        font-size:18px;
+
+    }
+
+
+    .dashboard-layout .welcome-card{
+
+        min-height:155px;
+        padding:24px 21px;
+
+    }
+
+
+    .dashboard-layout .welcome-card h2{
+
+        font-size:22px;
+
+    }
+
+
+    .dashboard-layout .welcome-card p{
+
+        font-size:11px;
+
+    }
+
+}</style>

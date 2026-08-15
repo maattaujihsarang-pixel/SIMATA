@@ -91,7 +91,6 @@
 <button
     id="loginButton"
     class="login-button"
-    onclick="createRipple(event); login()"
     type="button">
 
     <span id="buttonText">
@@ -184,56 +183,89 @@ if(password === ""){
 
     showLoading();
 
-    google.script.run
-    .withSuccessHandler(function(result){
+        google.script.run
+            .withSuccessHandler(function(result) {
+                hideLoading();
 
-    hideLoading();
+                button.disabled = false;
+                buttonText.textContent = "Masuk ke SIMATA";
 
-    button.disabled = false;
-    buttonText.textContent = "Masuk ke SIMATA";
+                if (result.success) {
+                    sessionStorage.setItem("SIMATA_TOKEN", result.token);
 
-    if(result.success){
+                    showToast(
+                        "success",
+                        "Login Berhasil",
+                        "Selamat datang, " + result.nama
+                    );
 
-        showToast(
-            "success",
-            "Login Berhasil",
-            "Selamat datang, " + result.nama
-        );
+                setTimeout(function() {
 
+                const appUrl = '<?!= ScriptApp.getService().getUrl(); ?>';
 
-        setTimeout(function () {
-          window.location.href = window.location.pathname + "?page=dashboard";
-       }, 1200);
+                window.top.location.replace(appUrl + "?page=dashboard");
 
-    }else{
+            }, 1200);
 
-        showToast(
-            "error",
-            "Login Gagal",
-            "Username atau Password salah."
-        );
+                } else {
+                    showToast(
+                        "error",
+                        "Login Gagal",
+                        "Username atau Password salah."
+                    );
+                }
+            })
+            .withFailureHandler(function(error) {
+                hideLoading();
+
+                button.disabled = false;
+                buttonText.textContent = "Masuk ke SIMATA";
+
+                showToast(
+                    "error",
+                    "Koneksi Gagal",
+                    "Tidak dapat terhubung ke server."
+                );
+
+                console.error(error);
+            })
+            .checkLogin(username, password);
 
     }
 
-})
-.withFailureHandler(function(error){
+function checkExistingSession() {
 
-    hideLoading();
+  const token = sessionStorage.getItem("SIMATA_TOKEN");
 
+  // Tidak ada token → tetap di halaman login
+  if (!token) {
+    return;
+  }
 
-    button.disabled = false;
-    buttonText.textContent = "Masuk ke SIMATA";   
+  google.script.run
+    .withSuccessHandler(function(result) {
 
-    showToast(
-        "error",
-        "Koneksi Gagal",
-        "Tidak dapat terhubung ke server."
-    );
+      if (result && result.valid) {
 
-    console.error(error);
+        const appUrl = '<?!= ScriptApp.getService().getUrl(); ?>';
 
-})
-.checkLogin(username,password);
+        // Session masih valid → langsung kembali ke Dashboard
+        window.top.location.replace(appUrl + "?page=dashboard");
+
+      } else {
+
+        // Token sudah tidak valid → bersihkan
+        sessionStorage.removeItem("SIMATA_TOKEN");
+
+      }
+
+    })
+    .withFailureHandler(function(error) {
+
+      console.error("Session check gagal:", error);
+
+    })
+    .validateSession(token);
 
 }
 
@@ -322,6 +354,26 @@ function createRipple(event){
     button.appendChild(circle);
 
 }
+
+// Pasang listener klik setelah DOM siap (menggantikan atribut inline onclick)
+document.addEventListener('DOMContentLoaded', function() {
+
+  // Cek session yang masih aktif
+  checkExistingSession();
+
+  var btn = document.getElementById('loginButton');
+
+  if (btn) {
+    try {
+      btn.removeAttribute('onclick');
+    } catch (e) {}
+
+    btn.addEventListener('click', function(e) {
+      createRipple(e);
+      login();
+    });
+  }
+});
 </script>
 
 <!-- Loading Overlay -->
@@ -333,3 +385,4 @@ function createRipple(event){
 </body>
 
 </html>
+

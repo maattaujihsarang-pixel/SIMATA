@@ -27,10 +27,20 @@ function checkLogin(username, password){
 
         Logger.log("Password cocok");
 
+        const token = SessionManager.generateToken();
+        
+        SessionManager.create(
+          token,
+          username
+        );
+        
+        Logger.log("Session berhasil dibuat: " + token);
+
         return {
           success: true,
           nama: row[2],
-          role: row[3]
+          role: row[3],
+          token: token
         };
 
       }
@@ -43,4 +53,12 @@ function checkLogin(username, password){
     success: false
   };
 
+}
+
+function logout(token) {
+  if (!token) {
+    return false;
+  }
+
+  return SessionManager.destroy(token);
 }

@@ -1,25 +1,41 @@
 <!DOCTYPE html>
 <html lang="id">
-<head>
-  <base target="_top">
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>SIMATA Dashboard</title>
+<head>
+
+  <base target="_top">
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>SIMATA | Dashboard</title>
 
   <?!= HtmlService.createHtmlOutputFromFile('style').getContent(); ?>
+
 </head>
 
-<body class="dashboard-page">
+
+<body class="dashboard-page" style="display: none;">
 
 <div class="dashboard-layout">
 
-  <!-- Sidebar -->
+
+  <!-- =========================
+       SIDEBAR
+  ========================== -->
+
   <aside class="sidebar">
 
     <div class="sidebar-logo">
 
-      <img src="LOGO_SEMENTARA" alt="Logo SIMATA">
+      <img
+        src="https://lh3.googleusercontent.com/d/1tlvabViqrOOR5NvCTnX-zjZME_s2SF1Q"
+        alt="Logo SIMATA"
+      >
 
       <h2>SIMATA</h2>
 
@@ -27,131 +43,956 @@
 
     </div>
 
-   <nav class="sidebar-menu">
 
-  <ul>
+    <nav class="sidebar-menu">
 
-    <li class="active">
-      <span class="menu-icon">🏠</span>
-      <span class="menu-text">Dashboard</span>
-    </li>
+      <ul>
 
-    <li>
-      <span class="menu-icon">📅</span>
-      <span class="menu-text">Absensi</span>
-    </li>
+        <li class="active">
 
-    <li>
-      <span class="menu-icon">👨‍🏫</span>
-      <span class="menu-text">Guru</span>
-    </li>
+          <span class="menu-icon">
 
-    <li>
-      <span class="menu-icon">🎓</span>
-      <span class="menu-text">Siswa</span>
-    </li>
+            <svg viewBox="0 0 24 24">
+              <path d="M3 12L12 4l9 8"/>
+              <path d="M5 10v10h14V10"/>
+              <path d="M9 20v-6h6v6"/>
+            </svg>
 
-    <li>
-      <span class="menu-icon">📝</span>
-      <span class="menu-text">Nilai</span>
-    </li>
+          </span>
 
-    <li>
-      <span class="menu-icon">📊</span>
-      <span class="menu-text">Laporan</span>
-    </li>
+          <span class="menu-text">
+            Dashboard
+          </span>
 
-    <li>
-      <span class="menu-icon">⚙️</span>
-      <span class="menu-text">Pengaturan</span>
-    </li>
+        </li>
 
-  </ul>
 
-</nav>
+        <li id="menu-teachers">
+
+          <span class="menu-icon">
+
+            <svg viewBox="0 0 24 24">
+              <rect x="3" y="4" width="18" height="17" rx="2"/>
+              <path d="M8 2v4"/>
+              <path d="M16 2v4"/>
+              <path d="M3 10h18"/>
+            </svg>
+
+          </span>
+
+          <span class="menu-text">
+            Absensi
+          </span>
+
+        </li>
+
+        <li id="menu-attendance">
+
+          <span class="menu-icon">
+
+            <svg viewBox="0 0 24 24">
+              <path d="M3 12h18"/>
+              <path d="M12 3v18"/>
+            </svg>
+
+          </span>
+
+          <span class="menu-text">
+            Absensi Siswa
+          </span>
+
+        </li>
+
+        <li id="menu-teacher-attendance">
+
+          <span class="menu-icon">
+
+            <svg viewBox="0 0 24 24">
+              <path d="M3 12h18"/>
+              <path d="M12 3v18"/>
+            </svg>
+
+          </span>
+
+          <span class="menu-text">
+            Absensi Guru
+          </span>
+
+        </li>
+
+        <li id="menu-journal">
+
+          <span class="menu-icon">
+
+            <svg viewBox="0 0 24 24">
+              <path d="M3 6h18v12H3z"/>
+              <path d="M3 10h18"/>
+            </svg>
+
+          </span>
+
+          <span class="menu-text">
+            Jurnal
+          </span>
+
+        </li>
+
+
+        <li>
+
+          <span class="menu-icon">
+
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="8" r="4"/>
+              <path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/>
+            </svg>
+
+          </span>
+
+          <span class="menu-text">
+            Guru
+          </span>
+
+        </li>
+
+
+        <li id="menu-students">
+
+          <span class="menu-icon">
+
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="7" r="4"/>
+              <path d="M5 21c0-4 3-7 7-7s7 3 7 7"/>
+            </svg>
+
+          </span>
+
+          <span class="menu-text">
+            Siswa
+          </span>
+
+        </li>
+
+
+        <li id="menu-grades">
+
+          <span class="menu-icon">
+
+            <svg viewBox="0 0 24 24">
+              <path d="M6 3h12v18H6z"/>
+              <path d="M9 7h6"/>
+              <path d="M9 11h6"/>
+              <path d="M9 15h4"/>
+            </svg>
+
+          </span>
+
+          <span class="menu-text">
+            Nilai
+          </span>
+
+        </li>
+
+        <li id="menu-classes">
+
+          <span class="menu-icon">
+
+            <svg viewBox="0 0 24 24">
+              <path d="M3 21V5l9-3 9 3v16"/>
+              <path d="M7 21v-6h10v6"/>
+            </svg>
+
+          </span>
+
+          <span class="menu-text">
+            Kelas
+          </span>
+
+        </li>
+
+
+        <li>
+
+          <span class="menu-icon">
+
+            <svg viewBox="0 0 24 24">
+              <path d="M4 19V5"/>
+              <path d="M4 19h17"/>
+              <path d="M7 16l4-5 3 2 5-7"/>
+            </svg>
+
+          </span>
+
+          <span class="menu-text">
+            Laporan
+          </span>
+
+        </li>
+
+
+        <li>
+
+          <span class="menu-icon">
+
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-1.7 1.7-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5v.2h-2.4v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1-1.7-1.7.1-.1A1.7 1.7 0 0 0 8.4 15a1.7 1.7 0 0 0-1.5-1H6.7v-2.4h.2a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9L8 8.6l1.7-1.7.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.5v-.2h2.4v.2a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1 1.7 1.7-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.5 1h.2V14h-.2a1.7 1.7 0 0 0-1.5 1z"/>
+            </svg>
+
+          </span>
+
+          <span class="menu-text">
+            Pengaturan
+          </span>
+
+        </li>
+
+      </ul>
+
+    </nav>
+
+
+    <div class="sidebar-footer">
+
+      <button
+        id="logout-button"
+        class="logout-button"
+        onclick="logoutSIMATA()"
+      >
+
+        <span class="menu-icon">
+
+          <svg viewBox="0 0 24 24">
+            <path d="M10 17l5-5-5-5"/>
+            <path d="M15 12H3"/>
+            <path d="M21 3v18"/>
+          </svg>
+
+        </span>
+
+        <span>Keluar</span>
+
+      </button>
+
+    </div>
 
   </aside>
 
-  <!-- Main -->
+
+
+  <!-- =========================
+       MAIN
+  ========================== -->
 
   <main class="main">
 
-  <header class="topbar">
 
-    <div class="topbar-left">
-        <h1>Dashboard</h1>
-    </div>
+    <!-- TOPBAR -->
 
-    <div class="topbar-right">
+    <header class="topbar">
 
-        <div id="liveClock" class="live-clock">
+      <div class="topbar-left">
+
+        <span class="topbar-label">
+          SISTEM INFORMASI
+        </span>
+
+        <h1>
+          Dashboard
+        </h1>
+
+      </div>
+
+
+      <div class="topbar-right">
+
+
+        <div class="live-clock">
+
+          <span class="clock-dot"></span>
+
+          <span id="liveClock">
             --:--:--
+          </span>
+
         </div>
+
 
         <div class="user-profile">
 
-            <div class="user-avatar">
-                IM
+          <div
+            class="user-avatar"
+            id="userAvatar"
+          >
+            IM
+          </div>
+
+
+          <div class="user-info">
+
+            <span
+              class="user-name"
+              id="userName"
+            >
+              Loading...
+            </span>
+
+            <small id="userRole">
+              Loading...
+            </small>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </header>
+
+
+
+    <!-- CONTENT -->
+
+    <section id="dashboardContent" class="content">
+
+
+      <!-- WELCOME -->
+
+      <div class="welcome-card">
+
+        <div class="welcome-content">
+
+          <span class="section-label">
+            DASHBOARD UTAMA
+          </span>
+
+          <h2>
+            Selamat Datang
+          </h2>
+
+          <p>
+            Kelola dan pantau aktivitas akademik
+            MA At-Taujih Sarang melalui SIMATA.
+          </p>
+
+        </div>
+
+
+        <div class="welcome-decoration">
+
+          <div class="decoration-circle circle-one"></div>
+          <div class="decoration-circle circle-two"></div>
+
+        </div>
+
+      </div>
+
+
+
+      <!-- STATISTICS -->
+
+      <div class="section-heading">
+
+        <div>
+
+          <span class="section-label">
+            RINGKASAN
+          </span>
+
+          <h2>
+            Statistik Sistem
+          </h2>
+
+        </div>
+
+      </div>
+
+
+      <div class="stats-grid">
+
+
+        <div class="stat-card">
+
+          <div class="stat-icon">
+
+            <svg viewBox="0 0 24 24">
+              <circle cx="9" cy="8" r="4"/>
+              <path d="M2 21c0-4 3-7 7-7"/>
+              <path d="M16 8a4 4 0 0 1 0 8"/>
+              <path d="M17 14c3 .7 5 2.7 5 6"/>
+            </svg>
+
+          </div>
+
+          <div class="stat-data">
+
+            <span>
+              Jumlah Siswa
+            </span>
+
+            <strong id="totalStudents">
+              0
+            </strong>
+
+          </div>
+
+        </div>
+
+
+
+        <div class="stat-card">
+
+          <div class="stat-icon">
+
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="7" r="4"/>
+              <path d="M5 21c0-4 3-7 7-7s7 3 7 7"/>
+            </svg>
+
+          </div>
+
+          <div class="stat-data">
+
+            <span>
+              Jumlah Guru
+            </span>
+
+            <strong id="totalTeachers">
+              0
+            </strong>
+
+          </div>
+
+        </div>
+
+
+
+        <div class="stat-card">
+
+          <div class="stat-icon">
+
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="9"/>
+              <path d="M8 12l2.5 2.5L16 9"/>
+            </svg>
+
+          </div>
+
+          <div class="stat-data">
+
+            <span>
+              Hadir Hari Ini
+            </span>
+
+            <strong id="todayAttendance">
+              0
+            </strong>
+
+          </div>
+
+        </div>
+
+
+
+        <div class="stat-card">
+
+          <div class="stat-icon">
+
+            <svg viewBox="0 0 24 24">
+              <path d="M3 21V5l9-3 9 3v16"/>
+              <path d="M7 21v-6h10v6"/>
+              <path d="M8 9h2"/>
+              <path d="M14 9h2"/>
+            </svg>
+
+          </div>
+
+          <div class="stat-data">
+
+            <span>
+              Jumlah Kelas
+            </span>
+
+            <strong id="totalClasses">
+              0
+            </strong>
+
+          </div>
+
+        </div>
+
+
+      </div>
+
+    </section>
+
+        <!-- ATTENDANCE CONTENT (hidden by default) -->
+        <section id="attendanceContent" class="content" style="display:none;">
+
+          <div class="section-heading">
+            <div>
+              <span class="section-label">ABSENSI SISWA</span>
+              <h2>Daftar Absensi Siswa</h2>
+            </div>
+            <div>
+              <input id="attendanceDateFilter" type="date" class="input-box" />
+              <select id="attendanceAcademicYearFilter" class="input-box" style="margin-left:8px;min-width:140px;"></select>
+              <select id="attendanceClassFilter" class="input-box" style="margin-left:8px;min-width:160px;"></select>
+              <select id="attendanceStudentFilter" class="input-box" style="margin-left:8px;min-width:180px;"></select>
+              <select id="attendanceStatusFilter" class="input-box" style="margin-left:8px;min-width:120px;">
+                <option value="">(Status)</option>
+                <option value="Hadir">Hadir</option>
+                <option value="Izin">Izin</option>
+                <option value="Sakit">Sakit</option>
+                <option value="Alpa">Alpa</option>
+              </select>
+              <button id="filterAttendanceButton" class="login-button" style="margin-left:8px;">Filter</button>
+              <button id="addAttendanceButton" class="login-button" style="margin-left:8px;">Tambah Absensi</button>
+            </div>
+          </div>
+
+          <div style="margin-top:18px;">
+            <table id="attendanceTable" style="width:100%;border-collapse:collapse;">
+              <thead>
+                <tr style="text-align:left;border-bottom:1px solid #e5e7eb;">
+                  <th style="padding:8px">Attendance ID</th>
+                  <th style="padding:8px">Date</th>
+                  <th style="padding:8px">Academic Year</th>
+                  <th style="padding:8px">Student</th>
+                  <th style="padding:8px">Class</th>
+                  <th style="padding:8px">Status</th>
+                  <th style="padding:8px">Method</th>
+                  <th style="padding:8px">Note</th>
+                  <th style="padding:8px">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="attendanceTbody"></tbody>
+            </table>
+          </div>
+
+        </section>
+
+        <!-- ATTENDANCE MODAL -->
+        <div id="attendanceModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;z-index:10000;">
+          <div style="background:white;padding:20px;border-radius:12px;min-width:420px;max-width:720px;">
+            <h3 id="attendanceModalTitle">Tambah Absensi</h3>
+            <div style="margin-top:12px;display:flex;flex-direction:column;gap:10px;">
+              <div style="display:flex;gap:8px;">
+                <input id="a_attendanceId" class="input-box" placeholder="attendanceId" />
+                <button id="a_generateId" class="login-button" style="width:140px;">Generate ID</button>
+              </div>
+              <input id="a_date" type="date" class="input-box" />
+              <input id="a_academicYear" class="input-box" placeholder="Academic Year" />
+              <select id="a_studentId" class="input-box"></select>
+              <select id="a_classId" class="input-box"></select>
+              <select id="a_status" class="input-box">
+                <option value="Hadir">Hadir</option>
+                <option value="Izin">Izin</option>
+                <option value="Sakit">Sakit</option>
+                <option value="Alpa">Alpa</option>
+              </select>
+              <select id="a_method" class="input-box">
+                <option value="Manual">Manual</option>
+                <option value="QR">QR</option>
+              </select>
+              <textarea id="a_note" class="input-box" placeholder="Note"></textarea>
+            </div>
+            <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
+              <button id="attendanceCancelBtn" class="login-button" style="background:#e5e7eb;color:#000">Batal</button>
+              <button id="attendanceSaveBtn" class="login-button">Simpan</button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- TEACHER ATTENDANCE CONTENT (hidden by default) -->
+        <section id="teacherAttendanceContent" class="content" style="display:none;">
+
+          <div class="section-heading">
+            <div>
+              <span class="section-label">ABSENSI GURU</span>
+              <h2>Daftar Absensi Guru</h2>
+            </div>
+            <div>
+              <input id="teacherAttendanceDateFilter" type="date" class="input-box" />
+              <select id="teacherAttendanceAcademicYearFilter" class="input-box" style="margin-left:8px;min-width:140px;"></select>
+              <select id="teacherAttendanceTeacherFilter" class="input-box" style="margin-left:8px;min-width:200px;"></select>
+              <select id="teacherAttendanceStatusFilter" class="input-box" style="margin-left:8px;min-width:120px;">
+                <option value="">(Status)</option>
+                <option value="Hadir">Hadir</option>
+                <option value="Izin">Izin</option>
+                <option value="Sakit">Sakit</option>
+                <option value="Alpa">Alpa</option>
+              </select>
+              <button id="filterTeacherAttendanceButton" class="login-button" style="margin-left:8px;">Filter</button>
+              <button id="addTeacherAttendanceButton" class="login-button" style="margin-left:8px;">Tambah Absensi Guru</button>
+            </div>
+          </div>
+
+          <div style="margin-top:18px;">
+            <table id="teacherAttendanceTable" style="width:100%;border-collapse:collapse;">
+              <thead>
+                <tr style="text-align:left;border-bottom:1px solid #e5e7eb;">
+                  <th style="padding:8px">Attendance ID</th>
+                  <th style="padding:8px">Date</th>
+                  <th style="padding:8px">Academic Year</th>
+                  <th style="padding:8px">Teacher</th>
+                  <th style="padding:8px">Status</th>
+                  <th style="padding:8px">Method</th>
+                  <th style="padding:8px">Note</th>
+                  <th style="padding:8px">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="teacherAttendanceTbody"></tbody>
+            </table>
+          </div>
+
+        </section>
+
+        <!-- TEACHER ATTENDANCE MODAL -->
+        <div id="teacherAttendanceModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;z-index:10000;">
+          <div style="background:white;padding:20px;border-radius:12px;min-width:420px;max-width:720px;">
+            <h3 id="teacherAttendanceModalTitle">Tambah Absensi Guru</h3>
+            <div style="margin-top:12px;display:flex;flex-direction:column;gap:10px;">
+              <div style="display:flex;gap:8px;">
+                <input id="ta_attendanceId" class="input-box" placeholder="attendanceId" />
+                <button id="ta_generateId" class="login-button" style="width:140px;">Generate ID</button>
+              </div>
+              <input id="ta_date" type="date" class="input-box" />
+              <input id="ta_academicYear" class="input-box" placeholder="Academic Year" />
+              <select id="ta_teacherId" class="input-box"></select>
+              <select id="ta_status" class="input-box">
+                <option value="Hadir">Hadir</option>
+                <option value="Izin">Izin</option>
+                <option value="Sakit">Sakit</option>
+                <option value="Alpa">Alpa</option>
+              </select>
+              <select id="ta_method" class="input-box">
+                <option value="Manual">Manual</option>
+                <option value="QR">QR</option>
+              </select>
+              <input id="ta_qrCodeId" class="input-box" placeholder="QR Code ID (opsional)" />
+              <textarea id="ta_note" class="input-box" placeholder="Note"></textarea>
+            </div>
+            <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
+              <button id="teacherAttendanceCancelBtn" class="login-button" style="background:#e5e7eb;color:#000">Batal</button>
+              <button id="teacherAttendanceSaveBtn" class="login-button">Simpan</button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- JOURNAL CONTENT (hidden by default) -->
+        <section id="journalContent" class="content" style="display:none;">
+
+          <div class="section-heading">
+            <div>
+              <span class="section-label">JURNAL</span>
+              <h2>Daftar Jurnal</h2>
+            </div>
+            <div>
+              <input id="journalDateFilter" type="date" class="input-box" />
+              <select id="journalAcademicYearFilter" class="input-box" style="margin-left:8px;min-width:140px;"></select>
+              <select id="journalTeacherFilter" class="input-box" style="margin-left:8px;min-width:180px;"></select>
+              <select id="journalClassFilter" class="input-box" style="margin-left:8px;min-width:160px;"></select>
+              <input id="journalSubjectFilter" class="input-box" placeholder="Subject" style="margin-left:8px;min-width:140px;" />
+              <select id="journalStatusFilter" class="input-box" style="margin-left:8px;min-width:120px;">
+                <option value="">(Status)</option>
+              </select>
+              <button id="filterJournalButton" class="login-button" style="margin-left:8px;">Filter</button>
+              <button id="addJournalButton" class="login-button" style="margin-left:8px;">Tambah Jurnal</button>
+            </div>
+          </div>
+
+          <div style="margin-top:18px;overflow:auto;">
+            <table id="journalTable" style="width:100%;border-collapse:collapse;">
+              <thead>
+                <tr style="text-align:left;border-bottom:1px solid #e5e7eb;">
+                  <th style="padding:8px">Journal ID</th>
+                  <th style="padding:8px">Date</th>
+                  <th style="padding:8px">Academic Year</th>
+                  <th style="padding:8px">Teacher</th>
+                  <th style="padding:8px">Class</th>
+                  <th style="padding:8px">Subject</th>
+                  <th style="padding:8px">Status</th>
+                  <th style="padding:8px">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="journalTbody"></tbody>
+            </table>
+          </div>
+
+        </section>
+
+        <!-- JOURNAL MODAL -->
+        <div id="journalModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;z-index:10000;">
+          <div style="background:white;padding:20px;border-radius:12px;min-width:320px;max-width:720px;">
+            <h3 id="journalModalTitle">Tambah Jurnal</h3>
+            <div style="margin-top:12px;display:flex;flex-direction:column;gap:10px;">
+              <div style="display:flex;gap:8px;">
+                <input id="j_journalId" class="input-box" placeholder="journalId" />
+                <button id="j_generateId" class="login-button" style="width:140px;">Generate ID</button>
+              </div>
+              <input id="j_date" type="date" class="input-box" />
+              <input id="j_academicYear" class="input-box" placeholder="Academic Year" />
+              <select id="j_teacherId" class="input-box"></select>
+              <select id="j_classId" class="input-box"></select>
+              <input id="j_subject" class="input-box" placeholder="Subject" />
+              <textarea id="j_content" class="input-box" placeholder="Content" rows="6"></textarea>
+              <input id="j_note" class="input-box" placeholder="Note" />
+              <select id="j_status" class="input-box">
+                <option value="">(Status)</option>
+              </select>
+            </div>
+            <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
+              <button id="journalCancelBtn" class="login-button" style="background:#e5e7eb;color:#000">Batal</button>
+              <button id="journalSaveBtn" class="login-button">Simpan</button>
+            </div>
+          </div>
+        </div>
+        <!-- GRADES CONTENT (hidden by default) -->
+        <section id="gradesContent" class="content" style="display:none;">
+
+          <div class="section-heading">
+            <div>
+              <span class="section-label">NILAI</span>
+              <h2>Daftar Nilai</h2>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
+              <input id="gradeSearch" class="input-box" placeholder="Cari gradeId, studentId, classId, subject, atau remarks" style="min-width:220px;" />
+              <select id="gradeStudentFilter" class="input-box" style="min-width:180px;"></select>
+              <select id="gradeClassFilter" class="input-box" style="min-width:170px;"></select>
+              <select id="gradeSubjectFilter" class="input-box" style="min-width:150px;"></select>
+              <select id="gradeAssessmentTypeFilter" class="input-box" style="min-width:170px;"></select>
+              <select id="gradeSemesterFilter" class="input-box" style="min-width:140px;"></select>
+              <select id="gradeAcademicYearFilter" class="input-box" style="min-width:150px;"></select>
+              <button id="filterGradeButton" class="login-button">Filter</button>
+              <button id="addGradeButton" class="login-button">Tambah Nilai</button>
+            </div>
+          </div>
+
+          <div style="margin-top:18px;overflow:auto;">
+            <table id="gradesTable" style="width:100%;border-collapse:collapse;min-width:1100px;">
+              <thead>
+                <tr style="text-align:left;border-bottom:1px solid #e5e7eb;">
+                  <th style="padding:8px">Grade ID</th>
+                  <th style="padding:8px">Student</th>
+                  <th style="padding:8px">Class</th>
+                  <th style="padding:8px">Subject</th>
+                  <th style="padding:8px">Assessment</th>
+                  <th style="padding:8px">Score</th>
+                  <th style="padding:8px">Semester</th>
+                  <th style="padding:8px">Academic Year</th>
+                  <th style="padding:8px">Date</th>
+                  <th style="padding:8px">Remarks</th>
+                  <th style="padding:8px">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="gradesTbody"></tbody>
+            </table>
+          </div>
+
+        </section>
+
+        <!-- GRADE MODAL -->
+        <div id="gradeModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;z-index:10000;">
+          <div style="background:white;padding:20px;border-radius:12px;min-width:320px;max-width:720px;width:min(92vw, 720px);">
+            <h3 id="gradeModalTitle">Tambah Nilai</h3>
+            <div style="margin-top:12px;display:flex;flex-direction:column;gap:10px;">
+              <input id="g_gradeId" class="input-box" placeholder="gradeId" />
+              <select id="g_studentId" class="input-box"></select>
+              <select id="g_classId" class="input-box"></select>
+              <input id="g_subject" class="input-box" placeholder="Subject" />
+              <input id="g_assessmentType" class="input-box" placeholder="Assessment Type" />
+              <input id="g_score" type="number" step="any" class="input-box" placeholder="Score" />
+              <input id="g_semester" class="input-box" placeholder="Semester" />
+              <input id="g_academicYear" class="input-box" placeholder="Academic Year" />
+              <input id="g_date" type="date" class="input-box" />
+              <textarea id="g_remarks" class="input-box" placeholder="Remarks" rows="3"></textarea>
+            </div>
+            <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
+              <button id="gradeCancelBtn" class="login-button" style="background:#e5e7eb;color:#000">Batal</button>
+              <button id="gradeSaveBtn" class="login-button">Simpan</button>
+            </div>
+          </div>
+        </div>
+
+        <section id="studentsContent" class="content" style="display:none;">
+
+          <div class="section-heading">
+            <div>
+              <span class="section-label">SISWA</span>
+              <h2>Daftar Siswa</h2>
+            </div>
+            <div>
+              <input id="studentSearch" class="input-box" placeholder="Cari berdasarkan nama, nis, nisn, atau studentId" />
+              <button id="addStudentButton" class="login-button" style="margin-left:12px;">Tambah Siswa</button>
+            </div>
+          </div>
+
+          <div style="margin-top:18px;">
+            <table id="studentsTable" style="width:100%;border-collapse:collapse;">
+              <thead>
+                <tr style="text-align:left;border-bottom:1px solid #e5e7eb;">
+                  <th style="padding:8px">Student ID</th>
+                  <th style="padding:8px">Name</th>
+                  <th style="padding:8px">NIS</th>
+                  <th style="padding:8px">Class</th>
+                  <th style="padding:8px">Status</th>
+                  <th style="padding:8px">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="studentsTbody"></tbody>
+            </table>
+          </div>
+
+        </section>
+
+        <!-- STUDENT MODAL -->
+        <div id="studentModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;z-index:10000;">
+          <div style="background:white;padding:20px;border-radius:12px;min-width:420px;max-width:720px;">
+            <h3 id="studentModalTitle">Tambah Siswa</h3>
+            <div style="margin-top:12px;display:flex;flex-direction:column;gap:10px;">
+              <input id="f_studentId" class="input-box" placeholder="studentId" />
+              <input id="f_nis" class="input-box" placeholder="NIS" />
+              <input id="f_nisn" class="input-box" placeholder="NISN" />
+              <input id="f_name" class="input-box" placeholder="Name" />
+              <select id="f_gender" class="input-box">
+                <option value="">(Gender)</option>
+                <option value="L">L</option>
+                <option value="P">P</option>
+              </select>
+              <select id="f_classId" class="input-box"></select>
+              <select id="f_status" class="input-box">
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+              <input id="f_birthDate" type="date" class="input-box" />
+              <input id="f_qrCodeId" class="input-box" placeholder="QR Code ID" />
             </div>
 
-            <div class="user-info">
-                <span class="user-name" id="userName">Loading...</span>
-                <small id="userRole">Loading...</small>
+            <!-- TEACHERS CONTENT (hidden by default) -->
+            <section id="teachersContent" class="content" style="display:none;">
+
+              <div class="section-heading">
+                <div>
+                  <span class="section-label">GURU</span>
+                  <h2>Daftar Guru</h2>
+                </div>
+                <div>
+                  <input id="teacherSearch" class="input-box" placeholder="Cari berdasarkan name, nip, nuptk, atau teacherId" />
+                  <button id="addTeacherButton" class="login-button" style="margin-left:12px;">Tambah Guru</button>
+                </div>
+              </div>
+
+              <div style="margin-top:18px;">
+                <table id="teachersTable" style="width:100%;border-collapse:collapse;">
+                  <thead>
+                    <tr style="text-align:left;border-bottom:1px solid #e5e7eb;">
+                      <th style="padding:8px">Teacher ID</th>
+                      <th style="padding:8px">Name</th>
+                      <th style="padding:8px">NIP</th>
+                      <th style="padding:8px">Position</th>
+                      <th style="padding:8px">Status</th>
+                      <th style="padding:8px">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="teachersTbody"></tbody>
+                </table>
+              </div>
+
+            </section>
+
+            <!-- TEACHER MODAL -->
+            <div id="teacherModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;z-index:10000;">
+              <div style="background:white;padding:20px;border-radius:12px;min-width:420px;max-width:720px;">
+                <h3 id="teacherModalTitle">Tambah Guru</h3>
+                <div style="margin-top:12px;display:flex;flex-direction:column;gap:10px;">
+                  <input id="t_teacherId" class="input-box" placeholder="teacherId" />
+                  <input id="t_nip" class="input-box" placeholder="NIP" />
+                  <input id="t_nuptk" class="input-box" placeholder="NUPTK" />
+                  <input id="t_name" class="input-box" placeholder="Name" />
+                  <input id="t_position" class="input-box" placeholder="Position" />
+                  <input id="t_subject" class="input-box" placeholder="Subject" />
+                  <select id="t_status" class="input-box">
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                  </select>
+                  <input id="t_qrCodeId" class="input-box" placeholder="QR Code ID" />
+                </div>
+
+                <!-- CLASSES CONTENT (hidden by default) -->
+                <section id="classesContent" class="content" style="display:none;">
+
+                  <div class="section-heading">
+                    <div>
+                      <span class="section-label">KELAS</span>
+                      <h2>Daftar Kelas</h2>
+                    </div>
+                    <div>
+                      <input id="classSearch" class="input-box" placeholder="Cari berdasarkan classId atau className" />
+                      <button id="addClassButton" class="login-button" style="margin-left:12px;">Tambah Kelas</button>
+                    </div>
+                  </div>
+
+                  <div style="margin-top:18px;">
+                    <table id="classesTable" style="width:100%;border-collapse:collapse;">
+                      <thead>
+                        <tr style="text-align:left;border-bottom:1px solid #e5e7eb;">
+                          <th style="padding:8px">Class ID</th>
+                          <th style="padding:8px">Class Name</th>
+                          <th style="padding:8px">Level</th>
+                          <th style="padding:8px">Academic Year</th>
+                          <th style="padding:8px">Wali Kelas</th>
+                          <th style="padding:8px">Status</th>
+                          <th style="padding:8px">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody id="classesTbody"></tbody>
+                    </table>
+                  </div>
+
+                </section>
+
+                <!-- CLASS MODAL -->
+                <div id="classModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;z-index:10000;">
+                  <div style="background:white;padding:20px;border-radius:12px;min-width:420px;max-width:720px;">
+                    <h3 id="classModalTitle">Tambah Kelas</h3>
+                    <div style="margin-top:12px;display:flex;flex-direction:column;gap:10px;">
+                      <input id="c_classId" class="input-box" placeholder="classId" />
+                      <input id="c_className" class="input-box" placeholder="Class Name" />
+                      <input id="c_level" class="input-box" placeholder="Level" />
+                      <input id="c_academicYear" class="input-box" placeholder="Academic Year" />
+                      <select id="c_homeroomTeacherId" class="input-box"></select>
+                      <select id="c_status" class="input-box">
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                      </select>
+                    </div>
+                    <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
+                      <button id="classCancelBtn" class="login-button" style="background:#e5e7eb;color:#000">Batal</button>
+                      <button id="classSaveBtn" class="login-button">Simpan</button>
+                    </div>
+                  </div>
+                </div>
+                <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
+                  <button id="teacherCancelBtn" class="login-button" style="background:#e5e7eb;color:#000">Batal</button>
+                  <button id="teacherSaveBtn" class="login-button">Simpan</button>
+                </div>
+              </div>
             </div>
-
+            <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
+              <button id="studentCancelBtn" class="login-button" style="background:#e5e7eb;color:#000">Batal</button>
+              <button id="studentSaveBtn" class="login-button">Simpan</button>
+            </div>
+          </div>
         </div>
-
-    </div>
-
-  </header>
-
-  <section class="content">
-
-    <!-- Welcome -->
-
-    <div class="welcome-card">
-
-        <h2>Selamat Datang 👋</h2>
-
-        <p>
-            Selamat datang di Sistem Informasi MA At-Taujih Sarang (SIMATA).
-        </p>
-
-    </div>
-
-    <!-- Statistics -->
-
-    <div class="stats-grid">
-
-        <div class="stat-card">
-            <h3 id="totalStudents">0</h3>
-            <p>Jumlah Siswa</p>
-        </div>
-
-        <div class="stat-card">
-            <h3 id="totalTeachers">0</h3>
-            <p>Jumlah Guru</p>
-        </div>
-
-        <div class="stat-card">
-            <h3 id="todayAttendance">0</h3>
-            <p>Hadir Hari Ini</p>
-        </div>
-
-        <div class="stat-card">
-            <h3 id="totalClasses">0</h3>
-            <p>Jumlah Kelas</p>
-        </div>
-
-    </div>
-
-  </section>
-
   </main>
 
 </div>
 
-<?!= HtmlService.createHtmlOutputFromFile('DashboardScript').getContent(); ?>
+
+<?!= include('DashboardScript'); ?>
+
 
 </body>
+
 </html>

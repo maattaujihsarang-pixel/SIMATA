@@ -1,76 +1,1446 @@
 <script>
 
-document.addEventListener("DOMContentLoaded", initDashboard);
+document.addEventListener("DOMContentLoaded", function() {
 
-function initDashboard(){
+    guardDashboard();
 
-    console.log("SIMATA Dashboard Loaded");
+});
+
+
+/* =========================
+   DASHBOARD GUARD
+========================= */
+
+function guardDashboard() {
+
+    const token = sessionStorage.getItem("SIMATA_TOKEN");
+
+    if (!token) {
+        console.warn("[SIMATA AUTH] Token tidak ditemukan. Redirect ke login.");
+        redirectToLogin();
+        return;
+    }
+
+    console.warn("[SIMATA AUTH] Token ditemukan, validasi session...");
+
+    google.script.run
+        .withSuccessHandler(function(result) {
+            if (!result || result.valid !== true) {
+                console.warn("[SIMATA AUTH] Session tidak valid. Redirect ke login.");
+                sessionStorage.removeItem("SIMATA_TOKEN");
+                redirectToLogin();
+                return;
+            }
+
+            console.log("[SIMATA AUTH] Session valid. Dashboard diizinkan.");
+            showDashboard();
+            initDashboard();
+            // initialize students & teachers modules
+            try { initStudentsModule(); } catch (e) {}
+            try { initTeachersModule(); } catch (e) {}
+            try { initClassesModule(); } catch (e) {}
+            try { initGradesModule(); } catch (e) {}
+            try { initAttendanceModule(); } catch (e) {}
+            // Teacher Attendance module will be initialized after dashboard data loads (role-based)
+            startLiveClock();
+            initDashboardSessionCheck();
+        })
+        .withFailureHandler(function(error) {
+            console.error("[SIMATA AUTH] Gagal memvalidasi session:", error);
+            sessionStorage.removeItem("SIMATA_TOKEN");
+            redirectToLogin();
+        })
+        .validateSession(token);
+
+}
+
+function showDashboard() {
+    document.body.style.display = "";
+}
+
+
+/* =========================
+   DASHBOARD INIT
+========================= */
+
+function initDashboard() {
 
     loadDashboard();
 
 }
 
-function loadDashboard(){
+// Attach additional UI handlers for pages (Students)
+function initStudentsModule() {
+    const menuStudents = document.getElementById('menu-students');
+    if (menuStudents) {
+        menuStudents.addEventListener('click', function() {
+            showStudentsView();
+        });
+    }
+
+    const addBtn = document.getElementById('addStudentButton');
+    if (addBtn) {
+        addBtn.addEventListener('click', function() { openStudentModal('create'); });
+    }
+
+    const searchInput = document.getElementById('studentSearch');
+    if (searchInput) {
+        let timer = null;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(timer);
+            timer = setTimeout(function() { loadStudents(searchInput.value.trim()); }, 300);
+        });
+    }
+
+    // Modal buttons
+    const cancelBtn = document.getElementById('studentCancelBtn');
+    if (cancelBtn) cancelBtn.addEventListener('click', closeStudentModal);
+
+    const saveBtn = document.getElementById('studentSaveBtn');
+    if (saveBtn) saveBtn.addEventListener('click', saveStudentFromModal);
+}
+
+function showStudentsView() {
+    document.getElementById('dashboardContent').style.display = 'none';
+    document.getElementById('studentsContent').style.display = '';
+    // highlight menu
+    document.querySelectorAll('.sidebar-menu li').forEach(function(li){ li.classList.remove('active'); });
+    const menu = document.getElementById('menu-students'); if (menu) menu.classList.add('active');
+    loadStudents();
+}
+
+function hideStudentsView() {
+    document.getElementById('studentsContent').style.display = 'none';
+    document.getElementById('dashboardContent').style.display = '';
+    // restore dashboard menu active state
+    document.querySelectorAll('.sidebar-menu li').forEach(function(li){ li.classList.remove('active'); });
+    document.querySelector('.sidebar-menu li').classList.add('active');
+}
+
+function loadStudents(filter) {
+    const tbody = document.getElementById('studentsTbody');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="6">Memuat...</td></tr>';
+
+    // load classes for class select
+    google.script.run.withSuccessHandler(function(classesRes){
+        const classSelect = document.getElementById('f_classId');
+        if (classSelect && classesRes && classesRes.success && Array.isArray(classesRes.classes)) {
+            classSelect.innerHTML = '<option value="">(Pilih Kelas)</option>' + classesRes.classes.map(function(c){
+                return '<option value="'+c.classId+'">'+(c.className || c.classId)+'</option>';
+            }).join('');
+        }
+    }).withFailureHandler(function(){ /* ignore */ }).getClasses();
 
     google.script.run
-        .withSuccessHandler(onDashboardLoaded)
-        .withFailureHandler(onDashboardError)
-        .getDashboardData();
+        .withSuccessHandler(function(result){
+            if (!result || !result.success) {
+                tbody.innerHTML = '<tr><td colspan="6">Gagal memuat siswa.</td></tr>';
+                return;
+            }
 
+            let students = result.students || [];
+            if (filter) {
+                const q = filter.toLowerCase();
+                students = students.filter(function(s){
+                    return (s.studentId||'').toLowerCase().includes(q) || (s.name||'').toLowerCase().includes(q) || (s.nis||'').toLowerCase().includes(q) || (s.nisn||'').toLowerCase().includes(q);
+                });
+            }
+
+            if (students.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6">Tidak ada data.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = students.map(function(s){
+                return '<tr>' +
+                    '<td style="padding:8px">'+escapeHtml(s.studentId)+'</td>' +
+                    '<td style="padding:8px">'+escapeHtml(s.name)+'</td>' +
+                    '<td style="padding:8px">'+escapeHtml(s.nis)+'</td>' +
+                    '<td style="padding:8px">'+escapeHtml(s.classId)+'</td>' +
+                    '<td style="padding:8px">'+escapeHtml(s.status)+'</td>' +
+                    '<td style="padding:8px">' +
+                      '<button onclick="openStudentModal(\'edit\', \''+escapeAttr(s.studentId)+'\')" style="margin-right:6px;">Edit</button>' +
+                      '<button onclick="openStudentModal(\'view\', \''+escapeAttr(s.studentId)+'\')">Detail</button>' +
+                    '</td>' +
+                  '</tr>';
+            }).join('');
+
+        })
+        .withFailureHandler(function(){ tbody.innerHTML = '<tr><td colspan="6">Gagal memuat siswa.</td></tr>'; })
+        .getStudents();
 }
 
-<script>
+function openStudentModal(mode, studentId) {
+    const modal = document.getElementById('studentModal');
+    const title = document.getElementById('studentModalTitle');
+    const idField = document.getElementById('f_studentId');
 
-document.addEventListener("DOMContentLoaded", initDashboard);
+    if (!modal) return;
 
-function initDashboard(){
+    if (mode === 'create') {
+        title.textContent = 'Tambah Siswa';
+        idField.disabled = false; idField.value = '';
+        ['f_nis','f_nisn','f_name','f_gender','f_classId','f_status','f_birthDate','f_qrCodeId'].forEach(function(k){
+            const el = document.getElementById(k); if (el) el.value = '';
+        });
+        modal.style.display = 'flex';
+        return;
+    }
 
-    console.log("SIMATA Dashboard Loaded");
+    if (!studentId) return;
 
-    loadDashboard();
-
+    title.textContent = mode === 'edit' ? 'Edit Siswa' : 'Detail Siswa';
+    // fetch student
+    google.script.run.withSuccessHandler(function(res){
+        if (!res || !res.success) { alert('Data siswa tidak ditemukan.'); return; }
+        const s = res.student;
+        idField.value = s.studentId || '';
+        idField.disabled = true;
+        document.getElementById('f_nis').value = s.nis || '';
+        document.getElementById('f_nisn').value = s.nisn || '';
+        document.getElementById('f_name').value = s.name || '';
+        document.getElementById('f_gender').value = s.gender || '';
+        document.getElementById('f_classId').value = s.classId || '';
+        document.getElementById('f_status').value = s.status || 'Active';
+        document.getElementById('f_birthDate').value = s.birthDate || '';
+        document.getElementById('f_qrCodeId').value = s.qrCodeId || '';
+        modal.style.display = 'flex';
+    }).withFailureHandler(function(){ alert('Gagal memuat data siswa.'); }).getStudentById(studentId);
 }
 
-function loadDashboard(){
+function closeStudentModal() { const m = document.getElementById('studentModal'); if (m) m.style.display = 'none'; }
+
+function saveStudentFromModal() {
+    const id = document.getElementById('f_studentId').value.trim();
+    const nis = document.getElementById('f_nis').value.trim();
+    const nisn = document.getElementById('f_nisn').value.trim();
+    const name = document.getElementById('f_name').value.trim();
+    const gender = document.getElementById('f_gender').value;
+    const classId = document.getElementById('f_classId').value;
+    const status = document.getElementById('f_status').value;
+    const birthDate = document.getElementById('f_birthDate').value;
+    const qrCodeId = document.getElementById('f_qrCodeId').value.trim();
+
+    if (!id) { alert('studentId wajib diisi.'); return; }
+    if (!name) { alert('Name wajib diisi.'); return; }
+    if (!classId) { alert('Class harus dipilih.'); return; }
+
+    const payload = { studentId: id, nis: nis, nisn: nisn, name: name, gender: gender, classId: classId, status: status, birthDate: birthDate, qrCodeId: qrCodeId };
+
+    // determine create or update by whether studentId exists already (fetch)
+    google.script.run.withSuccessHandler(function(res){
+        if (res && res.success) {
+            // exists -> update
+            google.script.run.withSuccessHandler(function(uRes){
+                if (uRes && uRes.success) {
+                    closeStudentModal(); loadStudents();
+                    alert('Data siswa berhasil diperbarui.');
+                } else {
+                    alert((uRes && uRes.message) || 'Gagal memperbarui siswa.');
+                }
+            }).withFailureHandler(function(){ alert('Gagal memperbarui siswa.'); }).updateStudent(id, payload);
+        } else {
+            // create
+            google.script.run.withSuccessHandler(function(cRes){
+                if (cRes && cRes.success) {
+                    closeStudentModal(); loadStudents();
+                    alert('Siswa berhasil ditambahkan.');
+                } else {
+                    alert((cRes && cRes.message) || 'Gagal menambahkan siswa.');
+                }
+            }).withFailureHandler(function(){ alert('Gagal menambahkan siswa.'); }).createStudent(payload);
+        }
+    }).withFailureHandler(function(){ alert('Gagal memeriksa keberadaan siswa.'); }).getStudentById(id);
+}
+
+function escapeHtml(s) { if (s === null || s === undefined) return ''; return String(s).replace(/[&<>\"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function escapeAttr(s) { return (s||'').replace(/'/g, "\\'"); }
+
+
+
+/* =========================
+   LOAD DASHBOARD
+========================= */
+
+function loadDashboard() {
+
+    const token =
+        sessionStorage.getItem("SIMATA_TOKEN");
+
+    if (!token) {
+
+        console.warn("[SIMATA AUTH] Token tidak ditemukan saat loadDashboard. Redirect ke login.");
+        redirectToLogin();
+
+        return;
+
+    }
+
 
     google.script.run
+
         .withSuccessHandler(onDashboardLoaded)
+
         .withFailureHandler(onDashboardError)
-        .getDashboardData();
+
+        .getDashboardData(token);
 
 }
 
-function onDashboardLoaded(data){
+// Teachers module
+function initTeachersModule() {
+    const menu = document.getElementById('menu-teachers');
+    if (menu) menu.addEventListener('click', function(){ showTeachersView(); });
 
-    console.log(data);
+    const addBtn = document.getElementById('addTeacherButton');
+    if (addBtn) addBtn.addEventListener('click', function(){ openTeacherModal('create'); });
 
-    if(!data.success) return;
+    const searchInput = document.getElementById('teacherSearch');
+    if (searchInput) {
+        let timer = null;
+        searchInput.addEventListener('input', function(){ clearTimeout(timer); timer = setTimeout(function(){ loadTeachers(searchInput.value.trim()); }, 300); });
+    }
 
-    // User
-    document.getElementById("userName").textContent = data.user.name;
-    document.getElementById("userRole").textContent = data.user.role;
+    const cancelBtn = document.getElementById('teacherCancelBtn'); if (cancelBtn) cancelBtn.addEventListener('click', closeTeacherModal);
+    const saveBtn = document.getElementById('teacherSaveBtn'); if (saveBtn) saveBtn.addEventListener('click', saveTeacherFromModal);
+}
 
-    // Statistics
-    document.getElementById("totalStudents").textContent = data.statistics.students;
-    document.getElementById("totalTeachers").textContent = data.statistics.teachers;
-    document.getElementById("todayAttendance").textContent = data.statistics.attendance;
-    document.getElementById("totalClasses").textContent = data.statistics.classes;
+function showTeachersView() {
+    document.getElementById('dashboardContent').style.display = 'none';
+    document.getElementById('studentsContent').style.display = 'none';
+    document.getElementById('teachersContent').style.display = '';
+    document.querySelectorAll('.sidebar-menu li').forEach(function(li){ li.classList.remove('active'); });
+    const menu = document.getElementById('menu-teachers'); if (menu) menu.classList.add('active');
+    loadTeachers();
+}
+
+function loadTeachers(filter) {
+    const tbody = document.getElementById('teachersTbody'); if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="6">Memuat...</td></tr>';
+
+    google.script.run.withSuccessHandler(function(result){
+        if (!result || !result.success) { tbody.innerHTML = '<tr><td colspan="6">Gagal memuat guru.</td></tr>'; return; }
+
+        let teachers = result.teachers || [];
+        if (filter) {
+            const q = filter.toLowerCase();
+            teachers = teachers.filter(function(t){
+                return (t.teacherId||'').toLowerCase().includes(q) || (t.name||'').toLowerCase().includes(q) || (t.nip||'').toLowerCase().includes(q) || (t.nuptk||'').toLowerCase().includes(q);
+            });
+        }
+
+        if (teachers.length === 0) { tbody.innerHTML = '<tr><td colspan="6">Tidak ada data.</td></tr>'; return; }
+
+        tbody.innerHTML = teachers.map(function(t){
+            return '<tr>' +
+                '<td style="padding:8px">'+escapeHtml(t.teacherId)+'</td>' +
+                '<td style="padding:8px">'+escapeHtml(t.name)+'</td>' +
+                '<td style="padding:8px">'+escapeHtml(t.nip)+'</td>' +
+                '<td style="padding:8px">'+escapeHtml(t.position)+'</td>' +
+                '<td style="padding:8px">'+escapeHtml(t.status)+'</td>' +
+                '<td style="padding:8px">' +
+                  '<button onclick="openTeacherModal(\'edit\', \''+escapeAttr(t.teacherId)+'\')" style="margin-right:6px;">Edit</button>' +
+                  '<button onclick="openTeacherModal(\'view\', \''+escapeAttr(t.teacherId)+'\')">Detail</button>' +
+                '</td>' +
+              '</tr>';
+        }).join('');
+
+    }).withFailureHandler(function(){ tbody.innerHTML = '<tr><td colspan="6">Gagal memuat guru.</td></tr>'; }).getTeachers();
+}
+
+function openTeacherModal(mode, teacherId) {
+    const modal = document.getElementById('teacherModal'); if (!modal) return;
+    const title = document.getElementById('teacherModalTitle');
+    const idField = document.getElementById('t_teacherId');
+
+    if (mode === 'create') {
+        title.textContent = 'Tambah Guru'; idField.disabled = false; idField.value = '';
+        ['t_nip','t_nuptk','t_name','t_position','t_subject','t_status','t_qrCodeId'].forEach(function(k){ const el = document.getElementById(k); if (el) el.value = ''; });
+        modal.style.display = 'flex'; return;
+    }
+
+    if (!teacherId) return;
+    title.textContent = mode === 'edit' ? 'Edit Guru' : 'Detail Guru';
+    google.script.run.withSuccessHandler(function(res){
+        if (!res || !res.success) { alert('Data guru tidak ditemukan.'); return; }
+        const t = res.teacher;
+        idField.value = t.teacherId || ''; idField.disabled = true;
+        document.getElementById('t_nip').value = t.nip || '';
+        document.getElementById('t_nuptk').value = t.nuptk || '';
+        document.getElementById('t_name').value = t.name || '';
+        document.getElementById('t_position').value = t.position || '';
+        document.getElementById('t_subject').value = t.subject || '';
+        document.getElementById('t_status').value = t.status || 'Active';
+        document.getElementById('t_qrCodeId').value = t.qrCodeId || '';
+        modal.style.display = 'flex';
+    }).withFailureHandler(function(){ alert('Gagal memuat data guru.'); }).getTeacherById(teacherId);
+}
+
+function closeTeacherModal() { const m = document.getElementById('teacherModal'); if (m) m.style.display = 'none'; }
+
+function saveTeacherFromModal() {
+    const id = document.getElementById('t_teacherId').value.trim();
+    const nip = document.getElementById('t_nip').value.trim();
+    const nuptk = document.getElementById('t_nuptk').value.trim();
+    const name = document.getElementById('t_name').value.trim();
+    const position = document.getElementById('t_position').value.trim();
+    const subject = document.getElementById('t_subject').value.trim();
+    const status = document.getElementById('t_status').value;
+    const qrCodeId = document.getElementById('t_qrCodeId').value.trim();
+
+    if (!id) { alert('teacherId wajib diisi.'); return; }
+    if (!name) { alert('Name wajib diisi.'); return; }
+
+    const payload = { teacherId: id, nip: nip, nuptk: nuptk, name: name, position: position, subject: subject, status: status, qrCodeId: qrCodeId };
+
+    google.script.run.withSuccessHandler(function(res){
+        if (res && res.success) {
+            // exists -> update
+            google.script.run.withSuccessHandler(function(uRes){ if (uRes && uRes.success) { closeTeacherModal(); loadTeachers(); alert('Data guru berhasil diperbarui.'); } else { alert((uRes && uRes.message) || 'Gagal memperbarui guru.'); } }).withFailureHandler(function(){ alert('Gagal memperbarui guru.'); }).updateTeacher(payload);
+        } else {
+            // create
+            google.script.run.withSuccessHandler(function(cRes){ if (cRes && cRes.success) { closeTeacherModal(); loadTeachers(); alert('Guru berhasil ditambahkan.'); } else { alert((cRes && cRes.message) || 'Gagal menambahkan guru.'); } }).withFailureHandler(function(){ alert('Gagal menambahkan guru.'); }).createTeacher(payload);
+        }
+    }).withFailureHandler(function(){ alert('Gagal memeriksa keberadaan guru.'); }).getTeacherById(id);
+}
+
+// Classes module
+function initClassesModule() {
+    const menu = document.getElementById('menu-classes'); if (menu) menu.addEventListener('click', function(){ showClassesView(); });
+    const addBtn = document.getElementById('addClassButton'); if (addBtn) addBtn.addEventListener('click', function(){ openClassModal('create'); });
+    const searchInput = document.getElementById('classSearch'); if (searchInput) { let timer = null; searchInput.addEventListener('input', function(){ clearTimeout(timer); timer = setTimeout(function(){ loadClasses(searchInput.value.trim()); }, 300); }); }
+    const cancelBtn = document.getElementById('classCancelBtn'); if (cancelBtn) cancelBtn.addEventListener('click', closeClassModal);
+    const saveBtn = document.getElementById('classSaveBtn'); if (saveBtn) saveBtn.addEventListener('click', saveClassFromModal);
+}
+
+function showClassesView() {
+    document.getElementById('dashboardContent').style.display = 'none';
+    document.getElementById('studentsContent').style.display = 'none';
+    document.getElementById('teachersContent').style.display = 'none';
+    document.getElementById('classesContent').style.display = '';
+    document.querySelectorAll('.sidebar-menu li').forEach(function(li){ li.classList.remove('active'); });
+    const menu = document.getElementById('menu-classes'); if (menu) menu.classList.add('active');
+    loadClasses();
+}
+
+function loadClasses(filter) {
+    const tbody = document.getElementById('classesTbody'); if (!tbody) return; tbody.innerHTML = '<tr><td colspan="7">Memuat...</td></tr>';
+
+    // preload teachers for homeroom select
+    google.script.run.withSuccessHandler(function(teachersRes){
+        const teacherSelect = document.getElementById('c_homeroomTeacherId');
+        if (teacherSelect && teachersRes && teachersRes.success && Array.isArray(teachersRes.teachers)) {
+            teacherSelect.innerHTML = '<option value="">(Pilih Wali Kelas)</option>' + teachersRes.teachers.map(function(t){ return '<option value="'+t.teacherId+'">'+(t.name || t.teacherId)+'</option>'; }).join('');
+        }
+    }).withFailureHandler(function(){ /* ignore */ }).getTeachers();
+
+    google.script.run.withSuccessHandler(function(result){
+        if (!result || !result.success) { tbody.innerHTML = '<tr><td colspan="7">Gagal memuat kelas.</td></tr>'; return; }
+        let classes = result.classes || [];
+        if (filter) { const q = filter.toLowerCase(); classes = classes.filter(function(c){ return (c.classId||'').toLowerCase().includes(q) || (c.className||'').toLowerCase().includes(q); }); }
+        if (classes.length === 0) { tbody.innerHTML = '<tr><td colspan="7">Tidak ada data.</td></tr>'; return; }
+        tbody.innerHTML = classes.map(function(c){ return '<tr>' +
+            '<td style="padding:8px">'+escapeHtml(c.classId)+'</td>' +
+            '<td style="padding:8px">'+escapeHtml(c.className)+'</td>' +
+            '<td style="padding:8px">'+escapeHtml(c.level)+'</td>' +
+            '<td style="padding:8px">'+escapeHtml(c.academicYear)+'</td>' +
+            '<td style="padding:8px">'+escapeHtml(c.homeroomTeacherId)+'</td>' +
+            '<td style="padding:8px">'+escapeHtml(c.status)+'</td>' +
+            '<td style="padding:8px">' +
+              '<button onclick="openClassModal(\'edit\', \''+escapeAttr(c.classId)+'\')" style="margin-right:6px;">Edit</button>' +
+              '<button onclick="openClassModal(\'view\', \''+escapeAttr(c.classId)+'\')">Detail</button>' +
+            '</td>' +
+          '</tr>'; }).join('');
+    }).withFailureHandler(function(){ tbody.innerHTML = '<tr><td colspan="7">Gagal memuat kelas.</td></tr>'; }).getClasses();
+}
+
+function openClassModal(mode, classId) {
+    const modal = document.getElementById('classModal'); if (!modal) return; const title = document.getElementById('classModalTitle'); const idField = document.getElementById('c_classId');
+    if (mode === 'create') { title.textContent = 'Tambah Kelas'; idField.disabled = false; idField.value = ''; ['c_className','c_level','c_academicYear','c_homeroomTeacherId','c_status'].forEach(function(k){ const el = document.getElementById(k); if (el) el.value = ''; }); modal.style.display = 'flex'; return; }
+    if (!classId) return; title.textContent = mode === 'edit' ? 'Edit Kelas' : 'Detail Kelas';
+    // preload teachers
+    google.script.run.withSuccessHandler(function(teachersRes){ const teacherSelect = document.getElementById('c_homeroomTeacherId'); if (teacherSelect && teachersRes && teachersRes.success && Array.isArray(teachersRes.teachers)) { teacherSelect.innerHTML = '<option value="">(Pilih Wali Kelas)</option>' + teachersRes.teachers.map(function(t){ return '<option value="'+t.teacherId+'">'+(t.name || t.teacherId)+'</option>'; }).join(''); } }).withFailureHandler(function(){}).getTeachers();
+    google.script.run.withSuccessHandler(function(res){ if (!res || !res.success) { alert('Data kelas tidak ditemukan.'); return; } const c = res.class; idField.value = c.classId || ''; idField.disabled = true; document.getElementById('c_className').value = c.className || ''; document.getElementById('c_level').value = c.level || ''; document.getElementById('c_academicYear').value = c.academicYear || ''; document.getElementById('c_homeroomTeacherId').value = c.homeroomTeacherId || ''; document.getElementById('c_status').value = c.status || 'Active'; modal.style.display = 'flex'; }).withFailureHandler(function(){ alert('Gagal memuat data kelas.'); }).getClassById(classId);
+}
+
+function closeClassModal() { const m = document.getElementById('classModal'); if (m) m.style.display = 'none'; }
+
+function saveClassFromModal() {
+    const id = document.getElementById('c_classId').value.trim();
+    const className = document.getElementById('c_className').value.trim();
+    const level = document.getElementById('c_level').value.trim();
+    const academicYear = document.getElementById('c_academicYear').value.trim();
+    const homeroomTeacherId = document.getElementById('c_homeroomTeacherId').value;
+    const status = document.getElementById('c_status').value;
+    if (!id) { alert('classId wajib diisi.'); return; }
+    if (!className) { alert('className wajib diisi.'); return; }
+    if (!academicYear) { alert('academicYear wajib diisi.'); return; }
+    if (!homeroomTeacherId) { alert('Wali kelas harus dipilih.'); return; }
+    const payload = { classId: id, className: className, level: level, academicYear: academicYear, homeroomTeacherId: homeroomTeacherId, status: status };
+    // check existence
+    google.script.run.withSuccessHandler(function(res){ if (res && res.success) { google.script.run.withSuccessHandler(function(uRes){ if (uRes && uRes.success) { closeClassModal(); loadClasses(); alert('Data kelas berhasil diperbarui.'); } else { alert((uRes && uRes.message) || 'Gagal memperbarui kelas.'); } }).withFailureHandler(function(){ alert('Gagal memperbarui kelas.'); }).updateClass(payload); } else { google.script.run.withSuccessHandler(function(cRes){ if (cRes && cRes.success) { closeClassModal(); loadClasses(); alert('Kelas berhasil ditambahkan.'); } else { alert((cRes && cRes.message) || 'Gagal menambahkan kelas.'); } }).withFailureHandler(function(){ alert('Gagal menambahkan kelas.'); }).createClass(payload); } }).withFailureHandler(function(){ alert('Gagal memeriksa keberadaan kelas.'); }).getClassById(id);
+}
+
+/* =========================
+   GRADES MODULE
+========================= */
+
+function initGradesModule() {
+    const menu = document.getElementById('menu-grades'); if (menu) menu.addEventListener('click', function(){ showGradesView(); });
+    const addBtn = document.getElementById('addGradeButton'); if (addBtn) addBtn.addEventListener('click', function(){ openGradeModal('create'); });
+    const filterBtn = document.getElementById('filterGradeButton'); if (filterBtn) filterBtn.addEventListener('click', function(){ loadGrades(); });
+    const searchInput = document.getElementById('gradeSearch'); if (searchInput) { let timer = null; searchInput.addEventListener('input', function(){ clearTimeout(timer); timer = setTimeout(function(){ loadGrades(searchInput.value.trim()); }, 300); }); }
+    const cancelBtn = document.getElementById('gradeCancelBtn'); if (cancelBtn) cancelBtn.addEventListener('click', closeGradeModal);
+    const saveBtn = document.getElementById('gradeSaveBtn'); if (saveBtn) saveBtn.addEventListener('click', saveGradeFromModal);
+
+    populateGradeSelects();
+}
+
+function showGradesView() {
+    document.getElementById('dashboardContent').style.display = 'none';
+    document.getElementById('studentsContent').style.display = 'none';
+    document.getElementById('teachersContent').style.display = 'none';
+    document.getElementById('classesContent').style.display = 'none';
+    document.getElementById('gradesContent').style.display = '';
+    document.getElementById('attendanceContent').style.display = 'none';
+    document.getElementById('teacherAttendanceContent').style.display = 'none';
+    document.getElementById('journalContent').style.display = 'none';
+    document.querySelectorAll('.sidebar-menu li').forEach(function(li){ li.classList.remove('active'); });
+    const menu = document.getElementById('menu-grades'); if (menu) menu.classList.add('active');
+    loadGrades();
+}
+
+function populateGradeSelects() {
+    google.script.run.withSuccessHandler(function(studentsRes){
+        const studentOptions = [
+            '<option value="">(Semua Siswa)</option>'
+        ];
+        const modalStudentSelect = document.getElementById('g_studentId');
+        const filterStudentSelect = document.getElementById('gradeStudentFilter');
+
+        if (studentsRes && studentsRes.success && Array.isArray(studentsRes.students)) {
+            studentsRes.students.forEach(function(s){
+                const label = (s.name && s.name.trim()) ? s.name + ' (' + (s.studentId || '') + ')' : (s.studentId || '');
+                const option = '<option value="' + escapeAttr(s.studentId || '') + '">' + escapeHtml(label) + '</option>';
+                studentOptions.push(option);
+            });
+        }
+
+        if (filterStudentSelect) filterStudentSelect.innerHTML = studentOptions.join('');
+        if (modalStudentSelect) modalStudentSelect.innerHTML = '<option value="">(Pilih Siswa)</option>' + (studentsRes && studentsRes.success && Array.isArray(studentsRes.students) ? studentsRes.students.map(function(s){ return '<option value="'+escapeAttr(s.studentId || '')+'">'+escapeHtml((s.name || s.studentId || ''))+'</option>'; }).join('') : '');
+    }).withFailureHandler(function(){ /* ignore */ }).getStudents();
+
+    google.script.run.withSuccessHandler(function(classesRes){
+        const classOptions = ['<option value="">(Semua Kelas)</option>'];
+        const modalClassSelect = document.getElementById('g_classId');
+        const filterClassSelect = document.getElementById('gradeClassFilter');
+        const yearFilterSelect = document.getElementById('gradeAcademicYearFilter');
+        const subjectFilterSelect = document.getElementById('gradeSubjectFilter');
+        const assessmentFilterSelect = document.getElementById('gradeAssessmentTypeFilter');
+        const semesterFilterSelect = document.getElementById('gradeSemesterFilter');
+
+        if (classesRes && classesRes.success && Array.isArray(classesRes.classes)) {
+            classesRes.classes.forEach(function(c){
+                const label = (c.className && c.className.trim()) ? c.className + ' (' + (c.classId || '') + ')' : (c.classId || '');
+                classOptions.push('<option value="' + escapeAttr(c.classId || '') + '">' + escapeHtml(label) + '</option>');
+            });
+
+            const years = Array.from(new Set(classesRes.classes.map(function(c){ return c.academicYear || ''; }).filter(Boolean))).sort();
+            if (yearFilterSelect) {
+                yearFilterSelect.innerHTML = '<option value="">(Semua Tahun)</option>' + years.map(function(y){ return '<option value="'+escapeAttr(y)+'">'+escapeHtml(y)+'</option>'; }).join('');
+            }
+        }
+
+        if (filterClassSelect) filterClassSelect.innerHTML = classOptions.join('');
+        if (modalClassSelect) modalClassSelect.innerHTML = '<option value="">(Pilih Kelas)</option>' + (classesRes && classesRes.success && Array.isArray(classesRes.classes) ? classesRes.classes.map(function(c){ return '<option value="'+escapeAttr(c.classId || '')+'">'+escapeHtml((c.className || c.classId || ''))+'</option>'; }).join('') : '');
+
+        if (subjectFilterSelect) subjectFilterSelect.innerHTML = '<option value="">(Semua Subject)</option>';
+        if (assessmentFilterSelect) assessmentFilterSelect.innerHTML = '<option value="">(Semua Assessment)</option>';
+        if (semesterFilterSelect) semesterFilterSelect.innerHTML = '<option value="">(Semua Semester)</option>';
+    }).withFailureHandler(function(){ /* ignore */ }).getClasses();
+}
+
+function loadGrades(filter) {
+    const tbody = document.getElementById('gradesTbody');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="11">Memuat...</td></tr>';
+
+    const filters = {};
+    const searchTerm = filter !== undefined ? filter : (document.getElementById('gradeSearch') ? document.getElementById('gradeSearch').value.trim() : '');
+
+    const studentId = document.getElementById('gradeStudentFilter') ? document.getElementById('gradeStudentFilter').value : '';
+    const classId = document.getElementById('gradeClassFilter') ? document.getElementById('gradeClassFilter').value : '';
+    const subject = document.getElementById('gradeSubjectFilter') ? document.getElementById('gradeSubjectFilter').value : '';
+    const assessmentType = document.getElementById('gradeAssessmentTypeFilter') ? document.getElementById('gradeAssessmentTypeFilter').value : '';
+    const semester = document.getElementById('gradeSemesterFilter') ? document.getElementById('gradeSemesterFilter').value : '';
+    const academicYear = document.getElementById('gradeAcademicYearFilter') ? document.getElementById('gradeAcademicYearFilter').value : '';
+
+    if (studentId) filters.studentId = studentId;
+    if (classId) filters.classId = classId;
+    if (subject) filters.subject = subject;
+    if (assessmentType) filters.assessmentType = assessmentType;
+    if (semester) filters.semester = semester;
+    if (academicYear) filters.academicYear = academicYear;
+
+    google.script.run.withSuccessHandler(function(result){
+        if (!result || !result.success) {
+            tbody.innerHTML = '<tr><td colspan="11">Gagal memuat nilai.</td></tr>';
+            return;
+        }
+
+        let grades = result.grades || [];
+        if (searchTerm) {
+            const q = searchTerm.toLowerCase();
+            grades = grades.filter(function(g){
+                return (g.gradeId || '').toLowerCase().includes(q) ||
+                    (g.studentId || '').toLowerCase().includes(q) ||
+                    (g.classId || '').toLowerCase().includes(q) ||
+                    (g.subject || '').toLowerCase().includes(q) ||
+                    (g.assessmentType || '').toLowerCase().includes(q) ||
+                    (g.semester || '').toLowerCase().includes(q) ||
+                    (g.academicYear || '').toLowerCase().includes(q) ||
+                    (g.remarks || '').toLowerCase().includes(q);
+            });
+        }
+
+        if (grades.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="11">Tidak ada data.</td></tr>';
+            return;
+        }
+
+        const subjectFilter = document.getElementById('gradeSubjectFilter');
+        const assessmentFilter = document.getElementById('gradeAssessmentTypeFilter');
+        const semesterFilter = document.getElementById('gradeSemesterFilter');
+        if (subjectFilter) {
+            const subjects = Array.from(new Set(grades.map(function(g){ return g.subject || ''; }).filter(Boolean))).sort();
+            subjectFilter.innerHTML = '<option value="">(Semua Subject)</option>' + subjects.map(function(v){ return '<option value="'+escapeAttr(v)+'">'+escapeHtml(v)+'</option>'; }).join('');
+            if (subject) subjectFilter.value = subject;
+        }
+        if (assessmentFilter) {
+            const types = Array.from(new Set(grades.map(function(g){ return g.assessmentType || ''; }).filter(Boolean))).sort();
+            assessmentFilter.innerHTML = '<option value="">(Semua Assessment)</option>' + types.map(function(v){ return '<option value="'+escapeAttr(v)+'">'+escapeHtml(v)+'</option>'; }).join('');
+            if (assessmentType) assessmentFilter.value = assessmentType;
+        }
+        if (semesterFilter) {
+            const semesters = Array.from(new Set(grades.map(function(g){ return g.semester || ''; }).filter(Boolean))).sort();
+            semesterFilter.innerHTML = '<option value="">(Semua Semester)</option>' + semesters.map(function(v){ return '<option value="'+escapeAttr(v)+'">'+escapeHtml(v)+'</option>'; }).join('');
+            if (semester) semesterFilter.value = semester;
+        }
+
+        tbody.innerHTML = grades.map(function(g){
+            return '<tr>' +
+                '<td style="padding:8px">'+escapeHtml(g.gradeId)+'</td>' +
+                '<td style="padding:8px">'+escapeHtml(g.studentId)+'</td>' +
+                '<td style="padding:8px">'+escapeHtml(g.classId)+'</td>' +
+                '<td style="padding:8px">'+escapeHtml(g.subject)+'</td>' +
+                '<td style="padding:8px">'+escapeHtml(g.assessmentType)+'</td>' +
+                '<td style="padding:8px">'+escapeHtml(g.score)+'</td>' +
+                '<td style="padding:8px">'+escapeHtml(g.semester)+'</td>' +
+                '<td style="padding:8px">'+escapeHtml(g.academicYear)+'</td>' +
+                '<td style="padding:8px">'+escapeHtml(g.date)+'</td>' +
+                '<td style="padding:8px">'+escapeHtml(g.remarks)+'</td>' +
+                '<td style="padding:8px">' +
+                  '<button onclick="openGradeModal(\'edit\', \' '+escapeAttr(g.gradeId)+'\')" style="margin-right:6px;">Edit</button>' +
+                  '<button onclick="openGradeModal(\'view\', \' '+escapeAttr(g.gradeId)+'\')">Detail</button>' +
+                '</td>' +
+              '</tr>';
+        }).join('');
+    }).withFailureHandler(function(){ tbody.innerHTML = '<tr><td colspan="11">Gagal memuat nilai.</td></tr>'; }).getGrades(filters);
+}
+
+function openGradeModal(mode, gradeId) {
+    const modal = document.getElementById('gradeModal'); if (!modal) return;
+    const title = document.getElementById('gradeModalTitle');
+    const gradeIdField = document.getElementById('g_gradeId');
+    const studentField = document.getElementById('g_studentId');
+    const classField = document.getElementById('g_classId');
+    const saveBtn = document.getElementById('gradeSaveBtn');
+
+    if (mode === 'create') {
+        title.textContent = 'Tambah Nilai';
+        gradeIdField.disabled = false; gradeIdField.value = '';
+        studentField.disabled = false; studentField.value = '';
+        classField.disabled = false; classField.value = '';
+        ['g_subject','g_assessmentType','g_score','g_semester','g_academicYear','g_date','g_remarks'].forEach(function(k){
+            const el = document.getElementById(k); if (el) el.value = '';
+        });
+        if (saveBtn) saveBtn.style.display = '';
+        window.currentGradeModalMode = 'create';
+        modal.style.display = 'flex';
+        return;
+    }
+
+    if (!gradeId) return;
+
+    title.textContent = mode === 'edit' ? 'Edit Nilai' : 'Detail Nilai';
+    window.currentGradeModalMode = mode;
+
+    google.script.run.withSuccessHandler(function(res){
+        if (!res || !res.success) { alert('Data nilai tidak ditemukan.'); return; }
+        const g = res.grade;
+        gradeIdField.value = g.gradeId || '';
+        studentField.value = g.studentId || '';
+        classField.value = g.classId || '';
+        document.getElementById('g_subject').value = g.subject || '';
+        document.getElementById('g_assessmentType').value = g.assessmentType || '';
+        document.getElementById('g_score').value = g.score || '';
+        document.getElementById('g_semester').value = g.semester || '';
+        document.getElementById('g_academicYear').value = g.academicYear || '';
+        document.getElementById('g_date').value = g.date || '';
+        document.getElementById('g_remarks').value = g.remarks || '';
+
+        const disableAll = mode === 'view';
+        gradeIdField.disabled = true;
+        studentField.disabled = true;
+        classField.disabled = true;
+
+        ['g_subject','g_assessmentType','g_score','g_semester','g_academicYear','g_date','g_remarks'].forEach(function(k){
+            const el = document.getElementById(k); if (el) el.disabled = disableAll;
+        });
+
+        if (saveBtn) saveBtn.style.display = mode === 'view' ? 'none' : '';
+        modal.style.display = 'flex';
+    }).withFailureHandler(function(){ alert('Gagal memuat data nilai.'); }).getGradeById(gradeId);
+}
+
+function closeGradeModal() { const m = document.getElementById('gradeModal'); if (m) m.style.display = 'none'; }
+
+function saveGradeFromModal() {
+    const mode = window.currentGradeModalMode || 'create';
+    const gradeId = document.getElementById('g_gradeId').value.trim();
+    const studentId = document.getElementById('g_studentId').value;
+    const classId = document.getElementById('g_classId').value;
+    const subject = document.getElementById('g_subject').value.trim();
+    const assessmentType = document.getElementById('g_assessmentType').value.trim();
+    const score = document.getElementById('g_score').value.trim();
+    const semester = document.getElementById('g_semester').value.trim();
+    const academicYear = document.getElementById('g_academicYear').value.trim();
+    const date = document.getElementById('g_date').value;
+    const remarks = document.getElementById('g_remarks').value.trim();
+
+    if (!gradeId) { alert('gradeId wajib diisi.'); return; }
+    if (!studentId) { alert('studentId wajib dipilih.'); return; }
+    if (!classId) { alert('classId wajib dipilih.'); return; }
+    if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) { alert('date harus dalam format YYYY-MM-DD.'); return; }
+
+    const payload = {
+        gradeId: gradeId,
+        studentId: studentId,
+        classId: classId,
+        subject: subject,
+        assessmentType: assessmentType,
+        score: score,
+        semester: semester,
+        academicYear: academicYear,
+        date: date,
+        remarks: remarks
+    };
+
+    const runSave = function(call) { call.withSuccessHandler(function(res){ if (res && res.success) { closeGradeModal(); loadGrades(); alert(mode === 'create' ? 'Nilai berhasil ditambahkan.' : 'Data nilai berhasil diperbarui.'); } else { alert((res && res.message) || 'Gagal menyimpan nilai.'); } }).withFailureHandler(function(){ alert('Gagal menyimpan nilai.'); }).call(); };
+
+    if (mode === 'create') {
+        google.script.run.withSuccessHandler(function(res){
+            if (res && res.success) {
+                closeGradeModal(); loadGrades(); alert('Nilai berhasil ditambahkan.');
+            } else {
+                alert((res && res.message) || 'Gagal menambahkan nilai.');
+            }
+        }).withFailureHandler(function(){ alert('Gagal menambahkan nilai.'); }).createGrade(payload);
+    } else {
+        google.script.run.withSuccessHandler(function(res){
+            if (res && res.success) {
+                closeGradeModal(); loadGrades(); alert('Data nilai berhasil diperbarui.');
+            } else {
+                alert((res && res.message) || 'Gagal memperbarui nilai.');
+            }
+        }).withFailureHandler(function(){ alert('Gagal memperbarui nilai.'); }).updateGrade(payload);
+    }
+}
+
+/* =========================
+   ATTENDANCE MODULE
+========================= */
+
+function initAttendanceModule() {
+    const menu = document.getElementById('menu-attendance'); if (menu) menu.addEventListener('click', function(){ showAttendanceView(); });
+    const addBtn = document.getElementById('addAttendanceButton'); if (addBtn) addBtn.addEventListener('click', function(){ openAttendanceModal('create'); });
+    const filterBtn = document.getElementById('filterAttendanceButton'); if (filterBtn) filterBtn.addEventListener('click', function(){ loadStudentAttendance(); });
+    const cancelBtn = document.getElementById('attendanceCancelBtn'); if (cancelBtn) cancelBtn.addEventListener('click', closeAttendanceModal);
+    const saveBtn = document.getElementById('attendanceSaveBtn'); if (saveBtn) saveBtn.addEventListener('click', saveAttendanceFromModal);
+    const genBtn = document.getElementById('a_generateId'); if (genBtn) genBtn.addEventListener('click', function(){ document.getElementById('a_attendanceId').value = 'A-'+Date.now(); });
+
+    // preload students and classes into selects
+    google.script.run.withSuccessHandler(function(sRes){ if (sRes && sRes.success) {
+        const sel = document.getElementById('a_studentId'); const filterSel = document.getElementById('attendanceStudentFilter');
+        if (sel) sel.innerHTML = '<option value="">(Pilih Siswa)</option>' + sRes.students.map(function(s){ return '<option value="'+s.studentId+'">'+(s.name||s.studentId)+'</option>'; }).join('');
+        if (filterSel) filterSel.innerHTML = '<option value="">(Semua Siswa)</option>' + sRes.students.map(function(s){ return '<option value="'+s.studentId+'">'+(s.name||s.studentId)+'</option>'; }).join('');
+    }}).withFailureHandler(function(){}).getStudents();
+
+    google.script.run.withSuccessHandler(function(cRes){ if (cRes && cRes.success) {
+        const sel = document.getElementById('a_classId'); const filterSel = document.getElementById('attendanceClassFilter'); const yearSel = document.getElementById('attendanceAcademicYearFilter');
+        if (sel) sel.innerHTML = '<option value="">(Pilih Kelas)</option>' + cRes.classes.map(function(c){ return '<option value="'+c.classId+'">'+(c.className||c.classId)+'</option>'; }).join('');
+        if (filterSel) filterSel.innerHTML = '<option value="">(Semua Kelas)</option>' + cRes.classes.map(function(c){ return '<option value="'+c.classId+'">'+(c.className||c.classId)+'</option>'; }).join('');
+        if (yearSel) {
+            const years = Array.from(new Set(cRes.classes.map(function(c){ return c.academicYear || ''; }).filter(Boolean))).sort();
+            yearSel.innerHTML = '<option value="">(Semua Tahun)</option>' + years.map(function(y){ return '<option value="'+y+'">'+y+'</option>'; }).join('');
+        }
+    }}).withFailureHandler(function(){}).getClasses();
 
 }
 
-function onDashboardError(error){
+function showAttendanceView() {
+    document.getElementById('dashboardContent').style.display = 'none';
+    document.getElementById('studentsContent').style.display = 'none';
+    document.getElementById('teachersContent').style.display = 'none';
+    document.getElementById('classesContent').style.display = 'none';
+    document.getElementById('attendanceContent').style.display = '';
+    document.querySelectorAll('.sidebar-menu li').forEach(function(li){ li.classList.remove('active'); });
+    const menu = document.getElementById('menu-attendance'); if (menu) menu.classList.add('active');
+    loadStudentAttendance();
+}
 
-    console.error(error);
+function loadStudentAttendance() {
+    const tbody = document.getElementById('attendanceTbody'); if (!tbody) return; tbody.innerHTML = '<tr><td colspan="9">Memuat...</td></tr>';
+    const date = document.getElementById('attendanceDateFilter').value;
+    const academicYear = document.getElementById('attendanceAcademicYearFilter').value;
+    const classId = document.getElementById('attendanceClassFilter').value;
+    const studentId = document.getElementById('attendanceStudentFilter').value;
+    const status = document.getElementById('attendanceStatusFilter').value;
+    const filters = {};
+    if (date) filters.date = date;
+    if (academicYear) filters.academicYear = academicYear;
+    if (classId) filters.classId = classId;
+    if (studentId) filters.studentId = studentId;
+    if (status) filters.status = status;
 
-    alert("Gagal memuat Dashboard.");
+    google.script.run.withSuccessHandler(function(result){
+        if (!result || !result.success) { tbody.innerHTML = '<tr><td colspan="9">Gagal memuat absensi.</td></tr>'; return; }
+        const attendances = result.attendances || [];
+        if (attendances.length === 0) { tbody.innerHTML = '<tr><td colspan="9">Tidak ada data.</td></tr>'; return; }
+        tbody.innerHTML = attendances.map(function(a){ return '<tr>' +
+            '<td style="padding:8px">'+escapeHtml(a.attendanceId)+'</td>' +
+            '<td style="padding:8px">'+escapeHtml(a.date)+'</td>' +
+            '<td style="padding:8px">'+escapeHtml(a.academicYear)+'</td>' +
+            '<td style="padding:8px">'+escapeHtml(a.studentId)+'</td>' +
+            '<td style="padding:8px">'+escapeHtml(a.classId)+'</td>' +
+            '<td style="padding:8px">'+escapeHtml(a.status)+'</td>' +
+            '<td style="padding:8px">'+escapeHtml(a.method)+'</td>' +
+            '<td style="padding:8px">'+escapeHtml(a.note)+'</td>' +
+            '<td style="padding:8px">' +
+              '<button onclick="openAttendanceModal(\'edit\', \''+escapeAttr(a.attendanceId)+'\')" style="margin-right:6px;">Edit</button>' +
+              '<button onclick="openAttendanceModal(\'view\', \''+escapeAttr(a.attendanceId)+'\')">Detail</button>' +
+            '</td>' +
+          '</tr>'; }).join('');
+    }).withFailureHandler(function(){ tbody.innerHTML = '<tr><td colspan="9">Gagal memuat absensi.</td></tr>'; }).getStudentAttendance(filters);
+}
+
+function openAttendanceModal(mode, attendanceId) {
+    const modal = document.getElementById('attendanceModal'); if (!modal) return; const title = document.getElementById('attendanceModalTitle');
+    const idField = document.getElementById('a_attendanceId');
+    if (mode === 'create') {
+        title.textContent = 'Tambah Absensi'; idField.disabled = false; idField.value = '';
+        ['a_date','a_academicYear','a_studentId','a_classId','a_status','a_method','a_note'].forEach(function(k){ const el = document.getElementById(k); if (el) el.value = ''; });
+        document.getElementById('a_method').value = 'Manual';
+        modal.style.display = 'flex'; return;
+    }
+    if (!attendanceId) return;
+    title.textContent = mode === 'edit' ? 'Edit Absensi' : 'Detail Absensi';
+    google.script.run.withSuccessHandler(function(res){ if (!res || !res.success) { alert('Data absensi tidak ditemukan.'); return; } const a = res.attendance; idField.value = a.attendanceId || ''; idField.disabled = true; document.getElementById('a_date').value = a.date || ''; document.getElementById('a_academicYear').value = a.academicYear || ''; document.getElementById('a_studentId').value = a.studentId || ''; document.getElementById('a_classId').value = a.classId || ''; document.getElementById('a_status').value = a.status || 'Hadir'; document.getElementById('a_method').value = a.method || 'Manual'; document.getElementById('a_note').value = a.note || ''; if (mode === 'view') { Array.from(modal.querySelectorAll('input,select,textarea,button')).forEach(function(el){ if (el.id !== 'attendanceCancelBtn') el.disabled = true; }); } else { Array.from(modal.querySelectorAll('input,select,textarea,button')).forEach(function(el){ el.disabled = false; }); document.getElementById('attendanceCancelBtn').disabled = false; } modal.style.display = 'flex'; }).withFailureHandler(function(){ alert('Gagal memuat data absensi.'); }).getStudentAttendanceById(attendanceId);
+}
+
+function closeAttendanceModal() { const m = document.getElementById('attendanceModal'); if (m) m.style.display = 'none'; }
+
+function saveAttendanceFromModal() {
+    const saveBtn = document.getElementById('attendanceSaveBtn');
+    const id = document.getElementById('a_attendanceId').value.trim();
+    const date = document.getElementById('a_date').value;
+    const academicYear = document.getElementById('a_academicYear').value.trim();
+    const studentId = document.getElementById('a_studentId').value;
+    const classId = document.getElementById('a_classId').value;
+    const status = document.getElementById('a_status').value;
+    const method = document.getElementById('a_method').value;
+    const note = document.getElementById('a_note').value.trim();
+    if (!id) { alert('attendanceId wajib diisi.'); return; }
+    if (!date) { alert('date wajib diisi.'); return; }
+    if (!academicYear) { alert('academicYear wajib diisi.'); return; }
+    if (!studentId) { alert('studentId wajib dipilih.'); return; }
+    if (!classId) { alert('classId wajib dipilih.'); return; }
+    if (!status) { alert('status wajib diisi.'); return; }
+
+    const payload = { attendanceId: id, date: date, academicYear: academicYear, studentId: studentId, classId: classId, status: status, method: method, timestamp: new Date().toISOString(), note: note };
+
+    saveBtn.disabled = true; saveBtn.textContent = 'Menyimpan...';
+
+    // determine create or update by trying to fetch
+    google.script.run.withSuccessHandler(function(res){
+        if (res && res.success) {
+            // exists -> update
+            google.script.run.withSuccessHandler(function(uRes){ saveBtn.disabled = false; saveBtn.textContent = 'Simpan'; if (uRes && uRes.success) { closeAttendanceModal(); loadStudentAttendance(); alert('Absensi berhasil diperbarui.'); } else { alert((uRes && uRes.message) || 'Gagal memperbarui absensi.'); } }).withFailureHandler(function(){ saveBtn.disabled = false; saveBtn.textContent = 'Simpan'; alert('Gagal memperbarui absensi.'); }).updateStudentAttendance(payload);
+        } else {
+            // create
+            google.script.run.withSuccessHandler(function(cRes){ saveBtn.disabled = false; saveBtn.textContent = 'Simpan'; if (cRes && cRes.success) { closeAttendanceModal(); loadStudentAttendance(); alert('Absensi berhasil ditambahkan.'); } else { alert((cRes && cRes.message) || 'Gagal menambahkan absensi.'); } }).withFailureHandler(function(){ saveBtn.disabled = false; saveBtn.textContent = 'Simpan'; alert('Gagal menambahkan absensi.'); }).createStudentAttendance(payload);
+        }
+    }).withFailureHandler(function(){ saveBtn.disabled = false; saveBtn.textContent = 'Simpan'; alert('Gagal memeriksa keberadaan absensi.'); }).getStudentAttendanceById(id);
+}
+
+/* =========================
+   TEACHER ATTENDANCE MODULE
+========================= */
+
+function initTeacherAttendanceModule() {
+    const menu = document.getElementById('menu-teacher-attendance'); if (menu) menu.addEventListener('click', function(){ showTeacherAttendanceView(); });
+    const filterBtn = document.getElementById('filterTeacherAttendanceButton'); if (filterBtn) filterBtn.addEventListener('click', function(){ loadTeacherAttendance(); });
+    // hide create button - Responder workflow not implemented
+    const addBtn = document.getElementById('addTeacherAttendanceButton'); if (addBtn) addBtn.style.display = 'none';
+    const cancelBtn = document.getElementById('teacherAttendanceCancelBtn'); if (cancelBtn) cancelBtn.addEventListener('click', closeTeacherAttendanceModal);
+    const saveBtn = document.getElementById('teacherAttendanceSaveBtn'); if (saveBtn) saveBtn.addEventListener('click', saveTeacherAttendanceFromModal);
+    const genBtn = document.getElementById('ta_generateId'); if (genBtn) genBtn.style.display = 'none';
+
+    // preload teachers for filter and modal
+    google.script.run.withSuccessHandler(function(tRes){ if (tRes && tRes.success) {
+        const filterSel = document.getElementById('teacherAttendanceTeacherFilter'); const modalSel = document.getElementById('ta_teacherId');
+        if (filterSel) filterSel.innerHTML = '<option value="">(Semua Guru)</option>' + tRes.teachers.map(function(t){ return '<option value="'+t.teacherId+'">'+(t.name||t.teacherId)+'</option>'; }).join('');
+        if (modalSel) modalSel.innerHTML = '<option value="">(Pilih Guru)</option>' + tRes.teachers.map(function(t){ return '<option value="'+t.teacherId+'">'+(t.name||t.teacherId)+'</option>'; }).join('');
+    }}).withFailureHandler(function(){}).getTeachers();
+}
+
+function showTeacherAttendanceView() {
+    document.getElementById('dashboardContent').style.display = 'none';
+    document.getElementById('studentsContent').style.display = 'none';
+    document.getElementById('teachersContent').style.display = 'none';
+    document.getElementById('classesContent').style.display = 'none';
+    document.getElementById('attendanceContent').style.display = 'none';
+    document.getElementById('teacherAttendanceContent').style.display = '';
+    document.querySelectorAll('.sidebar-menu li').forEach(function(li){ li.classList.remove('active'); });
+    const menu = document.getElementById('menu-teacher-attendance'); if (menu) menu.classList.add('active');
+    loadTeacherAttendance();
+}
+
+function loadTeacherAttendance() {
+    const tbody = document.getElementById('teacherAttendanceTbody'); if (!tbody) return; tbody.innerHTML = '<tr><td colspan="8">Memuat...</td></tr>';
+    const date = document.getElementById('teacherAttendanceDateFilter').value;
+    const academicYear = document.getElementById('teacherAttendanceAcademicYearFilter').value;
+    const teacherId = document.getElementById('teacherAttendanceTeacherFilter').value;
+    const status = document.getElementById('teacherAttendanceStatusFilter').value;
+    const filters = {};
+    if (date) filters.date = date;
+    if (academicYear) filters.academicYear = academicYear;
+    if (teacherId) filters.teacherId = teacherId;
+    if (status) filters.status = status;
+
+    google.script.run.withSuccessHandler(function(result){
+        if (!result || !result.success) { tbody.innerHTML = '<tr><td colspan="8">Gagal memuat absensi guru.</td></tr>'; return; }
+        const attendances = result.attendances || [];
+        if (attendances.length === 0) { tbody.innerHTML = '<tr><td colspan="8">Tidak ada data.</td></tr>'; return; }
+        tbody.innerHTML = attendances.map(function(a){ return '<tr>' +
+            '<td style="padding:8px">'+escapeHtml(a.attendanceId)+'</td>' +
+            '<td style="padding:8px">'+escapeHtml(a.date)+'</td>' +
+            '<td style="padding:8px">'+escapeHtml(a.academicYear)+'</td>' +
+            '<td style="padding:8px">'+escapeHtml(a.teacherId)+'</td>' +
+            '<td style="padding:8px">'+escapeHtml(a.status)+'</td>' +
+            '<td style="padding:8px">'+escapeHtml(a.method)+'</td>' +
+            '<td style="padding:8px">'+escapeHtml(a.note)+'</td>' +
+            '<td style="padding:8px">' +
+              '<button onclick="openTeacherAttendanceModal(\'edit\', \''+escapeAttr(a.attendanceId)+'\')" style="margin-right:6px;">Edit</button>' +
+              '<button onclick="openTeacherAttendanceModal(\'view\', \''+escapeAttr(a.attendanceId)+'\')">Detail</button>' +
+            '</td>' +
+          '</tr>'; }).join('');
+    }).withFailureHandler(function(){ tbody.innerHTML = '<tr><td colspan="8">Gagal memuat absensi guru.</td></tr>'; }).getTeacherAttendance(filters);
+}
+
+function openTeacherAttendanceModal(mode, attendanceId) {
+    const modal = document.getElementById('teacherAttendanceModal'); if (!modal) return; const title = document.getElementById('teacherAttendanceModalTitle');
+    const idField = document.getElementById('ta_attendanceId');
+    if (!attendanceId) return;
+    title.textContent = mode === 'edit' ? 'Edit Absensi Guru' : 'Detail Absensi Guru';
+    google.script.run.withSuccessHandler(function(res){ if (!res || !res.success) { alert('Data absensi guru tidak ditemukan.'); return; } const a = res.attendance; idField.value = a.attendanceId || ''; idField.disabled = true; document.getElementById('ta_date').value = a.date || ''; document.getElementById('ta_academicYear').value = a.academicYear || ''; document.getElementById('ta_teacherId').value = a.teacherId || ''; document.getElementById('ta_status').value = a.status || 'Hadir'; document.getElementById('ta_method').value = a.method || 'Manual'; document.getElementById('ta_qrCodeId').value = a.qrCodeId || ''; document.getElementById('ta_note').value = a.note || ''; if (mode === 'view') { Array.from(modal.querySelectorAll('input,select,textarea,button')).forEach(function(el){ if (el.id !== 'teacherAttendanceCancelBtn') el.disabled = true; }); } else { Array.from(modal.querySelectorAll('input,select,textarea,button')).forEach(function(el){ el.disabled = false; }); document.getElementById('teacherAttendanceCancelBtn').disabled = false; document.getElementById('ta_generateId').disabled = true; } modal.style.display = 'flex'; }).withFailureHandler(function(){ alert('Gagal memuat data absensi guru.'); }).getTeacherAttendanceById(attendanceId);
+}
+
+function closeTeacherAttendanceModal() { const m = document.getElementById('teacherAttendanceModal'); if (m) m.style.display = 'none'; }
+
+function saveTeacherAttendanceFromModal() {
+    const saveBtn = document.getElementById('teacherAttendanceSaveBtn');
+    const id = document.getElementById('ta_attendanceId').value.trim();
+    const date = document.getElementById('ta_date').value;
+    const academicYear = document.getElementById('ta_academicYear').value.trim();
+    const teacherId = document.getElementById('ta_teacherId').value;
+    const status = document.getElementById('ta_status').value;
+    const method = document.getElementById('ta_method').value;
+    const qrCodeId = document.getElementById('ta_qrCodeId').value.trim();
+    const note = document.getElementById('ta_note').value.trim();
+    if (!id) { alert('attendanceId wajib diisi.'); return; }
+    if (!date) { alert('date wajib diisi.'); return; }
+    if (!academicYear) { alert('academicYear wajib diisi.'); return; }
+    if (!teacherId) { alert('teacherId wajib dipilih.'); return; }
+    if (!status) { alert('status wajib diisi.'); return; }
+
+    const payload = { attendanceId: id, date: date, academicYear: academicYear, teacherId: teacherId, status: status, method: method, timestamp: new Date().toISOString(), note: note };
+
+    saveBtn.disabled = true; saveBtn.textContent = 'Menyimpan...';
+
+    google.script.run.withSuccessHandler(function(uRes){ saveBtn.disabled = false; saveBtn.textContent = 'Simpan'; if (uRes && uRes.success) { closeTeacherAttendanceModal(); loadTeacherAttendance(); alert('Absensi guru berhasil diperbarui.'); } else { alert((uRes && uRes.message) || 'Gagal memperbarui absensi guru.'); } }).withFailureHandler(function(){ saveBtn.disabled = false; saveBtn.textContent = 'Simpan'; alert('Gagal memperbarui absensi guru.'); }).updateTeacherAttendance(payload);
+}
+
+/* =========================
+   JOURNAL MODULE
+========================= */
+
+function initJournalModule() {
+    const menu = document.getElementById('menu-journal'); if (menu) menu.addEventListener('click', function(){ showJournalView(); });
+    const addBtn = document.getElementById('addJournalButton'); if (addBtn) addEventListenerSafe(addBtn, 'click', function(){ openJournalModal('create'); });
+    const filterBtn = document.getElementById('filterJournalButton'); if (filterBtn) filterBtn.addEventListener('click', function(){ loadJournal(); });
+    const cancelBtn = document.getElementById('journalCancelBtn'); if (cancelBtn) cancelBtn.addEventListener('click', closeJournalModal);
+    const saveBtn = document.getElementById('journalSaveBtn'); if (saveBtn) saveBtn.addEventListener('click', saveJournalFromModal);
+    const genBtn = document.getElementById('j_generateId'); if (genBtn) genBtn.addEventListener('click', function(){ document.getElementById('j_journalId').value = 'J-'+Date.now(); });
+
+    // preload teachers and classes
+    google.script.run.withSuccessHandler(function(tRes){ if (tRes && tRes.success) {
+        const tSel = document.getElementById('j_teacherId'); const filterTSel = document.getElementById('journalTeacherFilter');
+        if (tSel) tSel.innerHTML = '<option value="">(Pilih Guru)</option>' + tRes.teachers.map(function(t){ return '<option value="'+t.teacherId+'">'+(t.name||t.teacherId)+'</option>'; }).join('');
+        if (filterTSel) filterTSel.innerHTML = '<option value="">(Semua Guru)</option>' + tRes.teachers.map(function(t){ return '<option value="'+t.teacherId+'">'+(t.name||t.teacherId)+'</option>'; }).join('');
+    }}).withFailureHandler(function(){}).getTeachers();
+
+    google.script.run.withSuccessHandler(function(cRes){ if (cRes && cRes.success) {
+        const cSel = document.getElementById('j_classId'); const filterCSel = document.getElementById('journalClassFilter'); const yearSel = document.getElementById('journalAcademicYearFilter');
+        if (cSel) cSel.innerHTML = '<option value="">(Pilih Kelas)</option>' + cRes.classes.map(function(c){ return '<option value="'+c.classId+'">'+(c.className||c.classId)+'</option>'; }).join('');
+        if (filterCSel) filterCSel.innerHTML = '<option value="">(Semua Kelas)</option>' + cRes.classes.map(function(c){ return '<option value="'+c.classId+'">'+(c.className||c.classId)+'</option>'; }).join('');
+        if (yearSel) {
+            const years = Array.from(new Set(cRes.classes.map(function(c){ return c.academicYear || ''; }).filter(Boolean))).sort();
+            yearSel.innerHTML = '<option value="">(Semua Tahun)</option>' + years.map(function(y){ return '<option value="'+y+'">'+y+'</option>'; }).join('');
+        }
+    }}).withFailureHandler(function(){}).getClasses();
 
 }
 
-</script>
+function addEventListenerSafe(el, ev, fn){ if (!el) return; try{ el.addEventListener(ev, fn); } catch(e){ el.attachEvent && el.attachEvent('on'+ev, fn); } }
 
-function onDashboardError(error){
+function showJournalView() {
+    document.getElementById('dashboardContent').style.display = 'none';
+    document.getElementById('studentsContent').style.display = 'none';
+    document.getElementById('teachersContent').style.display = 'none';
+    document.getElementById('classesContent').style.display = 'none';
+    document.getElementById('attendanceContent').style.display = 'none';
+    document.getElementById('teacherAttendanceContent').style.display = 'none';
+    document.getElementById('journalContent').style.display = '';
+    document.querySelectorAll('.sidebar-menu li').forEach(function(li){ li.classList.remove('active'); });
+    const menu = document.getElementById('menu-journal'); if (menu) menu.classList.add('active');
+    loadJournal();
+}
 
-    console.error(error);
+function loadJournal() {
+    const tbody = document.getElementById('journalTbody'); if (!tbody) return; tbody.innerHTML = '<tr><td colspan="8">Memuat...</td></tr>';
+    const date = document.getElementById('journalDateFilter').value;
+    const academicYear = document.getElementById('journalAcademicYearFilter').value;
+    const teacherId = document.getElementById('journalTeacherFilter').value;
+    const classId = document.getElementById('journalClassFilter').value;
+    const subject = document.getElementById('journalSubjectFilter').value.trim();
+    const status = document.getElementById('journalStatusFilter').value;
+    const filters = {};
+    if (date) filters.date = date;
+    if (academicYear) filters.academicYear = academicYear;
+    if (teacherId) filters.teacherId = teacherId;
+    if (classId) filters.classId = classId;
+    if (subject) filters.subject = subject;
+    if (status) filters.status = status;
+
+    google.script.run.withSuccessHandler(function(result){
+        if (!result || !result.success) { tbody.innerHTML = '<tr><td colspan="8">Gagal memuat jurnal.</td></tr>'; return; }
+        const journals = result.journals || [];
+        if (journals.length === 0) { tbody.innerHTML = '<tr><td colspan="8">Tidak ada data.</td></tr>'; return; }
+        tbody.innerHTML = journals.map(function(j){ return '<tr>' +
+            '<td style="padding:8px">'+escapeHtml(j.journalId)+'</td>' +
+            '<td style="padding:8px">'+escapeHtml(j.date)+'</td>' +
+            '<td style="padding:8px">'+escapeHtml(j.academicYear)+'</td>' +
+            '<td style="padding:8px">'+escapeHtml(j.teacherId)+'</td>' +
+            '<td style="padding:8px">'+escapeHtml(j.classId)+'</td>' +
+            '<td style="padding:8px">'+escapeHtml(j.subject)+'</td>' +
+            '<td style="padding:8px">'+escapeHtml(j.status)+'</td>' +
+            '<td style="padding:8px">' +
+              '<button onclick="openJournalModal(\'edit\', \''+escapeAttr(j.journalId)+'\')" style="margin-right:6px;">Edit</button>' +
+              '<button onclick="openJournalModal(\'view\', \''+escapeAttr(j.journalId)+'\')">Detail</button>' +
+            '</td>' +
+          '</tr>'; }).join('');
+    }).withFailureHandler(function(){ tbody.innerHTML = '<tr><td colspan="8">Gagal memuat jurnal.</td></tr>'; }).getJournal(filters);
+}
+
+function openJournalModal(mode, journalId) {
+    const modal = document.getElementById('journalModal'); if (!modal) return; const title = document.getElementById('journalModalTitle'); const idField = document.getElementById('j_journalId');
+    if (mode === 'create') {
+        title.textContent = 'Tambah Jurnal'; idField.disabled = false; idField.value = '';
+        ['j_date','j_academicYear','j_teacherId','j_classId','j_subject','j_content','j_note','j_status'].forEach(function(k){ const el = document.getElementById(k); if (el) el.value = ''; });
+        modal.style.display = 'flex'; return;
+    }
+    if (!journalId) return;
+    title.textContent = mode === 'edit' ? 'Edit Jurnal' : 'Detail Jurnal';
+    google.script.run.withSuccessHandler(function(res){ if (!res || !res.success) { alert('Data jurnal tidak ditemukan.'); return; } const j = res.journal; idField.value = j.journalId || ''; idField.disabled = true; document.getElementById('j_date').value = j.date || ''; document.getElementById('j_academicYear').value = j.academicYear || ''; document.getElementById('j_teacherId').value = j.teacherId || ''; document.getElementById('j_classId').value = j.classId || ''; document.getElementById('j_subject').value = j.subject || ''; document.getElementById('j_content').value = j.content || ''; document.getElementById('j_note').value = j.note || ''; document.getElementById('j_status').value = j.status || ''; if (mode === 'view') { Array.from(modal.querySelectorAll('input,select,textarea,button')).forEach(function(el){ if (el.id !== 'journalCancelBtn') el.disabled = true; }); } else { Array.from(modal.querySelectorAll('input,select,textarea,button')).forEach(function(el){ el.disabled = false; }); document.getElementById('journalCancelBtn').disabled = false; document.getElementById('j_generateId').disabled = true; } modal.style.display = 'flex'; }).withFailureHandler(function(){ alert('Gagal memuat data jurnal.'); }).getJournalById(journalId);
+}
+
+function closeJournalModal() { const m = document.getElementById('journalModal'); if (m) m.style.display = 'none'; }
+
+function saveJournalFromModal() {
+    const saveBtn = document.getElementById('journalSaveBtn');
+    const id = document.getElementById('j_journalId').value.trim();
+    const date = document.getElementById('j_date').value;
+    const academicYear = document.getElementById('j_academicYear').value.trim();
+    const teacherId = document.getElementById('j_teacherId').value;
+    const classId = document.getElementById('j_classId').value;
+    const subject = document.getElementById('j_subject').value.trim();
+    const content = document.getElementById('j_content').value.trim();
+    const note = document.getElementById('j_note').value.trim();
+    const status = document.getElementById('j_status').value;
+    if (!id) { alert('journalId wajib diisi.'); return; }
+    if (!date) { alert('date wajib diisi.'); return; }
+    if (!academicYear) { alert('academicYear wajib diisi.'); return; }
+    if (!teacherId) { alert('teacherId wajib dipilih.'); return; }
+    if (!classId) { alert('classId wajib dipilih.'); return; }
+    if (!content) { alert('content wajib diisi.'); return; }
+
+    const payload = { journalId: id, date: date, academicYear: academicYear, teacherId: teacherId, classId: classId, subject: subject, content: content, note: note, status: status };
+
+    saveBtn.disabled = true; saveBtn.textContent = 'Menyimpan...';
+
+    // determine create or update by trying to fetch
+    google.script.run.withSuccessHandler(function(res){
+        if (res && res.success) {
+            // exists -> update
+            google.script.run.withSuccessHandler(function(uRes){ saveBtn.disabled = false; saveBtn.textContent = 'Simpan'; if (uRes && uRes.success) { closeJournalModal(); loadJournal(); alert('Jurnal berhasil diperbarui.'); } else { alert((uRes && uRes.message) || 'Gagal memperbarui jurnal.'); } }).withFailureHandler(function(){ saveBtn.disabled = false; saveBtn.textContent = 'Simpan'; alert('Gagal memperbarui jurnal.'); }).updateJournal(payload);
+        } else {
+            // create
+            google.script.run.withSuccessHandler(function(cRes){ saveBtn.disabled = false; saveBtn.textContent = 'Simpan'; if (cRes && cRes.success) { closeJournalModal(); loadJournal(); alert('Jurnal berhasil ditambahkan.'); } else { alert((cRes && cRes.message) || 'Gagal menambahkan jurnal.'); } }).withFailureHandler(function(){ saveBtn.disabled = false; saveBtn.textContent = 'Simpan'; alert('Gagal menambahkan jurnal.'); }).createJournal(payload);
+        }
+    }).withFailureHandler(function(){ saveBtn.disabled = false; saveBtn.textContent = 'Simpan'; alert('Gagal memeriksa keberadaan jurnal.'); }).getJournalById(id);
+}
+
+
+/* =========================
+   DASHBOARD DATA
+========================= */
+
+function onDashboardLoaded(data) {
+
+    if (!data || !data.success) {
+
+        sessionStorage.removeItem("SIMATA_TOKEN");
+
+        redirectToLogin();
+
+        return;
+
+    }
+
+
+    document.getElementById("userName").textContent =
+        data.user.name;
+
+    document.getElementById("userRole").textContent =
+        data.user.role;
+
+
+    document.getElementById("totalStudents").textContent =
+        data.statistics.students;
+
+    document.getElementById("totalTeachers").textContent =
+        data.statistics.teachers;
+
+    document.getElementById("todayAttendance").textContent =
+        data.statistics.attendance;
+
+    document.getElementById("totalClasses").textContent =
+        data.statistics.classes;
+
+
+    updateAvatar(data.user.name);
+
+    // Role-based visibility and init for Teacher Attendance (ADMIN only)
+    try {
+        const role = (data.user && data.user.role) ? String(data.user.role).toLowerCase() : '';
+        const taMenu = document.getElementById('menu-teacher-attendance');
+        if (taMenu) {
+            if (role === 'admin' || role === 'administrator') {
+                taMenu.style.display = '';
+                try { initTeacherAttendanceModule(); } catch (e) { console.error('initTeacherAttendanceModule failed', e); }
+            } else {
+                taMenu.style.display = 'none';
+            }
+        }
+    } catch (e) {
+        console.error('Error processing role for teacher attendance', e);
+    }
+
+    // Role-based visibility and init for Journal (Admin + Teacher)
+    try {
+        const role = (data.user && data.user.role) ? String(data.user.role).toLowerCase() : '';
+        const jMenu = document.getElementById('menu-journal');
+        if (jMenu) {
+            if (role === 'admin' || role === 'administrator' || role === 'teacher') {
+                jMenu.style.display = '';
+                try { initJournalModule(); } catch (e) { console.error('initJournalModule failed', e); }
+            } else {
+                jMenu.style.display = 'none';
+            }
+        }
+    } catch (e) {
+        console.error('Error processing role for journal', e);
+    }
+
+}
+
+
+/* =========================
+   USER AVATAR
+========================= */
+
+function updateAvatar(name) {
+
+    if (!name) return;
+
+    const words = name.trim().split(" ");
+
+    let initials = words[0].charAt(0);
+
+    if (words.length > 1) {
+
+        initials +=
+            words[words.length - 1].charAt(0);
+
+    }
+
+    document.getElementById("userAvatar")
+        .textContent = initials.toUpperCase();
+
+}
+
+
+/* =========================
+   LIVE CLOCK
+========================= */
+
+function startLiveClock() {
+
+    updateLiveClock();
+
+    setInterval(updateLiveClock, 1000);
+
+}
+
+
+function updateLiveClock() {
+
+    const clock =
+        document.getElementById("liveClock");
+
+    if (!clock) return;
+
+
+    const now = new Date();
+
+    const time =
+        now.toLocaleTimeString("id-ID", {
+
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit"
+
+        });
+
+
+    clock.textContent = time;
+
+}
+
+
+/* =========================
+   SESSION VALIDATION
+========================= */
+
+const DASHBOARD_SESSION_CHECK_INTERVAL = 5 * 60 * 1000;
+let dashboardSessionCheckTimer = null;
+let dashboardSessionFocusListener = null;
+
+function initDashboardSessionCheck() {
+
+    if (dashboardSessionCheckTimer === null) {
+        dashboardSessionCheckTimer = setInterval(
+            checkDashboardSession,
+            DASHBOARD_SESSION_CHECK_INTERVAL
+        );
+    }
+
+    if (!dashboardSessionFocusListener) {
+        dashboardSessionFocusListener = function() {
+            checkDashboardSession();
+        };
+        window.addEventListener("focus", dashboardSessionFocusListener);
+    }
+
+}
+
+function checkDashboardSession() {
+
+    const token =
+        sessionStorage.getItem("SIMATA_TOKEN");
+
+    if (!token) {
+
+        console.warn("[SIMATA AUTH] Token tidak ditemukan saat session check. Redirect ke login.");
+        redirectToLogin();
+
+        return;
+
+    }
+
+
+    google.script.run
+
+        .withSuccessHandler(function(result) {
+
+            if (!result || result.valid !== true) {
+
+                console.warn("[SIMATA AUTH] Session tidak valid saat session check. Redirect ke login.");
+                sessionStorage.removeItem("SIMATA_TOKEN");
+                redirectToLogin();
+
+            }
+
+        })
+
+        .withFailureHandler(function(error) {
+
+            console.error("[SIMATA AUTH] Gagal melakukan session check:", error);
+
+        })
+
+        .validateSession(token);
+
+}
+
+
+/* =========================
+   LOGOUT
+========================= */
+
+function logoutSIMATA() {
+
+    const token =
+        sessionStorage.getItem("SIMATA_TOKEN");
+
+    const button =
+        document.getElementById("logout-button");
+
+
+    if (button) {
+
+        button.disabled = true;
+
+        button.classList.add("loading");
+
+    }
+
+
+    if (!token) {
+
+        redirectToLogin();
+
+        return;
+
+    }
+
+
+    google.script.run
+
+        .withSuccessHandler(function(success) {
+
+            if (success) {
+
+                sessionStorage.removeItem(
+                    "SIMATA_TOKEN"
+                );
+
+                redirectToLogin();
+
+            } else {
+
+                if (button) {
+
+                    button.disabled = false;
+
+                    button.classList.remove("loading");
+
+                }
+
+                showToast(
+                    "error",
+                    "Logout Gagal",
+                    "Token tidak valid atau sesi sudah berakhir."
+                );
+
+            }
+
+        })
+
+        .withFailureHandler(function(error) {
+
+            console.error(error);
+
+
+            if (button) {
+
+                button.disabled = false;
+
+                button.classList.remove("loading");
+
+            }
+
+
+            showToast(
+                "error",
+                "Logout Gagal",
+                "Terjadi kesalahan saat menghubungi server."
+            );
+
+        })
+
+        .logout(token);
+
+}
+
+
+/* =========================
+   REDIRECT
+========================= */
+
+function redirectToLogin() {
+
+    const appUrl =
+        '<?!= ScriptApp.getService().getUrl(); ?>';
+
+    sessionStorage.removeItem(
+        "SIMATA_TOKEN"
+    );
+
+    window.top.location.replace(appUrl + "?page=login");
+
+}
+
+
+/* =========================
+   FALLBACK ERROR
+========================= */
+
+function onDashboardError(error) {
+
+    console.error(
+        "Dashboard Error:",
+        error
+    );
+
+
+    showToast(
+        "error",
+        "Dashboard Gagal",
+        "Data dashboard tidak dapat dimuat."
+    );
 
 }
 
