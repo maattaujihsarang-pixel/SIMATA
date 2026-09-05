@@ -48,6 +48,16 @@ const DATABASE_SCHEMAS = [
     sheetName: CONFIG.SHEET_GRADES,
     headers: ["gradeId", "studentId", "classId", "subject", "assessmentType", "score", "semester", "academicYear", "date", "remarks"],
     idHeader: "gradeId"
+  },
+  {
+    sheetName: CONFIG.SHEET_RESPONDER_SESSIONS,
+    headers: ["sessionId", "operatorId", "startedAt", "finishedAt", "evidenceId", "status"],
+    idHeader: "sessionId"
+  },
+  {
+    sheetName: CONFIG.SHEET_ATTENDANCE_EVIDENCES,
+    headers: ["evidenceId", "sessionId", "operatorId", "capturedAt", "fileId", "fileUrl"],
+    idHeader: "evidenceId"
   }
 ];
 

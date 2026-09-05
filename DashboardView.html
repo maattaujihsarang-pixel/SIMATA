@@ -15,6 +15,12 @@
   <title>SIMATA | Dashboard</title>
 
   <?!= HtmlService.createHtmlOutputFromFile('style').getContent(); ?>
+  <?!= HtmlService.createHtmlOutputFromFile('MobileResponsive').getContent(); ?>
+
+  <!-- jsQR: QR Code decode library (MIT, no npm required) -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+  <!-- QRCode.js: QR Code generator library for Student QR Preview & Print -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 
 </head>
 
@@ -23,6 +29,8 @@
 
 <div class="dashboard-layout">
 
+  <!-- MOBILE SIDEBAR BACKDROP -->
+  <div id="sidebarBackdrop" class="sidebar-backdrop" aria-hidden="true"></div>
 
   <!-- =========================
        SIDEBAR
@@ -37,9 +45,22 @@
         alt="Logo SIMATA"
       >
 
-      <h2>SIMATA</h2>
+      <div>
+        <h2>SIMATA</h2>
+        <p>MA At-Taujih Sarang</p>
+      </div>
 
-      <p>MA At-Taujih Sarang</p>
+      <button
+        id="sidebarCloseBtn"
+        class="sidebar-close-btn"
+        type="button"
+        aria-label="Tutup menu navigasi"
+      >
+        <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
 
     </div>
 
@@ -48,7 +69,7 @@
 
       <ul>
 
-        <li class="active">
+        <li id="menu-dashboard" class="active">
 
           <span class="menu-icon">
 
@@ -67,24 +88,22 @@
         </li>
 
 
-        <li id="menu-teachers">
+        <li id="menu-responder" style="display:none;">
 
           <span class="menu-icon">
 
             <svg viewBox="0 0 24 24">
-              <rect x="3" y="4" width="18" height="17" rx="2"/>
-              <path d="M8 2v4"/>
-              <path d="M16 2v4"/>
-              <path d="M3 10h18"/>
+              <path d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
             </svg>
 
           </span>
 
           <span class="menu-text">
-            Absensi
+            Responder
           </span>
 
         </li>
+
 
         <li id="menu-attendance">
 
@@ -138,7 +157,7 @@
         </li>
 
 
-        <li>
+        <li id="menu-teachers">
 
           <span class="menu-icon">
 
@@ -230,6 +249,10 @@
         </li>
 
 
+
+
+
+
         <li>
 
           <span class="menu-icon">
@@ -290,6 +313,20 @@
     <!-- TOPBAR -->
 
     <header class="topbar">
+
+      <button
+        id="hamburgerBtn"
+        class="hamburger-btn"
+        type="button"
+        aria-label="Buka menu navigasi"
+        aria-expanded="false"
+      >
+        <svg viewBox="0 0 24 24" style="width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;">
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
 
       <div class="topbar-left">
 
@@ -526,6 +563,367 @@
 
     </section>
 
+        <!-- RESPONDER CONTENT (hidden by default) -->
+        <section id="responderContent" class="content" style="display:none;">
+
+          <div class="section-heading">
+            <div>
+              <span class="section-label">SIMATA RESPONDER</span>
+              <h2>Sesi Absensi Scanner</h2>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+              <span id="responderStatusBadge" class="simata-badge simata-badge-success" style="font-size:12px;padding:4px 14px;">
+                STATUS: ACTIVE
+              </span>
+              <button id="finishResponderBtn" class="login-button" style="background:#DC2626;box-shadow:0 4px 12px rgba(220,38,38,0.2);">
+                Selesai Sesi
+              </button>
+            </div>
+          </div>
+
+          <!-- OPERATOR INFO STRIP -->
+          <div style="background:#fff;border:1px solid var(--s-border);border-radius:var(--s-radius-lg);padding:16px 20px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+            <div>
+              <span style="font-size:11px;color:var(--s-text-2);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Operator Sesi</span>
+              <div style="font-size:16px;font-weight:800;color:var(--s-text);margin-top:2px;">
+                <span id="responderOperatorName">--</span>
+                <span id="responderOperatorRole" style="font-size:12px;font-weight:600;color:var(--s-primary);margin-left:8px;background:var(--s-green-soft);padding:2px 8px;border-radius:6px;">--</span>
+              </div>
+            </div>
+            <div style="text-align:right;">
+              <span style="font-size:11px;color:var(--s-text-2);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Session ID</span>
+              <div id="responderSessionIdDisplay" style="font-family:monospace;font-size:13px;font-weight:700;color:var(--s-text);margin-top:2px;">
+                --
+              </div>
+            </div>
+          </div>
+
+          <!-- RESPONDER GRID (Mobile-First) -->
+          <div class="simata-responder">
+
+            <!-- PANEL 1: BUKTI KEHADIRAN (Camera Capture) -->
+            <div class="simata-responder-panel" id="responderCameraPanel">
+              <div style="padding:16px 20px;border-bottom:1px solid var(--s-border);display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                  <span class="section-label" style="margin-bottom:0;">BUKTI KEHADIRAN</span>
+                  <h3 style="font-size:15px;font-weight:800;color:var(--s-text);margin:2px 0 0;">Kamera Operator</h3>
+                </div>
+                <span id="cameraStatusBadge" class="simata-badge simata-badge-neutral" style="font-size:10px;">Kamera Siap</span>
+              </div>
+              
+              <div style="padding:16px 20px;">
+                
+                <!-- STATE A: Camera Inactive / Idle Placeholder -->
+                <div id="cameraIdleView" style="background:#F7FAF8;border:2px dashed var(--s-border-2);border-radius:var(--s-radius-lg);padding:32px 16px;text-align:center;">
+                  <div style="width:48px;height:48px;border-radius:50%;background:var(--s-green-soft);color:var(--s-primary);display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px;">
+                    <svg viewBox="0 0 24 24" style="width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;">
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                      <circle cx="12" cy="13" r="4"/>
+                    </svg>
+                  </div>
+                  <p style="font-size:13px;font-weight:700;color:var(--s-text);margin:0 0 4px;">Foto Bukti Operator</p>
+                  <p style="font-size:11px;color:var(--s-text-2);margin:0 0 16px;">Ambil foto bukti kehadiran sebelum atau saat sesi scanner berjalan.</p>
+                  <input
+                    type="file"
+                    id="responderCameraInput"
+                    accept="image/*"
+                    capture="environment"
+                    style="display:none;"
+                  >
+                  <button id="openCameraBtn" class="login-button" type="button" style="min-height:48px;padding:0 24px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:8px;">
+                    <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;">
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                      <circle cx="12" cy="13" r="4"/>
+                    </svg>
+                    Buka Kamera
+                  </button>
+                </div>
+
+                <!-- STATE B: Live Camera Streaming & Guide -->
+                <div id="cameraActiveView" style="display:none;">
+                  <div class="simata-camera" style="border-radius:var(--s-radius);overflow:hidden;box-shadow:var(--s-shadow);">
+                    <video id="responderVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;"></video>
+                    <div class="simata-camera-guide"></div>
+                  </div>
+                  
+                  <!-- Camera Action Controls (Touch-friendly >= 48px) -->
+                  <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;">
+                    <button id="switchCameraBtn" class="login-button" type="button" style="background:#F1F4F2;color:var(--s-text-2);border:1px solid var(--s-border);box-shadow:none;min-height:48px;padding:0 16px;display:inline-flex;align-items:center;gap:6px;">
+                      <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;">
+                        <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+                      </svg>
+                      Ganti Kamera
+                    </button>
+
+                    <button id="capturePhotoBtn" class="login-button" type="button" style="flex:1;min-width:140px;min-height:48px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:8px;">
+                      <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;">
+                        <circle cx="12" cy="12" r="10"/>
+                        <circle cx="12" cy="12" r="3"/>
+                      </svg>
+                      Ambil Foto
+                    </button>
+
+                    <button id="closeCameraBtn" class="login-button" type="button" style="background:#F1F4F2;color:var(--s-text-2);border:1px solid var(--s-border);box-shadow:none;min-height:48px;padding:0 16px;">
+                      Tutup
+                    </button>
+                  </div>
+                </div>
+
+                <!-- STATE C: Captured Photo Preview & Evidence Upload Controls -->
+                <div id="cameraCapturedView" style="display:none;">
+                  <div class="simata-camera" style="border-radius:var(--s-radius);overflow:hidden;box-shadow:var(--s-shadow);position:relative;">
+                    <img id="capturedPhotoPreview" alt="Foto Bukti Kehadiran" style="width:100%;height:100%;object-fit:cover;display:block;" />
+                    
+                    <!-- Dynamic Evidence Status Overlay -->
+                    <div id="capturedOverlayBadge" style="position:absolute;bottom:10px;left:10px;right:10px;background:rgba(15,36,25,0.85);color:#fff;padding:8px 12px;border-radius:8px;font-size:11px;font-weight:600;display:flex;align-items:center;gap:6px;backdrop-filter:blur(4px);">
+                      <svg id="capturedOverlayIcon" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:#4ADE80;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                      <span id="capturedOverlayText">Foto Berhasil Diambil</span>
+                    </div>
+                  </div>
+
+                  <!-- Inline Error Notice if Upload Fails -->
+                  <div id="evidenceErrorNotice" style="display:none;margin-top:10px;background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:8px 12px;font-size:11px;color:#991B1B;">
+                    <span id="evidenceErrorText">Gagal menyimpan bukti ke server.</span>
+                  </div>
+
+                  <!-- Evidence Action Buttons (Touch-friendly >= 48px) -->
+                  <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px;">
+                    <div style="display:flex;gap:10px;align-items:center;">
+                      <!-- Primary Save Button -->
+                      <button id="saveEvidenceBtn" class="login-button" type="button" style="flex:1;min-height:48px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:8px;">
+                        <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;">
+                          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                          <polyline points="17 21 17 13 7 13 7 21"/>
+                          <polyline points="7 3 7 8 15 8"/>
+                        </svg>
+                        <span id="saveEvidenceBtnText">Simpan Bukti</span>
+                      </button>
+
+                      <!-- Retry Button (Shown only on failure) -->
+                      <button id="retrySaveEvidenceBtn" class="login-button" type="button" style="display:none;flex:1;min-height:48px;background:#B45309;font-weight:700;align-items:center;justify-content:center;gap:8px;">
+                        <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;">
+                          <path d="M1 4v6h6M23 20v-6h-6"/>
+                          <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+                        </svg>
+                        Coba Simpan Lagi
+                      </button>
+
+                      <!-- Retake Button -->
+                      <button id="retakePhotoBtn" class="login-button" type="button" style="min-height:48px;background:#F1F4F2;color:var(--s-text-2);border:1px solid var(--s-border);box-shadow:none;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 18px;">
+                        <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;">
+                          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                          <circle cx="12" cy="13" r="4"/>
+                        </svg>
+                        Ambil Ulang
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- STATE D: Camera Error / Unsupported Notice -->
+                <div id="cameraErrorView" style="display:none;background:#FEF2F2;border:1px solid #FECACA;border-radius:var(--s-radius-lg);padding:24px 16px;text-align:center;">
+                  <div style="width:44px;height:44px;border-radius:50%;background:#FEE2E2;color:#DC2626;display:inline-flex;align-items:center;justify-content:center;margin-bottom:10px;">
+                    <svg viewBox="0 0 24 24" style="width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;">
+                      <circle cx="12" cy="12" r="10"/>
+                      <line x1="12" y1="8" x2="12" y2="12"/>
+                      <line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                  </div>
+                  <h4 style="font-size:14px;font-weight:700;color:#991B1B;margin:0 0 4px;" id="cameraErrorMessageTitle">Akses Kamera Gagal</h4>
+                  <p style="font-size:11px;color:#B91C1C;margin:0 0 14px;" id="cameraErrorMessageText">Tidak dapat mengakses perangkat kamera.</p>
+                  <button id="retryCameraBtn" class="login-button" type="button" style="min-height:44px;padding:0 20px;font-size:12px;">
+                    Coba Lagi
+                  </button>
+                </div>
+
+                <!-- Hidden Canvas for Image Processing / Compression -->
+                <canvas id="responderCanvas" style="display:none;"></canvas>
+
+              </div>
+            </div>
+
+            <!-- PANEL 2: SCAN QR SISWA -->
+            <div class="simata-responder-panel" id="responderScannerPanel">
+              <div style="padding:16px 20px;border-bottom:1px solid var(--s-border);display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                  <span class="section-label" style="margin-bottom:0;">SCANNER</span>
+                  <h3 style="font-size:15px;font-weight:800;color:var(--s-text);margin:2px 0 0;">Scan QR Siswa</h3>
+                </div>
+                <span id="qrScannerStatusBadge" class="simata-badge simata-badge-info" style="font-size:10px;">Scanner Siap</span>
+              </div>
+
+              <div style="padding:16px 20px;">
+
+                <!-- STATE: IDLE (scanner siap dibuka) -->
+                <div id="qrIdleView" style="background:#F7FAF8;border:2px dashed var(--s-border-2);border-radius:var(--s-radius-lg);padding:32px 16px;text-align:center;">
+                  <div style="width:48px;height:48px;border-radius:50%;background:var(--s-green-soft);color:var(--s-primary);display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px;">
+                    <svg viewBox="0 0 24 24" style="width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;">
+                      <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                      <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                    </svg>
+                  </div>
+                  <p style="font-size:13px;font-weight:700;color:var(--s-text);margin:0 0 4px;">Scanner QR Siap</p>
+                  <p style="font-size:11px;color:var(--s-text-2);margin:0 0 16px;">Arahkan kamera ke QR Code siswa untuk memindai presensi.</p>
+                  <button id="openQrScannerBtn" class="login-button" type="button" style="min-height:48px;padding:0 24px;font-size:13px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:8px;">
+                    <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;">
+                      <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                      <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                    </svg>
+                    Buka Scanner QR
+                  </button>
+                </div>
+
+                <!-- STATE: SCANNING (camera live + decode loop) -->
+                <div id="qrScanningView" style="display:none;">
+                  <div style="position:relative;border-radius:var(--s-radius);overflow:hidden;box-shadow:var(--s-shadow);background:#000;">
+                    <video id="qrVideo" playsinline muted autoplay style="width:100%;display:block;max-height:360px;object-fit:cover;"></video>
+                    <!-- Scan frame overlay -->
+                    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;">
+                      <div style="width:min(220px,70%);aspect-ratio:1/1;position:relative;">
+                        <div style="position:absolute;top:0;left:0;width:28px;height:28px;border-top:3px solid #4ADE80;border-left:3px solid #4ADE80;border-radius:4px 0 0 0;"></div>
+                        <div style="position:absolute;top:0;right:0;width:28px;height:28px;border-top:3px solid #4ADE80;border-right:3px solid #4ADE80;border-radius:0 4px 0 0;"></div>
+                        <div style="position:absolute;bottom:0;left:0;width:28px;height:28px;border-bottom:3px solid #4ADE80;border-left:3px solid #4ADE80;border-radius:0 0 0 4px;"></div>
+                        <div style="position:absolute;bottom:0;right:0;width:28px;height:28px;border-bottom:3px solid #4ADE80;border-right:3px solid #4ADE80;border-radius:0 0 4px 0;"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <canvas id="qrCanvas" style="display:none;"></canvas>
+                  <div style="margin-top:12px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+                    <button id="closeQrScannerBtn" class="login-button" type="button" style="min-height:44px;background:#F1F4F2;color:var(--s-text-2);border:1px solid var(--s-border);box-shadow:none;font-weight:600;padding:0 20px;font-size:12px;display:inline-flex;align-items:center;gap:6px;">
+                      <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                      Tutup Scanner
+                    </button>
+                  </div>
+                  <p style="text-align:center;font-size:11px;color:var(--s-text-2);margin-top:10px;">Arahkan kamera ke QR Code siswa...</p>
+                </div>
+
+                <!-- STATE: RESULT (QR berhasil dibaca, konfirmasi presensi) -->
+                <div id="qrResultView" style="display:none;">
+                  <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:var(--s-radius-lg);padding:16px;display:flex;align-items:center;gap:14px;margin-bottom:14px;">
+                    <div style="width:44px;height:44px;border-radius:50%;background:#4ADE80;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                      <svg viewBox="0 0 24 24" style="width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <div style="flex:1;min-width:0;">
+                      <p style="font-size:10px;font-weight:700;color:#166534;margin:0 0 2px;text-transform:uppercase;letter-spacing:0.5px;">Siswa Ditemukan</p>
+                      <p id="qrResultName" style="font-size:16px;font-weight:800;color:#14532D;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">--</p>
+                    </div>
+                  </div>
+                  <div style="background:#fff;border:1px solid var(--s-border);border-radius:var(--s-radius);padding:12px 14px;margin-bottom:14px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                    <div>
+                      <p style="font-size:10px;color:var(--s-text-2);font-weight:600;text-transform:uppercase;margin:0 0 2px;">NIS</p>
+                      <p id="qrResultNis" style="font-size:13px;font-weight:700;color:var(--s-text);margin:0;">--</p>
+                    </div>
+                    <div>
+                      <p style="font-size:10px;color:var(--s-text-2);font-weight:600;text-transform:uppercase;margin:0 0 2px;">Kelas</p>
+                      <p id="qrResultClass" style="font-size:13px;font-weight:700;color:var(--s-text);margin:0;">--</p>
+                    </div>
+                    <div>
+                      <p style="font-size:10px;color:var(--s-text-2);font-weight:600;text-transform:uppercase;margin:0 0 2px;">Student ID</p>
+                      <p id="qrResultStudentId" style="font-size:11px;font-weight:600;color:var(--s-text-2);margin:0;font-family:monospace;">--</p>
+                    </div>
+                    <div>
+                      <p style="font-size:10px;color:var(--s-text-2);font-weight:600;text-transform:uppercase;margin:0 0 2px;">Status Siswa</p>
+                      <p id="qrResultStatus" style="font-size:13px;font-weight:700;color:var(--s-text);margin:0;">--</p>
+                    </div>
+                  </div>
+
+                  <!-- Status Confirmation Selector -->
+                  <div style="margin-bottom:14px;">
+                    <label style="font-size:11px;font-weight:700;color:var(--s-text-2);text-transform:uppercase;margin-bottom:6px;display:block;">Status Kehadiran</label>
+                    <select id="qrAttendanceStatusSelect" class="input-box" style="width:100%;height:44px;font-weight:700;border-radius:var(--s-radius);">
+                      <option value="Hadir" selected>Hadir (Default)</option>
+                      <option value="Izin">Izin</option>
+                      <option value="Sakit">Sakit</option>
+                      <option value="Alpa">Alpa</option>
+                    </select>
+                  </div>
+
+                  <!-- Action Buttons -->
+                  <div style="display:flex;flex-direction:column;gap:8px;">
+                    <button id="submitAttendanceBtn" class="login-button" type="button" style="width:100%;min-height:48px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;">
+                      <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                      <span id="submitAttendanceBtnText">Konfirmasi & Simpan Absensi</span>
+                    </button>
+                    <button id="cancelScanResultBtn" class="login-button" type="button" style="width:100%;min-height:44px;background:#F1F4F2;color:var(--s-text-2);border:1px solid var(--s-border);box-shadow:none;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;">
+                      Batal / Scan Ulang
+                    </button>
+                  </div>
+                </div>
+
+                <!-- STATE: SUCCESS RECORDED (Presensi berhasil dicatat) -->
+                <div id="qrSuccessRecordedView" style="display:none;">
+                  <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:var(--s-radius-lg);padding:24px 16px;text-align:center;margin-bottom:14px;">
+                    <div style="width:52px;height:52px;border-radius:50%;background:#4ADE80;color:#fff;display:inline-flex;align-items:center;justify-content:center;margin:0 auto 12px;box-shadow:0 4px 12px rgba(74,222,128,0.3);">
+                      <svg viewBox="0 0 24 24" style="width:28px;height:28px;stroke:currentColor;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <p style="font-size:15px;font-weight:800;color:#14532D;margin:0 0 4px;">Absensi Berhasil Dicatat</p>
+                    <p id="recordedStudentDetail" style="font-size:12px;color:#166534;margin:0 0 8px;font-weight:600;">--</p>
+                    <span id="recordedStatusBadge" class="simata-badge simata-badge-success" style="font-size:11px;padding:3px 12px;">HADIR</span>
+                  </div>
+                  <button id="nextScanFromSuccessBtn" class="login-button" type="button" style="width:100%;min-height:48px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;">
+                    <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                    Scan Siswa Berikutnya
+                  </button>
+                </div>
+
+                <!-- STATE: DUPLICATE RECORDED (Siswa sudah absen hari ini) -->
+                <div id="qrDuplicateView" style="display:none;">
+                  <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:var(--s-radius-lg);padding:24px 16px;text-align:center;margin-bottom:14px;">
+                    <div style="width:52px;height:52px;border-radius:50%;background:#FDE68A;color:#B45309;display:inline-flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+                      <svg viewBox="0 0 24 24" style="width:26px;height:26px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    </div>
+                    <p style="font-size:14px;font-weight:800;color:#92400E;margin:0 0 4px;">Siswa Sudah Absen Hari Ini</p>
+                    <p id="duplicateStudentDetail" style="font-size:11px;color:#B45309;margin:0;">Data absensi untuk siswa tersebut pada tanggal hari ini sudah tercatat sebelumnya.</p>
+                  </div>
+                  <button id="nextScanFromDuplicateBtn" class="login-button" type="button" style="width:100%;min-height:48px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;">
+                    <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                    Scan Siswa Berikutnya
+                  </button>
+                </div>
+
+                <!-- STATE: NOT FOUND (QR dibaca tapi tidak ada di database) -->
+                <div id="qrNotFoundView" style="display:none;">
+                  <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:var(--s-radius-lg);padding:16px;text-align:center;margin-bottom:14px;">
+                    <div style="width:44px;height:44px;border-radius:50%;background:#FEE2E2;color:#DC2626;display:inline-flex;align-items:center;justify-content:center;margin:0 auto 10px;">
+                      <svg viewBox="0 0 24 24" style="width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    </div>
+                    <p style="font-size:13px;font-weight:700;color:#991B1B;margin:0 0 4px;">QR Tidak Dikenal</p>
+                    <p id="qrNotFoundDetail" style="font-size:11px;color:#B91C1C;margin:0;">QR siswa tidak ditemukan dalam sistem.</p>
+                  </div>
+                  <button id="nextScanFromNotFoundBtn" class="login-button" type="button" style="width:100%;min-height:48px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;">
+                    <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                    Scan Siswa Berikutnya
+                  </button>
+                </div>
+
+                <!-- STATE: ERROR (camera gagal / library gagal) -->
+                <div id="qrErrorView" style="display:none;background:#FEF2F2;border:1px solid #FECACA;border-radius:var(--s-radius-lg);padding:24px 16px;text-align:center;">
+                  <div style="width:44px;height:44px;border-radius:50%;background:#FEE2E2;color:#DC2626;display:inline-flex;align-items:center;justify-content:center;margin:0 auto 10px;">
+                    <svg viewBox="0 0 24 24" style="width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  </div>
+                  <p id="qrErrorTitle" style="font-size:13px;font-weight:700;color:#991B1B;margin:0 0 4px;">Kamera Tidak Dapat Dibuka</p>
+                  <p id="qrErrorDetail" style="font-size:11px;color:#B91C1C;margin:0 0 14px;">Izinkan akses kamera pada pengaturan browser Anda.</p>
+                  <button id="retryQrScannerBtn" class="login-button" type="button" style="min-height:44px;padding:0 20px;font-size:12px;">Coba Lagi</button>
+                </div>
+
+                <!-- STATE: LOOKING UP (menunggu server response) -->
+                <div id="qrLookupView" style="display:none;text-align:center;padding:32px 16px;">
+                  <div style="width:44px;height:44px;border-radius:50%;background:var(--s-green-soft);color:var(--s-primary);display:inline-flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+                    <svg viewBox="0 0 24 24" style="width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                  </div>
+                  <p style="font-size:13px;font-weight:700;color:var(--s-text);margin:0 0 4px;">Mencari Data Siswa...</p>
+                  <p style="font-size:11px;color:var(--s-text-2);margin:0;">Mohon tunggu sebentar.</p>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+
+        </section>
+
         <!-- ATTENDANCE CONTENT (hidden by default) -->
         <section id="attendanceContent" class="content" style="display:none;">
 
@@ -534,25 +932,25 @@
               <span class="section-label">ABSENSI SISWA</span>
               <h2>Daftar Absensi Siswa</h2>
             </div>
-            <div>
+            <div class="section-actions">
               <input id="attendanceDateFilter" type="date" class="input-box" />
-              <select id="attendanceAcademicYearFilter" class="input-box" style="margin-left:8px;min-width:140px;"></select>
-              <select id="attendanceClassFilter" class="input-box" style="margin-left:8px;min-width:160px;"></select>
-              <select id="attendanceStudentFilter" class="input-box" style="margin-left:8px;min-width:180px;"></select>
-              <select id="attendanceStatusFilter" class="input-box" style="margin-left:8px;min-width:120px;">
+              <select id="attendanceAcademicYearFilter" class="input-box" style="min-width:140px;"></select>
+              <select id="attendanceClassFilter" class="input-box" style="min-width:160px;"></select>
+              <select id="attendanceStudentFilter" class="input-box" style="min-width:180px;"></select>
+              <select id="attendanceStatusFilter" class="input-box" style="min-width:120px;">
                 <option value="">(Status)</option>
                 <option value="Hadir">Hadir</option>
                 <option value="Izin">Izin</option>
                 <option value="Sakit">Sakit</option>
                 <option value="Alpa">Alpa</option>
               </select>
-              <button id="filterAttendanceButton" class="login-button" style="margin-left:8px;">Filter</button>
-              <button id="addAttendanceButton" class="login-button" style="margin-left:8px;">Tambah Absensi</button>
+              <button id="filterAttendanceButton" class="login-button">Filter</button>
+              <button id="addAttendanceButton" class="login-button">Tambah Absensi</button>
             </div>
           </div>
 
-          <div style="margin-top:18px;">
-            <table id="attendanceTable" style="width:100%;border-collapse:collapse;">
+          <div class="table-responsive">
+            <table id="attendanceTable" style="width:100%;border-collapse:collapse;min-width:800px;">
               <thead>
                 <tr style="text-align:left;border-bottom:1px solid #e5e7eb;">
                   <th style="padding:8px">Attendance ID</th>
@@ -573,8 +971,8 @@
         </section>
 
         <!-- ATTENDANCE MODAL -->
-        <div id="attendanceModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;z-index:10000;">
-          <div style="background:white;padding:20px;border-radius:12px;min-width:420px;max-width:720px;">
+        <div id="attendanceModal" class="modal-backdrop" style="display:none;">
+          <div class="modal-card">
             <h3 id="attendanceModalTitle">Tambah Absensi</h3>
             <div style="margin-top:12px;display:flex;flex-direction:column;gap:10px;">
               <div style="display:flex;gap:8px;">
@@ -597,8 +995,8 @@
               </select>
               <textarea id="a_note" class="input-box" placeholder="Note"></textarea>
             </div>
-            <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
-              <button id="attendanceCancelBtn" class="login-button" style="background:#e5e7eb;color:#000">Batal</button>
+            <div class="modal-footer" style="display:flex;gap:8px;justify-content:flex-end;">
+              <button id="attendanceCancelBtn" class="login-button btn-secondary">Batal</button>
               <button id="attendanceSaveBtn" class="login-button">Simpan</button>
             </div>
           </div>
@@ -612,24 +1010,24 @@
               <span class="section-label">ABSENSI GURU</span>
               <h2>Daftar Absensi Guru</h2>
             </div>
-            <div>
+            <div class="section-actions">
               <input id="teacherAttendanceDateFilter" type="date" class="input-box" />
-              <select id="teacherAttendanceAcademicYearFilter" class="input-box" style="margin-left:8px;min-width:140px;"></select>
-              <select id="teacherAttendanceTeacherFilter" class="input-box" style="margin-left:8px;min-width:200px;"></select>
-              <select id="teacherAttendanceStatusFilter" class="input-box" style="margin-left:8px;min-width:120px;">
+              <select id="teacherAttendanceAcademicYearFilter" class="input-box" style="min-width:140px;"></select>
+              <select id="teacherAttendanceTeacherFilter" class="input-box" style="min-width:200px;"></select>
+              <select id="teacherAttendanceStatusFilter" class="input-box" style="min-width:120px;">
                 <option value="">(Status)</option>
                 <option value="Hadir">Hadir</option>
                 <option value="Izin">Izin</option>
                 <option value="Sakit">Sakit</option>
                 <option value="Alpa">Alpa</option>
               </select>
-              <button id="filterTeacherAttendanceButton" class="login-button" style="margin-left:8px;">Filter</button>
-              <button id="addTeacherAttendanceButton" class="login-button" style="margin-left:8px;">Tambah Absensi Guru</button>
+              <button id="filterTeacherAttendanceButton" class="login-button">Filter</button>
+              <button id="addTeacherAttendanceButton" class="login-button">Tambah Absensi Guru</button>
             </div>
           </div>
 
-          <div style="margin-top:18px;">
-            <table id="teacherAttendanceTable" style="width:100%;border-collapse:collapse;">
+          <div class="table-responsive">
+            <table id="teacherAttendanceTable" style="width:100%;border-collapse:collapse;min-width:800px;">
               <thead>
                 <tr style="text-align:left;border-bottom:1px solid #e5e7eb;">
                   <th style="padding:8px">Attendance ID</th>
@@ -649,8 +1047,8 @@
         </section>
 
         <!-- TEACHER ATTENDANCE MODAL -->
-        <div id="teacherAttendanceModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;z-index:10000;">
-          <div style="background:white;padding:20px;border-radius:12px;min-width:420px;max-width:720px;">
+        <div id="teacherAttendanceModal" class="modal-backdrop" style="display:none;">
+          <div class="modal-card">
             <h3 id="teacherAttendanceModalTitle">Tambah Absensi Guru</h3>
             <div style="margin-top:12px;display:flex;flex-direction:column;gap:10px;">
               <div style="display:flex;gap:8px;">
@@ -673,8 +1071,8 @@
               <input id="ta_qrCodeId" class="input-box" placeholder="QR Code ID (opsional)" />
               <textarea id="ta_note" class="input-box" placeholder="Note"></textarea>
             </div>
-            <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
-              <button id="teacherAttendanceCancelBtn" class="login-button" style="background:#e5e7eb;color:#000">Batal</button>
+            <div class="modal-footer" style="display:flex;gap:8px;justify-content:flex-end;">
+              <button id="teacherAttendanceCancelBtn" class="login-button btn-secondary">Batal</button>
               <button id="teacherAttendanceSaveBtn" class="login-button">Simpan</button>
             </div>
           </div>
@@ -688,22 +1086,22 @@
               <span class="section-label">JURNAL</span>
               <h2>Daftar Jurnal</h2>
             </div>
-            <div>
+            <div class="section-actions">
               <input id="journalDateFilter" type="date" class="input-box" />
-              <select id="journalAcademicYearFilter" class="input-box" style="margin-left:8px;min-width:140px;"></select>
-              <select id="journalTeacherFilter" class="input-box" style="margin-left:8px;min-width:180px;"></select>
-              <select id="journalClassFilter" class="input-box" style="margin-left:8px;min-width:160px;"></select>
-              <input id="journalSubjectFilter" class="input-box" placeholder="Subject" style="margin-left:8px;min-width:140px;" />
-              <select id="journalStatusFilter" class="input-box" style="margin-left:8px;min-width:120px;">
+              <select id="journalAcademicYearFilter" class="input-box" style="min-width:140px;"></select>
+              <select id="journalTeacherFilter" class="input-box" style="min-width:180px;"></select>
+              <select id="journalClassFilter" class="input-box" style="min-width:160px;"></select>
+              <input id="journalSubjectFilter" class="input-box" placeholder="Subject" style="min-width:140px;" />
+              <select id="journalStatusFilter" class="input-box" style="min-width:120px;">
                 <option value="">(Status)</option>
               </select>
-              <button id="filterJournalButton" class="login-button" style="margin-left:8px;">Filter</button>
-              <button id="addJournalButton" class="login-button" style="margin-left:8px;">Tambah Jurnal</button>
+              <button id="filterJournalButton" class="login-button">Filter</button>
+              <button id="addJournalButton" class="login-button">Tambah Jurnal</button>
             </div>
           </div>
 
-          <div style="margin-top:18px;overflow:auto;">
-            <table id="journalTable" style="width:100%;border-collapse:collapse;">
+          <div class="table-responsive">
+            <table id="journalTable" style="width:100%;border-collapse:collapse;min-width:800px;">
               <thead>
                 <tr style="text-align:left;border-bottom:1px solid #e5e7eb;">
                   <th style="padding:8px">Journal ID</th>
@@ -723,8 +1121,8 @@
         </section>
 
         <!-- JOURNAL MODAL -->
-        <div id="journalModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;z-index:10000;">
-          <div style="background:white;padding:20px;border-radius:12px;min-width:320px;max-width:720px;">
+        <div id="journalModal" class="modal-backdrop" style="display:none;">
+          <div class="modal-card">
             <h3 id="journalModalTitle">Tambah Jurnal</h3>
             <div style="margin-top:12px;display:flex;flex-direction:column;gap:10px;">
               <div style="display:flex;gap:8px;">
@@ -742,8 +1140,8 @@
                 <option value="">(Status)</option>
               </select>
             </div>
-            <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
-              <button id="journalCancelBtn" class="login-button" style="background:#e5e7eb;color:#000">Batal</button>
+            <div class="modal-footer" style="display:flex;gap:8px;justify-content:flex-end;">
+              <button id="journalCancelBtn" class="login-button btn-secondary">Batal</button>
               <button id="journalSaveBtn" class="login-button">Simpan</button>
             </div>
           </div>
@@ -756,7 +1154,7 @@
               <span class="section-label">NILAI</span>
               <h2>Daftar Nilai</h2>
             </div>
-            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
+            <div class="section-actions">
               <input id="gradeSearch" class="input-box" placeholder="Cari gradeId, studentId, classId, subject, atau remarks" style="min-width:220px;" />
               <select id="gradeStudentFilter" class="input-box" style="min-width:180px;"></select>
               <select id="gradeClassFilter" class="input-box" style="min-width:170px;"></select>
@@ -769,7 +1167,7 @@
             </div>
           </div>
 
-          <div style="margin-top:18px;overflow:auto;">
+          <div class="table-responsive">
             <table id="gradesTable" style="width:100%;border-collapse:collapse;min-width:1100px;">
               <thead>
                 <tr style="text-align:left;border-bottom:1px solid #e5e7eb;">
@@ -793,8 +1191,8 @@
         </section>
 
         <!-- GRADE MODAL -->
-        <div id="gradeModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;z-index:10000;">
-          <div style="background:white;padding:20px;border-radius:12px;min-width:320px;max-width:720px;width:min(92vw, 720px);">
+        <div id="gradeModal" class="modal-backdrop" style="display:none;">
+          <div class="modal-card">
             <h3 id="gradeModalTitle">Tambah Nilai</h3>
             <div style="margin-top:12px;display:flex;flex-direction:column;gap:10px;">
               <input id="g_gradeId" class="input-box" placeholder="gradeId" />
@@ -808,8 +1206,8 @@
               <input id="g_date" type="date" class="input-box" />
               <textarea id="g_remarks" class="input-box" placeholder="Remarks" rows="3"></textarea>
             </div>
-            <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
-              <button id="gradeCancelBtn" class="login-button" style="background:#e5e7eb;color:#000">Batal</button>
+            <div class="modal-footer" style="display:flex;gap:8px;justify-content:flex-end;">
+              <button id="gradeCancelBtn" class="login-button btn-secondary">Batal</button>
               <button id="gradeSaveBtn" class="login-button">Simpan</button>
             </div>
           </div>
@@ -822,22 +1220,39 @@
               <span class="section-label">SISWA</span>
               <h2>Daftar Siswa</h2>
             </div>
-            <div>
+            <div class="section-actions">
               <input id="studentSearch" class="input-box" placeholder="Cari berdasarkan nama, nis, nisn, atau studentId" />
-              <button id="addStudentButton" class="login-button" style="margin-left:12px;">Tambah Siswa</button>
+              <button id="addStudentButton" class="login-button">Tambah Siswa</button>
+              <button id="batchQrButton" class="login-button">Cetak QR Kelas</button>
             </div>
           </div>
 
-          <div style="margin-top:18px;">
-            <table id="studentsTable" style="width:100%;border-collapse:collapse;">
+          <!-- FILTER & SUMMARY BAR -->
+          <div class="student-filter-bar" style="margin-top:16px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;background:#fff;padding:12px 16px;border-radius:12px;border:1px solid #e2e8f0;">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <label for="studentClassFilter" style="font-size:13px;font-weight:600;color:#475569;white-space:nowrap;">Filter Kelas:</label>
+              <select id="studentClassFilter" class="input-box" style="height:36px;padding:0 12px;font-size:13px;min-width:150px;">
+                <option value="">Semua Kelas</option>
+              </select>
+              <span id="studentFilterCountText" style="font-size:13px;font-weight:600;color:#166534;background:#f0fdf4;padding:6px 12px;border-radius:20px;border:1px solid #bbf7d0;">Total: 0 siswa</span>
+            </div>
+
+            <!-- Dynamic class summary chips -->
+            <div id="studentClassSummaryChips" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"></div>
+          </div>
+
+          <div class="table-responsive" style="margin-top:16px;overflow-x:auto;background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.05);border:1px solid #e2e8f0;">
+            <table id="studentsTable" class="simata-table" style="width:100%;border-collapse:collapse;min-width:760px;">
               <thead>
-                <tr style="text-align:left;border-bottom:1px solid #e5e7eb;">
-                  <th style="padding:8px">Student ID</th>
-                  <th style="padding:8px">Name</th>
-                  <th style="padding:8px">NIS</th>
-                  <th style="padding:8px">Class</th>
-                  <th style="padding:8px">Status</th>
-                  <th style="padding:8px">Actions</th>
+                <tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">
+                  <th style="padding:12px 8px;text-align:center;width:44px;font-size:12.5px;font-weight:700;color:#475569;">No</th>
+                  <th style="padding:12px 10px;text-align:center;width:110px;font-size:12.5px;font-weight:700;color:#475569;">NIS</th>
+                  <th style="padding:12px 10px;text-align:center;width:120px;font-size:12.5px;font-weight:700;color:#475569;">NISN</th>
+                  <th style="padding:12px 14px;text-align:left;font-size:12.5px;font-weight:700;color:#475569;">Nama</th>
+                  <th style="padding:12px 8px;text-align:center;width:100px;font-size:12.5px;font-weight:700;color:#475569;">Jenis Kelamin</th>
+                  <th style="padding:12px 10px;text-align:center;width:100px;font-size:12.5px;font-weight:700;color:#475569;">Kelas</th>
+                  <th style="padding:12px 10px;text-align:center;width:95px;font-size:12.5px;font-weight:700;color:#475569;">Status</th>
+                  <th style="padding:12px 12px;text-align:center;width:175px;font-size:12.5px;font-weight:700;color:#475569;">Aksi</th>
                 </tr>
               </thead>
               <tbody id="studentsTbody"></tbody>
@@ -847,148 +1262,300 @@
         </section>
 
         <!-- STUDENT MODAL -->
-        <div id="studentModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;z-index:10000;">
-          <div style="background:white;padding:20px;border-radius:12px;min-width:420px;max-width:720px;">
-            <h3 id="studentModalTitle">Tambah Siswa</h3>
+        <div id="studentModal" class="student-modal-backdrop" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.45);align-items:center;justify-content:center;z-index:10000;">
+          <div class="student-modal-card">
+            <!-- Modal Header -->
+            <div class="student-modal-header">
+              <h3 id="studentModalTitle">Tambah Siswa</h3>
+              <button type="button" onclick="closeStudentModal()" class="student-modal-close-btn" aria-label="Tutup">&times;</button>
+            </div>
+
+            <!-- Modal Body (2-column responsive form) -->
+            <div class="student-modal-body">
+
+              <!-- Section 1: Identitas Sistem -->
+              <div class="student-form-section">
+                <div class="student-section-title">
+                  <span>Identitas Sistem</span>
+                </div>
+                <div class="student-form-grid">
+                  <div class="student-form-group">
+                    <label for="f_studentId" class="student-form-label">Student ID <span class="field-hint">(Otomatis)</span></label>
+                    <input id="f_studentId" class="input-box" placeholder="studentId (Otomatis)" />
+                  </div>
+                  <div class="student-form-group">
+                    <label for="f_qrCodeId" class="student-form-label">QR Code ID <span class="field-hint">(Otomatis)</span></label>
+                    <input id="f_qrCodeId" class="input-box" placeholder="QR Code ID (Otomatis)" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Section 2: Data Pribadi -->
+              <div class="student-form-section">
+                <div class="student-section-title">
+                  <span>Data Pribadi</span>
+                </div>
+                <div class="student-form-grid">
+                  <div class="student-form-group">
+                    <label for="f_nis" class="student-form-label">NIS</label>
+                    <input id="f_nis" class="input-box" placeholder="NIS" />
+                  </div>
+                  <div class="student-form-group">
+                    <label for="f_nisn" class="student-form-label">NISN</label>
+                    <input id="f_nisn" class="input-box" placeholder="NISN" />
+                  </div>
+                  <div class="student-form-group student-col-span-2">
+                    <label for="f_name" class="student-form-label">Nama Lengkap <span class="field-required">*</span></label>
+                    <input id="f_name" class="input-box" placeholder="Nama Lengkap Siswa" />
+                  </div>
+                  <div class="student-form-group">
+                    <label for="f_gender" class="student-form-label">Jenis Kelamin</label>
+                    <select id="f_gender" class="input-box">
+                      <option value="">(Pilih Gender)</option>
+                      <option value="L">Laki-laki (L)</option>
+                      <option value="P">Perempuan (P)</option>
+                    </select>
+                  </div>
+                  <div class="student-form-group">
+                    <label for="f_birthDate" class="student-form-label">Tanggal Lahir</label>
+                    <input id="f_birthDate" type="date" class="input-box" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Section 3: Status Akademik -->
+              <div class="student-form-section">
+                <div class="student-section-title">
+                  <span>Status Akademik</span>
+                </div>
+                <div class="student-form-grid">
+                  <div class="student-form-group">
+                    <label for="f_classId" class="student-form-label">Kelas <span class="field-required">*</span></label>
+                    <select id="f_classId" class="input-box"></select>
+                  </div>
+                  <div class="student-form-group">
+                    <label for="f_status" class="student-form-label">Status Siswa</label>
+                    <select id="f_status" class="input-box">
+                      <option value="Active">Active</option>
+                      <option value="Inactive">Inactive</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="student-modal-footer">
+              <button type="button" id="studentCancelBtn" class="login-button student-btn-cancel">Batal</button>
+              <button type="button" id="studentSaveBtn" class="login-button student-btn-save">Simpan</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- STUDENT QR MODAL -->
+        <div id="studentQrModal" class="student-qr-modal-backdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;z-index:10000;">
+          <div class="student-qr-modal-card" style="background:white;padding:24px;border-radius:12px;width:100%;max-width:380px;box-shadow:0 10px 25px rgba(0,0,0,0.2);display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;margin:16px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;width:100%;margin-bottom:16px;">
+              <h3 style="margin:0;font-size:1.2rem;font-weight:600;color:#1e293b;">QR Siswa</h3>
+              <button type="button" onclick="closeStudentQrModal()" style="background:none;border:none;font-size:1.5rem;line-height:1;cursor:pointer;color:#64748b;padding:0 4px;" aria-label="Tutup">&times;</button>
+            </div>
+
+            <!-- QR Container -->
+            <div id="studentQrContainer" style="background:#f8fafc;padding:16px;border-radius:8px;border:1px solid #e2e8f0;display:flex;align-items:center;justify-content:center;min-height:200px;min-width:200px;margin-bottom:16px;box-sizing:border-box;">
+              <!-- QR Code generated client-side -->
+            </div>
+
+            <!-- Student Info -->
+            <div style="width:100%;background:#f1f5f9;border-radius:8px;padding:12px;text-align:left;font-size:0.9rem;color:#334155;margin-bottom:20px;box-sizing:border-box;">
+              <div style="margin-bottom:4px;"><strong>Nama:</strong> <span id="sqr_name">-</span></div>
+              <div style="margin-bottom:4px;"><strong>Student ID:</strong> <span id="sqr_studentId">-</span></div>
+              <div><strong>QR ID:</strong> <span id="sqr_qrCodeId" style="font-family:monospace;font-weight:600;color:#2563eb;">-</span></div>
+            </div>
+
+            <!-- Actions -->
+            <div style="display:flex;gap:10px;width:100%;justify-content:flex-end;">
+              <button type="button" onclick="printStudentQr()" class="login-button" style="background:#2563eb;flex:1;display:flex;align-items:center;justify-content:center;gap:6px;">
+                <svg style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;" viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
+                Cetak QR
+              </button>
+              <button type="button" onclick="closeStudentQrModal()" class="login-button" style="background:#e2e8f0;color:#334155;flex:1;">Tutup</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- BATCH STUDENT QR MODAL -->
+        <div id="batchQrModal" class="batch-qr-modal-backdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;z-index:10000;">
+          <div class="batch-qr-modal-card" style="background:white;padding:24px;border-radius:12px;width:100%;max-width:860px;max-height:90vh;box-shadow:0 10px 25px rgba(0,0,0,0.2);display:flex;flex-direction:column;box-sizing:border-box;margin:16px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;border-bottom:1px solid #e2e8f0;padding-bottom:12px;">
+              <div>
+                <h3 style="margin:0;font-size:1.25rem;font-weight:600;color:#1e293b;">Cetak QR Siswa Per Kelas</h3>
+                <p style="margin:4px 0 0 0;font-size:0.85rem;color:#64748b;">Pratinjau dan cetak kartu QR seluruh siswa dalam satu kelas</p>
+              </div>
+              <button type="button" onclick="closeBatchQrModal()" style="background:none;border:none;font-size:1.5rem;line-height:1;cursor:pointer;color:#64748b;padding:0 4px;" aria-label="Tutup">&times;</button>
+            </div>
+
+            <!-- Controls: Class Selector & Summary -->
+            <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;background:#f8fafc;padding:14px;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:16px;">
+              <div style="flex:1;min-width:200px;">
+                <label for="batchClassSelect" style="display:block;font-size:0.85rem;font-weight:600;color:#475569;margin-bottom:4px;">Pilih Kelas:</label>
+                <select id="batchClassSelect" class="input-box" style="width:100%;">
+                  <option value="">(Pilih Kelas)</option>
+                </select>
+              </div>
+              <div style="display:flex;flex-direction:column;justify-content:flex-end;">
+                <span style="font-size:0.85rem;color:#64748b;margin-bottom:4px;">Jumlah Siswa:</span>
+                <span id="batchCountBadge" style="font-size:0.9rem;font-weight:600;color:#0f172a;padding:8px 12px;background:#e2e8f0;border-radius:6px;display:inline-block;">0 siswa</span>
+              </div>
+              <div style="display:flex;align-items:flex-end;">
+                <button type="button" id="renderBatchBtn" onclick="renderBatchQrPreview()" class="login-button" style="background:#2563eb;height:38px;padding:0 16px;">Tampilkan QR</button>
+              </div>
+            </div>
+
+            <!-- Warning for students without QR (if any) -->
+            <div id="batchWarningNotice" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:#991b1b;padding:10px 14px;border-radius:6px;font-size:0.85rem;margin-bottom:16px;"></div>
+
+            <!-- Preview Grid Scrollable Container -->
+            <div id="batchPreviewScroll" style="flex:1;overflow-y:auto;min-height:220px;max-height:48vh;border:1px solid #e2e8f0;border-radius:8px;padding:16px;background:#f1f5f9;margin-bottom:16px;box-sizing:border-box;">
+              <div id="batchPreviewEmpty" style="text-align:center;color:#64748b;padding:40px 0;font-size:0.95rem;">
+                Silakan pilih kelas dan klik <strong>Tampilkan QR</strong> untuk memuat pratinjau kartu.
+              </div>
+              <div id="batchPreviewGrid" style="display:none;grid-template-columns:repeat(auto-fill, minmax(200px, 1fr));gap:16px;">
+                <!-- Dynamically populated QR cards -->
+              </div>
+            </div>
+
+            <!-- Modal Footer Actions -->
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+              <div id="batchReadyNotice" style="font-size:0.85rem;color:#64748b;"></div>
+              <div style="display:flex;gap:10px;">
+                <button type="button" id="printBatchBtn" onclick="printBatchQr()" class="login-button" style="background:#059669;display:flex;align-items:center;gap:6px;" disabled>
+                  <svg style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;" viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
+                  Cetak Semua
+                </button>
+                <button type="button" onclick="closeBatchQrModal()" class="login-button" style="background:#e2e8f0;color:#334155;">Tutup</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TEACHERS CONTENT (hidden by default) -->
+        <section id="teachersContent" class="content" style="display:none;">
+          <div class="section-heading">
+            <div>
+              <span class="section-label">GURU</span>
+              <h2>Daftar Guru</h2>
+            </div>
+            <div class="section-actions">
+              <input id="teacherSearch" class="input-box" placeholder="Cari berdasarkan name, nip, nuptk, atau teacherId" />
+              <button id="addTeacherButton" class="login-button">Tambah Guru</button>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table id="teachersTable" style="width:100%;border-collapse:collapse;min-width:700px;">
+              <thead>
+                <tr style="text-align:left;border-bottom:1px solid #e5e7eb;">
+                  <th style="padding:8px">Teacher ID</th>
+                  <th style="padding:8px">Name</th>
+                  <th style="padding:8px">NIP</th>
+                  <th style="padding:8px">Position</th>
+                  <th style="padding:8px">Status</th>
+                  <th style="padding:8px">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="teachersTbody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- TEACHER MODAL -->
+        <div id="teacherModal" class="modal-backdrop" style="display:none;">
+          <div class="modal-card">
+            <h3 id="teacherModalTitle">Tambah Guru</h3>
             <div style="margin-top:12px;display:flex;flex-direction:column;gap:10px;">
-              <input id="f_studentId" class="input-box" placeholder="studentId" />
-              <input id="f_nis" class="input-box" placeholder="NIS" />
-              <input id="f_nisn" class="input-box" placeholder="NISN" />
-              <input id="f_name" class="input-box" placeholder="Name" />
-              <select id="f_gender" class="input-box">
-                <option value="">(Gender)</option>
-                <option value="L">L</option>
-                <option value="P">P</option>
-              </select>
-              <select id="f_classId" class="input-box"></select>
-              <select id="f_status" class="input-box">
+              <input id="t_teacherId" class="input-box" placeholder="teacherId (Otomatis)" />
+              <input id="t_nip" class="input-box" placeholder="NIP" />
+              <input id="t_nuptk" class="input-box" placeholder="NUPTK" />
+              <input id="t_name" class="input-box" placeholder="Name" />
+              <input id="t_position" class="input-box" placeholder="Position" />
+              <input id="t_subject" class="input-box" placeholder="Subject" />
+              <select id="t_status" class="input-box">
                 <option value="Active">Active</option>
                 <option value="Inactive">Inactive</option>
               </select>
-              <input id="f_birthDate" type="date" class="input-box" />
-              <input id="f_qrCodeId" class="input-box" placeholder="QR Code ID" />
             </div>
-
-            <!-- TEACHERS CONTENT (hidden by default) -->
-            <section id="teachersContent" class="content" style="display:none;">
-
-              <div class="section-heading">
-                <div>
-                  <span class="section-label">GURU</span>
-                  <h2>Daftar Guru</h2>
-                </div>
-                <div>
-                  <input id="teacherSearch" class="input-box" placeholder="Cari berdasarkan name, nip, nuptk, atau teacherId" />
-                  <button id="addTeacherButton" class="login-button" style="margin-left:12px;">Tambah Guru</button>
-                </div>
-              </div>
-
-              <div style="margin-top:18px;">
-                <table id="teachersTable" style="width:100%;border-collapse:collapse;">
-                  <thead>
-                    <tr style="text-align:left;border-bottom:1px solid #e5e7eb;">
-                      <th style="padding:8px">Teacher ID</th>
-                      <th style="padding:8px">Name</th>
-                      <th style="padding:8px">NIP</th>
-                      <th style="padding:8px">Position</th>
-                      <th style="padding:8px">Status</th>
-                      <th style="padding:8px">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody id="teachersTbody"></tbody>
-                </table>
-              </div>
-
-            </section>
-
-            <!-- TEACHER MODAL -->
-            <div id="teacherModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;z-index:10000;">
-              <div style="background:white;padding:20px;border-radius:12px;min-width:420px;max-width:720px;">
-                <h3 id="teacherModalTitle">Tambah Guru</h3>
-                <div style="margin-top:12px;display:flex;flex-direction:column;gap:10px;">
-                  <input id="t_teacherId" class="input-box" placeholder="teacherId" />
-                  <input id="t_nip" class="input-box" placeholder="NIP" />
-                  <input id="t_nuptk" class="input-box" placeholder="NUPTK" />
-                  <input id="t_name" class="input-box" placeholder="Name" />
-                  <input id="t_position" class="input-box" placeholder="Position" />
-                  <input id="t_subject" class="input-box" placeholder="Subject" />
-                  <select id="t_status" class="input-box">
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                  </select>
-                  <input id="t_qrCodeId" class="input-box" placeholder="QR Code ID" />
-                </div>
-
-                <!-- CLASSES CONTENT (hidden by default) -->
-                <section id="classesContent" class="content" style="display:none;">
-
-                  <div class="section-heading">
-                    <div>
-                      <span class="section-label">KELAS</span>
-                      <h2>Daftar Kelas</h2>
-                    </div>
-                    <div>
-                      <input id="classSearch" class="input-box" placeholder="Cari berdasarkan classId atau className" />
-                      <button id="addClassButton" class="login-button" style="margin-left:12px;">Tambah Kelas</button>
-                    </div>
-                  </div>
-
-                  <div style="margin-top:18px;">
-                    <table id="classesTable" style="width:100%;border-collapse:collapse;">
-                      <thead>
-                        <tr style="text-align:left;border-bottom:1px solid #e5e7eb;">
-                          <th style="padding:8px">Class ID</th>
-                          <th style="padding:8px">Class Name</th>
-                          <th style="padding:8px">Level</th>
-                          <th style="padding:8px">Academic Year</th>
-                          <th style="padding:8px">Wali Kelas</th>
-                          <th style="padding:8px">Status</th>
-                          <th style="padding:8px">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody id="classesTbody"></tbody>
-                    </table>
-                  </div>
-
-                </section>
-
-                <!-- CLASS MODAL -->
-                <div id="classModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;z-index:10000;">
-                  <div style="background:white;padding:20px;border-radius:12px;min-width:420px;max-width:720px;">
-                    <h3 id="classModalTitle">Tambah Kelas</h3>
-                    <div style="margin-top:12px;display:flex;flex-direction:column;gap:10px;">
-                      <input id="c_classId" class="input-box" placeholder="classId" />
-                      <input id="c_className" class="input-box" placeholder="Class Name" />
-                      <input id="c_level" class="input-box" placeholder="Level" />
-                      <input id="c_academicYear" class="input-box" placeholder="Academic Year" />
-                      <select id="c_homeroomTeacherId" class="input-box"></select>
-                      <select id="c_status" class="input-box">
-                        <option value="Active">Active</option>
-                        <option value="Inactive">Inactive</option>
-                      </select>
-                    </div>
-                    <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
-                      <button id="classCancelBtn" class="login-button" style="background:#e5e7eb;color:#000">Batal</button>
-                      <button id="classSaveBtn" class="login-button">Simpan</button>
-                    </div>
-                  </div>
-                </div>
-                <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
-                  <button id="teacherCancelBtn" class="login-button" style="background:#e5e7eb;color:#000">Batal</button>
-                  <button id="teacherSaveBtn" class="login-button">Simpan</button>
-                </div>
-              </div>
+            <div class="modal-footer" style="display:flex;gap:8px;justify-content:flex-end;">
+              <button id="teacherCancelBtn" class="login-button btn-secondary">Batal</button>
+              <button id="teacherSaveBtn" class="login-button">Simpan</button>
             </div>
-            <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
-              <button id="studentCancelBtn" class="login-button" style="background:#e5e7eb;color:#000">Batal</button>
-              <button id="studentSaveBtn" class="login-button">Simpan</button>
+          </div>
+        </div>
+
+        <!-- CLASSES CONTENT (hidden by default) -->
+        <section id="classesContent" class="content" style="display:none;">
+          <div class="section-heading">
+            <div>
+              <span class="section-label">KELAS</span>
+              <h2>Daftar Kelas</h2>
+            </div>
+            <div class="section-actions">
+              <input id="classSearch" class="input-box" placeholder="Cari berdasarkan classId atau className" />
+              <button id="addClassButton" class="login-button">Tambah Kelas</button>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table id="classesTable" style="width:100%;border-collapse:collapse;min-width:700px;">
+              <thead>
+                <tr style="text-align:left;border-bottom:1px solid #e5e7eb;">
+                  <th style="padding:8px">Class ID</th>
+                  <th style="padding:8px">Class Name</th>
+                  <th style="padding:8px">Level</th>
+                  <th style="padding:8px">Academic Year</th>
+                  <th style="padding:8px">Wali Kelas</th>
+                  <th style="padding:8px">Status</th>
+                  <th style="padding:8px">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="classesTbody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- CLASS MODAL -->
+        <div id="classModal" class="modal-backdrop" style="display:none;">
+          <div class="modal-card">
+            <h3 id="classModalTitle">Tambah Kelas</h3>
+            <div style="margin-top:12px;display:flex;flex-direction:column;gap:10px;">
+              <input id="c_classId" class="input-box" placeholder="classId (Otomatis)" />
+              <input id="c_className" class="input-box" placeholder="Class Name" />
+              <input id="c_level" class="input-box" placeholder="Level" />
+              <input id="c_academicYear" class="input-box" placeholder="Academic Year" />
+              <select id="c_homeroomTeacherId" class="input-box"></select>
+              <select id="c_status" class="input-box">
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+            </div>
+            <div class="modal-footer" style="display:flex;gap:8px;justify-content:flex-end;">
+              <button id="classCancelBtn" class="login-button btn-secondary">Batal</button>
+              <button id="classSaveBtn" class="login-button">Simpan</button>
             </div>
           </div>
         </div>
   </main>
 
+
 </div>
 
+
+<!-- TOAST NOTIFICATION -->
+<div id="toast" class="toast">
+  <div class="toast-icon" id="toastIcon">✔</div>
+  <div class="toast-content">
+    <div id="toastTitle" class="toast-title">Berhasil</div>
+    <div id="toastMessage" class="toast-message">Data siswa berhasil diperbarui</div>
+  </div>
+</div>
 
 <?!= include('DashboardScript'); ?>
 

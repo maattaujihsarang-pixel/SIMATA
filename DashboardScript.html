@@ -2,9 +2,129 @@
 
 document.addEventListener("DOMContentLoaded", function() {
 
+    initMobileSidebar();
     guardDashboard();
 
 });
+
+
+/* =========================
+   MOBILE SIDEBAR CONTROLLER
+========================= */
+
+function initMobileSidebar() {
+    const hamburger = document.getElementById('hamburgerBtn');
+    const backdrop = document.getElementById('sidebarBackdrop');
+    const closeBtn = document.getElementById('sidebarCloseBtn');
+
+    if (hamburger) {
+        hamburger.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleMobileSidebar();
+        });
+    }
+
+    if (backdrop) {
+        backdrop.addEventListener('click', function() {
+            closeMobileSidebar();
+        });
+    }
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function() {
+            closeMobileSidebar();
+        });
+    }
+
+    // Auto-close off-canvas sidebar when a menu item is clicked on mobile screen (<=768px)
+    const menuItems = document.querySelectorAll('.dashboard-layout .sidebar-menu li');
+    menuItems.forEach(function(item) {
+        item.addEventListener('click', function() {
+            if (window.innerWidth <= 768) {
+                closeMobileSidebar();
+            }
+        });
+    });
+
+    // Close on Escape key press
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeMobileSidebar();
+        }
+    });
+}
+
+function openMobileSidebar() {
+    const sidebar = document.querySelector('.dashboard-layout .sidebar');
+    const backdrop = document.getElementById('sidebarBackdrop');
+    const hamburger = document.getElementById('hamburgerBtn');
+    if (sidebar) sidebar.classList.add('mobile-open');
+    if (backdrop) backdrop.classList.add('active');
+    if (hamburger) hamburger.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeMobileSidebar() {
+    const sidebar = document.querySelector('.dashboard-layout .sidebar');
+    const backdrop = document.getElementById('sidebarBackdrop');
+    const hamburger = document.getElementById('hamburgerBtn');
+    if (sidebar) sidebar.classList.remove('mobile-open');
+    if (backdrop) backdrop.classList.remove('active');
+    if (hamburger) hamburger.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+}
+
+function toggleMobileSidebar() {
+    const sidebar = document.querySelector('.dashboard-layout .sidebar');
+    if (sidebar && sidebar.classList.contains('mobile-open')) {
+        closeMobileSidebar();
+    } else {
+        openMobileSidebar();
+    }
+}
+
+
+/* =========================
+   TOAST NOTIFICATION HELPER
+========================= */
+
+function showToast(type, title, message) {
+    const toast = document.getElementById("toast");
+    const icon = document.getElementById("toastIcon");
+    const toastTitle = document.getElementById("toastTitle");
+    const toastMessage = document.getElementById("toastMessage");
+
+    if (!toast) return;
+
+    if (toastTitle) toastTitle.textContent = title || "";
+    if (toastMessage) toastMessage.textContent = message || "";
+
+    if (icon) {
+        if (type === "success") {
+            icon.innerHTML = "✔";
+            icon.style.background = "#E8F5E9";
+            icon.style.color = "#2E7D32";
+        } else if (type === "warning" || type === "info") {
+            icon.innerHTML = "ℹ";
+            icon.style.background = "#FEF3C7";
+            icon.style.color = "#D97706";
+        } else {
+            icon.innerHTML = "✖";
+            icon.style.background = "#FDECEC";
+            icon.style.color = "#D32F2F";
+        }
+    }
+
+    toast.classList.add("show");
+
+    if (window._toastTimeout) {
+        clearTimeout(window._toastTimeout);
+    }
+
+    window._toastTimeout = setTimeout(function() {
+        toast.classList.remove("show");
+    }, 3000);
+}
 
 
 /* =========================
@@ -65,11 +185,22 @@ function showDashboard() {
 
 function initDashboard() {
 
+    const menuDashboard = document.getElementById('menu-dashboard');
+    if (menuDashboard) {
+        menuDashboard.addEventListener('click', function() {
+            showDashboardView();
+        });
+    }
+
     loadDashboard();
 
 }
 
 // Attach additional UI handlers for pages (Students)
+let allLoadedStudents = [];
+let loadedClassesList = [];
+let studentClassMap = {};
+
 function initStudentsModule() {
     const menuStudents = document.getElementById('menu-students');
     if (menuStudents) {
@@ -83,13 +214,23 @@ function initStudentsModule() {
         addBtn.addEventListener('click', function() { openStudentModal('create'); });
     }
 
+    const batchBtn = document.getElementById('batchQrButton');
+    if (batchBtn) {
+        batchBtn.addEventListener('click', openBatchQrModal);
+    }
+
     const searchInput = document.getElementById('studentSearch');
     if (searchInput) {
         let timer = null;
         searchInput.addEventListener('input', function() {
             clearTimeout(timer);
-            timer = setTimeout(function() { loadStudents(searchInput.value.trim()); }, 300);
+            timer = setTimeout(applyStudentFilters, 250);
         });
+    }
+
+    const classFilter = document.getElementById('studentClassFilter');
+    if (classFilter) {
+        classFilter.addEventListener('change', applyStudentFilters);
     }
 
     // Modal buttons
@@ -101,7 +242,7 @@ function initStudentsModule() {
 }
 
 function showStudentsView() {
-    document.getElementById('dashboardContent').style.display = 'none';
+    hideAllViews();
     document.getElementById('studentsContent').style.display = '';
     // highlight menu
     document.querySelectorAll('.sidebar-menu li').forEach(function(li){ li.classList.remove('active'); });
@@ -117,57 +258,161 @@ function hideStudentsView() {
     document.querySelector('.sidebar-menu li').classList.add('active');
 }
 
+function setStudentClassFilter(classId) {
+    const select = document.getElementById('studentClassFilter');
+    if (select) {
+        select.value = classId || '';
+        applyStudentFilters();
+    }
+}
+
+function applyStudentFilters() {
+    const tbody = document.getElementById('studentsTbody');
+    if (!tbody) return;
+
+    const searchInput = document.getElementById('studentSearch');
+    const q = (searchInput ? searchInput.value : '').trim().toLowerCase();
+
+    const classSelect = document.getElementById('studentClassFilter');
+    const selectedClassId = classSelect ? classSelect.value : '';
+
+    const countText = document.getElementById('studentFilterCountText');
+    const summaryChips = document.getElementById('studentClassSummaryChips');
+
+    // Calculate class counts across full dataset & render summary chips
+    if (summaryChips && Array.isArray(loadedClassesList)) {
+        summaryChips.innerHTML = loadedClassesList.map(function(c) {
+            const count = allLoadedStudents.filter(function(s) { return s.classId === c.classId; }).length;
+            const isSelected = selectedClassId === c.classId;
+            const activeClass = isSelected ? ' active' : '';
+            return '<button type="button" class="class-summary-chip' + activeClass + '" onclick="setStudentClassFilter(\'' + escapeAttr(c.classId) + '\')" title="Klik untuk memfilter ' + escapeHtml(c.className || c.classId) + '">' +
+                '<span class="chip-label">' + escapeHtml(c.className || c.classId) + '</span>' +
+                '<span class="chip-badge">' + count + '</span>' +
+                '</button>';
+        }).join('');
+    }
+
+    // Filter students in-memory
+    let filtered = allLoadedStudents.slice();
+
+    if (selectedClassId) {
+        filtered = filtered.filter(function(s) {
+            return s.classId === selectedClassId;
+        });
+    }
+
+    if (q) {
+        filtered = filtered.filter(function(s) {
+            return (s.studentId || '').toLowerCase().includes(q) ||
+                (s.name || '').toLowerCase().includes(q) ||
+                (s.nis || '').toLowerCase().includes(q) ||
+                (s.nisn || '').toLowerCase().includes(q);
+        });
+    }
+
+    // Update count display
+    if (countText) {
+        if (selectedClassId) {
+            countText.textContent = 'Menampilkan: ' + filtered.length + ' siswa';
+        } else {
+            countText.textContent = 'Total: ' + allLoadedStudents.length + ' siswa';
+        }
+    }
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:#64748b;">Tidak ada data siswa yang sesuai.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = filtered.map(function(s, idx) {
+        const no = idx + 1;
+        const nis = escapeHtml(s.nis || '-');
+        const nisn = escapeHtml(s.nisn || '-');
+        const name = escapeHtml(s.name || '-');
+        const gender = escapeHtml(s.gender || '-');
+        const className = escapeHtml((studentClassMap && studentClassMap[s.classId]) || s.classId || '-');
+        const status = (s.status || 'Active');
+        const statusBadge = (status.toLowerCase() === 'active' || status.toLowerCase() === 'aktif')
+            ? '<span class="status-badge status-badge-active">Aktif</span>'
+            : '<span class="status-badge status-badge-inactive">Tidak Aktif</span>';
+
+        return '<tr class="simata-table-row">' +
+            '<td style="padding:10px 8px;text-align:center;color:#64748b;font-size:12.5px;">' + no + '</td>' +
+            '<td style="padding:10px 8px;text-align:center;font-size:12.5px;font-family:monospace;color:#334155;">' + nis + '</td>' +
+            '<td style="padding:10px 8px;text-align:center;font-size:12.5px;font-family:monospace;color:#334155;">' + nisn + '</td>' +
+            '<td style="padding:10px 14px;text-align:left;font-size:13px;font-weight:600;color:#0f172a;">' + name + '</td>' +
+            '<td style="padding:10px 8px;text-align:center;font-size:12.5px;color:#334155;">' + gender + '</td>' +
+            '<td style="padding:10px 8px;text-align:center;font-size:12.5px;color:#334155;">' + className + '</td>' +
+            '<td style="padding:10px 8px;text-align:center;">' + statusBadge + '</td>' +
+            '<td style="padding:10px 12px;text-align:center;">' +
+              '<div class="student-action-group" style="justify-content:center;">' +
+                '<button type="button" class="btn-action btn-action-edit" onclick="openStudentModal(\'edit\', \'' + escapeAttr(s.studentId) + '\')" title="Edit Siswa">' +
+                  '<svg viewBox="0 0 24 24" class="btn-action-icon"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' +
+                  '<span>Edit</span>' +
+                '</button>' +
+                '<button type="button" class="btn-action btn-action-detail" onclick="openStudentModal(\'view\', \'' + escapeAttr(s.studentId) + '\')" title="Detail Siswa">' +
+                  '<svg viewBox="0 0 24 24" class="btn-action-icon"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>' +
+                  '<span>Detail</span>' +
+                '</button>' +
+                '<button type="button" class="btn-action btn-action-qr" onclick="showStudentQrModal(\'' + escapeAttr(s.studentId) + '\')" title="Lihat QR Siswa">' +
+                  '<svg viewBox="0 0 24 24" class="btn-action-icon"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>' +
+                  '<span>QR</span>' +
+                '</button>' +
+              '</div>' +
+            '</td>' +
+          '</tr>';
+    }).join('');
+}
+
 function loadStudents(filter) {
     const tbody = document.getElementById('studentsTbody');
     if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="6">Memuat...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:#64748b;">Memuat data siswa...</td></tr>';
 
-    // load classes for class select
-    google.script.run.withSuccessHandler(function(classesRes){
-        const classSelect = document.getElementById('f_classId');
-        if (classSelect && classesRes && classesRes.success && Array.isArray(classesRes.classes)) {
-            classSelect.innerHTML = '<option value="">(Pilih Kelas)</option>' + classesRes.classes.map(function(c){
-                return '<option value="'+c.classId+'">'+(c.className || c.classId)+'</option>';
-            }).join('');
+    // load classes for class select and class name mapping
+    google.script.run.withSuccessHandler(function(classesRes) {
+        if (classesRes && classesRes.success && Array.isArray(classesRes.classes)) {
+            loadedClassesList = classesRes.classes;
+            studentClassMap = {};
+            classesRes.classes.forEach(function(c) {
+                studentClassMap[c.classId] = c.className || c.classId;
+            });
+
+            const modalSelect = document.getElementById('f_classId');
+            if (modalSelect) {
+                modalSelect.innerHTML = '<option value="">(Pilih Kelas)</option>' + classesRes.classes.map(function(c) {
+                    return '<option value="' + escapeAttr(c.classId) + '">' + escapeHtml(c.className || c.classId) + '</option>';
+                }).join('');
+            }
+
+            const filterSelect = document.getElementById('studentClassFilter');
+            if (filterSelect) {
+                const currentVal = filterSelect.value;
+                filterSelect.innerHTML = '<option value="">Semua Kelas</option>' + classesRes.classes.map(function(c) {
+                    return '<option value="' + escapeAttr(c.classId) + '">' + escapeHtml(c.className || c.classId) + '</option>';
+                }).join('');
+                filterSelect.value = currentVal || '';
+            }
         }
-    }).withFailureHandler(function(){ /* ignore */ }).getClasses();
+    }).withFailureHandler(function() { /* ignore */ }).getClasses();
 
     google.script.run
-        .withSuccessHandler(function(result){
+        .withSuccessHandler(function(result) {
             if (!result || !result.success) {
-                tbody.innerHTML = '<tr><td colspan="6">Gagal memuat siswa.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:#ef4444;">Gagal memuat siswa.</td></tr>';
                 return;
             }
 
-            let students = result.students || [];
+            allLoadedStudents = result.students || [];
             if (filter) {
-                const q = filter.toLowerCase();
-                students = students.filter(function(s){
-                    return (s.studentId||'').toLowerCase().includes(q) || (s.name||'').toLowerCase().includes(q) || (s.nis||'').toLowerCase().includes(q) || (s.nisn||'').toLowerCase().includes(q);
-                });
+                const searchInput = document.getElementById('studentSearch');
+                if (searchInput) searchInput.value = filter;
             }
-
-            if (students.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6">Tidak ada data.</td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = students.map(function(s){
-                return '<tr>' +
-                    '<td style="padding:8px">'+escapeHtml(s.studentId)+'</td>' +
-                    '<td style="padding:8px">'+escapeHtml(s.name)+'</td>' +
-                    '<td style="padding:8px">'+escapeHtml(s.nis)+'</td>' +
-                    '<td style="padding:8px">'+escapeHtml(s.classId)+'</td>' +
-                    '<td style="padding:8px">'+escapeHtml(s.status)+'</td>' +
-                    '<td style="padding:8px">' +
-                      '<button onclick="openStudentModal(\'edit\', \''+escapeAttr(s.studentId)+'\')" style="margin-right:6px;">Edit</button>' +
-                      '<button onclick="openStudentModal(\'view\', \''+escapeAttr(s.studentId)+'\')">Detail</button>' +
-                    '</td>' +
-                  '</tr>';
-            }).join('');
-
+            applyStudentFilters();
         })
-        .withFailureHandler(function(){ tbody.innerHTML = '<tr><td colspan="6">Gagal memuat siswa.</td></tr>'; })
+        .withFailureHandler(function() {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:#ef4444;">Gagal memuat siswa.</td></tr>';
+        })
         .getStudents();
 }
 
@@ -175,13 +420,15 @@ function openStudentModal(mode, studentId) {
     const modal = document.getElementById('studentModal');
     const title = document.getElementById('studentModalTitle');
     const idField = document.getElementById('f_studentId');
+    const qrField = document.getElementById('f_qrCodeId');
 
     if (!modal) return;
 
     if (mode === 'create') {
         title.textContent = 'Tambah Siswa';
-        idField.disabled = false; idField.value = '';
-        ['f_nis','f_nisn','f_name','f_gender','f_classId','f_status','f_birthDate','f_qrCodeId'].forEach(function(k){
+        idField.disabled = true; idField.value = '';
+        if (qrField) { qrField.disabled = true; qrField.value = ''; }
+        ['f_nis','f_nisn','f_name','f_gender','f_classId','f_status','f_birthDate'].forEach(function(k){
             const el = document.getElementById(k); if (el) el.value = '';
         });
         modal.style.display = 'flex';
@@ -204,7 +451,7 @@ function openStudentModal(mode, studentId) {
         document.getElementById('f_classId').value = s.classId || '';
         document.getElementById('f_status').value = s.status || 'Active';
         document.getElementById('f_birthDate').value = s.birthDate || '';
-        document.getElementById('f_qrCodeId').value = s.qrCodeId || '';
+        if (qrField) { qrField.value = s.qrCodeId || ''; qrField.disabled = true; }
         modal.style.display = 'flex';
     }).withFailureHandler(function(){ alert('Gagal memuat data siswa.'); }).getStudentById(studentId);
 }
@@ -222,36 +469,421 @@ function saveStudentFromModal() {
     const birthDate = document.getElementById('f_birthDate').value;
     const qrCodeId = document.getElementById('f_qrCodeId').value.trim();
 
-    if (!id) { alert('studentId wajib diisi.'); return; }
     if (!name) { alert('Name wajib diisi.'); return; }
     if (!classId) { alert('Class harus dipilih.'); return; }
 
     const payload = { studentId: id, nis: nis, nisn: nisn, name: name, gender: gender, classId: classId, status: status, birthDate: birthDate, qrCodeId: qrCodeId };
 
-    // determine create or update by whether studentId exists already (fetch)
-    google.script.run.withSuccessHandler(function(res){
-        if (res && res.success) {
-            // exists -> update
-            google.script.run.withSuccessHandler(function(uRes){
-                if (uRes && uRes.success) {
-                    closeStudentModal(); loadStudents();
-                    alert('Data siswa berhasil diperbarui.');
-                } else {
-                    alert((uRes && uRes.message) || 'Gagal memperbarui siswa.');
+    if (id) {
+        // exists -> update
+        google.script.run.withSuccessHandler(function(uRes){
+            if (uRes && uRes.success) {
+                closeStudentModal(); loadStudents();
+                showToast("success", "Berhasil", "Data siswa berhasil diperbarui");
+            } else {
+                alert((uRes && uRes.message) || 'Gagal memperbarui siswa.');
+            }
+        }).withFailureHandler(function(){ alert('Gagal memperbarui siswa.'); }).updateStudent(id, payload);
+    } else {
+        // create -> server generates studentId & qrCodeId
+        google.script.run.withSuccessHandler(function(cRes){
+            if (cRes && cRes.success) {
+                closeStudentModal(); loadStudents();
+                showToast("success", "Berhasil", "Siswa berhasil ditambahkan.");
+            } else {
+                alert((cRes && cRes.message) || 'Gagal menambahkan siswa.');
+            }
+        }).withFailureHandler(function(){ alert('Gagal menambahkan siswa.'); }).createStudent(payload);
+    }
+}
+
+let currentPreviewStudent = null;
+
+function showStudentQrModal(studentId) {
+    if (!studentId) return;
+
+    google.script.run
+        .withSuccessHandler(function(res) {
+            if (!res || !res.success || !res.student) {
+                alert((res && res.message) || 'Data siswa tidak ditemukan.');
+                return;
+            }
+            const s = res.student;
+            currentPreviewStudent = s;
+
+            document.getElementById('sqr_name').textContent = s.name || '-';
+            document.getElementById('sqr_studentId').textContent = s.studentId || '-';
+            document.getElementById('sqr_qrCodeId').textContent = s.qrCodeId || '-';
+
+            const qrContainer = document.getElementById('studentQrContainer');
+            qrContainer.innerHTML = '';
+
+            const qrValue = (s.qrCodeId || '').trim();
+            if (!qrValue) {
+                qrContainer.innerHTML = '<span style="color:#ef4444;font-size:0.9rem;">QR Code ID tidak tersedia.</span>';
+            } else {
+                try {
+                    new QRCode(qrContainer, {
+                        text: qrValue,
+                        width: 180,
+                        height: 180,
+                        colorDark: '#000000',
+                        colorLight: '#ffffff',
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                } catch (err) {
+                    console.error('Error generating QR code:', err);
+                    qrContainer.innerHTML = '<span style="color:#ef4444;">Gagal membuat QR Code.</span>';
                 }
-            }).withFailureHandler(function(){ alert('Gagal memperbarui siswa.'); }).updateStudent(id, payload);
-        } else {
-            // create
-            google.script.run.withSuccessHandler(function(cRes){
-                if (cRes && cRes.success) {
-                    closeStudentModal(); loadStudents();
-                    alert('Siswa berhasil ditambahkan.');
-                } else {
-                    alert((cRes && cRes.message) || 'Gagal menambahkan siswa.');
+            }
+
+            const modal = document.getElementById('studentQrModal');
+            if (modal) modal.style.display = 'flex';
+        })
+        .withFailureHandler(function() {
+            alert('Gagal memuat data siswa untuk QR.');
+        })
+        .getStudentById(studentId);
+}
+
+function closeStudentQrModal() {
+    const modal = document.getElementById('studentQrModal');
+    if (modal) modal.style.display = 'none';
+    currentPreviewStudent = null;
+}
+
+function printStudentQr() {
+    if (!currentPreviewStudent) {
+        alert('Data siswa tidak tersedia untuk dicetak.');
+        return;
+    }
+
+    const qrContainer = document.getElementById('studentQrContainer');
+    const qrImg = qrContainer.querySelector('img') || qrContainer.querySelector('canvas');
+    if (!qrImg) {
+        alert('QR code belum siap untuk dicetak.');
+        return;
+    }
+
+    let qrSrc = '';
+    if (qrImg.tagName.toLowerCase() === 'img') {
+        qrSrc = qrImg.src;
+    } else if (qrImg.tagName.toLowerCase() === 'canvas') {
+        qrSrc = qrImg.toDataURL('image/png');
+    }
+
+    const s = currentPreviewStudent;
+    const printWindow = window.open('', '_blank', 'width=450,height=550');
+    if (!printWindow) {
+        alert('Popup diblokir oleh browser. Izinkan popup untuk mencetak QR.');
+        return;
+    }
+
+    const html = '<!DOCTYPE html>' +
+        '<html><head><title>Cetak QR Siswa - ' + escapeHtml(s.name) + '</title>' +
+        '<style>' +
+        '@page { size: auto; margin: 15mm; }' +
+        'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #fff; }' +
+        '.qr-card { border: 2px solid #0f172a; border-radius: 12px; padding: 24px; text-align: center; width: 280px; box-sizing: border-box; page-break-inside: avoid; }' +
+        '.school-header { font-size: 14px; font-weight: bold; color: #0f172a; margin-bottom: 2px; }' +
+        '.school-sub { font-size: 11px; color: #64748b; margin-bottom: 16px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 8px; }' +
+        '.qr-img { width: 180px; height: 180px; margin: 0 auto 16px auto; display: block; }' +
+        '.student-name { font-size: 16px; font-weight: bold; color: #0f172a; margin-bottom: 6px; word-break: break-word; }' +
+        '.student-meta { font-size: 12px; color: #475569; line-height: 1.5; }' +
+        '.qr-id { font-family: monospace; font-weight: bold; color: #1e40af; font-size: 13px; margin-top: 4px; }' +
+        '</style></head><body>' +
+        '<div class="qr-card">' +
+        '<div class="school-header">SIMATA - MA AT-TAUJIH</div>' +
+        '<div class="school-sub">KARTU IDENTITAS PRESENSI SISWA</div>' +
+        '<img class="qr-img" src="' + qrSrc + '" alt="QR Code" />' +
+        '<div class="student-name">' + escapeHtml(s.name) + '</div>' +
+        '<div class="student-meta">' +
+        '<div><strong>Student ID:</strong> ' + escapeHtml(s.studentId) + '</div>' +
+        '<div><strong>Kelas:</strong> ' + escapeHtml(s.classId || '-') + '</div>' +
+        '<div class="qr-id">' + escapeHtml(s.qrCodeId || '-') + '</div>' +
+        '</div></div>' +
+        '<script>' +
+        'window.onload = function() { window.print(); setTimeout(function() { window.close(); }, 500); };' +
+        '<' + '/script>' +
+        '</body></html>';
+
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+}
+
+/* =========================
+   BATCH STUDENT QR PER CLASS
+========================= */
+
+let batchLoadedStudents = [];
+let batchClassMap = {};
+
+function openBatchQrModal() {
+    const modal = document.getElementById('batchQrModal');
+    if (!modal) return;
+
+    const select = document.getElementById('batchClassSelect');
+    const countBadge = document.getElementById('batchCountBadge');
+    const warnNotice = document.getElementById('batchWarningNotice');
+    const readyNotice = document.getElementById('batchReadyNotice');
+    const emptyNotice = document.getElementById('batchPreviewEmpty');
+    const grid = document.getElementById('batchPreviewGrid');
+    const printBtn = document.getElementById('printBatchBtn');
+
+    if (select) select.innerHTML = '<option value="">Memuat daftar kelas...</option>';
+    if (countBadge) countBadge.textContent = '0 siswa';
+    if (warnNotice) { warnNotice.style.display = 'none'; warnNotice.textContent = ''; }
+    if (readyNotice) readyNotice.textContent = '';
+    if (emptyNotice) { emptyNotice.style.display = 'block'; emptyNotice.textContent = 'Silakan pilih kelas dan klik Tampilkan QR untuk memuat pratinjau kartu.'; }
+    if (grid) { grid.style.display = 'none'; grid.innerHTML = ''; }
+    if (printBtn) printBtn.disabled = true;
+
+    batchLoadedStudents = [];
+    batchClassMap = {};
+
+    modal.style.display = 'flex';
+
+    // Fetch classes and students in parallel
+    google.script.run
+        .withSuccessHandler(function(classRes) {
+            if (!classRes || !classRes.success || !Array.isArray(classRes.classes)) {
+                if (select) select.innerHTML = '<option value="">Gagal memuat kelas</option>';
+                return;
+            }
+
+            batchClassMap = {};
+            classRes.classes.forEach(function(c) {
+                batchClassMap[c.classId] = c.className || c.classId;
+            });
+
+            if (select) {
+                select.innerHTML = '<option value="">(Pilih Kelas)</option>' + classRes.classes.map(function(c) {
+                    return '<option value="' + escapeAttr(c.classId) + '">' + escapeHtml(c.className || c.classId) + ' (' + escapeHtml(c.classId) + ')</option>';
+                }).join('');
+            }
+
+            // Also load students for quick count calculation
+            google.script.run
+                .withSuccessHandler(function(sRes) {
+                    if (sRes && sRes.success && Array.isArray(sRes.students)) {
+                        batchLoadedStudents = sRes.students;
+                    }
+                })
+                .getStudents();
+        })
+        .withFailureHandler(function() {
+            if (select) select.innerHTML = '<option value="">Gagal memuat kelas</option>';
+        })
+        .getClasses();
+}
+
+function closeBatchQrModal() {
+    const modal = document.getElementById('batchQrModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function renderBatchQrPreview() {
+    const select = document.getElementById('batchClassSelect');
+    const classId = select ? select.value : '';
+    const warnNotice = document.getElementById('batchWarningNotice');
+    const readyNotice = document.getElementById('batchReadyNotice');
+    const emptyNotice = document.getElementById('batchPreviewEmpty');
+    const grid = document.getElementById('batchPreviewGrid');
+    const printBtn = document.getElementById('printBatchBtn');
+    const countBadge = document.getElementById('batchCountBadge');
+
+    if (!classId) {
+        alert('Silakan pilih kelas terlebih dahulu.');
+        return;
+    }
+
+    if (warnNotice) { warnNotice.style.display = 'none'; warnNotice.textContent = ''; }
+    if (emptyNotice) { emptyNotice.style.display = 'block'; emptyNotice.textContent = 'Memuat data siswa kelas...'; }
+    if (grid) { grid.style.display = 'none'; grid.innerHTML = ''; }
+    if (printBtn) printBtn.disabled = true;
+
+    // Fresh fetch of students to ensure latest state
+    google.script.run
+        .withSuccessHandler(function(res) {
+            if (!res || !res.success || !Array.isArray(res.students)) {
+                if (emptyNotice) emptyNotice.textContent = 'Gagal memuat daftar siswa.';
+                return;
+            }
+
+            batchLoadedStudents = res.students;
+            const classStudents = batchLoadedStudents.filter(function(s) {
+                return s.classId === classId;
+            });
+
+            if (countBadge) countBadge.textContent = classStudents.length + ' siswa';
+
+            if (classStudents.length === 0) {
+                if (emptyNotice) {
+                    emptyNotice.style.display = 'block';
+                    emptyNotice.textContent = 'Tidak ada siswa yang terdaftar pada kelas ini.';
                 }
-            }).withFailureHandler(function(){ alert('Gagal menambahkan siswa.'); }).createStudent(payload);
+                return;
+            }
+
+            const validStudents = [];
+            const invalidStudents = [];
+
+            classStudents.forEach(function(s) {
+                if (s.qrCodeId && String(s.qrCodeId).trim() !== '') {
+                    validStudents.push(s);
+                } else {
+                    invalidStudents.push(s);
+                }
+            });
+
+            if (invalidStudents.length > 0 && warnNotice) {
+                warnNotice.style.display = 'block';
+                warnNotice.textContent = invalidStudents.length + ' siswa dalam kelas ini belum memiliki QR Code ID dan tidak disertakan dalam pratinjau/cetak (' + invalidStudents.map(function(s){ return s.name; }).join(', ') + ').';
+            }
+
+            if (validStudents.length === 0) {
+                if (emptyNotice) {
+                    emptyNotice.style.display = 'block';
+                    emptyNotice.textContent = 'Seluruh siswa pada kelas ini belum memiliki QR Code ID.';
+                }
+                return;
+            }
+
+            if (emptyNotice) emptyNotice.style.display = 'none';
+            if (grid) {
+                grid.style.display = 'grid';
+                grid.innerHTML = '';
+            }
+
+            const classNameStr = batchClassMap[classId] || classId;
+
+            validStudents.forEach(function(s, idx) {
+                const card = document.createElement('div');
+                card.className = 'batch-qr-card-preview';
+                card.style.background = '#ffffff';
+                card.style.border = '1px solid #cbd5e1';
+                card.style.borderRadius = '8px';
+                card.style.padding = '12px';
+                card.style.textAlign = 'center';
+                card.style.display = 'flex';
+                card.style.flexDirection = 'column';
+                card.style.alignItems = 'center';
+                card.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
+
+                const qrBox = document.createElement('div');
+                qrBox.id = 'batch_qr_box_' + idx;
+                qrBox.style.width = '140px';
+                qrBox.style.height = '140px';
+                qrBox.style.display = 'flex';
+                qrBox.style.alignItems = 'center';
+                qrBox.style.justifyContent = 'center';
+                qrBox.style.marginBottom = '8px';
+
+                card.appendChild(qrBox);
+
+                const infoBox = document.createElement('div');
+                infoBox.style.width = '100%';
+                infoBox.style.fontSize = '0.8rem';
+                infoBox.style.color = '#334155';
+                infoBox.style.lineHeight = '1.4';
+                infoBox.innerHTML = '<div style="font-weight:700;font-size:0.85rem;color:#0f172a;margin-bottom:2px;word-break:break-word;">' + escapeHtml(s.name) + '</div>' +
+                    '<div><strong>ID:</strong> ' + escapeHtml(s.studentId) + ' | <strong>Kelas:</strong> ' + escapeHtml(classNameStr) + '</div>' +
+                    '<div style="font-family:monospace;font-weight:600;color:#2563eb;font-size:0.8rem;margin-top:2px;">' + escapeHtml(s.qrCodeId) + '</div>';
+
+                card.appendChild(infoBox);
+                grid.appendChild(card);
+
+                // Render QRCode using QRCode.js
+                try {
+                    new QRCode(qrBox, {
+                        text: String(s.qrCodeId).trim(),
+                        width: 140,
+                        height: 140,
+                        colorDark: '#000000',
+                        colorLight: '#ffffff',
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                } catch (e) {
+                    console.error('Error rendering QR for student:', s.studentId, e);
+                    qrBox.innerHTML = '<span style="color:#ef4444;font-size:0.75rem;">Gagal Render</span>';
+                }
+            });
+
+            if (readyNotice) {
+                readyNotice.textContent = validStudents.length + ' kartu siap dicetak.';
+            }
+            if (printBtn) {
+                printBtn.disabled = false;
+            }
+        })
+        .withFailureHandler(function() {
+            if (emptyNotice) emptyNotice.textContent = 'Gagal menghubungi server untuk memuat siswa.';
+        })
+        .getStudents();
+}
+
+function printBatchQr() {
+    const grid = document.getElementById('batchPreviewGrid');
+    if (!grid) return;
+
+    const cards = grid.querySelectorAll('.batch-qr-card-preview');
+    if (cards.length === 0) {
+        alert('Tidak ada kartu QR yang siap dicetak.');
+        return;
+    }
+
+    const select = document.getElementById('batchClassSelect');
+    const classId = select ? select.value : '';
+    const classNameStr = (batchClassMap && batchClassMap[classId]) || classId || 'Kelas';
+
+    const printWindow = window.open('', '_blank', 'width=900,height=700');
+    if (!printWindow) {
+        alert('Popup diblokir oleh browser. Izinkan popup untuk mencetak QR.');
+        return;
+    }
+
+    let cardsHtml = '';
+    cards.forEach(function(card) {
+        const img = card.querySelector('img') || card.querySelector('canvas');
+        let src = '';
+        if (img) {
+            src = img.tagName.toLowerCase() === 'img' ? img.src : img.toDataURL('image/png');
         }
-    }).withFailureHandler(function(){ alert('Gagal memeriksa keberadaan siswa.'); }).getStudentById(id);
+
+        const infoDiv = card.children[1];
+        const infoHtml = infoDiv ? infoDiv.innerHTML : '';
+
+        cardsHtml += '<div class="print-qr-card">' +
+            '<div class="school-header">SIMATA - MA AT-TAUJIH</div>' +
+            '<div class="school-sub">KARTU IDENTITAS PRESENSI SISWA</div>' +
+            '<img class="qr-img" src="' + src + '" alt="QR" />' +
+            '<div class="card-info">' + infoHtml + '</div>' +
+            '</div>';
+    });
+
+    const html = '<!DOCTYPE html>' +
+        '<html><head><title>Cetak QR Siswa - ' + escapeHtml(classNameStr) + '</title>' +
+        '<style>' +
+        '@page { size: A4 portrait; margin: 10mm; }' +
+        'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; background: #fff; }' +
+        '.print-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }' +
+        '.print-qr-card { border: 1.5px solid #0f172a; border-radius: 8px; padding: 12px; text-align: center; page-break-inside: avoid; break-inside: avoid; background: #fff; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; }' +
+        '.school-header { font-size: 11px; font-weight: bold; color: #0f172a; margin-bottom: 2px; }' +
+        '.school-sub { font-size: 9px; color: #64748b; margin-bottom: 8px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 4px; width: 100%; }' +
+        '.qr-img { width: 130px; height: 130px; margin: 0 auto 8px auto; display: block; }' +
+        '.card-info { font-size: 11px; color: #334155; line-height: 1.3; width: 100%; word-break: break-word; }' +
+        '@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }' +
+        '</style></head><body>' +
+        '<div class="print-grid">' + cardsHtml + '</div>' +
+        '<script>' +
+        'window.onload = function() { window.print(); setTimeout(function() { window.close(); }, 500); };' +
+        '<' + '/script>' +
+        '</body></html>';
+
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
 }
 
 function escapeHtml(s) { if (s === null || s === undefined) return ''; return String(s).replace(/[&<>\"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
@@ -307,8 +939,7 @@ function initTeachersModule() {
 }
 
 function showTeachersView() {
-    document.getElementById('dashboardContent').style.display = 'none';
-    document.getElementById('studentsContent').style.display = 'none';
+    hideAllViews();
     document.getElementById('teachersContent').style.display = '';
     document.querySelectorAll('.sidebar-menu li').forEach(function(li){ li.classList.remove('active'); });
     const menu = document.getElementById('menu-teachers'); if (menu) menu.classList.add('active');
@@ -355,8 +986,9 @@ function openTeacherModal(mode, teacherId) {
     const idField = document.getElementById('t_teacherId');
 
     if (mode === 'create') {
-        title.textContent = 'Tambah Guru'; idField.disabled = false; idField.value = '';
-        ['t_nip','t_nuptk','t_name','t_position','t_subject','t_status','t_qrCodeId'].forEach(function(k){ const el = document.getElementById(k); if (el) el.value = ''; });
+        title.textContent = 'Tambah Guru';
+        idField.disabled = true; idField.value = '';
+        ['t_nip','t_nuptk','t_name','t_position','t_subject','t_status'].forEach(function(k){ const el = document.getElementById(k); if (el) el.value = ''; });
         modal.style.display = 'flex'; return;
     }
 
@@ -372,7 +1004,6 @@ function openTeacherModal(mode, teacherId) {
         document.getElementById('t_position').value = t.position || '';
         document.getElementById('t_subject').value = t.subject || '';
         document.getElementById('t_status').value = t.status || 'Active';
-        document.getElementById('t_qrCodeId').value = t.qrCodeId || '';
         modal.style.display = 'flex';
     }).withFailureHandler(function(){ alert('Gagal memuat data guru.'); }).getTeacherById(teacherId);
 }
@@ -387,22 +1018,32 @@ function saveTeacherFromModal() {
     const position = document.getElementById('t_position').value.trim();
     const subject = document.getElementById('t_subject').value.trim();
     const status = document.getElementById('t_status').value;
-    const qrCodeId = document.getElementById('t_qrCodeId').value.trim();
 
-    if (!id) { alert('teacherId wajib diisi.'); return; }
     if (!name) { alert('Name wajib diisi.'); return; }
 
-    const payload = { teacherId: id, nip: nip, nuptk: nuptk, name: name, position: position, subject: subject, status: status, qrCodeId: qrCodeId };
+    const payload = { teacherId: id, nip: nip, nuptk: nuptk, name: name, position: position, subject: subject, status: status };
 
-    google.script.run.withSuccessHandler(function(res){
-        if (res && res.success) {
-            // exists -> update
-            google.script.run.withSuccessHandler(function(uRes){ if (uRes && uRes.success) { closeTeacherModal(); loadTeachers(); alert('Data guru berhasil diperbarui.'); } else { alert((uRes && uRes.message) || 'Gagal memperbarui guru.'); } }).withFailureHandler(function(){ alert('Gagal memperbarui guru.'); }).updateTeacher(payload);
-        } else {
-            // create
-            google.script.run.withSuccessHandler(function(cRes){ if (cRes && cRes.success) { closeTeacherModal(); loadTeachers(); alert('Guru berhasil ditambahkan.'); } else { alert((cRes && cRes.message) || 'Gagal menambahkan guru.'); } }).withFailureHandler(function(){ alert('Gagal menambahkan guru.'); }).createTeacher(payload);
-        }
-    }).withFailureHandler(function(){ alert('Gagal memeriksa keberadaan guru.'); }).getTeacherById(id);
+    if (id) {
+        // exists -> update
+        google.script.run.withSuccessHandler(function(uRes){
+            if (uRes && uRes.success) {
+                closeTeacherModal(); loadTeachers();
+                showToast("success", "Berhasil", "Data guru berhasil diperbarui.");
+            } else {
+                alert((uRes && uRes.message) || 'Gagal memperbarui guru.');
+            }
+        }).withFailureHandler(function(){ alert('Gagal memperbarui guru.'); }).updateTeacher(payload);
+    } else {
+        // create -> server generates teacherId
+        google.script.run.withSuccessHandler(function(cRes){
+            if (cRes && cRes.success) {
+                closeTeacherModal(); loadTeachers();
+                showToast("success", "Berhasil", "Guru berhasil ditambahkan.");
+            } else {
+                alert((cRes && cRes.message) || 'Gagal menambahkan guru.');
+            }
+        }).withFailureHandler(function(){ alert('Gagal menambahkan guru.'); }).createTeacher(payload);
+    }
 }
 
 // Classes module
@@ -415,9 +1056,7 @@ function initClassesModule() {
 }
 
 function showClassesView() {
-    document.getElementById('dashboardContent').style.display = 'none';
-    document.getElementById('studentsContent').style.display = 'none';
-    document.getElementById('teachersContent').style.display = 'none';
+    hideAllViews();
     document.getElementById('classesContent').style.display = '';
     document.querySelectorAll('.sidebar-menu li').forEach(function(li){ li.classList.remove('active'); });
     const menu = document.getElementById('menu-classes'); if (menu) menu.classList.add('active');
@@ -426,19 +1065,9 @@ function showClassesView() {
 
 function loadClasses(filter) {
     const tbody = document.getElementById('classesTbody'); if (!tbody) return; tbody.innerHTML = '<tr><td colspan="7">Memuat...</td></tr>';
-
-    // preload teachers for homeroom select
-    google.script.run.withSuccessHandler(function(teachersRes){
-        const teacherSelect = document.getElementById('c_homeroomTeacherId');
-        if (teacherSelect && teachersRes && teachersRes.success && Array.isArray(teachersRes.teachers)) {
-            teacherSelect.innerHTML = '<option value="">(Pilih Wali Kelas)</option>' + teachersRes.teachers.map(function(t){ return '<option value="'+t.teacherId+'">'+(t.name || t.teacherId)+'</option>'; }).join('');
-        }
-    }).withFailureHandler(function(){ /* ignore */ }).getTeachers();
-
     google.script.run.withSuccessHandler(function(result){
         if (!result || !result.success) { tbody.innerHTML = '<tr><td colspan="7">Gagal memuat kelas.</td></tr>'; return; }
-        let classes = result.classes || [];
-        if (filter) { const q = filter.toLowerCase(); classes = classes.filter(function(c){ return (c.classId||'').toLowerCase().includes(q) || (c.className||'').toLowerCase().includes(q); }); }
+        const classes = result.classes || [];
         if (classes.length === 0) { tbody.innerHTML = '<tr><td colspan="7">Tidak ada data.</td></tr>'; return; }
         tbody.innerHTML = classes.map(function(c){ return '<tr>' +
             '<td style="padding:8px">'+escapeHtml(c.classId)+'</td>' +
@@ -452,34 +1081,63 @@ function loadClasses(filter) {
               '<button onclick="openClassModal(\'view\', \''+escapeAttr(c.classId)+'\')">Detail</button>' +
             '</td>' +
           '</tr>'; }).join('');
-    }).withFailureHandler(function(){ tbody.innerHTML = '<tr><td colspan="7">Gagal memuat kelas.</td></tr>'; }).getClasses();
+    }).withFailureHandler(function(){ tbody.innerHTML = '<tr><td colspan="7">Gagal memuat kelas.</td></tr>'; }).getClasses(filter ? { search: filter } : {});
 }
 
 function openClassModal(mode, classId) {
-    const modal = document.getElementById('classModal'); if (!modal) return; const title = document.getElementById('classModalTitle'); const idField = document.getElementById('c_classId');
-    if (mode === 'create') { title.textContent = 'Tambah Kelas'; idField.disabled = false; idField.value = ''; ['c_className','c_level','c_academicYear','c_homeroomTeacherId','c_status'].forEach(function(k){ const el = document.getElementById(k); if (el) el.value = ''; }); modal.style.display = 'flex'; return; }
-    if (!classId) return; title.textContent = mode === 'edit' ? 'Edit Kelas' : 'Detail Kelas';
-    // preload teachers
-    google.script.run.withSuccessHandler(function(teachersRes){ const teacherSelect = document.getElementById('c_homeroomTeacherId'); if (teacherSelect && teachersRes && teachersRes.success && Array.isArray(teachersRes.teachers)) { teacherSelect.innerHTML = '<option value="">(Pilih Wali Kelas)</option>' + teachersRes.teachers.map(function(t){ return '<option value="'+t.teacherId+'">'+(t.name || t.teacherId)+'</option>'; }).join(''); } }).withFailureHandler(function(){}).getTeachers();
-    google.script.run.withSuccessHandler(function(res){ if (!res || !res.success) { alert('Data kelas tidak ditemukan.'); return; } const c = res.class; idField.value = c.classId || ''; idField.disabled = true; document.getElementById('c_className').value = c.className || ''; document.getElementById('c_level').value = c.level || ''; document.getElementById('c_academicYear').value = c.academicYear || ''; document.getElementById('c_homeroomTeacherId').value = c.homeroomTeacherId || ''; document.getElementById('c_status').value = c.status || 'Active'; modal.style.display = 'flex'; }).withFailureHandler(function(){ alert('Gagal memuat data kelas.'); }).getClassById(classId);
+    const modal = document.getElementById('classModal'); if (!modal) return; const title = document.getElementById('classModalTitle');
+    const idField = document.getElementById('c_classId');
+    if (mode === 'create') {
+        title.textContent = 'Tambah Kelas'; idField.disabled = true; idField.value = '';
+        ['c_className','c_level','c_academicYear','c_homeroomTeacherId','c_status'].forEach(function(k){ const el = document.getElementById(k); if (el) el.value = ''; });
+        modal.style.display = 'flex'; return;
+    }
+    if (!classId) return;
+    title.textContent = mode === 'edit' ? 'Edit Kelas' : 'Detail Kelas';
+    google.script.run.withSuccessHandler(function(res){ if (!res || !res.success) { alert('Data kelas tidak ditemukan.'); return; } const c = res.classObj || res.class; idField.value = c.classId || ''; idField.disabled = true; document.getElementById('c_className').value = c.className || ''; document.getElementById('c_level').value = c.level || ''; document.getElementById('c_academicYear').value = c.academicYear || ''; document.getElementById('c_homeroomTeacherId').value = c.homeroomTeacherId || ''; document.getElementById('c_status').value = c.status || 'Active'; if (mode === 'view') { Array.from(modal.querySelectorAll('input,select,button')).forEach(function(el){ if (el.id !== 'classCancelBtn') el.disabled = true; }); } else { Array.from(modal.querySelectorAll('input,select,button')).forEach(function(el){ el.disabled = false; }); document.getElementById('classCancelBtn').disabled = false; } modal.style.display = 'flex'; }).withFailureHandler(function(){ alert('Gagal memuat data kelas.'); }).getClassById(classId);
 }
 
 function closeClassModal() { const m = document.getElementById('classModal'); if (m) m.style.display = 'none'; }
 
 function saveClassFromModal() {
+    const saveBtn = document.getElementById('classSaveBtn');
     const id = document.getElementById('c_classId').value.trim();
-    const className = document.getElementById('c_className').value.trim();
+    const name = document.getElementById('c_className').value.trim();
     const level = document.getElementById('c_level').value.trim();
     const academicYear = document.getElementById('c_academicYear').value.trim();
-    const homeroomTeacherId = document.getElementById('c_homeroomTeacherId').value;
+    const homeroom = document.getElementById('c_homeroomTeacherId').value;
     const status = document.getElementById('c_status').value;
-    if (!id) { alert('classId wajib diisi.'); return; }
-    if (!className) { alert('className wajib diisi.'); return; }
-    if (!academicYear) { alert('academicYear wajib diisi.'); return; }
-    if (!homeroomTeacherId) { alert('Wali kelas harus dipilih.'); return; }
-    const payload = { classId: id, className: className, level: level, academicYear: academicYear, homeroomTeacherId: homeroomTeacherId, status: status };
-    // check existence
-    google.script.run.withSuccessHandler(function(res){ if (res && res.success) { google.script.run.withSuccessHandler(function(uRes){ if (uRes && uRes.success) { closeClassModal(); loadClasses(); alert('Data kelas berhasil diperbarui.'); } else { alert((uRes && uRes.message) || 'Gagal memperbarui kelas.'); } }).withFailureHandler(function(){ alert('Gagal memperbarui kelas.'); }).updateClass(payload); } else { google.script.run.withSuccessHandler(function(cRes){ if (cRes && cRes.success) { closeClassModal(); loadClasses(); alert('Kelas berhasil ditambahkan.'); } else { alert((cRes && cRes.message) || 'Gagal menambahkan kelas.'); } }).withFailureHandler(function(){ alert('Gagal menambahkan kelas.'); }).createClass(payload); } }).withFailureHandler(function(){ alert('Gagal memeriksa keberadaan kelas.'); }).getClassById(id);
+
+    if (!name) { alert('Class Name wajib diisi.'); return; }
+    if (!academicYear) { alert('Academic Year wajib diisi.'); return; }
+    if (!level) { alert('Level wajib diisi.'); return; }
+
+    const payload = { classId: id, className: name, level: level, academicYear: academicYear, homeroomTeacherId: homeroom, status: status };
+    saveBtn.disabled = true; saveBtn.textContent = 'Menyimpan...';
+
+    if (id) {
+        // exists -> update
+        google.script.run.withSuccessHandler(function(uRes){
+            saveBtn.disabled = false; saveBtn.textContent = 'Simpan';
+            if (uRes && uRes.success) {
+                closeClassModal(); loadClasses();
+                showToast("success", "Berhasil", "Data kelas berhasil diperbarui.");
+            } else {
+                alert((uRes && uRes.message) || 'Gagal memperbarui kelas.');
+            }
+        }).withFailureHandler(function(){ saveBtn.disabled = false; saveBtn.textContent = 'Simpan'; alert('Gagal memperbarui kelas.'); }).updateClass(payload);
+    } else {
+        // create -> server generates classId
+        google.script.run.withSuccessHandler(function(cRes){
+            saveBtn.disabled = false; saveBtn.textContent = 'Simpan';
+            if (cRes && cRes.success) {
+                closeClassModal(); loadClasses();
+                showToast("success", "Berhasil", "Kelas berhasil ditambahkan.");
+            } else {
+                alert((cRes && cRes.message) || 'Gagal menambahkan kelas.');
+            }
+        }).withFailureHandler(function(){ saveBtn.disabled = false; saveBtn.textContent = 'Simpan'; alert('Gagal menambahkan kelas.'); }).createClass(payload);
+    }
 }
 
 /* =========================
@@ -487,9 +1145,19 @@ function saveClassFromModal() {
 ========================= */
 
 function initGradesModule() {
-    const menu = document.getElementById('menu-grades'); if (menu) menu.addEventListener('click', function(){ showGradesView(); });
-    const addBtn = document.getElementById('addGradeButton'); if (addBtn) addBtn.addEventListener('click', function(){ openGradeModal('create'); });
-    const filterBtn = document.getElementById('filterGradeButton'); if (filterBtn) filterBtn.addEventListener('click', function(){ loadGrades(); });
+    const menuGrades = document.getElementById('menu-grades');
+    if (menuGrades) {
+        menuGrades.addEventListener('click', function() {
+            showGradesView();
+        });
+    }
+
+    const addBtn = document.getElementById('addGradeButton');
+    if (addBtn) addBtn.addEventListener('click', function(){ openGradeModal('create'); });
+
+    const filterBtn = document.getElementById('filterGradeButton');
+    if (filterBtn) filterBtn.addEventListener('click', function(){ loadGrades(); });
+
     const searchInput = document.getElementById('gradeSearch'); if (searchInput) { let timer = null; searchInput.addEventListener('input', function(){ clearTimeout(timer); timer = setTimeout(function(){ loadGrades(searchInput.value.trim()); }, 300); }); }
     const cancelBtn = document.getElementById('gradeCancelBtn'); if (cancelBtn) cancelBtn.addEventListener('click', closeGradeModal);
     const saveBtn = document.getElementById('gradeSaveBtn'); if (saveBtn) saveBtn.addEventListener('click', saveGradeFromModal);
@@ -498,14 +1166,8 @@ function initGradesModule() {
 }
 
 function showGradesView() {
-    document.getElementById('dashboardContent').style.display = 'none';
-    document.getElementById('studentsContent').style.display = 'none';
-    document.getElementById('teachersContent').style.display = 'none';
-    document.getElementById('classesContent').style.display = 'none';
+    hideAllViews();
     document.getElementById('gradesContent').style.display = '';
-    document.getElementById('attendanceContent').style.display = 'none';
-    document.getElementById('teacherAttendanceContent').style.display = 'none';
-    document.getElementById('journalContent').style.display = 'none';
     document.querySelectorAll('.sidebar-menu li').forEach(function(li){ li.classList.remove('active'); });
     const menu = document.getElementById('menu-grades'); if (menu) menu.classList.add('active');
     loadGrades();
@@ -790,10 +1452,7 @@ function initAttendanceModule() {
 }
 
 function showAttendanceView() {
-    document.getElementById('dashboardContent').style.display = 'none';
-    document.getElementById('studentsContent').style.display = 'none';
-    document.getElementById('teachersContent').style.display = 'none';
-    document.getElementById('classesContent').style.display = 'none';
+    hideAllViews();
     document.getElementById('attendanceContent').style.display = '';
     document.querySelectorAll('.sidebar-menu li').forEach(function(li){ li.classList.remove('active'); });
     const menu = document.getElementById('menu-attendance'); if (menu) menu.classList.add('active');
@@ -906,11 +1565,7 @@ function initTeacherAttendanceModule() {
 }
 
 function showTeacherAttendanceView() {
-    document.getElementById('dashboardContent').style.display = 'none';
-    document.getElementById('studentsContent').style.display = 'none';
-    document.getElementById('teachersContent').style.display = 'none';
-    document.getElementById('classesContent').style.display = 'none';
-    document.getElementById('attendanceContent').style.display = 'none';
+    hideAllViews();
     document.getElementById('teacherAttendanceContent').style.display = '';
     document.querySelectorAll('.sidebar-menu li').forEach(function(li){ li.classList.remove('active'); });
     const menu = document.getElementById('menu-teacher-attendance'); if (menu) menu.classList.add('active');
@@ -982,6 +1637,7 @@ function saveTeacherAttendanceFromModal() {
     google.script.run.withSuccessHandler(function(uRes){ saveBtn.disabled = false; saveBtn.textContent = 'Simpan'; if (uRes && uRes.success) { closeTeacherAttendanceModal(); loadTeacherAttendance(); alert('Absensi guru berhasil diperbarui.'); } else { alert((uRes && uRes.message) || 'Gagal memperbarui absensi guru.'); } }).withFailureHandler(function(){ saveBtn.disabled = false; saveBtn.textContent = 'Simpan'; alert('Gagal memperbarui absensi guru.'); }).updateTeacherAttendance(payload);
 }
 
+
 /* =========================
    JOURNAL MODULE
 ========================= */
@@ -1016,12 +1672,7 @@ function initJournalModule() {
 function addEventListenerSafe(el, ev, fn){ if (!el) return; try{ el.addEventListener(ev, fn); } catch(e){ el.attachEvent && el.attachEvent('on'+ev, fn); } }
 
 function showJournalView() {
-    document.getElementById('dashboardContent').style.display = 'none';
-    document.getElementById('studentsContent').style.display = 'none';
-    document.getElementById('teachersContent').style.display = 'none';
-    document.getElementById('classesContent').style.display = 'none';
-    document.getElementById('attendanceContent').style.display = 'none';
-    document.getElementById('teacherAttendanceContent').style.display = 'none';
+    hideAllViews();
     document.getElementById('journalContent').style.display = '';
     document.querySelectorAll('.sidebar-menu li').forEach(function(li){ li.classList.remove('active'); });
     const menu = document.getElementById('menu-journal'); if (menu) menu.classList.add('active');
@@ -1114,6 +1765,1177 @@ function saveJournalFromModal() {
 
 
 /* =========================
+   RESPONDER MODULE & CAMERA
+========================= */
+
+let currentResponderSession = null;
+let currentResponderUser = null;
+let currentCameraStream = null;
+let currentCameraFacingMode = "environment"; // "environment" or "user"
+let currentCapturedEvidenceDataUrl = null;
+let currentEvidenceRecord = null;
+let isEvidenceSaved = false;
+let isEvidenceUploading = false;
+
+// QR Scanner state
+let currentQrStream = null;
+let isQrScanning = false;
+let isQrLookingUp = false;
+let isAttendanceSubmitting = false;
+let qrAnimationFrameId = null;
+let lastScannedQrCode = null;
+let qrScannerWindow = null;
+let qrScannerPollTimer = null;
+let isQrMessageListenerRegistered = false;
+
+// Trusted Origin Configuration (External Scanner)
+const QR_SCANNER_ORIGIN = (typeof window.SIMATA_SCANNER_ORIGIN !== "undefined")
+    ? window.SIMATA_SCANNER_ORIGIN
+    : "https://simata-scanner.pages.dev";
+const QR_SCANNER_URL = QR_SCANNER_ORIGIN + "/scanner.html";
+
+function initResponderModule(user) {
+    currentResponderUser = user;
+
+    const menu = document.getElementById('menu-responder');
+    if (menu) {
+        menu.onclick = function() {
+            startOrOpenResponder();
+        };
+    }
+
+    const finishBtn = document.getElementById('finishResponderBtn');
+    if (finishBtn) {
+        finishBtn.onclick = function() {
+            finishActiveResponderSession();
+        };
+    }
+
+    initResponderCamera();
+    initQrScanner();
+}
+
+function initResponderCamera() {
+    const cameraInput = document.getElementById('responderCameraInput');
+    if (cameraInput) {
+        cameraInput.onchange = function(e) {
+            handleResponderCameraFile(e);
+        };
+    }
+
+    const openBtn = document.getElementById('openCameraBtn');
+    if (openBtn) {
+        openBtn.onclick = function() {
+            openResponderCamera();
+        };
+    }
+
+    const captureBtn = document.getElementById('capturePhotoBtn');
+    if (captureBtn) {
+        captureBtn.onclick = function() {
+            captureResponderPhoto();
+        };
+    }
+
+    const switchBtn = document.getElementById('switchCameraBtn');
+    if (switchBtn) {
+        switchBtn.onclick = function() {
+            switchResponderCamera();
+        };
+    }
+
+    const closeBtn = document.getElementById('closeCameraBtn');
+    if (closeBtn) {
+        closeBtn.onclick = function() {
+            closeResponderCamera();
+        };
+    }
+
+    const retakeBtn = document.getElementById('retakePhotoBtn');
+    if (retakeBtn) {
+        retakeBtn.onclick = function() {
+            retakeResponderPhoto();
+        };
+    }
+
+    const saveEvidenceBtn = document.getElementById('saveEvidenceBtn');
+    if (saveEvidenceBtn) {
+        saveEvidenceBtn.onclick = function() {
+            uploadAttendanceEvidence();
+        };
+    }
+
+    const retrySaveEvidenceBtn = document.getElementById('retrySaveEvidenceBtn');
+    if (retrySaveEvidenceBtn) {
+        retrySaveEvidenceBtn.onclick = function() {
+            uploadAttendanceEvidence();
+        };
+    }
+
+    const retryBtn = document.getElementById('retryCameraBtn');
+    if (retryBtn) {
+        retryBtn.onclick = function() {
+            openResponderCamera();
+        };
+    }
+}
+
+function openResponderCamera() {
+    stopQrScannerStream();
+
+    if (!currentResponderSession || !currentResponderSession.sessionId || currentResponderSession.status !== "ACTIVE") {
+        if (typeof showToast === 'function') {
+            showToast("warning", "Sesi Diperlukan", "Mulai atau buka sesi responder terlebih dahulu sebelum menggunakan kamera.");
+        } else {
+            alert("Mulai atau buka sesi responder terlebih dahulu sebelum menggunakan kamera.");
+        }
+        return;
+    }
+
+    const fileInput = document.getElementById('responderCameraInput');
+    if (fileInput) {
+        fileInput.value = "";
+        fileInput.click();
+    } else {
+        console.error("[SIMATA CAMERA] Elemen responderCameraInput tidak ditemukan.");
+    }
+}
+
+function handleResponderCameraFile(e) {
+    const file = e && e.target && e.target.files && e.target.files[0];
+    if (!file) {
+        // User cancelled camera / file picker — silent cancel, keep current state
+        return;
+    }
+
+    // Validate MIME type
+    if (!file.type || !file.type.toLowerCase().startsWith('image/')) {
+        if (typeof showToast === 'function') {
+            showToast("error", "File Tidak Valid", "File yang dipilih bukan gambar. Silakan gunakan foto yang valid.");
+        } else {
+            alert("File yang dipilih bukan gambar. Silakan gunakan foto yang valid.");
+        }
+        return;
+    }
+
+    // Size limit guard: 25MB max for raw upload before compression
+    if (file.size && file.size > 25 * 1024 * 1024) {
+        if (typeof showToast === 'function') {
+            showToast("warning", "Ukuran Terlalu Besar", "Ukuran foto terlalu besar. Silakan ambil foto kembali.");
+        } else {
+            alert("Ukuran foto terlalu besar. Silakan ambil foto kembali.");
+        }
+        return;
+    }
+
+    setCameraBadge("Memproses Foto...", "info");
+
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        const rawDataUrl = event.target.result;
+
+        // Compress / resize image using canvas to ensure optimal payload size (< 2MB)
+        const img = new Image();
+        img.onload = function() {
+            let w = img.width;
+            let h = img.height;
+            const maxDim = 1024;
+
+            if (w > maxDim || h > maxDim) {
+                if (w >= h) {
+                    h = Math.round((h * maxDim) / w);
+                    w = maxDim;
+                } else {
+                    w = Math.round((w * maxDim) / h);
+                    h = maxDim;
+                }
+            }
+
+            const canvas = document.getElementById('responderCanvas') || document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+
+            // Compress: image/jpeg with ~0.75 quality
+            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.75);
+
+            currentCapturedEvidenceDataUrl = compressedDataUrl;
+            currentEvidenceRecord = null;
+            isEvidenceSaved = false;
+
+            const previewImg = document.getElementById('capturedPhotoPreview');
+            if (previewImg) {
+                previewImg.src = compressedDataUrl;
+            }
+
+            setCameraViewMode("captured");
+            setEvidenceUploadState("captured");
+
+            if (typeof showToast === 'function') {
+                showToast("success", "Foto Diambil", "Foto bukti berhasil diambil. Klik 'Simpan Bukti' untuk menyimpan ke sistem.");
+            }
+        };
+
+        img.onerror = function() {
+            showCameraError("Gagal Memuat Gambar", "Format gambar tidak didukung atau file foto rusak.");
+        };
+
+        img.src = rawDataUrl;
+    };
+
+    reader.onerror = function() {
+        showCameraError("Gagal Membaca File", "Terjadi kesalahan saat membaca file foto dari perangkat.");
+    };
+
+    reader.readAsDataURL(file);
+}
+
+function switchResponderCamera() {
+    // In native file capture, front/rear camera switching is handled by native camera app
+}
+
+function captureResponderPhoto() {
+    // In native file capture, photo is captured via native file input
+}
+
+function uploadAttendanceEvidence() {
+    if (isEvidenceUploading) return;
+
+    if (!currentResponderSession || !currentResponderSession.sessionId || currentResponderSession.status !== "ACTIVE") {
+        if (typeof showToast === 'function') {
+            showToast("error", "Sesi Tidak Aktif", "Hanya sesi responder yang aktif yang dapat menyimpan bukti kehadiran.");
+        } else {
+            alert("Hanya sesi responder yang aktif yang dapat menyimpan bukti kehadiran.");
+        }
+        return;
+    }
+
+    if (!currentCapturedEvidenceDataUrl) {
+        if (typeof showToast === 'function') {
+            showToast("warning", "Foto Kosong", "Ambil foto bukti kehadiran terlebih dahulu sebelum menyimpan.");
+        } else {
+            alert("Ambil foto bukti kehadiran terlebih dahulu sebelum menyimpan.");
+        }
+        return;
+    }
+
+    const token = sessionStorage.getItem("SIMATA_TOKEN");
+    if (!token) {
+        if (typeof showToast === 'function') {
+            showToast("error", "Autentikasi Diperlukan", "Token sesi tidak ditemukan. Silakan login kembali.");
+        } else {
+            alert("Token sesi tidak ditemukan. Silakan login kembali.");
+        }
+        return;
+    }
+
+    setEvidenceUploadState("uploading");
+
+    const sessionId = currentResponderSession.sessionId;
+    const imagePayload = currentCapturedEvidenceDataUrl;
+
+    google.script.run
+        .withSuccessHandler(function(result) {
+            if (!result || !result.success) {
+                const msg = (result && result.message) || "Gagal menyimpan bukti kehadiran ke server.";
+                setEvidenceUploadState("failed", msg);
+                if (typeof showToast === 'function') {
+                    showToast("error", "Gagal Menyimpan", msg);
+                } else {
+                    alert(msg);
+                }
+                return;
+            }
+
+            // Success / Idempotent existing reconciliation
+            currentEvidenceRecord = result.evidence;
+            setEvidenceUploadState("saved");
+
+            if (typeof showToast === 'function') {
+                showToast("success", "Bukti Tersimpan", "Foto bukti kehadiran berhasil disimpan ke sistem.");
+            }
+        })
+        .withFailureHandler(function(error) {
+            console.error("[SIMATA EVIDENCE] Gagal menyimpan bukti:", error);
+            const msg = (error && error.message) || "Terjadi kesalahan jaringan atau server saat menyimpan bukti.";
+            setEvidenceUploadState("failed", msg);
+            if (typeof showToast === 'function') {
+                showToast("error", "Koneksi Gagal", "Tidak dapat menghubungi server untuk menyimpan bukti kehadiran.");
+            } else {
+                alert("Tidak dapat menghubungi server untuk menyimpan bukti kehadiran.");
+            }
+        })
+        .createAttendanceEvidence(token, sessionId, imagePayload);
+}
+
+function retakeResponderPhoto() {
+    if (isEvidenceUploading) return;
+    currentCapturedEvidenceDataUrl = null;
+    currentEvidenceRecord = null;
+    isEvidenceSaved = false;
+    openResponderCamera();
+}
+
+function closeResponderCamera() {
+    stopResponderCameraStream();
+    if (currentCapturedEvidenceDataUrl) {
+        setCameraViewMode("captured");
+        if (isEvidenceSaved) {
+            setEvidenceUploadState("saved");
+        } else {
+            setEvidenceUploadState("captured");
+        }
+    } else {
+        setCameraViewMode("idle");
+        setCameraBadge("Kamera Siap", "neutral");
+    }
+}
+
+function stopResponderCameraStream() {
+    if (currentCameraStream) {
+        try {
+            currentCameraStream.getTracks().forEach(function(track) {
+                track.stop();
+            });
+        } catch (e) {
+            console.warn("[SIMATA CAMERA] Gagal menghentikan track:", e);
+        }
+        currentCameraStream = null;
+    }
+
+    const video = document.getElementById('responderVideo');
+    if (video) {
+        video.srcObject = null;
+    }
+}
+
+function resetResponderCameraState() {
+    stopResponderCameraStream();
+    stopQrScannerStream();
+    currentCapturedEvidenceDataUrl = null;
+    currentEvidenceRecord = null;
+    isEvidenceSaved = false;
+    isEvidenceUploading = false;
+    isQrScanning = false;
+    isQrLookingUp = false;
+    lastScannedQrCode = null;
+    currentCameraFacingMode = "environment";
+    const fileInput = document.getElementById('responderCameraInput');
+    if (fileInput) {
+        fileInput.value = "";
+    }
+    setCameraViewMode("idle");
+    setCameraBadge("Kamera Siap", "neutral");
+    syncQrScannerWithEvidenceState();
+}
+
+function setEvidenceUploadState(state, message) {
+    const saveBtn = document.getElementById('saveEvidenceBtn');
+    const saveBtnText = document.getElementById('saveEvidenceBtnText');
+    const retryBtn = document.getElementById('retrySaveEvidenceBtn');
+    const retakeBtn = document.getElementById('retakePhotoBtn');
+    const badgeText = document.getElementById('capturedOverlayText');
+    const badgeIcon = document.getElementById('capturedOverlayIcon');
+    const errorNotice = document.getElementById('evidenceErrorNotice');
+    const errorText = document.getElementById('evidenceErrorText');
+
+    if (state === "captured") {
+        isEvidenceSaved = false;
+        isEvidenceUploading = false;
+        if (saveBtn) {
+            saveBtn.style.display = 'inline-flex';
+            saveBtn.disabled = false;
+        }
+        if (saveBtnText) saveBtnText.textContent = "Simpan Bukti";
+        if (retryBtn) retryBtn.style.display = 'none';
+        if (retakeBtn) retakeBtn.disabled = false;
+        if (errorNotice) errorNotice.style.display = 'none';
+        if (badgeText) badgeText.textContent = "Foto Berhasil Diambil";
+        if (badgeIcon) {
+            badgeIcon.innerHTML = '<polyline points="20 6 9 17 4 12"/>';
+            badgeIcon.style.stroke = '#4ADE80';
+        }
+        setCameraBadge("Foto Siap", "info");
+        syncQrScannerWithEvidenceState();
+    } else if (state === "uploading") {
+        isEvidenceUploading = true;
+        if (saveBtn) {
+            saveBtn.style.display = 'inline-flex';
+            saveBtn.disabled = true;
+        }
+        if (saveBtnText) saveBtnText.textContent = "Menyimpan bukti...";
+        if (retryBtn) retryBtn.style.display = 'none';
+        if (retakeBtn) retakeBtn.disabled = true;
+        if (errorNotice) errorNotice.style.display = 'none';
+        if (badgeText) badgeText.textContent = "Menyimpan bukti ke server...";
+        if (badgeIcon) {
+            badgeIcon.innerHTML = '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>';
+            badgeIcon.style.stroke = '#FACC15';
+        }
+        setCameraBadge("Menyimpan Bukti...", "info");
+        // Disable finish button during upload to prevent race condition
+        const finishBtn = document.getElementById('finishResponderBtn');
+        if (finishBtn) finishBtn.disabled = true;
+    } else if (state === "saved") {
+        isEvidenceSaved = true;
+        isEvidenceUploading = false;
+        if (saveBtn) {
+            saveBtn.style.display = 'inline-flex';
+            saveBtn.disabled = true;
+        }
+        if (saveBtnText) saveBtnText.textContent = "Bukti Tersimpan";
+        if (retryBtn) retryBtn.style.display = 'none';
+        if (retakeBtn) retakeBtn.disabled = false;
+        if (errorNotice) errorNotice.style.display = 'none';
+        if (badgeText) badgeText.textContent = "Bukti Kehadiran Tersimpan";
+        if (badgeIcon) {
+            badgeIcon.innerHTML = '<polyline points="20 6 9 17 4 12"/>';
+            badgeIcon.style.stroke = '#4ADE80';
+        }
+        setCameraBadge("Bukti Tersimpan", "success");
+        // Upload complete — re-enable finish button
+        const finishBtnSaved = document.getElementById('finishResponderBtn');
+        if (finishBtnSaved) finishBtnSaved.disabled = false;
+        syncQrScannerWithEvidenceState();
+    } else if (state === "failed") {
+        isEvidenceSaved = false;
+        isEvidenceUploading = false;
+        if (saveBtn) saveBtn.style.display = 'none';
+        if (retryBtn) {
+            retryBtn.style.display = 'inline-flex';
+            retryBtn.disabled = false;
+        }
+        if (retakeBtn) retakeBtn.disabled = false;
+        if (errorNotice) {
+            errorNotice.style.display = 'block';
+            if (errorText) errorText.textContent = message || "Gagal menyimpan bukti kehadiran ke server.";
+        }
+        if (badgeText) badgeText.textContent = "Bukti Belum Tersimpan";
+        if (badgeIcon) {
+            badgeIcon.innerHTML = '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>';
+            badgeIcon.style.stroke = '#F87171';
+        }
+        setCameraBadge("Bukti Belum Tersimpan", "danger");
+        // Upload failed — re-enable finish button so session can still be closed
+        const finishBtnFailed = document.getElementById('finishResponderBtn');
+        if (finishBtnFailed) finishBtnFailed.disabled = false;
+        syncQrScannerWithEvidenceState();
+    }
+}
+
+function setCameraViewMode(mode) {
+    const idleView = document.getElementById('cameraIdleView');
+    const activeView = document.getElementById('cameraActiveView');
+    const capturedView = document.getElementById('cameraCapturedView');
+    const errorView = document.getElementById('cameraErrorView');
+
+    if (idleView) idleView.style.display = (mode === "idle") ? "" : "none";
+    if (activeView) activeView.style.display = (mode === "active") ? "" : "none";
+    if (capturedView) capturedView.style.display = (mode === "captured") ? "" : "none";
+    if (errorView) errorView.style.display = (mode === "error") ? "" : "none";
+}
+
+function setCameraBadge(text, type) {
+    const badge = document.getElementById('cameraStatusBadge');
+    if (!badge) return;
+    badge.textContent = text;
+    badge.className = "simata-badge simata-badge-" + (type || "neutral");
+}
+
+function showCameraError(title, message) {
+    const titleEl = document.getElementById('cameraErrorMessageTitle');
+    const textEl = document.getElementById('cameraErrorMessageText');
+    if (titleEl) titleEl.textContent = title;
+    if (textEl) textEl.textContent = message;
+
+    setCameraViewMode("error");
+    setCameraBadge("Kamera Gagal", "danger");
+}
+
+/* =========================
+   QR SCANNER MODULE
+========================= */
+
+function initQrScanner() {
+    if (!isQrMessageListenerRegistered) {
+        window.addEventListener("message", handleQrScannerMessage);
+        isQrMessageListenerRegistered = true;
+    }
+
+    const openBtn = document.getElementById('openQrScannerBtn');
+    if (openBtn) {
+        openBtn.onclick = function() {
+            openQrScanner();
+        };
+    }
+
+    const closeBtn = document.getElementById('closeQrScannerBtn');
+    if (closeBtn) {
+        closeBtn.onclick = function() {
+            closeQrScanner();
+        };
+    }
+
+    const submitBtn = document.getElementById('submitAttendanceBtn');
+    if (submitBtn) {
+        submitBtn.onclick = function() {
+            submitQrAttendance();
+        };
+    }
+
+    const cancelResultBtn = document.getElementById('cancelScanResultBtn');
+    if (cancelResultBtn) {
+        cancelResultBtn.onclick = function() {
+            openQrScanner();
+        };
+    }
+
+    const nextFromSuccessBtn = document.getElementById('nextScanFromSuccessBtn');
+    if (nextFromSuccessBtn) {
+        nextFromSuccessBtn.onclick = function() {
+            openQrScanner();
+        };
+    }
+
+    const nextFromDuplicateBtn = document.getElementById('nextScanFromDuplicateBtn');
+    if (nextFromDuplicateBtn) {
+        nextFromDuplicateBtn.onclick = function() {
+            openQrScanner();
+        };
+    }
+
+    const nextBtn = document.getElementById('nextScanBtn');
+    if (nextBtn) {
+        nextBtn.onclick = function() {
+            openQrScanner();
+        };
+    }
+
+    const nextFromNotFoundBtn = document.getElementById('nextScanFromNotFoundBtn');
+    if (nextFromNotFoundBtn) {
+        nextFromNotFoundBtn.onclick = function() {
+            openQrScanner();
+        };
+    }
+
+    const retryBtn = document.getElementById('retryQrScannerBtn');
+    if (retryBtn) {
+        retryBtn.onclick = function() {
+            openQrScanner();
+        };
+    }
+}
+
+function handleQrScannerMessage(event) {
+    // 1. Exact origin validation
+    if (!event || event.origin !== QR_SCANNER_ORIGIN) {
+        return;
+    }
+
+    // 2. Exact source window validation
+    if (!qrScannerWindow || event.source !== qrScannerWindow) {
+        return;
+    }
+
+    // 3. Payload validation
+    const data = event.data;
+    if (!data || typeof data !== "object") {
+        return;
+    }
+
+    if (data.type !== "SIMATA_QR_RESULT") {
+        return;
+    }
+
+    if (typeof data.qrCodeId !== "string") {
+        return;
+    }
+
+    const trimmedQr = data.qrCodeId.trim();
+    if (!trimmedQr) {
+        return;
+    }
+
+    // 4. Cleanup window
+    if (qrScannerPollTimer) {
+        clearInterval(qrScannerPollTimer);
+        qrScannerPollTimer = null;
+    }
+    isQrScanning = false;
+
+    try {
+        if (qrScannerWindow && !qrScannerWindow.closed) {
+            qrScannerWindow.close();
+        }
+    } catch (e) {
+        console.warn("[SIMATA QR] Gagal menutup scanner window:", e);
+    }
+    qrScannerWindow = null;
+
+    // 5. Proceed to existing lookup flow
+    lookupStudentByQrCode(trimmedQr);
+}
+
+function syncQrScannerWithEvidenceState() {
+    if (currentResponderSession && currentResponderSession.status === "ACTIVE") {
+        if (!isQrScanning && !isQrLookingUp) {
+            const resultView = document.getElementById('qrResultView');
+            const successRecView = document.getElementById('qrSuccessRecordedView');
+            const duplicateView = document.getElementById('qrDuplicateView');
+            const notFoundView = document.getElementById('qrNotFoundView');
+            // If already showing a result or post-scan state, don't overwrite
+            if ((!resultView || resultView.style.display === 'none') &&
+                (!successRecView || successRecView.style.display === 'none') &&
+                (!duplicateView || duplicateView.style.display === 'none') &&
+                (!notFoundView || notFoundView.style.display === 'none')) {
+                setQrScannerViewMode("idle");
+                setQrScannerBadge("Scanner Siap", "info");
+            }
+        }
+    } else {
+        stopQrScannerStream();
+        setQrScannerViewMode("idle");
+        setQrScannerBadge("Belum Aktif", "neutral");
+    }
+}
+
+function openQrScanner() {
+    // GUARD 1: Active session required
+    if (!currentResponderSession || !currentResponderSession.sessionId || currentResponderSession.status !== "ACTIVE") {
+        if (typeof showToast === 'function') {
+            showToast("warning", "Sesi Diperlukan", "Mulai atau buka sesi responder terlebih dahulu sebelum memindai QR.");
+        } else {
+            alert("Mulai atau buka sesi responder terlebih dahulu sebelum memindai QR.");
+        }
+        return;
+    }
+
+    // Stop evidence camera stream before starting QR scanner
+    stopResponderCameraStream();
+    stopQrScannerStream();
+
+    // Clean up previous scanner window if open
+    if (qrScannerWindow && !qrScannerWindow.closed) {
+        try {
+            qrScannerWindow.focus();
+            return;
+        } catch (e) {
+            try { qrScannerWindow.close(); } catch (err) {}
+        }
+    }
+
+    setQrScannerViewMode("scanning");
+    setQrScannerBadge("Membuka Scanner...", "info");
+    isQrScanning = true;
+
+    // Pass parent origin to external scanner for strictly targeted postMessage return
+    const targetUrl = QR_SCANNER_URL + "?simataOrigin=" + encodeURIComponent(window.location.origin);
+    qrScannerWindow = window.open(
+        targetUrl,
+        "simata_qr_scanner",
+        "width=500,height=680,menubar=no,toolbar=no,location=no,status=no,resizable=yes"
+    );
+
+    if (!qrScannerWindow || qrScannerWindow.closed || typeof qrScannerWindow.closed === "undefined") {
+        isQrScanning = false;
+        showQrScannerError(
+            "Popup Diblokir",
+            "Browser memblokir jendela pemindai QR. Izinkan pop-up untuk situs ini pada pengaturan browser lalu klik Coba Lagi."
+        );
+        return;
+    }
+
+    // Monitor for user closing window manually
+    if (qrScannerPollTimer) {
+        clearInterval(qrScannerPollTimer);
+    }
+    qrScannerPollTimer = setInterval(function() {
+        if (qrScannerWindow && qrScannerWindow.closed) {
+            clearInterval(qrScannerPollTimer);
+            qrScannerPollTimer = null;
+            if (isQrScanning) {
+                isQrScanning = false;
+                setQrScannerViewMode("idle");
+                setQrScannerBadge("Scanner Siap", "info");
+            }
+        }
+    }, 1000);
+}
+
+function scanQrFrameLoop() {
+    // Deprecated in GAS sandbox: scanning is handled by external scanner page
+}
+
+function lookupStudentByQrCode(qrCodeId) {
+    if (isQrLookingUp) return;
+
+    if (!currentResponderSession || !currentResponderSession.sessionId || currentResponderSession.status !== "ACTIVE") {
+        if (typeof showToast === 'function') {
+            showToast("error", "Sesi Tidak Aktif", "Hanya sesi responder yang aktif yang dapat memindai QR.");
+        } else {
+            alert("Hanya sesi responder yang aktif yang dapat memindai QR.");
+        }
+        return;
+    }
+
+    const token = sessionStorage.getItem("SIMATA_TOKEN");
+    if (!token) {
+        if (typeof showToast === 'function') {
+            showToast("error", "Autentikasi Diperlukan", "Token sesi tidak ditemukan. Silakan login kembali.");
+        } else {
+            alert("Token sesi tidak ditemukan. Silakan login kembali.");
+        }
+        return;
+    }
+
+    isQrLookingUp = true;
+    lastScannedQrCode = qrCodeId;
+
+    // View mode: looking up
+    setQrScannerViewMode("lookup");
+    setQrScannerBadge("Mencari Data...", "info");
+
+    const sessionId = currentResponderSession.sessionId;
+
+    google.script.run
+        .withSuccessHandler(function(res) {
+            isQrLookingUp = false;
+
+            if (!res || !res.success || !res.student) {
+                const errMsg = (res && res.message) || ('QR Code "' + qrCodeId + '" tidak terdaftar pada database siswa.');
+                setQrScannerViewMode("not_found");
+                setQrScannerBadge("QR Tidak Dikenal", "danger");
+                const detailEl = document.getElementById('qrNotFoundDetail');
+                if (detailEl) {
+                    detailEl.textContent = errMsg;
+                }
+                if (typeof showToast === 'function') {
+                    showToast("warning", "QR Tidak Dikenal", errMsg);
+                }
+                return;
+            }
+
+            const s = res.student;
+
+            // Populate student details
+            const nameEl = document.getElementById('qrResultName');
+            const nisEl = document.getElementById('qrResultNis');
+            const classEl = document.getElementById('qrResultClass');
+            const idEl = document.getElementById('qrResultStudentId');
+            const statusEl = document.getElementById('qrResultStatus');
+
+            if (nameEl) nameEl.textContent = s.name || "--";
+            if (nisEl) nisEl.textContent = s.nis || s.nisn || "--";
+            if (classEl) classEl.textContent = s.classId || "--";
+            if (idEl) idEl.textContent = s.studentId || "--";
+            if (statusEl) statusEl.textContent = s.status || "Active";
+
+            setQrScannerViewMode("result");
+            setQrScannerBadge("Siswa Ditemukan", "success");
+
+            if (typeof showToast === 'function') {
+                showToast("success", "Siswa Ditemukan", (s.name || "Siswa") + " (" + (s.classId || "") + ")");
+            }
+        })
+        .withFailureHandler(function(error) {
+            isQrLookingUp = false;
+            console.error("[SIMATA QR] Gagal lookup QR:", error);
+            showQrScannerError("Koneksi Gagal", "Gagal menghubungi server untuk memverifikasi QR Code.");
+        })
+        .lookupStudentByQr(token, sessionId, qrCodeId);
+}
+
+function submitQrAttendance() {
+    if (isAttendanceSubmitting) return;
+
+    if (!currentResponderSession || !currentResponderSession.sessionId || currentResponderSession.status !== "ACTIVE") {
+        if (typeof showToast === 'function') {
+            showToast("error", "Sesi Tidak Aktif", "Hanya sesi responder yang aktif yang dapat mencatat absensi.");
+        } else {
+            alert("Hanya sesi responder yang aktif yang dapat mencatat absensi.");
+        }
+        return;
+    }
+
+    const token = sessionStorage.getItem("SIMATA_TOKEN");
+    if (!token) {
+        if (typeof showToast === 'function') {
+            showToast("error", "Autentikasi Diperlukan", "Token sesi tidak ditemukan. Silakan login kembali.");
+        } else {
+            alert("Token sesi tidak ditemukan. Silakan login kembali.");
+        }
+        return;
+    }
+
+    if (!lastScannedQrCode) {
+        if (typeof showToast === 'function') {
+            showToast("warning", "QR Diperlukan", "Pindai QR siswa terlebih dahulu.");
+        }
+        openQrScanner();
+        return;
+    }
+
+    isAttendanceSubmitting = true;
+
+    const statusSel = document.getElementById('qrAttendanceStatusSelect');
+    const chosenStatus = (statusSel && statusSel.value) ? statusSel.value : "Hadir";
+
+    const submitBtn = document.getElementById('submitAttendanceBtn');
+    const submitBtnText = document.getElementById('submitAttendanceBtnText');
+
+    if (submitBtn) submitBtn.disabled = true;
+    if (submitBtnText) submitBtnText.textContent = "Menyimpan Absensi...";
+
+    const sessionId = currentResponderSession.sessionId;
+    const qrCodeId = lastScannedQrCode;
+
+    google.script.run
+        .withSuccessHandler(function(res) {
+            isAttendanceSubmitting = false;
+            if (submitBtn) submitBtn.disabled = false;
+            if (submitBtnText) submitBtnText.textContent = "Konfirmasi & Simpan Absensi";
+
+            if (res && res.success) {
+                // Success recorded
+                const studentName = (res.student && res.student.name) || "Siswa";
+                const studentClass = (res.student && res.student.classId) || "";
+                const recordedStatus = (res.attendance && res.attendance.status) || chosenStatus;
+
+                const detailEl = document.getElementById('recordedStudentDetail');
+                if (detailEl) detailEl.textContent = studentName + (studentClass ? " (" + studentClass + ")" : "");
+
+                const badgeEl = document.getElementById('recordedStatusBadge');
+                if (badgeEl) {
+                    badgeEl.textContent = recordedStatus.toUpperCase();
+                    badgeEl.className = "simata-badge simata-badge-" + (recordedStatus === "Hadir" ? "success" : (recordedStatus === "Alpa" ? "danger" : "warning"));
+                }
+
+                setQrScannerViewMode("success_recorded");
+                setQrScannerBadge("Presensi Berhasil", "success");
+
+                if (typeof showToast === 'function') {
+                    showToast("success", "Presensi Berhasil", studentName + " berhasil dicatat: " + recordedStatus);
+                }
+                return;
+            }
+
+            // Failure handling
+            const errMsg = (res && res.message) || "Gagal mencatat absensi siswa.";
+
+            // Check if duplicate rejection
+            if (errMsg.toLowerCase().includes("sudah ada") || errMsg.toLowerCase().includes("sudah absen")) {
+                const dupDetailEl = document.getElementById('duplicateStudentDetail');
+                if (dupDetailEl) dupDetailEl.textContent = errMsg;
+
+                setQrScannerViewMode("duplicate");
+                setQrScannerBadge("Sudah Absen", "warning");
+
+                if (typeof showToast === 'function') {
+                    showToast("warning", "Sudah Absen Hari Ini", errMsg);
+                }
+            } else {
+                if (typeof showToast === 'function') {
+                    showToast("error", "Gagal Mencatat Absensi", errMsg);
+                } else {
+                    alert(errMsg);
+                }
+            }
+        })
+        .withFailureHandler(function(error) {
+            isAttendanceSubmitting = false;
+            if (submitBtn) submitBtn.disabled = false;
+            if (submitBtnText) submitBtnText.textContent = "Konfirmasi & Simpan Absensi";
+
+            console.error("[SIMATA QR] Gagal mencatat presensi:", error);
+            if (typeof showToast === 'function') {
+                showToast("error", "Koneksi Gagal", "Gagal menghubungi server untuk mencatat presensi.");
+            } else {
+                alert("Gagal menghubungi server untuk mencatat presensi.");
+            }
+        })
+        .recordStudentAttendanceFromQr(token, sessionId, qrCodeId, chosenStatus, "");
+}
+
+function closeQrScanner() {
+    stopQrScannerStream();
+    setQrScannerViewMode("idle");
+    setQrScannerBadge("Scanner Siap", "info");
+}
+
+function stopQrScannerStream() {
+    isQrScanning = false;
+
+    if (qrScannerPollTimer) {
+        clearInterval(qrScannerPollTimer);
+        qrScannerPollTimer = null;
+    }
+
+    if (qrScannerWindow && !qrScannerWindow.closed) {
+        try {
+            qrScannerWindow.close();
+        } catch (e) {}
+    }
+    qrScannerWindow = null;
+
+    if (qrAnimationFrameId) {
+        cancelAnimationFrame(qrAnimationFrameId);
+        qrAnimationFrameId = null;
+    }
+
+    if (currentQrStream) {
+        try {
+            currentQrStream.getTracks().forEach(function(track) {
+                track.stop();
+            });
+        } catch (e) {
+            console.warn("[SIMATA QR] Gagal menghentikan track:", e);
+        }
+        currentQrStream = null;
+    }
+
+    const video = document.getElementById('qrVideo');
+    if (video) {
+        video.srcObject = null;
+    }
+}
+
+function setQrScannerViewMode(mode) {
+    const evReqView = document.getElementById('qrEvidenceRequiredView');
+    const idleView = document.getElementById('qrIdleView');
+    const scanningView = document.getElementById('qrScanningView');
+    const resultView = document.getElementById('qrResultView');
+    const successRecView = document.getElementById('qrSuccessRecordedView');
+    const duplicateView = document.getElementById('qrDuplicateView');
+    const notFoundView = document.getElementById('qrNotFoundView');
+    const errorView = document.getElementById('qrErrorView');
+    const lookupView = document.getElementById('qrLookupView');
+
+    if (evReqView) evReqView.style.display = (mode === "evidence_required") ? "" : "none";
+    if (idleView) idleView.style.display = (mode === "idle") ? "" : "none";
+    if (scanningView) scanningView.style.display = (mode === "scanning") ? "" : "none";
+    if (resultView) resultView.style.display = (mode === "result") ? "" : "none";
+    if (successRecView) successRecView.style.display = (mode === "success_recorded") ? "" : "none";
+    if (duplicateView) duplicateView.style.display = (mode === "duplicate") ? "" : "none";
+    if (notFoundView) notFoundView.style.display = (mode === "not_found") ? "" : "none";
+    if (errorView) errorView.style.display = (mode === "error") ? "" : "none";
+    if (lookupView) lookupView.style.display = (mode === "lookup") ? "" : "none";
+}
+
+function setQrScannerBadge(text, type) {
+    const badge = document.getElementById('qrScannerStatusBadge');
+    if (!badge) return;
+    badge.textContent = text;
+    badge.className = "simata-badge simata-badge-" + (type || "neutral");
+}
+
+function showQrScannerError(title, message) {
+    const titleEl = document.getElementById('qrErrorTitle');
+    const textEl = document.getElementById('qrErrorDetail');
+    if (titleEl) titleEl.textContent = title;
+    if (textEl) textEl.textContent = message;
+
+    setQrScannerViewMode("error");
+    setQrScannerBadge("Scanner Gagal", "danger");
+}
+
+function startOrOpenResponder() {
+    // If there is already an active session in local state, simply switch to the view
+    if (currentResponderSession && currentResponderSession.sessionId) {
+        showResponderView();
+        return;
+    }
+
+    const token = sessionStorage.getItem("SIMATA_TOKEN");
+    if (!token) {
+        if (typeof showToast === 'function') {
+            showToast("error", "Autentikasi Diperlukan", "Token sesi tidak ditemukan. Silakan login kembali.");
+        } else {
+            alert("Token sesi tidak ditemukan. Silakan login kembali.");
+        }
+        return;
+    }
+
+    if (typeof showToast === 'function') {
+        showToast("info", "Memulai Sesi", "Membuka sesi responder...");
+    }
+
+    google.script.run
+        .withSuccessHandler(function(result) {
+            if (!result || !result.success) {
+                const msg = (result && result.message) || "Terjadi kesalahan saat memulai sesi responder.";
+                if (typeof showToast === 'function') {
+                    showToast("error", "Gagal Membuka Sesi", msg);
+                } else {
+                    alert(msg);
+                }
+                return;
+            }
+
+            currentResponderSession = result.session;
+
+            // Populate Operator & Session UI Information
+            const nameEl = document.getElementById('responderOperatorName');
+            const roleEl = document.getElementById('responderOperatorRole');
+            const sessionEl = document.getElementById('responderSessionIdDisplay');
+            const badgeEl = document.getElementById('responderStatusBadge');
+
+            if (nameEl) nameEl.textContent = (currentResponderUser && currentResponderUser.name) || currentResponderSession.operatorId || "--";
+            if (roleEl) roleEl.textContent = (currentResponderUser && currentResponderUser.role) || "Operator";
+            if (sessionEl) sessionEl.textContent = currentResponderSession.sessionId || "--";
+            if (badgeEl) {
+                badgeEl.textContent = "STATUS: " + (currentResponderSession.status || "ACTIVE");
+                badgeEl.className = "simata-badge simata-badge-success";
+            }
+
+            // Reset camera to clean idle state
+            resetResponderCameraState();
+
+            showResponderView();
+
+            if (typeof showToast === 'function') {
+                showToast("success", "Sesi Aktif", "Sesi responder berhasil dimulai.");
+            }
+        })
+        .withFailureHandler(function(error) {
+            console.error("[SIMATA RESPONDER] Gagal memulai sesi:", error);
+            if (typeof showToast === 'function') {
+                showToast("error", "Koneksi Gagal", "Tidak dapat menghubungi server untuk membuat sesi responder.");
+            } else {
+                alert("Tidak dapat menghubungi server untuk membuat sesi responder.");
+            }
+        })
+        .createResponderSession(token);
+}
+
+function hideAllViews() {
+    stopResponderCameraStream();
+    stopQrScannerStream();
+    const views = [
+        'dashboardContent', 'studentsContent', 'teachersContent',
+        'classesContent', 'gradesContent', 'attendanceContent',
+        'teacherAttendanceContent', 'journalContent', 'responderContent'
+    ];
+    views.forEach(function(id) {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+}
+
+function showResponderView() {
+    hideAllViews();
+
+    const respEl = document.getElementById('responderContent');
+    if (respEl) respEl.style.display = '';
+
+    document.querySelectorAll('.sidebar-menu li').forEach(function(li) {
+        li.classList.remove('active');
+    });
+    const menu = document.getElementById('menu-responder');
+    if (menu) menu.classList.add('active');
+}
+
+function finishActiveResponderSession() {
+    if (!currentResponderSession || !currentResponderSession.sessionId) {
+        hideResponderView();
+        return;
+    }
+
+    // RACE GUARD: block finish while evidence upload is in-flight
+    if (isEvidenceUploading) {
+        if (typeof showToast === 'function') {
+            showToast("warning", "Upload Sedang Berjalan", "Bukti sedang disimpan. Tunggu sampai selesai.");
+        } else {
+            alert("Bukti sedang disimpan. Tunggu sampai selesai.");
+        }
+        return;
+    }
+
+    const token = sessionStorage.getItem("SIMATA_TOKEN");
+    if (!token) {
+        if (typeof showToast === 'function') {
+            showToast("error", "Autentikasi Diperlukan", "Token sesi tidak ditemukan. Silakan login kembali.");
+        } else {
+            alert("Token sesi tidak ditemukan. Silakan login kembali.");
+        }
+        return;
+    }
+
+    const finishBtn = document.getElementById('finishResponderBtn');
+    if (finishBtn) {
+        finishBtn.disabled = true;
+        finishBtn.textContent = "Menyelesaikan...";
+    }
+
+    const sessionId = currentResponderSession.sessionId;
+
+    google.script.run
+        .withSuccessHandler(function(result) {
+            if (finishBtn) {
+                finishBtn.disabled = false;
+                finishBtn.textContent = "Selesai Sesi";
+            }
+
+            if (!result || !result.success) {
+                const msg = (result && result.message) || "Gagal menyelesaikan sesi responder.";
+                if (typeof showToast === 'function') {
+                    showToast("error", "Gagal Selesai", msg);
+                } else {
+                    alert(msg);
+                }
+                return;
+            }
+
+            // Clear local session state & stop camera stream
+            currentResponderSession = null;
+            resetResponderCameraState();
+
+            // Return to normal dashboard
+            hideResponderView();
+
+            if (typeof showToast === 'function') {
+                showToast("success", "Sesi Selesai", "Sesi responder telah diselesaikan.");
+            }
+        })
+        .withFailureHandler(function(error) {
+            if (finishBtn) {
+                finishBtn.disabled = false;
+                finishBtn.textContent = "Selesai Sesi";
+            }
+            console.error("[SIMATA RESPONDER] Gagal menyelesaikan sesi:", error);
+            if (typeof showToast === 'function') {
+                showToast("error", "Koneksi Gagal", "Gagal menghubungi server untuk menyelesaikan sesi.");
+            } else {
+                alert("Gagal menghubungi server untuk menyelesaikan sesi.");
+            }
+        })
+        .finishResponderSession(token, sessionId);
+}
+
+function hideResponderView() {
+    stopResponderCameraStream();
+    const respEl = document.getElementById('responderContent');
+    if (respEl) respEl.style.display = 'none';
+
+    showDashboardView();
+}
+
+function showDashboardView() {
+    hideAllViews();
+
+    const dashEl = document.getElementById('dashboardContent');
+    if (dashEl) dashEl.style.display = '';
+
+    document.querySelectorAll('.sidebar-menu li').forEach(function(li) {
+        li.classList.remove('active');
+    });
+    const dashMenu = document.getElementById('menu-dashboard') || document.querySelector('.sidebar-menu li');
+    if (dashMenu) dashMenu.classList.add('active');
+}
+
+
+/* =========================
    DASHBOARD DATA
 ========================= */
 
@@ -1151,6 +2973,22 @@ function onDashboardLoaded(data) {
 
 
     updateAvatar(data.user.name);
+
+    // Role-based visibility and init for Responder (Admin + Guru)
+    try {
+        const role = (data.user && data.user.role) ? String(data.user.role).toLowerCase() : '';
+        const rMenu = document.getElementById('menu-responder');
+        if (rMenu) {
+            if (role === 'admin' || role === 'administrator' || role === 'guru' || role === 'teacher') {
+                rMenu.style.display = '';
+                try { initResponderModule(data.user); } catch (e) { console.error('initResponderModule failed', e); }
+            } else {
+                rMenu.style.display = 'none';
+            }
+        }
+    } catch (e) {
+        console.error('Error processing role for responder', e);
+    }
 
     // Role-based visibility and init for Teacher Attendance (ADMIN only)
     try {
@@ -1443,5 +3281,10 @@ function onDashboardError(error) {
     );
 
 }
+
+window.addEventListener('beforeunload', function() {
+    stopResponderCameraStream();
+    stopQrScannerStream();
+});
 
 </script>

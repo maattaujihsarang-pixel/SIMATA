@@ -362,38 +362,52 @@ function createStudentAttendance(data) {
     note
   ];
 
-  // Duplicate protection: prevent multiple student attendance records for the
-  // same studentId + classId + date + academicYear combination.
-  const existing = getStudentAttendance({
-    studentId: studentValidation.value,
-    classId: classValidation.value,
-    date: dateValidation.value,
-    academicYear: academicYear
-  });
-  if (existing && existing.success && existing.attendances && existing.attendances.length > 0) {
+  const lock = LockService.getScriptLock();
+  const lockAcquired = lock.tryLock(5000);
+
+  if (!lockAcquired) {
     return {
       success: false,
-      message: "Student attendance untuk siswa, kelas, tanggal, dan tahun akademik tersebut sudah ada."
+      message: "Server sedang sibuk memproses presensi. Silakan coba lagi."
     };
   }
 
-  sheet.appendRow(row);
-
-  return {
-    success: true,
-    message: "Student attendance berhasil ditambahkan.",
-    attendance: {
-      attendanceId: attendanceId,
-      date: dateValidation.value,
-      academicYear: academicYear,
+  try {
+    // Duplicate protection: prevent multiple student attendance records for the
+    // same studentId + classId + date + academicYear combination.
+    const existing = getStudentAttendance({
       studentId: studentValidation.value,
       classId: classValidation.value,
-      status: statusValidation.value,
-      method: methodValidation.value,
-      timestamp: timestamp,
-      note: note
+      date: dateValidation.value,
+      academicYear: academicYear
+    });
+    if (existing && existing.success && existing.attendances && existing.attendances.length > 0) {
+      return {
+        success: false,
+        message: "Student attendance untuk siswa, kelas, tanggal, dan tahun akademik tersebut sudah ada."
+      };
     }
-  };
+
+    sheet.appendRow(row);
+
+    return {
+      success: true,
+      message: "Student attendance berhasil ditambahkan.",
+      attendance: {
+        attendanceId: attendanceId,
+        date: dateValidation.value,
+        academicYear: academicYear,
+        studentId: studentValidation.value,
+        classId: classValidation.value,
+        status: statusValidation.value,
+        method: methodValidation.value,
+        timestamp: timestamp,
+        note: note
+      }
+    };
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 function updateStudentAttendance(data) {

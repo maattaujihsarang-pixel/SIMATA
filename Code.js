@@ -43,13 +43,15 @@ function doGet(e) {
       Logger.log("MEMBUKA DASHBOARD");
       return HtmlService
         .createTemplateFromFile("DashboardView")
-        .evaluate();
+        .evaluate()
+        .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 
     default:
       Logger.log("MEMBUKA LOGIN");
       return HtmlService
         .createTemplateFromFile("Index")
-        .evaluate();
+        .evaluate()
+        .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 
   }
 

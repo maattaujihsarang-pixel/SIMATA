@@ -75,7 +75,7 @@ function isStudentIdExists(sheet, studentId) {
   return !!findStudentRowById(sheet, studentId);
 }
 
-function isQrCodeIdExists(sheet, qrCodeId, excludeStudentId) {
+function isStudentQrCodeIdExists(sheet, qrCodeId, excludeStudentId) {
   const headers = getSheetHeaders(sheet);
   const headerMap = getHeaderMap(headers);
   const qrIndex = headerMap["qrCodeId"];
@@ -215,21 +215,6 @@ function createStudent(data) {
   const sheet = sheetResult.sheet;
   const headers = getSheetHeaders(sheet);
 
-  const studentId = normalizeString(data.studentId);
-  if (!studentId) {
-    return {
-      success: false,
-      message: "studentId wajib diisi."
-    };
-  }
-
-  if (isStudentIdExists(sheet, studentId)) {
-    return {
-      success: false,
-      message: "studentId sudah digunakan."
-    };
-  }
-
   const name = normalizeString(data.name);
   if (!name) {
     return {
@@ -248,48 +233,82 @@ function createStudent(data) {
     return genderValidation;
   }
 
-  const nis = normalizeString(data.nis);
-  const nisn = normalizeString(data.nisn);
   const classId = normalizeString(data.classId);
-  const birthDate = normalizeString(data.birthDate);
-  const qrCodeId = normalizeString(data.qrCodeId);
-
-  if (qrCodeId && isQrCodeIdExists(sheet, qrCodeId)) {
+  if (!classId) {
     return {
       success: false,
-      message: "qrCodeId sudah digunakan."
+      message: "classId wajib dipilih."
     };
   }
 
-  const row = [
-    studentId,
-    nis,
-    nisn,
-    name,
-    genderValidation.value,
-    classId,
-    statusValidation.value,
-    birthDate,
-    qrCodeId
-  ];
+  const nis = normalizeString(data.nis);
+  const nisn = normalizeString(data.nisn);
+  const birthDate = normalizeString(data.birthDate);
 
-  sheet.appendRow(row);
+  const lock = LockService.getScriptLock();
+  const lockAcquired = lock.tryLock(5000);
+  if (!lockAcquired) {
+    return {
+      success: false,
+      message: "Server sedang sibuk memproses penambahan siswa. Silakan coba lagi."
+    };
+  }
 
-  return {
-    success: true,
-    message: "Data siswa berhasil ditambahkan.",
-    student: {
-      studentId: studentId,
-      nis: nis,
-      nisn: nisn,
-      name: name,
-      gender: genderValidation.value,
-      classId: classId,
-      status: statusValidation.value,
-      birthDate: birthDate,
-      qrCodeId: qrCodeId
+  try {
+    const identityResult = generateStudentIdentity(sheet, classId);
+    if (!identityResult.success) {
+      return identityResult;
     }
-  };
+
+    const studentId = identityResult.studentId;
+    const qrCodeId = identityResult.qrCodeId;
+
+    if (isStudentIdExists(sheet, studentId)) {
+      return {
+        success: false,
+        message: "studentId sudah digunakan."
+      };
+    }
+
+    if (qrCodeId && isStudentQrCodeIdExists(sheet, qrCodeId)) {
+      return {
+        success: false,
+        message: "qrCodeId sudah digunakan."
+      };
+    }
+
+    const row = [
+      studentId,
+      nis,
+      nisn,
+      name,
+      genderValidation.value,
+      classId,
+      statusValidation.value,
+      birthDate,
+      qrCodeId
+    ];
+
+    sheet.appendRow(row);
+
+    return {
+      success: true,
+      message: "Data siswa berhasil ditambahkan.",
+      student: {
+        studentId: studentId,
+        nis: nis,
+        nisn: nisn,
+        name: name,
+        gender: genderValidation.value,
+        classId: classId,
+        status: statusValidation.value,
+        birthDate: birthDate,
+        qrCodeId: qrCodeId
+      }
+    };
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 function updateStudent(studentId, data) {
@@ -352,7 +371,7 @@ function updateStudent(studentId, data) {
   const birthDate = data.birthDate !== undefined ? normalizeString(data.birthDate) : normalizeString(rowValues[headerMap["birthDate"]]);
   const qrCodeId = data.qrCodeId !== undefined ? normalizeString(data.qrCodeId) : normalizeString(rowValues[headerMap["qrCodeId"]]);
 
-  if (qrCodeId && isQrCodeIdExists(sheet, qrCodeId, studentId)) {
+  if (qrCodeId && isStudentQrCodeIdExists(sheet, qrCodeId, studentId)) {
     return {
       success: false,
       message: "qrCodeId sudah digunakan oleh siswa lain."

@@ -174,21 +174,6 @@ function createClass(data) {
 
   const sheet = sheetResult.sheet;
 
-  const classId = normalizeString(data.classId);
-  if (!classId) {
-    return {
-      success: false,
-      message: "classId wajib diisi."
-    };
-  }
-
-  if (isClassIdExists(sheet, classId)) {
-    return {
-      success: false,
-      message: "classId sudah digunakan."
-    };
-  }
-
   const className = normalizeString(data.className);
   if (!className) {
     return {
@@ -211,34 +196,68 @@ function createClass(data) {
   }
 
   const level = normalizeString(data.level);
+  if (!level) {
+    return {
+      success: false,
+      message: "level wajib diisi."
+    };
+  }
+
   const homeroomTeacherIdValidation = validateHomeroomTeacherId(data.homeroomTeacherId);
   if (!homeroomTeacherIdValidation.success) {
     return homeroomTeacherIdValidation;
   }
 
-  const row = [
-    classId,
-    className,
-    level,
-    academicYear,
-    homeroomTeacherIdValidation.value,
-    statusValidation.value
-  ];
+  const lock = LockService.getScriptLock();
+  const lockAcquired = lock.tryLock(5000);
+  if (!lockAcquired) {
+    return {
+      success: false,
+      message: "Server sedang sibuk memproses penambahan kelas. Silakan coba lagi."
+    };
+  }
 
-  sheet.appendRow(row);
-
-  return {
-    success: true,
-    message: "Data kelas berhasil ditambahkan.",
-    class: {
-      classId: classId,
-      className: className,
-      level: level,
-      academicYear: academicYear,
-      homeroomTeacherId: homeroomTeacherIdValidation.value,
-      status: statusValidation.value
+  try {
+    const classIdResult = generateClassId(sheet, academicYear, className, level);
+    if (!classIdResult.success) {
+      return classIdResult;
     }
-  };
+
+    const classId = classIdResult.classId;
+
+    if (isClassIdExists(sheet, classId)) {
+      return {
+        success: false,
+        message: "classId sudah digunakan."
+      };
+    }
+
+    const row = [
+      classId,
+      className,
+      level,
+      academicYear,
+      homeroomTeacherIdValidation.value,
+      statusValidation.value
+    ];
+
+    sheet.appendRow(row);
+
+    return {
+      success: true,
+      message: "Data kelas berhasil ditambahkan.",
+      class: {
+        classId: classId,
+        className: className,
+        level: level,
+        academicYear: academicYear,
+        homeroomTeacherId: homeroomTeacherIdValidation.value,
+        status: statusValidation.value
+      }
+    };
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 function updateClass(data) {

@@ -74,46 +74,6 @@ function isTeacherIdExists(sheet, teacherId) {
   return !!findTeacherRowById(sheet, teacherId);
 }
 
-function isQrCodeIdExists(sheet, qrCodeId, excludeTeacherId) {
-  const headers = getSheetHeaders(sheet);
-  const headerMap = getHeaderMap(headers);
-  const qrIndex = headerMap["qrCodeId"];
-  const idIndex = headerMap["teacherId"];
-
-  if (qrIndex === undefined || qrIndex === -1) {
-    return false;
-  }
-
-  const lastRow = sheet.getLastRow();
-  if (lastRow <= 1) {
-    return false;
-  }
-
-  const values = sheet.getRange(2, 1, lastRow - 1, headers.length).getValues();
-  const normalizedQr = normalizeString(qrCodeId);
-  const normalizedExcludeId = normalizeString(excludeTeacherId);
-
-  if (!normalizedQr) {
-    return false;
-  }
-
-  for (let i = 0; i < values.length; i++) {
-    const currentQr = normalizeString(values[i][qrIndex]);
-    const currentId = normalizeString(values[i][idIndex]);
-
-    if (currentQr && currentQr === normalizedQr) {
-      if (normalizedExcludeId && currentId === normalizedExcludeId) {
-        continue;
-      }
-      return true;
-    }
-  }
-
-  return false;
-}
-
-
-
 function validateTeacherStatus(status) {
   const normalized = normalizeString(status) || "Active";
   if (normalized !== "Active" && normalized !== "Inactive") {
@@ -192,21 +152,6 @@ function createTeacher(data) {
   const sheet = sheetResult.sheet;
   const headers = getSheetHeaders(sheet);
 
-  const teacherId = normalizeString(data.teacherId);
-  if (!teacherId) {
-    return {
-      success: false,
-      message: "teacherId wajib diisi."
-    };
-  }
-
-  if (isTeacherIdExists(sheet, teacherId)) {
-    return {
-      success: false,
-      message: "teacherId sudah digunakan."
-    };
-  }
-
   const name = normalizeString(data.name);
   if (!name) {
     return {
@@ -224,42 +169,60 @@ function createTeacher(data) {
   const nuptk = normalizeString(data.nuptk);
   const position = normalizeString(data.position);
   const subject = normalizeString(data.subject);
-  const qrCodeId = normalizeString(data.qrCodeId);
 
-  if (qrCodeId && isQrCodeIdExists(sheet, qrCodeId)) {
+  const lock = LockService.getScriptLock();
+  const lockAcquired = lock.tryLock(5000);
+  if (!lockAcquired) {
     return {
       success: false,
-      message: "qrCodeId sudah digunakan."
+      message: "Server sedang sibuk memproses penambahan guru. Silakan coba lagi."
     };
   }
 
-  const row = [
-    teacherId,
-    nip,
-    nuptk,
-    name,
-    position,
-    statusValidation.value,
-    subject,
-    qrCodeId
-  ];
-
-  sheet.appendRow(row);
-
-  return {
-    success: true,
-    message: "Data guru berhasil ditambahkan.",
-    teacher: {
-      teacherId: teacherId,
-      nip: nip,
-      nuptk: nuptk,
-      name: name,
-      position: position,
-      status: statusValidation.value,
-      subject: subject,
-      qrCodeId: qrCodeId
+  try {
+    const identityResult = generateTeacherId(sheet);
+    if (!identityResult.success) {
+      return identityResult;
     }
-  };
+
+    const teacherId = identityResult.teacherId;
+
+    if (isTeacherIdExists(sheet, teacherId)) {
+      return {
+        success: false,
+        message: "teacherId sudah digunakan."
+      };
+    }
+
+    const row = [
+      teacherId,
+      nip,
+      nuptk,
+      name,
+      position,
+      statusValidation.value,
+      subject,
+      ""
+    ];
+
+    sheet.appendRow(row);
+
+    return {
+      success: true,
+      message: "Data guru berhasil ditambahkan.",
+      teacher: {
+        teacherId: teacherId,
+        nip: nip,
+        nuptk: nuptk,
+        name: name,
+        position: position,
+        status: statusValidation.value,
+        subject: subject
+      }
+    };
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 function updateTeacher(data) {
@@ -308,14 +271,6 @@ function updateTeacher(data) {
   const nuptk = data.nuptk !== undefined ? normalizeString(data.nuptk) : normalizeString(rowValues[headerMap["nuptk"]]);
   const position = data.position !== undefined ? normalizeString(data.position) : normalizeString(rowValues[headerMap["position"]]);
   const subject = data.subject !== undefined ? normalizeString(data.subject) : normalizeString(rowValues[headerMap["subject"]]);
-  const qrCodeId = data.qrCodeId !== undefined ? normalizeString(data.qrCodeId) : normalizeString(rowValues[headerMap["qrCodeId"]]);
-
-  if (qrCodeId && isQrCodeIdExists(sheet, qrCodeId, teacherId)) {
-    return {
-      success: false,
-      message: "qrCodeId sudah digunakan oleh guru lain."
-    };
-  }
 
   rowValues[headerMap["nip"]] = nip;
   rowValues[headerMap["nuptk"]] = nuptk;
@@ -323,7 +278,6 @@ function updateTeacher(data) {
   rowValues[headerMap["position"]] = position;
   rowValues[headerMap["status"]] = statusValidation.value;
   rowValues[headerMap["subject"]] = subject;
-  rowValues[headerMap["qrCodeId"]] = qrCodeId;
 
   sheet.getRange(teacherRow.rowIndex, 1, 1, rowValues.length).setValues([rowValues]);
 
