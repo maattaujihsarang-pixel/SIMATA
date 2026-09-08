@@ -26,29 +26,41 @@
       -webkit-tap-highlight-color: transparent;
     }
 
+    html {
+      height: 100%;
+      height: 100dvh;
+    }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background-color: var(--s-bg);
       color: var(--s-text);
-      min-height: 100vh;
+      height: 100%;
+      height: 100dvh;
+      min-height: 100%;
+      max-height: 100dvh;
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      position: fixed;
+      inset: 0;
+      width: 100%;
     }
 
     /* Top Bar */
     .camera-header {
-      padding: 16px 20px;
+      flex-shrink: 0;
+      padding: 12px 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       background: var(--s-surface);
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      z-index: 10;
+      z-index: 20;
     }
 
     .camera-title-group h1 {
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 700;
       letter-spacing: -0.2px;
       color: #fff;
@@ -81,16 +93,22 @@
 
     /* Main Viewport */
     .camera-viewport {
-      flex: 1;
+      flex: 1 1 0%;
+      min-height: 0;
       position: relative;
       background: #000;
       display: flex;
       align-items: center;
       justify-content: center;
       overflow: hidden;
+      z-index: 1;
     }
 
-    video#cameraVideo {
+    video#cameraVideo,
+    img#photoPreview {
+      position: absolute;
+      top: 0;
+      left: 0;
       width: 100%;
       height: 100%;
       object-fit: cover;
@@ -100,13 +118,6 @@
     /* Mirror preview if front camera */
     .mirror {
       transform: scaleX(-1);
-    }
-
-    img#photoPreview {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: none;
     }
 
     canvas#hiddenCanvas {
@@ -121,11 +132,13 @@
       align-items: center;
       justify-content: center;
       pointer-events: none;
+      z-index: 10;
     }
 
     .viewfinder-frame {
-      width: min(280px, 75vw);
-      height: min(340px, 60vh);
+      width: min(260px, 72vw);
+      height: min(320px, 50vh);
+      max-height: calc(100% - 24px);
       position: relative;
       border-radius: 20px;
       box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.5);
@@ -171,21 +184,24 @@
 
     /* Bottom Control Bar */
     .camera-footer {
-      padding: 16px 20px;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 100;
+      padding: 12px 16px;
+      padding-bottom: max(14px, env(safe-area-inset-bottom));
       background: var(--s-surface);
       border-top: 1px solid rgba(255, 255, 255, 0.08);
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 14px;
-      z-index: 10;
+      gap: 10px;
     }
 
     .status-badge {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 6px 14px;
+      padding: 5px 14px;
       border-radius: 20px;
       font-size: 12px;
       font-weight: 600;
@@ -218,19 +234,20 @@
 
     .control-row {
       display: flex;
-      gap: 12px;
+      gap: 10px;
       width: 100%;
-      max-width: 380px;
+      max-width: 420px;
       align-items: center;
-      justify-content: center;
+      justify-content: space-between;
     }
 
     .btn-secondary {
       flex: 1;
+      min-width: 0;
       background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.18);
       color: #fff;
-      padding: 12px 14px;
+      padding: 12px 10px;
       border-radius: 10px;
       font-size: 13px;
       font-weight: 600;
@@ -239,6 +256,7 @@
       align-items: center;
       justify-content: center;
       gap: 6px;
+      white-space: nowrap;
       transition: background 0.2s;
     }
 
@@ -248,10 +266,11 @@
 
     .btn-primary {
       flex: 1.2;
+      min-width: 0;
       background: var(--s-accent);
       border: none;
       color: var(--s-primary);
-      padding: 12px 16px;
+      padding: 12px 14px;
       border-radius: 10px;
       font-size: 13px;
       font-weight: 700;
@@ -260,6 +279,7 @@
       align-items: center;
       justify-content: center;
       gap: 6px;
+      white-space: nowrap;
       transition: background 0.2s, transform 0.1s;
     }
 
@@ -273,18 +293,23 @@
 
     /* Shutter button style */
     .shutter-btn {
-      width: 60px;
-      height: 60px;
+      width: 64px;
+      height: 64px;
       border-radius: 50%;
       background: var(--s-accent);
-      border: 4px solid rgba(255, 255, 255, 0.3);
+      border: 4px solid rgba(255, 255, 255, 0.35);
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       color: var(--s-primary);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
       transition: transform 0.15s, background 0.2s;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 101;
+      visibility: visible;
+      opacity: 1;
     }
 
     .shutter-btn:hover {
@@ -309,7 +334,7 @@
       align-items: center;
       justify-content: center;
       text-align: center;
-      z-index: 20;
+      z-index: 30;
     }
 
     .error-container h2 {
@@ -335,6 +360,39 @@
       font-size: 13px;
       font-weight: 700;
       cursor: pointer;
+    }
+
+    /* Responsive for Short / Landscape Screens */
+    @media (max-height: 520px) {
+      .camera-header {
+        padding: 8px 14px;
+      }
+      .camera-header h1 {
+        font-size: 13px;
+      }
+      .camera-header p {
+        display: none;
+      }
+      .camera-footer {
+        padding: 8px 12px;
+        gap: 8px;
+      }
+      .status-badge {
+        padding: 3px 10px;
+        font-size: 11px;
+      }
+      .shutter-btn {
+        width: 48px;
+        height: 48px;
+      }
+      .btn-secondary, .btn-primary {
+        padding: 8px 10px;
+        font-size: 12px;
+      }
+      .viewfinder-frame {
+        height: min(180px, calc(100% - 16px));
+        width: min(220px, 45vw);
+      }
     }
   </style>
 </head>
@@ -480,6 +538,8 @@
       if (errorMessageEl) errorMessageEl.textContent = msg;
       if (errorContainerEl) errorContainerEl.style.display = "flex";
       setStatus("Kamera Bermasalah", "error");
+      if (liveControlsEl) liveControlsEl.style.display = "flex";
+      if (reviewControlsEl) reviewControlsEl.style.display = "none";
     }
 
     function hideError() {
