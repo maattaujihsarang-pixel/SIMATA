@@ -1,0 +1,482 @@
+<!-- SIMATA CHATBOT VIEW (AI-01) -->
+<!-- Floating Launcher Button (FAB) -->
+<button
+  type="button"
+  id="simataChatbotFab"
+  class="simata-chat-fab"
+  onclick="window.SimataChatbot && window.SimataChatbot.toggleChat()"
+  title="Buka SIMATA AI Assistant"
+  aria-label="Buka SIMATA AI Assistant"
+>
+  <span class="simata-chat-fab-icon-open">
+    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+      <circle cx="9" cy="10" r="1" fill="currentColor"></circle>
+      <circle cx="15" cy="10" r="1" fill="currentColor"></circle>
+    </svg>
+  </span>
+  <span class="simata-chat-fab-icon-close" style="display:none;">
+    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18"></line>
+      <line x1="6" y1="6" x2="18" y2="18"></line>
+    </svg>
+  </span>
+  <span class="simata-chat-fab-badge" id="simataChatbotBadge" style="display:none;">1</span>
+</button>
+
+<!-- Chat Window Card -->
+<div
+  id="simataChatbotWindow"
+  class="simata-chat-window"
+  style="display:none;"
+  role="dialog"
+  aria-labelledby="simataChatbotHeaderTitle"
+  aria-modal="true"
+>
+  <!-- Window Header -->
+  <div class="simata-chat-header">
+    <div class="simata-chat-header-info">
+      <div class="simata-chat-avatar">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2a4 4 0 0 1 4 4v2H8V6a4 4 0 0 1 4-4z"></path>
+          <rect x="4" y="8" width="16" height="12" rx="4"></rect>
+          <line x1="9" y1="13" x2="9" y2="15"></line>
+          <line x1="15" y1="13" x2="15" y2="15"></line>
+        </svg>
+      </div>
+      <div>
+        <div class="simata-chat-title" id="simataChatbotHeaderTitle">Asisten SIMATA Web</div>
+        <div class="simata-chat-status">
+          <span class="simata-chat-status-dot"></span>
+          <span id="simataChatbotStatusText">Online • Chatbot AI</span>
+        </div>
+      </div>
+    </div>
+    <div class="simata-chat-header-actions">
+      <button
+        type="button"
+        id="simataChatbotClearBtn"
+        class="simata-chat-header-btn"
+        onclick="window.SimataChatbot && window.SimataChatbot.clearChat()"
+        title="Bersihkan Percakapan"
+        aria-label="Bersihkan Percakapan"
+      >
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        </svg>
+      </button>
+      <button
+        type="button"
+        id="simataChatbotCloseBtn"
+        class="simata-chat-header-btn"
+        onclick="window.SimataChatbot && window.SimataChatbot.closeChat()"
+        title="Tutup Chat"
+        aria-label="Tutup Chat"
+      >
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Messages List -->
+  <div id="simataChatbotMessages" class="simata-chat-messages" tabindex="0">
+    <!-- Welcome message bubble -->
+    <div class="simata-chat-bubble-row bot">
+      <div class="simata-chat-bubble-avatar">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="4" y="8" width="16" height="12" rx="4"></rect>
+          <path d="M12 2v6"></path>
+        </svg>
+      </div>
+      <div class="simata-chat-bubble bot">
+        <div class="simata-chat-bubble-text">
+          Assalamu'alaikum! Saya adalah <strong>SIMATA AI Assistant</strong> yang siap membantu menjawab pertanyaan seputar SIMATA, data akademik, presensi, dan informasi madrasah. Ada yang bisa saya bantu hari ini?
+        </div>
+        <div class="simata-chat-bubble-time">Sekarang</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Typing Indicator (Hidden by default) -->
+  <div id="simataChatbotTyping" class="simata-chat-typing-row" style="display:none;">
+    <div class="simata-chat-bubble-avatar">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="4" y="8" width="16" height="12" rx="4"></rect>
+      </svg>
+    </div>
+    <div class="simata-chat-typing-bubble">
+      <span class="simata-chat-dot"></span>
+      <span class="simata-chat-dot"></span>
+      <span class="simata-chat-dot"></span>
+    </div>
+  </div>
+
+  <!-- Input Form -->
+  <form id="simataChatbotForm" class="simata-chat-form" onsubmit="event.preventDefault(); window.SimataChatbot && window.SimataChatbot.sendMessage();">
+    <div class="simata-chat-input-wrapper">
+      <input
+        type="text"
+        id="simataChatbotInput"
+        class="simata-chat-input"
+        placeholder="Tulis pesan untuk SIMATA AI..."
+        maxlength="2000"
+        autocomplete="off"
+      />
+      <button
+        type="submit"
+        id="simataChatbotSendBtn"
+        class="simata-chat-send-btn"
+        title="Kirim pesan"
+        aria-label="Kirim pesan"
+      >
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"></line>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+      </button>
+    </div>
+    <div class="simata-chat-disclaimer">
+      SIMATA AI dapat membuat kekeliruan. Cek kembali informasi penting.
+    </div>
+  </form>
+</div>
+
+<!-- Scoped CSS for SIMATA Chatbot -->
+<style>
+  /* Launcher FAB */
+  .simata-chat-fab {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #15803d 0%, #166534 100%);
+    color: #ffffff;
+    border: none;
+    box-shadow: 0 4px 14px rgba(22, 101, 52, 0.4), 0 2px 6px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+  }
+  .simata-chat-fab:hover {
+    transform: scale(1.08);
+    box-shadow: 0 6px 20px rgba(22, 101, 52, 0.5), 0 3px 8px rgba(0, 0, 0, 0.15);
+  }
+  .simata-chat-fab:active {
+    transform: scale(0.95);
+  }
+  .simata-chat-fab-badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    background: #ef4444;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #ffffff;
+  }
+
+  /* Chat Window */
+  .simata-chat-window {
+    position: fixed;
+    bottom: 92px;
+    right: 24px;
+    width: 380px;
+    max-width: calc(100vw - 32px);
+    height: 540px;
+    max-height: calc(100vh - 120px);
+    background: #ffffff;
+    border-radius: 18px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18), 0 2px 10px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 1000;
+    font-family: inherit;
+    animation: simataChatSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes simataChatSlideUp {
+    from {
+      opacity: 0;
+      transform: translateY(16px) scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  /* Header */
+  .simata-chat-header {
+    background: linear-gradient(135deg, #15803d 0%, #166534 100%);
+    color: #ffffff;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .simata-chat-header-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .simata-chat-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    flex-shrink: 0;
+  }
+  .simata-chat-title {
+    font-size: 14.5px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  .simata-chat-status {
+    font-size: 11.5px;
+    color: #bbf7d0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 2px;
+  }
+  .simata-chat-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #4ade80;
+    box-shadow: 0 0 6px #4ade80;
+  }
+  .simata-chat-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .simata-chat-header-btn {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.85);
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .simata-chat-header-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+  }
+
+  /* Messages Area */
+  .simata-chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: #f8fafc;
+  }
+
+  .simata-chat-bubble-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    max-width: 85%;
+  }
+  .simata-chat-bubble-row.user {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+  }
+  .simata-chat-bubble-row.bot {
+    align-self: flex-start;
+  }
+
+  .simata-chat-bubble-avatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    color: #166534;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .simata-chat-bubble {
+    padding: 10px 14px;
+    border-radius: 14px;
+    font-size: 13.5px;
+    line-height: 1.45;
+    word-break: break-word;
+  }
+  .simata-chat-bubble.user {
+    background: #166534;
+    color: #ffffff;
+    border-bottom-right-radius: 3px;
+  }
+  .simata-chat-bubble.bot {
+    background: #ffffff;
+    color: #1e293b;
+    border: 1px solid #e2e8f0;
+    border-bottom-left-radius: 3px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  }
+  .simata-chat-bubble.error {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+  }
+  .simata-chat-bubble-text {
+    white-space: pre-wrap;
+  }
+  .simata-chat-bubble-time {
+    font-size: 10px;
+    margin-top: 4px;
+    opacity: 0.75;
+    text-align: right;
+  }
+
+  /* Typing animation */
+  .simata-chat-typing-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    align-self: flex-start;
+    padding: 0 16px 12px;
+    background: #f8fafc;
+  }
+  .simata-chat-typing-bubble {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    border-bottom-left-radius: 3px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .simata-chat-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #94a3b8;
+    animation: simataDotPulse 1.4s infinite ease-in-out both;
+  }
+  .simata-chat-dot:nth-child(1) { animation-delay: -0.32s; }
+  .simata-chat-dot:nth-child(2) { animation-delay: -0.16s; }
+  .simata-chat-dot:nth-child(3) { animation-delay: 0s; }
+
+  @keyframes simataDotPulse {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+    40% { transform: scale(1.1); opacity: 1; background: #166534; }
+  }
+
+  /* Footer & Input */
+  .simata-chat-form {
+    padding: 12px 14px;
+    background: #ffffff;
+    border-top: 1px solid #e2e8f0;
+    flex-shrink: 0;
+  }
+  .simata-chat-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 24px;
+    padding: 4px 6px 4px 14px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  }
+  .simata-chat-input-wrapper:focus-within {
+    background: #ffffff;
+    border-color: #166534;
+    box-shadow: 0 0 0 3px rgba(22, 101, 52, 0.15);
+  }
+  .simata-chat-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 13.5px;
+    color: #0f172a;
+    outline: none;
+    padding: 6px 0;
+    font-family: inherit;
+  }
+  .simata-chat-input::placeholder {
+    color: #94a3b8;
+  }
+  .simata-chat-send-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #166534;
+    color: #ffffff;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.15s ease, transform 0.15s ease;
+  }
+  .simata-chat-send-btn:hover {
+    background: #15803d;
+  }
+  .simata-chat-send-btn:disabled {
+    background: #cbd5e1;
+    cursor: not-allowed;
+    transform: none;
+  }
+  .simata-chat-disclaimer {
+    font-size: 10.5px;
+    color: #94a3b8;
+    text-align: center;
+    margin-top: 6px;
+  }
+
+  /* Mobile responsiveness */
+  @media (max-width: 640px) {
+    .simata-chat-window {
+      bottom: 84px;
+      right: 12px;
+      width: calc(100vw - 24px);
+      height: calc(100vh - 100px);
+      max-height: none;
+      border-radius: 14px;
+    }
+    .simata-chat-fab {
+      bottom: 16px;
+      right: 16px;
+      width: 50px;
+      height: 50px;
+    }
+  }
+</style>
+

@@ -671,10 +671,10 @@ function lookupStudentByQr(token, sessionId, qrCodeId) {
  *    - timestamp: ISO datetime from server clock
  *    - method: forced to "QR"
  *    - attendanceId: auto-generated structured ID
- * 8. Call createStudentAttendance({ ... }) -> native duplicate protection
+ * 8. Call createStudentAttendance({ ... }) -> native duplicate protection across periods
  * 9. Multi-Student Session: does not finish or cancel session
  */
-function recordStudentAttendanceFromQr(token, sessionId, qrCodeId, status, note) {
+function recordStudentAttendanceFromQr(token, sessionId, qrCodeId, status, note, periods) {
   // Step 1: Validate session token
   if (!token || typeof token !== "string" || token.trim() === "") {
     return {
@@ -767,7 +767,7 @@ function recordStudentAttendanceFromQr(token, sessionId, qrCodeId, status, note)
     };
   }
 
-  // Step 8: Resolve student record
+  // Step 7: Resolve student record
   const studentResult = getStudentById(studentId);
   if (!studentResult || !studentResult.success || !studentResult.student) {
     return {
@@ -785,7 +785,7 @@ function recordStudentAttendanceFromQr(token, sessionId, qrCodeId, status, note)
     };
   }
 
-  // Step 9: Resolve academicYear from Classes master
+  // Step 8: Resolve academicYear from Classes master
   const classResult = getClassById(classId);
   if (!classResult || !classResult.success || !classResult.class) {
     return {
@@ -802,22 +802,26 @@ function recordStudentAttendanceFromQr(token, sessionId, qrCodeId, status, note)
     };
   }
 
-  // Step 10: Validate attendance status (Hadir / Izin / Sakit / Alpa)
+  // Step 9: Validate attendance status (Hadir / Izin / Sakit / Alpa)
   const statusValidation = validateAttendanceStatus(status || "Hadir");
   if (!statusValidation.success) {
     return statusValidation;
+  }
+
+  // Step 10: Validate multi-period selection
+  const periodsValidation = normalizeAndValidatePeriods(periods);
+  if (!periodsValidation.success) {
+    return periodsValidation;
   }
 
   // Step 11: Server-generated fields
   const now = new Date();
   const date = Utilities.formatDate(now, Session.getScriptTimeZone(), "yyyy-MM-dd");
   const timestamp = Utilities.formatDate(now, Session.getScriptTimeZone(), "yyyy-MM-dd'T'HH:mm:ss");
-  const attendanceId = "ATT-" + Utilities.formatDate(now, Session.getScriptTimeZone(), "yyyyMMdd-HHmmss") + "-" + Utilities.getUuid().substring(0, 8);
   const note_normalized = normalizeString(note);
 
   // Step 12: Construct attendance payload
   const attendanceData = {
-    attendanceId: attendanceId,
     date: date,
     academicYear: academicYear,
     studentId: studentId,
@@ -825,10 +829,11 @@ function recordStudentAttendanceFromQr(token, sessionId, qrCodeId, status, note)
     status: statusValidation.value,
     method: "QR",
     timestamp: timestamp,
-    note: note_normalized
+    note: note_normalized,
+    periods: periodsValidation.periods
   };
 
-  // Step 13: Call createStudentAttendance (handles native duplicate check)
+  // Step 13: Call createStudentAttendance (handles native atomic ScriptLock duplicate check)
   const createResult = createStudentAttendance(attendanceData);
   if (!createResult || !createResult.success) {
     return createResult;
@@ -836,7 +841,10 @@ function recordStudentAttendanceFromQr(token, sessionId, qrCodeId, status, note)
 
   return {
     success: true,
-    message: "Presensi siswa berhasil dicatat.",
+    message: "Presensi siswa berhasil dicatat untuk " + periodsValidation.periods.length + " jam pelajaran.",
+    count: createResult.count,
+    periods: periodsValidation.periods,
+    attendances: createResult.attendances,
     attendance: createResult.attendance,
     student: {
       studentId: student.studentId,
@@ -846,4 +854,281 @@ function recordStudentAttendanceFromQr(token, sessionId, qrCodeId, status, note)
       status: statusValidation.value
     }
   };
+}
+
+/**
+ * BUG 29: Get Class Attendance Roster for Batch QR Attendance
+ * Validates teacher session and role, loads class details and all active students in the class.
+ * Checks for existing attendance records for today to pre-populate statuses.
+ */
+function getClassAttendanceRoster(token, classId, sessionId) {
+  // 1. Auth check
+  if (!token || typeof token !== "string" || token.trim() === "") {
+    return { success: false, message: "Token sesi tidak boleh kosong." };
+  }
+  const session = SessionManager.validate(token.trim());
+  if (!session || !session.valid || !session.username) {
+    return { success: false, message: "Sesi tidak valid atau telah berakhir." };
+  }
+  const authUser = normalizeString(session.username);
+  const userRole = getAuthenticatedUserRole(authUser);
+  if (!userRole || !isResponderRoleAllowed(userRole)) {
+    return { success: false, message: "Akses ditolak: Hanya Admin dan Guru yang diizinkan melakukan presensi kelas." };
+  }
+
+  // 2. Class check
+  const normClassId = normalizeString(classId);
+  if (!normClassId) {
+    return { success: false, message: "classId tidak boleh kosong." };
+  }
+  const classResult = getClassById(normClassId);
+  if (!classResult || !classResult.success || !classResult.class) {
+    return { success: false, message: "Kelas tidak ditemukan untuk ID: " + classId };
+  }
+  const klass = classResult.class;
+
+  // 3. Resolve context date and periods
+  let activePeriods = ["1"];
+  let todayDate = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd");
+  if (sessionId) {
+    const sRow = getResponderSessionById(sessionId);
+    if (sRow && sRow.success && sRow.session) {
+      if (sRow.session.operatorId === authUser && sRow.session.status === RESPONDER_STATUS_ACTIVE) {
+        if (sRow.session.date) todayDate = sRow.session.date;
+        if (sRow.session.periods && Array.isArray(sRow.session.periods) && sRow.session.periods.length > 0) {
+          activePeriods = sRow.session.periods;
+        } else if (sRow.session.period) {
+          activePeriods = [String(sRow.session.period)];
+        }
+      }
+    }
+  }
+
+  // 4. Fetch students in this class
+  const studentsResult = getStudents();
+  if (!studentsResult || !studentsResult.success) {
+    return { success: false, message: "Gagal memuat data siswa." };
+  }
+
+  const allStudents = studentsResult.students || [];
+  const classStudents = allStudents.filter(function(s) {
+    const sClass = normalizeString(s.classId);
+    const sStatus = normalizeString(s.status || "Active").toLowerCase();
+    return sClass === normClassId && (sStatus === "active" || sStatus === "aktif");
+  });
+
+  // Sort students alphabetically by name
+  classStudents.sort(function(a, b) {
+    return (a.name || "").localeCompare(b.name || "");
+  });
+
+  // 5. Check existing attendance for this class, date, and academicYear
+  const existingAttResult = getStudentAttendance({
+    classId: normClassId,
+    date: todayDate,
+    academicYear: klass.academicYear
+  });
+
+  const existingStatusMap = {};
+  if (existingAttResult && existingAttResult.success && Array.isArray(existingAttResult.attendances)) {
+    existingAttResult.attendances.forEach(function(att) {
+      if (att.studentId && att.status) {
+        existingStatusMap[att.studentId] = att.status;
+      }
+    });
+  }
+
+  // 6. Map students roster with default status = "Hadir" (or pre-existing if already recorded)
+  const roster = classStudents.map(function(s) {
+    return {
+      studentId: s.studentId,
+      nis: s.nis || "-",
+      nisn: s.nisn || "-",
+      name: s.name || "-",
+      gender: s.gender || "-",
+      status: existingStatusMap[s.studentId] || "Hadir",
+      hasExistingRecord: !!existingStatusMap[s.studentId]
+    };
+  });
+
+  return {
+    success: true,
+    class: {
+      classId: klass.classId,
+      className: klass.className,
+      level: klass.level,
+      academicYear: klass.academicYear,
+      homeroomTeacherId: klass.homeroomTeacherId,
+      status: klass.status
+    },
+    date: todayDate,
+    periods: activePeriods,
+    totalStudents: roster.length,
+    students: roster
+  };
+}
+
+/**
+ * BUG 29: Record Batch Class Attendance
+ * Saves attendance for all students in the class in a single atomic transaction.
+ * Prevents duplicates via composite key upsert on (date, academicYear, classId, period, studentId).
+ */
+function recordBatchClassAttendance(token, sessionId, payload) {
+  // 1. Auth check
+  if (!token || typeof token !== "string" || token.trim() === "") {
+    return { success: false, message: "Token sesi tidak boleh kosong." };
+  }
+  const session = SessionManager.validate(token.trim());
+  if (!session || !session.valid || !session.username) {
+    return { success: false, message: "Sesi tidak valid atau telah berakhir." };
+  }
+  const authUser = normalizeString(session.username);
+  const userRole = getAuthenticatedUserRole(authUser);
+  if (!userRole || !isResponderRoleAllowed(userRole)) {
+    return { success: false, message: "Akses ditolak: Hanya Admin dan Guru yang diizinkan menyimpan presensi." };
+  }
+
+  if (!payload || typeof payload !== "object") {
+    return { success: false, message: "Payload presensi tidak valid." };
+  }
+
+  const normClassId = normalizeString(payload.classId);
+  if (!normClassId) {
+    return { success: false, message: "classId wajib diisi." };
+  }
+
+  const classResult = getClassById(normClassId);
+  if (!classResult || !classResult.success || !classResult.class) {
+    return { success: false, message: "Kelas tidak ditemukan." };
+  }
+  const klass = classResult.class;
+
+  const academicYear = normalizeString(payload.academicYear) || klass.academicYear;
+  if (!academicYear) {
+    return { success: false, message: "academicYear tidak boleh kosong." };
+  }
+
+  const dateValidation = validateDateFormat(payload.date);
+  if (!dateValidation.success) {
+    return dateValidation;
+  }
+  const dateStr = dateValidation.value;
+
+  const periodsValidation = normalizeAndValidatePeriods(payload.periods || payload.period);
+  if (!periodsValidation.success) {
+    return periodsValidation;
+  }
+  const periods = periodsValidation.periods;
+
+  const studentAttendances = Array.isArray(payload.attendances) ? payload.attendances : [];
+  if (studentAttendances.length === 0) {
+    return { success: false, message: "Daftar siswa untuk presensi tidak boleh kosong." };
+  }
+
+  // Lock script to ensure atomic execution
+  const lock = LockService.getScriptLock();
+  const lockAcquired = lock.tryLock(10000);
+  if (!lockAcquired) {
+    return { success: false, message: "Server sedang sibuk memproses presensi. Silakan coba beberapa saat lagi." };
+  }
+
+  try {
+    const sheetResult = getStudentAttendanceSheet();
+    if (!sheetResult.success) {
+      return sheetResult;
+    }
+    const sheet = sheetResult.sheet;
+    const headers = getSheetHeaders(sheet);
+    const headerMap = getHeaderMap(headers);
+    const lastRow = sheet.getLastRow();
+
+    // Read existing rows to index existing records for duplicate prevention / upsert
+    const existingIndex = {}; // key: date_academicYear_classId_period_studentId -> { rowIndex, rowValues }
+    if (lastRow > 1) {
+      const allRows = sheet.getRange(2, 1, lastRow - 1, headers.length).getValues();
+      for (let i = 0; i < allRows.length; i++) {
+        const r = allRows[i];
+        const rDate = normalizeDateValue(r[headerMap["date"]]);
+        const rAcad = normalizeString(r[headerMap["academicYear"]]);
+        const rClassId = normalizeString(r[headerMap["classId"]]);
+        const rPeriod = normalizeString(r[headerMap["period"]]);
+        const rStudentId = normalizeString(r[headerMap["studentId"]]);
+        if (rDate && rClassId && rStudentId) {
+          const key = rDate + "_" + rAcad + "_" + rClassId + "_" + rPeriod + "_" + rStudentId;
+          existingIndex[key] = {
+            rowIndex: i + 2,
+            rowValues: r
+          };
+        }
+      }
+    }
+
+    const now = new Date();
+    const timestamp = Utilities.formatDate(now, Session.getScriptTimeZone(), "yyyy-MM-dd'T'HH:mm:ss");
+    const rowsToAppend = [];
+    let updatedCount = 0;
+    let createdCount = 0;
+
+    periods.forEach(function(p) {
+      studentAttendances.forEach(function(item) {
+        const studentId = normalizeString(item.studentId);
+        if (!studentId) return;
+
+        // Canonical status: "Hadir", "Sakit", "Izin", "Alpa"
+        let status = normalizeString(item.status) || "Hadir";
+        const statusValidation = validateAttendanceStatus(status);
+        if (statusValidation.success) {
+          status = statusValidation.value;
+        }
+
+        const note = normalizeString(item.note) || "";
+        const key = dateStr + "_" + academicYear + "_" + normClassId + "_" + p + "_" + studentId;
+
+        if (existingIndex[key]) {
+          // Update existing row
+          const match = existingIndex[key];
+          const rIndex = match.rowIndex;
+          sheet.getRange(rIndex, headerMap["status"] + 1).setValue(status);
+          sheet.getRange(rIndex, headerMap["method"] + 1).setValue("QR_BATCH");
+          sheet.getRange(rIndex, headerMap["timestamp"] + 1).setValue(timestamp);
+          if (note) {
+            sheet.getRange(rIndex, headerMap["note"] + 1).setValue(note);
+          }
+          updatedCount++;
+        } else {
+          // Prepare new row
+          const rowAttendanceId = "ATT-STD-" + Utilities.formatDate(now, Session.getScriptTimeZone(), "yyyyMMdd-HHmmss") + "-P" + p + "-" + Utilities.getUuid().substring(0, 6);
+          const newRow = [
+            rowAttendanceId,
+            dateStr,
+            academicYear,
+            studentId,
+            normClassId,
+            status,
+            "QR_BATCH",
+            timestamp,
+            note,
+            p
+          ];
+          rowsToAppend.push(newRow);
+          createdCount++;
+        }
+      });
+    });
+
+    if (rowsToAppend.length > 0) {
+      sheet.getRange(sheet.getLastRow() + 1, 1, rowsToAppend.length, headers.length).setValues(rowsToAppend);
+    }
+
+    return {
+      success: true,
+      message: "Presensi kelas " + (klass.className || normClassId) + " berhasil disimpan (" + (createdCount + updatedCount) + " catatan untuk " + periods.length + " jam pelajaran).",
+      createdCount: createdCount,
+      updatedCount: updatedCount,
+      totalCount: createdCount + updatedCount,
+      periods: periods
+    };
+  } finally {
+    lock.releaseLock();
+  }
 }

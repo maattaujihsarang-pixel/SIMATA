@@ -1,0 +1,224 @@
+<script>
+/**
+ * SIMATA Chatbot Client Controller (AI-01)
+ * 
+ * Tanggung jawab:
+ * - Mengelola interaksi UI Floating Chatbot (buka, tutup, kirim pesan, bersihkan pesan).
+ * - Menangani request asynchronous ke server melalui google.script.run.sendChatbotMessage.
+ * - Mengisolasi state chatbot agar tidak mencemari lingkungan Dashboard utama.
+ */
+(function() {
+  const state = {
+    isOpen: false,
+    isWaiting: false
+  };
+
+  function escapeHtml(str) {
+    if (!str || typeof str !== 'string') return '';
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function formatBotText(rawText) {
+    if (!rawText) return '';
+    let escaped = escapeHtml(rawText);
+
+    // Format markdown bold: **text** -> <strong>text</strong>
+    escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+    // Format markdown bullets: * or - at start of line
+    const lines = escaped.split('\n');
+    const formattedLines = lines.map(function(line) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith('* ') || trimmed.startsWith('- ')) {
+        return '<div style="display:flex;gap:6px;margin:2px 0;"><span>•</span><span>' + trimmed.substring(2) + '</span></div>';
+      }
+      return line;
+    });
+
+    return formattedLines.join('<br>');
+  }
+
+  function formatTimeNow() {
+    const d = new Date();
+    const h = String(d.getHours()).padStart(2, '0');
+    const m = String(d.getMinutes()).padStart(2, '0');
+    return h + ':' + m;
+  }
+
+  function scrollToBottom() {
+    const container = document.getElementById('simataChatbotMessages');
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
+  }
+
+  function toggleChat() {
+    if (state.isOpen) {
+      closeChat();
+    } else {
+      openChat();
+    }
+  }
+
+  function openChat() {
+    const win = document.getElementById('simataChatbotWindow');
+    const fabOpen = document.querySelector('.simata-chat-fab-icon-open');
+    const fabClose = document.querySelector('.simata-chat-fab-icon-close');
+    const badge = document.getElementById('simataChatbotBadge');
+    const input = document.getElementById('simataChatbotInput');
+
+    if (win) win.style.display = 'flex';
+    if (fabOpen) fabOpen.style.display = 'none';
+    if (fabClose) fabClose.style.display = 'inline-flex';
+    if (badge) badge.style.display = 'none';
+
+    state.isOpen = true;
+    scrollToBottom();
+
+    if (input) {
+      setTimeout(function() { input.focus(); }, 100);
+    }
+  }
+
+  function closeChat() {
+    const win = document.getElementById('simataChatbotWindow');
+    const fabOpen = document.querySelector('.simata-chat-fab-icon-open');
+    const fabClose = document.querySelector('.simata-chat-fab-icon-close');
+
+    if (win) win.style.display = 'none';
+    if (fabOpen) fabOpen.style.display = 'inline-flex';
+    if (fabClose) fabClose.style.display = 'none';
+
+    state.isOpen = false;
+  }
+
+  function clearChat() {
+    const messages = document.getElementById('simataChatbotMessages');
+    if (!messages) return;
+
+    messages.innerHTML = 
+      '<div class="simata-chat-bubble-row bot">' +
+        '<div class="simata-chat-bubble-avatar">' +
+          '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">' +
+            '<rect x="4" y="8" width="16" height="12" rx="4"></rect>' +
+            '<path d="M12 2v6"></path>' +
+          '</svg>' +
+        '</div>' +
+        '<div class="simata-chat-bubble bot">' +
+          '<div class="simata-chat-bubble-text">' +
+            'Percakapan dibersihkan. Ada yang bisa <strong>SIMATA AI Assistant</strong> bantu?' +
+          '</div>' +
+          '<div class="simata-chat-bubble-time">' + formatTimeNow() + '</div>' +
+        '</div>' +
+      '</div>';
+    
+    scrollToBottom();
+  }
+
+  function appendMessage(role, text, isError) {
+    const messages = document.getElementById('simataChatbotMessages');
+    if (!messages) return;
+
+    const row = document.createElement('div');
+    row.className = 'simata-chat-bubble-row ' + role;
+
+    const formattedContent = (role === 'bot' && !isError) ? formatBotText(text) : escapeHtml(text);
+    const bubbleClass = 'simata-chat-bubble ' + role + (isError ? ' error' : '');
+
+    const avatarHtml = (role === 'bot')
+      ? '<div class="simata-chat-bubble-avatar">' +
+          '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">' +
+            '<rect x="4" y="8" width="16" height="12" rx="4"></rect>' +
+            '<path d="M12 2v6"></path>' +
+          '</svg>' +
+        '</div>'
+      : '';
+
+    row.innerHTML = 
+      avatarHtml +
+      '<div class="' + bubbleClass + '">' +
+        '<div class="simata-chat-bubble-text">' + formattedContent + '</div>' +
+        '<div class="simata-chat-bubble-time">' + formatTimeNow() + '</div>' +
+      '</div>';
+
+    messages.appendChild(row);
+    scrollToBottom();
+  }
+
+  function setWaiting(waiting) {
+    state.isWaiting = waiting;
+    const typing = document.getElementById('simataChatbotTyping');
+    const sendBtn = document.getElementById('simataChatbotSendBtn');
+    const input = document.getElementById('simataChatbotInput');
+
+    if (typing) typing.style.display = waiting ? 'flex' : 'none';
+    if (sendBtn) sendBtn.disabled = waiting;
+    if (input) input.disabled = waiting;
+
+    if (waiting) {
+      scrollToBottom();
+    } else if (input) {
+      input.focus();
+    }
+  }
+
+  function sendMessage() {
+    if (state.isWaiting) return;
+
+    const input = document.getElementById('simataChatbotInput');
+    if (!input) return;
+
+    const promptText = input.value ? input.value.trim() : '';
+    if (!promptText) return;
+
+    // Tambahkan pesan user ke UI
+    appendMessage('user', promptText, false);
+    input.value = '';
+
+    // Ambil token sesi SIMATA
+    const token = sessionStorage.getItem('SIMATA_TOKEN');
+    if (!token) {
+      appendMessage('bot', 'Sesi login tidak valid atau telah berakhir. Silakan login kembali.', true);
+      return;
+    }
+
+    setWaiting(true);
+
+    simataClient
+      .withSuccessHandler(function(res) {
+        setWaiting(false);
+        if (res && res.success && res.reply) {
+          appendMessage('bot', res.reply, false);
+          const stText = document.getElementById('simataChatbotStatusText');
+          if (stText) {
+            stText.textContent = res.hasData ? 'Online • Terhubung data SIMATA (Read-Only)' : 'Online • Chatbot AI';
+          }
+        } else {
+          const errMsg = (res && res.message) ? res.message : 'Maaf, terjadi kendala saat memproses respons AI.';
+          appendMessage('bot', errMsg, true);
+        }
+      })
+      .withFailureHandler(function(err) {
+        setWaiting(false);
+        const errMsg = (err && err.message) ? err.message : String(err);
+        appendMessage('bot', 'Terjadi kesalahan komunikasi dengan server: ' + errMsg, true);
+      })
+      .sendChatbotMessage(token, promptText);
+  }
+
+  // Expose API ke global namespace
+  window.SimataChatbot = {
+    toggleChat: toggleChat,
+    openChat: openChat,
+    closeChat: closeChat,
+    clearChat: clearChat,
+    sendMessage: sendMessage
+  };
+})();
+</script>
+

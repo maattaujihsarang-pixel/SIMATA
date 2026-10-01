@@ -1,0 +1,815 @@
+<style>
+/**
+ * SIMATA — Academic Professional Login Stylesheet
+ * File: LoginResponsive.html
+ * 
+ * Target devices:
+ * - Desktop: 1366x768, 1366x900, 1024x768
+ * - Tablet: 768x1024
+ * - Mobile: 390x844, 360x800, 320x568
+ * 
+ * Strictly scoped to .login-layout, .toast, and .loading-overlay.
+ * Zero side effects on DashboardView.html.
+ */
+
+/* ==========================================================================
+   1. GLOBAL RESET & BASE SETTINGS
+   ========================================================================== */
+
+html, body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #0F172A;
+  background-color: #F8FAFC;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* ==========================================================================
+   2. DESKTOP BASE SPLIT LAYOUT (> 1024px)
+   ========================================================================== */
+
+.login-layout {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  background: #F8FAFC;
+  position: relative;
+}
+
+/* --- Left Branding Panel (Pure Multi-Stop Green Gradient) --- */
+.login-layout .branding-panel {
+  flex: 1.15;
+  min-height: 100vh;
+  background: linear-gradient(140deg, #052313 0%, #0B3B20 28%, #115930 62%, #166534 82%, #15803D 100%);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 56px 52px;
+  overflow: hidden;
+  color: #FFFFFF;
+}
+
+/* Subtle radial depth & ambient glow */
+.login-layout .branding-overlay {
+  position: absolute;
+  inset: 0;
+  background: 
+    radial-gradient(circle at 18% 22%, rgba(74, 222, 128, 0.18) 0%, transparent 48%),
+    radial-gradient(circle at 82% 78%, rgba(34, 197, 94, 0.12) 0%, transparent 42%),
+    radial-gradient(circle at 50% 100%, rgba(5, 35, 19, 0.75) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.login-layout .branding-pattern {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.login-layout .branding-content {
+  position: relative;
+  z-index: 2;
+  max-width: 460px;
+  width: 100%;
+}
+
+.login-layout .branding-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: #86EFAC;
+  margin-bottom: 24px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.login-layout .branding-badge svg {
+  flex-shrink: 0;
+}
+
+.login-layout .branding-content h1 {
+  font-size: 56px;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+  margin: 0 0 12px 0;
+  color: #FFFFFF;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
+}
+
+.login-layout .branding-content h2 {
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.35;
+  margin: 0 0 16px 0;
+  color: rgba(255, 255, 255, 0.95);
+  letter-spacing: -0.01em;
+}
+
+.login-layout .branding-desc {
+  font-size: 15px;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+}
+
+/* --- Right Login Panel --- */
+.login-layout .login-panel {
+  flex: 1;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 32px;
+  background: #F8FAFC;
+  box-sizing: border-box;
+}
+
+/* --- Login Card --- */
+.login-layout .card {
+  width: 100%;
+  max-width: 440px;
+  background: #FFFFFF;
+  border-radius: 20px;
+  padding: 38px 34px 30px;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 20px 35px -10px rgba(15, 23, 42, 0.07), 0 8px 16px -6px rgba(15, 23, 42, 0.04);
+  box-sizing: border-box;
+  margin: 0 auto;
+}
+
+/* --- School Logo --- */
+.login-layout .school-logo {
+  width: 76px;
+  height: auto;
+  max-height: 76px;
+  display: block;
+  margin: 0 auto 16px;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.06));
+  transition: transform 0.25s ease;
+}
+
+.login-layout .school-logo:hover {
+  transform: scale(1.04);
+}
+
+/* --- Typography --- */
+.login-layout .title {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #0F172A;
+  text-align: center;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.02em;
+}
+
+.login-layout .subtitle {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #64748B;
+  text-align: center;
+  margin: 0 0 22px 0;
+}
+
+/* --- Form Elements --- */
+.login-layout .login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0 !important;
+  width: 100%;
+}
+
+.login-layout .form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 18px;
+}
+
+.login-layout .input-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 7px;
+  letter-spacing: 0.2px;
+}
+
+.login-layout .input-wrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.login-layout .input-icon {
+  position: absolute;
+  left: 14px;
+  color: #94A3B8;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.login-layout .input-box {
+  width: 100%;
+  height: 50px;
+  min-height: 50px;
+  padding: 13px 14px 13px 44px;
+  font-size: 14.5px;
+  font-family: inherit;
+  color: #0F172A;
+  border-radius: 12px;
+  border: 1.5px solid #CBD5E1;
+  background: #F8FAFC;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.login-layout .input-box::placeholder {
+  color: #94A3B8;
+  font-size: 13.5px;
+}
+
+.login-layout .input-box:focus {
+  border-color: #166534;
+  background: #FFFFFF;
+  box-shadow: 0 0 0 3.5px rgba(22, 101, 52, 0.12);
+}
+
+/* Input Error State */
+.login-layout .input-box.input-error {
+  border-color: #EF4444 !important;
+  background-color: #FEF2F2 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+}
+
+.login-layout .input-box.input-error ~ .input-icon {
+  color: #EF4444;
+}
+
+/* --- Password Toggle Button --- */
+.login-layout .password-group {
+  position: relative;
+  width: 100%;
+}
+
+.login-layout .password-group .input-box {
+  padding-right: 44px;
+}
+
+.login-layout .toggle-password {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #64748B;
+  padding: 0;
+  transition: all 0.2s ease;
+  z-index: 2;
+  touch-action: manipulation;
+}
+
+.login-layout .toggle-password:hover {
+  color: #166534;
+  background: rgba(22, 101, 52, 0.08);
+}
+
+/* Pure CSS Eye / Eye-Off Swap based on input type without JS modification */
+#password[type="text"] ~ .toggle-password .icon-eye {
+  display: none !important;
+}
+
+#password[type="text"] ~ .toggle-password .icon-eye-off {
+  display: block !important;
+}
+
+#password[type="password"] ~ .toggle-password .icon-eye {
+  display: block !important;
+}
+
+#password[type="password"] ~ .toggle-password .icon-eye-off {
+  display: none !important;
+}
+
+/* --- Validation Error Messages --- */
+.login-layout .error-message {
+  font-size: 12px;
+  color: #DC2626;
+  font-weight: 500;
+  margin-top: 2px;
+  line-height: 1.3;
+  min-height: 0;
+  display: none;
+}
+
+.login-layout .error-message:not(:empty) {
+  display: block;
+  margin-top: 3px;
+  margin-bottom: 2px;
+}
+
+/* --- Options Row (Ingatkan saya & Lupa Password) --- */
+.login-layout .login-options-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2px;
+  margin-bottom: 18px;
+  font-size: 13.5px;
+  user-select: none;
+}
+
+.login-layout .remember-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: #475569;
+  font-weight: 500;
+  font-size: 13px;
+  transition: color 0.15s ease;
+}
+
+.login-layout .remember-label:hover {
+  color: #166534;
+}
+
+.login-layout .remember-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #166534;
+  cursor: pointer;
+  margin: 0;
+  border-radius: 4px;
+}
+
+.login-layout .btn-forgot-password {
+  background: transparent;
+  border: none;
+  color: #166534;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+  font-family: inherit;
+  text-decoration: none;
+}
+
+.login-layout .btn-forgot-password:hover {
+  color: #15803D;
+  background-color: rgba(22, 101, 52, 0.08);
+  text-decoration: underline;
+}
+
+.login-layout .forgot-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background-color: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  border-radius: 10px;
+  color: #166534;
+  font-size: 12.5px;
+  line-height: 1.4;
+  margin-top: -4px;
+  margin-bottom: 14px;
+  animation: noticeFadeIn 0.2s ease-out;
+}
+
+.login-layout .forgot-notice .notice-icon {
+  flex-shrink: 0;
+  color: #166534;
+  display: flex;
+  align-items: center;
+}
+
+@keyframes noticeFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* --- Submit Button --- */
+.login-layout .login-button {
+  width: 100%;
+  height: 48px;
+  min-height: 48px;
+  margin-top: 0;
+  padding: 12px 20px;
+  border: 1px solid rgba(22, 101, 52, 0.85);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #166534 0%, #14532D 100%);
+  color: #FFFFFF;
+  font-size: 14.5px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(22, 101, 52, 0.25);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+  touch-action: manipulation;
+}
+
+.login-layout .login-button .btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.login-layout .login-button:hover {
+  background: linear-gradient(180deg, #15803D 0%, #166534 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(22, 101, 52, 0.32);
+}
+
+.login-layout .login-button:hover .btn-icon {
+  transform: translateX(2px);
+}
+
+.login-layout .login-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(22, 101, 52, 0.2);
+}
+
+.login-layout .login-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.35), 0 4px 12px rgba(22, 101, 52, 0.25);
+}
+
+.login-layout .login-button:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Button Ripple */
+.login-layout .ripple {
+  position: absolute;
+  border-radius: 50%;
+  transform: scale(0);
+  animation: rippleAnim 0.6s linear;
+  background: rgba(255, 255, 255, 0.35);
+  pointer-events: none;
+}
+
+@keyframes rippleAnim {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* --- Footer --- */
+.login-layout .login-footer {
+  margin-top: 24px;
+  text-align: center;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #94A3B8;
+  letter-spacing: 0.3px;
+}
+
+/* ==========================================================================
+   3. TOAST NOTIFICATION & LOADING OVERLAY
+   ========================================================================== */
+
+/* --- Toast --- */
+.toast {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  min-width: 320px;
+  max-width: 420px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  box-shadow: 0 20px 30px -8px rgba(15, 23, 42, 0.12), 0 8px 12px -4px rgba(15, 23, 42, 0.06);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-16px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 99999;
+}
+
+.toast.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.toast-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.toast-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.toast-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0F172A;
+  line-height: 1.3;
+}
+
+.toast-message {
+  font-size: 12.5px;
+  color: #475569;
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+/* --- Loading Overlay --- */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.25s ease;
+  z-index: 99999;
+}
+
+.loading-overlay.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.loading-overlay .spinner {
+  width: 44px;
+  height: 44px;
+  border: 3.5px solid rgba(255, 255, 255, 0.25);
+  border-top-color: #22C55E;
+  border-radius: 50%;
+  animation: loginSpin 0.75s linear infinite;
+}
+
+.loading-overlay p {
+  margin-top: 14px;
+  color: #FFFFFF;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.3px;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes loginSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ==========================================================================
+   4. TABLET BREAKPOINT (max-width: 1024px)
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+  .login-layout .branding-panel {
+    padding: 40px 32px;
+  }
+
+  .login-layout .branding-content h1 {
+    font-size: 42px;
+  }
+
+  .login-layout .branding-content h2 {
+    font-size: 18px;
+  }
+
+  .login-layout .branding-desc {
+    font-size: 14px;
+    margin-bottom: 0;
+  }
+
+  .login-layout .login-panel {
+    padding: 36px 24px;
+  }
+
+  .login-layout .card {
+    padding: 32px 26px 24px;
+    max-width: 400px;
+  }
+}
+
+/* ==========================================================================
+   5. MOBILE BREAKPOINT (max-width: 768px: 768px, 430px, 390px, 375px)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .login-layout {
+    flex-direction: column;
+    width: 100%;
+    min-height: 100vh;
+    background: 
+      radial-gradient(circle at 18% 12%, rgba(74, 222, 128, 0.18) 0%, transparent 48%),
+      radial-gradient(circle at 82% 88%, rgba(34, 197, 94, 0.14) 0%, transparent 45%),
+      linear-gradient(145deg, #052313 0%, #0B3B20 28%, #115930 62%, #166534 82%, #15803D 100%);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Hide large desktop branding hero panel on mobile */
+  .login-layout .branding-panel {
+    display: none;
+  }
+
+  /* Full-width centered login panel */
+  .login-layout .login-panel {
+    flex: 1;
+    width: 100%;
+    max-width: 100%;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 24px 16px;
+    background: transparent;
+    box-sizing: border-box;
+  }
+
+  /* Login Card */
+  .login-layout .card {
+    width: 100%;
+    max-width: 420px;
+    background: #FFFFFF;
+    border-radius: 20px;
+    padding: 32px 24px 26px;
+    box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.35), 0 8px 20px -5px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    margin: 0 auto;
+  }
+
+  /* School Logo */
+  .login-layout .school-logo {
+    width: 72px;
+    max-height: 72px;
+    margin-bottom: 14px;
+  }
+
+  /* Typography */
+  .login-layout .title {
+    font-size: 23px;
+  }
+
+  .login-layout .subtitle {
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+
+  /* Form & Inputs */
+  /* 16px font-size prevents iOS Safari auto-zoom on focus */
+  .login-layout .input-box {
+    height: 50px;
+    min-height: 48px;
+    font-size: 16px;
+    padding: 12px 14px 12px 42px;
+  }
+
+  .login-layout .input-box::placeholder {
+    font-size: 14px;
+  }
+
+  /* Submit Button */
+  .login-layout .login-button {
+    height: 50px;
+    min-height: 48px;
+    font-size: 15px;
+    margin-top: 6px;
+  }
+
+  /* Toast Notification */
+  .toast {
+    top: 16px;
+    left: 16px;
+    right: 16px;
+    min-width: 0;
+    width: auto;
+    max-width: none;
+    padding: 12px 16px;
+    border-radius: 12px;
+  }
+
+  .toast-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 15px;
+  }
+}
+
+/* ==========================================================================
+   6. EXTRA SMALL MOBILE BREAKPOINT (max-width: 360px: 320px - 360px)
+   ========================================================================== */
+
+@media (max-width: 360px) {
+  .login-layout .login-panel {
+    padding: 16px 10px;
+  }
+
+  .login-layout .card {
+    padding: 22px 14px 18px;
+    border-radius: 16px;
+  }
+
+  .login-layout .school-logo {
+    width: 64px;
+    max-height: 64px;
+    margin-bottom: 10px;
+  }
+
+  .login-layout .title {
+    font-size: 20px;
+  }
+
+  .login-layout .subtitle {
+    font-size: 12px;
+    margin-bottom: 16px;
+  }
+
+  .login-layout .input-box {
+    height: 46px;
+    min-height: 44px;
+    font-size: 16px;
+    padding: 10px 12px 10px 38px;
+  }
+
+  .login-layout .input-icon {
+    left: 12px;
+  }
+
+  .login-layout .login-button {
+    height: 46px;
+    min-height: 44px;
+    font-size: 14px;
+  }
+}
+</style>

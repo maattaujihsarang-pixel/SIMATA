@@ -21,7 +21,29 @@ const DATABASE_SCHEMAS = [
   },
   {
     sheetName: CONFIG.SHEET_TEACHERS,
-    headers: ["teacherId", "nip", "nuptk", "name", "position", "status", "subject", "qrCodeId"],
+    headers: [
+      "teacherId",
+      "nip",
+      "nuptk",
+      "name",
+      "position",
+      "status",
+      "subject",
+      "qrCodeId",
+      "nik",
+      "gender",
+      "birthPlace",
+      "birthDate",
+      "village",
+      "district",
+      "regency",
+      "phone",
+      "email",
+      "education",
+      "major",
+      "graduationYear",
+      "teachingHours"
+    ],
     idHeader: "teacherId"
   },
   {
@@ -31,17 +53,17 @@ const DATABASE_SCHEMAS = [
   },
   {
     sheetName: CONFIG.SHEET_STUDENT_ATTENDANCE,
-    headers: ["attendanceId", "date", "academicYear", "studentId", "classId", "status", "method", "timestamp", "note"],
+    headers: ["attendanceId", "date", "academicYear", "studentId", "classId", "status", "method", "timestamp", "note", "period"],
     idHeader: "attendanceId"
   },
   {
     sheetName: CONFIG.SHEET_TEACHER_ATTENDANCE,
-    headers: ["attendanceId", "date", "academicYear", "teacherId", "status", "method", "timestamp", "note"],
+    headers: ["attendanceId", "date", "academicYear", "teacherId", "status", "method", "timestamp", "note", "period", "subject", "materi", "classId"],
     idHeader: "attendanceId"
   },
   {
     sheetName: CONFIG.SHEET_JOURNAL,
-    headers: ["journalId", "date", "academicYear", "teacherId", "classId", "subject", "content", "note", "status"],
+    headers: ["journalId", "date", "academicYear", "teacherId", "classId", "period", "subject", "content", "note", "status"],
     idHeader: "journalId"
   },
   {
@@ -56,7 +78,7 @@ const DATABASE_SCHEMAS = [
   },
   {
     sheetName: CONFIG.SHEET_ATTENDANCE_EVIDENCES,
-    headers: ["evidenceId", "sessionId", "operatorId", "capturedAt", "fileId", "fileUrl"],
+    headers: ["evidenceId", "sessionId", "operatorId", "capturedAt", "fileId", "fileUrl", "attendanceId"],
     idHeader: "evidenceId"
   }
 ];

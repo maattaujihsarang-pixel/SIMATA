@@ -46,6 +46,12 @@ function doGet(e) {
         .evaluate()
         .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 
+    case "logo":
+      Logger.log("MEMBUKA LOGO");
+      return HtmlService
+        .createHtmlOutput('<img src="' + getSimataLogo() + '" style="max-width:100%;height:auto;display:block;margin:auto;" alt="Logo SIMATA">')
+        .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+
     default:
       Logger.log("MEMBUKA LOGIN");
       return HtmlService
@@ -63,3 +69,25 @@ function include(filename) {
     .evaluate()
     .getContent();
 }
+
+let _cachedSimataLogo = null;
+
+/**
+ * Single Source of Truth for SIMATA Application Logo
+ * Reads base64 data URI from assets.html and caches it in memory.
+ */
+function getSimataLogo() {
+  if (!_cachedSimataLogo) {
+    try {
+      const content = HtmlService.createHtmlOutputFromFile('assets').getContent();
+      const match = content.match(/SIMATA_ASSETS\.logo\s*=\s*["']([^"']+)["']/);
+      if (match && match[1]) {
+        _cachedSimataLogo = match[1];
+      }
+    } catch (e) {
+      Logger.log("getSimataLogo error: " + (e && e.message ? e.message : String(e)));
+    }
+  }
+  return _cachedSimataLogo || "";
+}
+

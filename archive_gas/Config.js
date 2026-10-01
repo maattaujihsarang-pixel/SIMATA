@@ -17,3 +17,4 @@ const CONFIG = {
   // Get folder ID from Drive URL: https://drive.google.com/drive/folders/[FOLDER_ID]
   EVIDENCE_FOLDER_ID: "13Pp9gzPgVjnsVa6V-gK1ejBIjCWl4fL6",
 };
+// SIMATA System Config - 2026

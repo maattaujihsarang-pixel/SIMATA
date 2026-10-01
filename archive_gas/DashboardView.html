@@ -1,0 +1,2820 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+
+  <base target="_top">
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>SIMATA | Dashboard</title>
+
+  <?!= HtmlService.createHtmlOutputFromFile('style').getContent(); ?>
+  <?!= HtmlService.createHtmlOutputFromFile('MobileResponsive').getContent(); ?>
+  <?!= include('assets'); ?>
+
+  <!-- jsQR: QR Code decode library (MIT, no npm required) -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+  <!-- QRCode.js: QR Code generator library for Student QR Preview & Print -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script src="/js/simata-client.js"></script>
+</head>
+
+
+<body class="dashboard-page">
+
+<!-- GLOBAL INITIAL & SESSION LOADING OVERLAY (BUG 20) -->
+<div id="globalLoadingOverlay" class="loading-overlay show" role="status" aria-live="polite">
+  <div class="spinner"></div>
+  <p id="globalLoadingText">Memverifikasi sesi &amp; memuat SIMATA...</p>
+</div>
+
+<div class="dashboard-layout">
+
+  <!-- MOBILE SIDEBAR BACKDROP -->
+  <div id="sidebarBackdrop" class="sidebar-backdrop" aria-hidden="true"></div>
+
+  <!-- =========================
+       SIDEBAR
+  ========================== -->
+
+  <aside class="sidebar">
+
+    <div class="sidebar-logo">
+
+      <img
+        src="<?!= getSimataLogo(); ?>"
+        alt="Logo SIMATA"
+      >
+
+      <div>
+        <h2>SIMATA</h2>
+        <p>MA At-Taujih Sarang</p>
+      </div>
+
+      <button
+        id="sidebarCloseBtn"
+        class="sidebar-close-btn"
+        type="button"
+        aria-label="Tutup menu navigasi"
+      >
+        <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+
+    </div>
+
+
+    <nav class="sidebar-menu">
+
+      <ul>
+
+        <li id="menu-dashboard" class="active">
+
+          <span class="menu-icon">
+
+            <svg viewBox="0 0 24 24">
+              <path d="M3 12L12 4l9 8"/>
+              <path d="M5 10v10h14V10"/>
+              <path d="M9 20v-6h6v6"/>
+            </svg>
+
+          </span>
+
+          <span class="menu-text">
+            Dashboard
+          </span>
+
+        </li>
+
+
+        <li id="menu-responder" style="display:none;">
+
+          <span class="menu-icon">
+
+            <svg viewBox="0 0 24 24">
+              <path d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+            </svg>
+
+          </span>
+
+          <span class="menu-text">
+            Responder
+          </span>
+
+        </li>
+
+
+        <li id="menu-attendance">
+
+          <span class="menu-icon">
+
+            <svg viewBox="0 0 24 24">
+              <path d="M3 12h18"/>
+              <path d="M12 3v18"/>
+            </svg>
+
+          </span>
+
+          <span class="menu-text">
+            Presensi Siswa
+          </span>
+
+        </li>
+
+        <li id="menu-teacher-attendance">
+
+          <span class="menu-icon">
+
+            <svg viewBox="0 0 24 24">
+              <path d="M3 12h18"/>
+              <path d="M12 3v18"/>
+            </svg>
+
+          </span>
+
+          <span class="menu-text">
+            Presensi Guru
+          </span>
+
+        </li>
+
+        <li id="menu-journal">
+
+          <span class="menu-icon">
+
+            <svg viewBox="0 0 24 24">
+              <path d="M3 6h18v12H3z"/>
+              <path d="M3 10h18"/>
+            </svg>
+
+          </span>
+
+          <span class="menu-text">
+            Rekap & Cetak 
+          </span>
+
+        </li>
+
+
+        <li id="menu-teachers">
+
+          <span class="menu-icon">
+
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="8" r="4"/>
+              <path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/>
+            </svg>
+
+          </span>
+
+          <span class="menu-text">
+            Guru
+          </span>
+
+        </li>
+
+
+        <li id="menu-students">
+
+          <span class="menu-icon">
+
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="7" r="4"/>
+              <path d="M5 21c0-4 3-7 7-7s7 3 7 7"/>
+            </svg>
+
+          </span>
+
+          <span class="menu-text">
+            Siswa
+          </span>
+
+        </li>
+
+
+        <li id="menu-grades">
+
+          <span class="menu-icon">
+
+            <svg viewBox="0 0 24 24">
+              <path d="M6 3h12v18H6z"/>
+              <path d="M9 7h6"/>
+              <path d="M9 11h6"/>
+              <path d="M9 15h4"/>
+            </svg>
+
+          </span>
+
+          <span class="menu-text">
+            Nilai
+          </span>
+
+        </li>
+
+        <li id="menu-classes">
+
+          <span class="menu-icon">
+
+            <svg viewBox="0 0 24 24">
+              <path d="M3 21V5l9-3 9 3v16"/>
+              <path d="M7 21v-6h10v6"/>
+            </svg>
+
+          </span>
+
+          <span class="menu-text">
+            Kelas
+          </span>
+
+        </li>
+
+
+        <li>
+
+          <span class="menu-icon">
+
+            <svg viewBox="0 0 24 24">
+              <path d="M4 19V5"/>
+              <path d="M4 19h17"/>
+              <path d="M7 16l4-5 3 2 5-7"/>
+            </svg>
+
+          </span>
+
+          <span class="menu-text">
+            Laporan
+          </span>
+
+        </li>
+
+
+
+
+
+
+        <!-- PENGATURAN -->
+        <li id="menu-settings">
+          <span class="menu-icon">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-1.7 1.7-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5v.2h-2.4v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1-1.7-1.7.1-.1A1.7 1.7 0 0 0 8.4 15a1.7 1.7 0 0 0-1.5-1H6.7v-2.4h.2a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9L8 8.6l1.7-1.7.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.5v-.2h2.4v.2a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1 1.7 1.7-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.5 1h.2V14h-.2a1.7 1.7 0 0 0-1.5 1z"/>
+            </svg>
+          </span>
+          <span class="menu-text">
+            Pengaturan
+          </span>
+        </li>
+
+      </ul>
+
+    </nav>
+
+  </aside>
+
+
+
+  <!-- =========================
+       MAIN
+  ========================== -->
+
+  <main class="main">
+
+
+    <!-- TOPBAR -->
+
+    <header class="topbar">
+
+      <button
+        id="hamburgerBtn"
+        class="hamburger-btn"
+        type="button"
+        aria-label="Buka menu navigasi"
+        aria-expanded="false"
+      >
+        <svg viewBox="0 0 24 24" style="width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;">
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+
+      <div class="topbar-left">
+
+        <span class="topbar-label">
+          SISTEM INFORMASI
+        </span>
+
+        <h1>
+          Dashboard
+        </h1>
+
+      </div>
+
+
+      <div class="topbar-right">
+
+
+        <div class="live-clock">
+
+          <span class="clock-dot"></span>
+
+          <span id="liveClock">
+            --:--:--
+          </span>
+
+        </div>
+
+
+        <div class="user-profile-wrapper" id="profileDropdownWrapper">
+
+          <button
+            type="button"
+            class="user-profile"
+            id="profileTrigger"
+            aria-haspopup="true"
+            aria-expanded="false"
+            aria-label="Menu Profil Pengguna"
+          >
+
+            <div
+              class="user-avatar"
+              id="userAvatar"
+            >
+              IM
+            </div>
+
+            <div class="user-info">
+
+              <span
+                class="user-name"
+                id="userName"
+              >
+                Loading...
+              </span>
+
+              <small id="userRole">
+                Loading...
+              </small>
+
+            </div>
+
+            <svg class="profile-chevron" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+            </svg>
+
+          </button>
+
+          <!-- PROFILE DROPDOWN MENU -->
+          <div
+            class="profile-dropdown-menu"
+            id="profileDropdownMenu"
+            role="menu"
+            aria-orientation="vertical"
+            aria-labelledby="profileTrigger"
+          >
+
+            <!-- Item 1: Profil -->
+            <button
+              type="button"
+              class="profile-dropdown-item"
+              id="profileMenuItemProfil"
+              role="menuitem"
+            >
+              <span class="dropdown-item-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+              </span>
+              <span>Profil</span>
+            </button>
+
+            <div class="profile-dropdown-divider"></div>
+
+            <!-- Item 2: Logout -->
+            <button
+              type="button"
+              class="profile-dropdown-item profile-dropdown-item-danger"
+              id="logout-button"
+              role="menuitem"
+            >
+              <span class="dropdown-item-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                  <polyline points="16 17 21 12 16 7"/>
+                  <line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+              </span>
+              <span>Logout</span>
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </header>
+
+
+
+    <!-- CONTENT -->
+
+    <section id="dashboardContent" class="content">
+
+
+      <!-- WELCOME -->
+
+      <div class="welcome-card">
+
+        <div class="welcome-content">
+
+          <span class="section-label">
+            DASHBOARD UTAMA
+          </span>
+
+          <h2>
+            Selamat Datang
+          </h2>
+
+          <p>
+            Kelola dan pantau aktivitas akademik
+            MA At-Taujih Sarang melalui SIMATA.
+          </p>
+
+        </div>
+
+
+        <div class="welcome-decoration">
+
+          <div class="decoration-circle circle-one"></div>
+          <div class="decoration-circle circle-two"></div>
+
+        </div>
+
+      </div>
+
+
+
+      <!-- STATISTICS -->
+
+      <div class="section-heading">
+
+        <div>
+
+          <span class="section-label">
+            RINGKASAN
+          </span>
+
+          <h2>
+            Statistik Sistem
+          </h2>
+
+        </div>
+
+      </div>
+
+
+      <div class="stats-grid">
+
+
+        <div class="stat-card">
+
+          <div class="stat-icon">
+
+            <svg viewBox="0 0 24 24">
+              <circle cx="9" cy="8" r="4"/>
+              <path d="M2 21c0-4 3-7 7-7"/>
+              <path d="M16 8a4 4 0 0 1 0 8"/>
+              <path d="M17 14c3 .7 5 2.7 5 6"/>
+            </svg>
+
+          </div>
+
+          <div class="stat-data">
+
+            <span>
+              Jumlah Siswa
+            </span>
+
+            <strong id="totalStudents">
+              0
+            </strong>
+
+          </div>
+
+        </div>
+
+
+
+        <div class="stat-card">
+
+          <div class="stat-icon">
+
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="7" r="4"/>
+              <path d="M5 21c0-4 3-7 7-7s7 3 7 7"/>
+            </svg>
+
+          </div>
+
+          <div class="stat-data">
+
+            <span>
+              Jumlah Guru
+            </span>
+
+            <strong id="totalTeachers">
+              0
+            </strong>
+
+          </div>
+
+        </div>
+
+
+
+        <div class="stat-card">
+
+          <div class="stat-icon">
+
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="9"/>
+              <path d="M8 12l2.5 2.5L16 9"/>
+            </svg>
+
+          </div>
+
+          <div class="stat-data">
+
+            <span>
+              Hadir Hari Ini
+            </span>
+
+            <strong id="todayAttendance">
+              0
+            </strong>
+
+          </div>
+
+        </div>
+
+
+
+        <div class="stat-card">
+
+          <div class="stat-icon">
+
+            <svg viewBox="0 0 24 24">
+              <path d="M3 21V5l9-3 9 3v16"/>
+              <path d="M7 21v-6h10v6"/>
+              <path d="M8 9h2"/>
+              <path d="M14 9h2"/>
+            </svg>
+
+          </div>
+
+          <div class="stat-data">
+
+            <span>
+              Jumlah Kelas
+            </span>
+
+            <strong id="totalClasses">
+              0
+            </strong>
+
+          </div>
+
+        </div>
+
+
+      </div>
+
+    </section>
+
+        <!-- RESPONDER CONTENT (hidden by default) -->
+        <section id="responderContent" class="content" style="display:none;">
+
+          <div class="section-heading responder-header-wrap">
+            <div class="responder-header-left">
+              <span class="section-label">SIMATA RESPONDER</span>
+              <h2 class="responder-title">Sesi Presensi Scanner</h2>
+              <p class="responder-subtitle">Presensi terpadu guru dan pemindaian cepat QR Code siswa</p>
+            </div>
+            <div id="responderHeaderActions" class="responder-header-actions">
+              <span id="responderStatusBadge" class="simata-badge simata-badge-success">
+                STATUS: ACTIVE
+              </span>
+              <button id="finishResponderBtn" type="button">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
+                <span>Selesai Sesi</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- OPERATOR INFO STRIP -->
+          <div class="responder-session-strip">
+            <div class="responder-meta-item">
+              <div class="responder-meta-icon">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </div>
+              <div class="responder-meta-content">
+                <span class="responder-meta-label">Operator Sesi</span>
+                <div class="responder-meta-val">
+                  <span id="responderOperatorName">--</span>
+                  <span id="responderOperatorRole" class="responder-role-pill">--</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="responder-meta-divider"></div>
+
+            <div class="responder-meta-item">
+              <div class="responder-meta-icon">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                  <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                </svg>
+              </div>
+              <div class="responder-meta-content">
+                <span class="responder-meta-label">Mode Operasional</span>
+                <div class="responder-meta-val">
+                  <span class="responder-mode-badge">Presensi Real-Time SIMATA</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="responder-meta-divider"></div>
+
+            <div class="responder-meta-item responder-meta-right">
+              <div class="responder-meta-icon">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
+                  <line x1="4" y1="22" x2="4" y2="15"></line>
+                </svg>
+              </div>
+              <div class="responder-meta-content">
+                <span class="responder-meta-label">Session ID</span>
+                <div class="responder-meta-val">
+                  <div id="responderSessionIdDisplay" class="responder-session-id">--</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RESPONDER GRID -->
+          <div class="simata-responder">
+
+            <!-- PANEL 1: PRESENSI GURU (Live Camera + Form Manual) -->
+            <div class="simata-responder-panel" id="responderTeacherPanel">
+              <div class="responder-panel-header">
+                <div class="responder-panel-header-left">
+                  <div class="responder-panel-icon responder-panel-icon-teacher">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                      <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <span class="section-label" style="margin-bottom:0;">PRESENSI GURU</span>
+                    <h3 class="responder-panel-title">Presensi Guru</h3>
+                  </div>
+                </div>
+                <span id="teacherCameraStatusBadge" class="simata-badge simata-badge-neutral">Siap Presensi</span>
+              </div>
+              
+              <div class="responder-panel-body">
+                
+                <!-- CAMERA CONTAINER -->
+                <div>
+                  
+                  <!-- STATE A: Camera Inactive / Idle Placeholder -->
+                  <div id="teacherCameraIdleView" class="responder-interactive-box">
+                    <div class="responder-box-icon">
+                      <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                        <circle cx="12" cy="13" r="4"/>
+                      </svg>
+                    </div>
+                    <h4 class="responder-box-title">Foto Langsung dari Kamera</h4>
+                    <p class="responder-box-desc">Buka kamera perangkat untuk verifikasi kehadiran guru secara langsung (tanpa upload galeri).</p>
+                    <button id="openTeacherCameraBtn" class="btn-responder-primary" type="button">
+                      <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                        <circle cx="12" cy="13" r="4"/>
+                      </svg>
+                      <span>Buka Kamera</span>
+                    </button>
+                  </div>
+
+                  <!-- STATE B: Camera Popup Active in Gateway -->
+                  <div id="teacherCameraActiveView" style="display:none;" class="responder-feedback-card success">
+                    <div class="responder-feedback-icon">
+                      <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                        <circle cx="12" cy="13" r="4"/>
+                      </svg>
+                    </div>
+                    <h4 class="responder-feedback-title">Jendela Kamera Sedang Aktif</h4>
+                    <p class="responder-feedback-desc">Silakan ambil dan konfirmasi foto pada jendela pop-up kamera yang terbuka.</p>
+                    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+                      <button id="reopenTeacherCameraBtn" class="btn-responder-primary" type="button" style="min-height:38px;padding:0 16px;font-size:12px;">
+                        Fokus / Buka Ulang Jendela
+                      </button>
+                      <button id="closeTeacherCameraBtn" class="btn-responder-secondary" type="button" style="min-height:38px;padding:0 16px;font-size:12px;">
+                        Batal
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- STATE C: Captured Photo Preview (Temporary / Ephemeral) -->
+                  <div id="teacherCameraCapturedView" style="display:none;">
+                    <div class="simata-camera" style="border-radius:12px;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,0.1);position:relative;background:#000;">
+                      <img id="teacherCapturedPreview" alt="Foto Kehadiran Guru" style="width:100%;max-height:280px;object-fit:cover;display:block;" />
+                      <div style="position:absolute;bottom:8px;left:8px;right:8px;background:rgba(15,36,25,0.85);color:#fff;padding:6px 12px;border-radius:6px;font-size:11.5px;font-weight:600;display:flex;align-items:center;gap:6px;backdrop-filter:blur(4px);">
+                        <svg viewBox="0 0 24 24" width="14" height="14" stroke="#4ADE80" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        <span>Foto Siap (Validasi Visual Langsung)</span>
+                      </div>
+                    </div>
+                    <div style="margin-top:10px;display:flex;justify-content:flex-end;">
+                      <button id="retakeTeacherPhotoBtn" class="btn-responder-secondary" type="button">
+                        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                          <circle cx="12" cy="13" r="4"/>
+                        </svg>
+                        <span>Ambil Ulang Foto</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- STATE D: Camera Error -->
+                  <div id="teacherCameraErrorView" style="display:none;" class="responder-feedback-card danger">
+                    <p id="teacherCameraErrorText" style="font-size:12.5px;color:#B91C1C;margin:0 0 12px;font-weight:600;">Tidak dapat mengakses kamera perangkat.</p>
+                    <button id="retryTeacherCameraBtn" class="btn-responder-primary" type="button" style="min-height:38px;padding:0 18px;font-size:12px;">Coba Lagi</button>
+                  </div>
+
+                  <!-- Hidden Canvas for capturing temporary photo -->
+                  <canvas id="teacherAttendanceCanvas" style="display:none;"></canvas>
+                </div>
+
+                <!-- FORM MANUAL PRESENSI GURU -->
+                <div class="responder-form-card">
+                  <div class="responder-form-grid">
+                    <div class="responder-field-group">
+                      <label for="rg_teacherId" class="responder-field-label">Nama Guru <span class="responder-required">*</span></label>
+                      <select id="rg_teacherId" class="input-box">
+                        <option value="">(Memuat data guru...)</option>
+                      </select>
+                    </div>
+
+                    <div class="responder-field-group">
+                      <label for="rg_classId" class="responder-field-label">Kelas yang Diajar <span class="responder-required">*</span></label>
+                      <select id="rg_classId" class="input-box">
+                        <option value="">(Memuat data kelas...)</option>
+                      </select>
+                    </div>
+
+                    <div class="responder-field-group">
+                      <label for="rg_status" class="responder-field-label">Status Kehadiran <span class="responder-required">*</span></label>
+                      <select id="rg_status" class="input-box" style="font-weight:700;">
+                        <option value="Hadir" selected>Hadir</option>
+                        <option value="Izin">Izin</option>
+                        <option value="Sakit">Sakit</option>
+                        <option value="Alpa">Alpa</option>
+                      </select>
+                    </div>
+
+                    <div class="responder-field-group">
+                      <label for="rg_subject" class="responder-field-label">Mata Pelajaran <span class="responder-required">*</span></label>
+                      <input id="rg_subject" class="input-box" placeholder="Contoh: Fiqih, SKI, Bahasa Arab" />
+                    </div>
+
+                    <div class="responder-field-group responder-col-span-2">
+                      <label class="responder-field-label">Jam ke- (Bisa pilih lebih dari satu) <span class="responder-required">*</span></label>
+                      <div id="rg_period" class="period-checkbox-container">
+                        <label class="period-checkbox-label">
+                          <input type="checkbox" name="rg_period" class="rg-period-checkbox" value="1" style="width:15px;height:15px;accent-color:#166534;cursor:pointer;" />
+                          <span>Jam ke-1</span>
+                        </label>
+                        <label class="period-checkbox-label">
+                          <input type="checkbox" name="rg_period" class="rg-period-checkbox" value="2" style="width:15px;height:15px;accent-color:#166534;cursor:pointer;" />
+                          <span>Jam ke-2</span>
+                        </label>
+                        <label class="period-checkbox-label">
+                          <input type="checkbox" name="rg_period" class="rg-period-checkbox" value="3" style="width:15px;height:15px;accent-color:#166534;cursor:pointer;" />
+                          <span>Jam ke-3</span>
+                        </label>
+                        <label class="period-checkbox-label">
+                          <input type="checkbox" name="rg_period" class="rg-period-checkbox" value="4" style="width:15px;height:15px;accent-color:#166534;cursor:pointer;" />
+                          <span>Jam ke-4</span>
+                        </label>
+                        <label class="period-checkbox-label">
+                          <input type="checkbox" name="rg_period" class="rg-period-checkbox" value="5" style="width:15px;height:15px;accent-color:#166534;cursor:pointer;" />
+                          <span>Jam ke-5</span>
+                        </label>
+                        <label class="period-checkbox-label">
+                          <input type="checkbox" name="rg_period" class="rg-period-checkbox" value="6" style="width:15px;height:15px;accent-color:#166534;cursor:pointer;" />
+                          <span>Jam ke-6</span>
+                        </label>
+                        <label class="period-checkbox-label">
+                          <input type="checkbox" name="rg_period" class="rg-period-checkbox" value="7" style="width:15px;height:15px;accent-color:#166534;cursor:pointer;" />
+                          <span>Jam ke-7</span>
+                        </label>
+                        <label class="period-checkbox-label">
+                          <input type="checkbox" name="rg_period" class="rg-period-checkbox" value="8" style="width:15px;height:15px;accent-color:#166534;cursor:pointer;" />
+                          <span>Jam ke-8</span>
+                        </label>
+                        <label class="period-checkbox-label">
+                          <input type="checkbox" name="rg_period" class="rg-period-checkbox" value="9" style="width:15px;height:15px;accent-color:#166534;cursor:pointer;" />
+                          <span>Jam ke-9</span>
+                        </label>
+                        <label class="period-checkbox-label">
+                          <input type="checkbox" name="rg_period" class="rg-period-checkbox" value="10" style="width:15px;height:15px;accent-color:#166534;cursor:pointer;" />
+                          <span>Jam ke-10</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div class="responder-field-group">
+                      <label for="rg_materi" class="responder-field-label">Materi Pembelajaran <span class="responder-required">*</span></label>
+                      <input id="rg_materi" class="input-box" placeholder="Pokok bahasan / materi yang diajarkan" />
+                    </div>
+
+                    <div class="responder-field-group">
+                      <label for="rg_note" class="responder-field-label">Catatan (Opsional)</label>
+                      <input id="rg_note" class="input-box" placeholder="Catatan tambahan bila ada" />
+                    </div>
+
+                    <div class="responder-col-span-2" style="margin-top:6px;">
+                      <button id="submitTeacherAttendanceBtn" class="btn-responder-primary" type="button" style="width:100%;min-height:46px;">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                          <polyline points="17 21 17 13 7 13 7 21"/>
+                          <polyline points="7 3 7 8 15 8"/>
+                        </svg>
+                        <span id="submitTeacherAttendanceBtnText">Simpan Presensi Guru</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- SUCCESS NOTICE CARD (Hidden by default, shown after successful submit) -->
+                <div id="teacherAttendanceSuccessCard" style="display:none;" class="responder-feedback-card success">
+                  <div class="responder-feedback-icon">
+                    <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  </div>
+                  <h4 class="responder-feedback-title">Presensi Guru Berhasil Dicatat</h4>
+                  <p id="teacherSuccessDetail" class="responder-feedback-desc">--</p>
+                  <button id="resetTeacherFormBtn" class="btn-responder-primary" type="button" style="min-height:38px;padding:0 18px;font-size:12px;">Presensi Guru Lainnya</button>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- PANEL 2: SCAN QR SISWA -->
+            <div class="simata-responder-panel" id="responderScannerPanel">
+              <div class="responder-panel-header">
+                <div class="responder-panel-header-left">
+                  <div class="responder-panel-icon responder-panel-icon-scanner">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                      <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <span class="section-label" style="margin-bottom:0;">SCANNER SISWA</span>
+                    <h3 class="responder-panel-title">Scan QR Siswa</h3>
+                  </div>
+                </div>
+                <span id="qrScannerStatusBadge" class="simata-badge simata-badge-info">Scanner Siap</span>
+              </div>
+
+              <div class="responder-panel-body">
+
+                <!-- STATE: IDLE (scanner siap dibuka) -->
+                <div id="qrIdleView">
+                  <div class="responder-interactive-box">
+                    <div class="responder-box-icon">
+                      <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                        <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                      </svg>
+                    </div>
+                    <h4 class="responder-box-title">Scan QR Siswa</h4>
+                    <p class="responder-box-desc">Arahkan kamera ke QR Code siswa untuk memindai presensi cepat dan akurat.</p>
+                    <button id="openQrScannerBtn" class="btn-responder-primary" type="button">
+                      <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                        <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                      </svg>
+                      <span>Buka Scanner QR</span>
+                    </button>
+                  </div>
+
+                  <!-- PANDUAN ALUR PRESENSI QR -->
+                  <div class="responder-guide-card" style="margin-top:16px;">
+                    <div class="responder-guide-header">
+                      <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+                      </svg>
+                      <span>Panduan Alur Presensi QR</span>
+                    </div>
+                    <div class="responder-guide-steps">
+                      <div class="responder-step-item">
+                        <span class="responder-step-num">1</span>
+                        <div>
+                          <strong>Pindai QR Siswa</strong>
+                          <p>Arahkan kamera ke kartu QR siswa atau QR per kelas.</p>
+                        </div>
+                      </div>
+                      <div class="responder-step-item">
+                        <span class="responder-step-num">2</span>
+                        <div>
+                          <strong>Tentukan Multi-Jam & Status</strong>
+                          <p>Pilih jam pelajaran yang ingin dipresensikan setelah kartu terbaca.</p>
+                        </div>
+                      </div>
+                      <div class="responder-step-item">
+                        <span class="responder-step-num">3</span>
+                        <div>
+                          <strong>Konfirmasi & Simpan</strong>
+                          <p>Klik tombol konfirmasi untuk mencatat presensi ke sistem.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Format chips -->
+                  <div class="responder-qr-formats">
+                    <span class="responder-qr-chip">
+                      <span class="chip-dot emerald"></span>
+                      QR Siswa Individual
+                    </span>
+                    <span class="responder-qr-chip">
+                      <span class="chip-dot blue"></span>
+                      QR Presensi Per Kelas
+                    </span>
+                  </div>
+                </div>
+
+                <!-- STATE: SCANNING (camera live + decode loop) -->
+                <div id="qrScanningView" style="display:none;">
+                  <div class="responder-scanner-viewport">
+                    <video id="qrVideo" playsinline muted autoplay style="width:100%;display:block;max-height:360px;object-fit:cover;"></video>
+                    <!-- Scan frame overlay -->
+                    <div class="responder-scan-target">
+                      <div class="responder-scan-box">
+                        <div class="responder-scan-corner tl"></div>
+                        <div class="responder-scan-corner tr"></div>
+                        <div class="responder-scan-corner bl"></div>
+                        <div class="responder-scan-corner br"></div>
+                        <div class="responder-scan-laser"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <canvas id="qrCanvas" style="display:none;"></canvas>
+                  <div style="margin-top:14px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+                    <button id="closeQrScannerBtn" class="btn-responder-secondary" type="button">
+                      <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                      <span>Tutup Scanner</span>
+                    </button>
+                  </div>
+                  <p style="text-align:center;font-size:12px;color:#64748b;margin-top:10px;font-weight:500;">Arahkan kamera ke QR Code siswa...</p>
+                </div>
+
+                <!-- STATE: RESULT (QR berhasil dibaca, konfirmasi presensi) -->
+                <div id="qrResultView" style="display:none;">
+                  <div class="responder-student-card">
+                    <div class="responder-student-avatar">
+                      <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <div style="flex:1;min-width:0;">
+                      <p style="font-size:10px;font-weight:700;color:#166534;margin:0 0 2px;text-transform:uppercase;letter-spacing:0.5px;">Siswa Ditemukan</p>
+                      <p id="qrResultName" style="font-size:16px;font-weight:800;color:#14532D;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">--</p>
+                    </div>
+                  </div>
+                  <div class="responder-student-grid">
+                    <div>
+                      <p class="responder-grid-cell-k">NIS</p>
+                      <p id="qrResultNis" class="responder-grid-cell-v">--</p>
+                    </div>
+                    <div>
+                      <p class="responder-grid-cell-k">Kelas</p>
+                      <p id="qrResultClass" class="responder-grid-cell-v">--</p>
+                    </div>
+                    <div>
+                      <p class="responder-grid-cell-k">Student ID</p>
+                      <p id="qrResultStudentId" class="responder-grid-cell-v" style="font-family:monospace;font-size:12px;color:#64748b;">--</p>
+                    </div>
+                    <div>
+                      <p class="responder-grid-cell-k">Status Siswa</p>
+                      <p id="qrResultStatus" class="responder-grid-cell-v">--</p>
+                    </div>
+                  </div>
+
+                  <!-- RESPONDER STUDENT PERIOD SELECTION (Multi-Jam Siswa) -->
+                  <div id="responderStudentPeriodSelection" class="responder-form-card" style="padding:14px;margin-bottom:14px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:6px;">
+                      <div style="display:flex;align-items:center;gap:6px;">
+                        <label class="responder-field-label" style="margin:0;">
+                          Jam Pelajaran Siswa <span class="responder-required">*</span>
+                        </label>
+                        <span id="responderPeriodLockNotice" style="display:none;font-size:10px;font-weight:700;color:#B45309;background:#FEF3C7;padding:2px 8px;border-radius:4px;border:1px solid #FDE68A;">
+                          Terkunci Sesi Aktif
+                        </span>
+                      </div>
+                      <div id="studentPeriodQuickActions" style="display:flex;gap:6px;">
+                        <button type="button" onclick="toggleAllStudentPeriods(true)" class="login-button" style="background:#e2e8f0;color:#334155;font-size:11px;padding:3px 8px;height:auto;font-weight:600;box-shadow:none;">Pilih Semua</button>
+                        <button type="button" onclick="toggleAllStudentPeriods(false)" class="login-button" style="background:#f1f5f9;color:#64748b;font-size:11px;padding:3px 8px;height:auto;font-weight:600;border:1px solid #cbd5e1;box-shadow:none;">Hapus Semua</button>
+                      </div>
+                    </div>
+                    <p style="font-size:11.5px;color:#64748b;margin:0 0 8px;">Pilih jam pelajaran untuk presensi (bisa multi-jam):</p>
+                    <div id="rq_student_periods" class="period-checkbox-container">
+                      <label class="period-checkbox-label">
+                        <input type="checkbox" name="rq_period" class="rq-period-checkbox" value="1" style="width:15px;height:15px;accent-color:#166534;cursor:pointer;" />
+                        <span>Jam ke-1</span>
+                      </label>
+                      <label class="period-checkbox-label">
+                        <input type="checkbox" name="rq_period" class="rq-period-checkbox" value="2" style="width:15px;height:15px;accent-color:#166534;cursor:pointer;" />
+                        <span>Jam ke-2</span>
+                      </label>
+                      <label class="period-checkbox-label">
+                        <input type="checkbox" name="rq_period" class="rq-period-checkbox" value="3" style="width:15px;height:15px;accent-color:#166534;cursor:pointer;" />
+                        <span>Jam ke-3</span>
+                      </label>
+                      <label class="period-checkbox-label">
+                        <input type="checkbox" name="rq_period" class="rq-period-checkbox" value="4" style="width:15px;height:15px;accent-color:#166534;cursor:pointer;" />
+                        <span>Jam ke-4</span>
+                      </label>
+                      <label class="period-checkbox-label">
+                        <input type="checkbox" name="rq_period" class="rq-period-checkbox" value="5" style="width:15px;height:15px;accent-color:#166534;cursor:pointer;" />
+                        <span>Jam ke-5</span>
+                      </label>
+                      <label class="period-checkbox-label">
+                        <input type="checkbox" name="rq_period" class="rq-period-checkbox" value="6" style="width:15px;height:15px;accent-color:#166534;cursor:pointer;" />
+                        <span>Jam ke-6</span>
+                      </label>
+                      <label class="period-checkbox-label">
+                        <input type="checkbox" name="rq_period" class="rq-period-checkbox" value="7" style="width:15px;height:15px;accent-color:#166534;cursor:pointer;" />
+                        <span>Jam ke-7</span>
+                      </label>
+                      <label class="period-checkbox-label">
+                        <input type="checkbox" name="rq_period" class="rq-period-checkbox" value="8" style="width:15px;height:15px;accent-color:#166534;cursor:pointer;" />
+                        <span>Jam ke-8</span>
+                      </label>
+                      <label class="period-checkbox-label">
+                        <input type="checkbox" name="rq_period" class="rq-period-checkbox" value="9" style="width:15px;height:15px;accent-color:#166534;cursor:pointer;" />
+                        <span>Jam ke-9</span>
+                      </label>
+                      <label class="period-checkbox-label">
+                        <input type="checkbox" name="rq_period" class="rq-period-checkbox" value="10" style="width:15px;height:15px;accent-color:#166534;cursor:pointer;" />
+                        <span>Jam ke-10</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <!-- Status Confirmation Selector -->
+                  <div style="margin-bottom:14px;">
+                    <label class="responder-field-label" style="margin-bottom:6px;">Status Kehadiran</label>
+                    <select id="qrAttendanceStatusSelect" class="input-box" style="width:100%;height:44px;font-weight:700;border-radius:10px;">
+                      <option value="Hadir" selected>Hadir (Default)</option>
+                      <option value="Izin">Izin</option>
+                      <option value="Sakit">Sakit</option>
+                      <option value="Alpa">Alpa</option>
+                    </select>
+                  </div>
+
+                  <!-- Action Buttons -->
+                  <div style="display:flex;flex-direction:column;gap:8px;">
+                    <button id="submitAttendanceBtn" class="btn-responder-primary" type="button" style="width:100%;min-height:48px;">
+                      <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                      <span id="submitAttendanceBtnText">Konfirmasi & Simpan Presensi</span>
+                    </button>
+                    <button id="cancelScanResultBtn" class="btn-responder-secondary" type="button" style="width:100%;min-height:42px;">
+                      Batal / Scan Ulang
+                    </button>
+                  </div>
+                </div>
+
+                <!-- STATE: SUCCESS RECORDED (Presensi berhasil dicatat) -->
+                <div id="qrSuccessRecordedView" style="display:none;" class="responder-feedback-card success">
+                  <div class="responder-feedback-icon">
+                    <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  </div>
+                  <h4 class="responder-feedback-title">Presensi Berhasil Dicatat</h4>
+                  <p id="recordedStudentDetail" class="responder-feedback-desc">--</p>
+                  <div style="margin-bottom:14px;">
+                    <span id="recordedStatusBadge" class="simata-badge simata-badge-success" style="font-size:11px;padding:3px 12px;">HADIR</span>
+                  </div>
+                  <button id="nextScanFromSuccessBtn" class="btn-responder-primary" type="button" style="width:100%;min-height:46px;">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                    Scan Siswa Berikutnya
+                  </button>
+                </div>
+
+                <!-- STATE: DUPLICATE RECORDED (Siswa sudah presensi hari ini) -->
+                <div id="qrDuplicateView" style="display:none;" class="responder-feedback-card warning">
+                  <div class="responder-feedback-icon">
+                    <svg viewBox="0 0 24 24" width="26" height="26" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  </div>
+                  <h4 class="responder-feedback-title">Siswa Sudah Presensi Hari Ini</h4>
+                  <p id="duplicateStudentDetail" class="responder-feedback-desc">Data presensi untuk siswa tersebut pada tanggal hari ini sudah tercatat sebelumnya.</p>
+                  <button id="nextScanFromDuplicateBtn" class="btn-responder-primary" type="button" style="width:100%;min-height:46px;">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                    Scan Siswa Berikutnya
+                  </button>
+                </div>
+
+                <!-- STATE: NOT FOUND (QR dibaca tapi tidak ada di database) -->
+                <div id="qrNotFoundView" style="display:none;" class="responder-feedback-card danger">
+                  <div class="responder-feedback-icon">
+                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg>
+                  </div>
+                  <h4 class="responder-feedback-title">QR Tidak Dikenal</h4>
+                  <p id="qrNotFoundDetail" class="responder-feedback-desc">QR siswa tidak ditemukan dalam sistem.</p>
+                  <button id="nextScanFromNotFoundBtn" class="btn-responder-primary" type="button" style="width:100%;min-height:46px;">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                    Scan Siswa Berikutnya
+                  </button>
+                </div>
+
+                <!-- STATE: ERROR (camera gagal / library gagal) -->
+                <div id="qrErrorView" style="display:none;" class="responder-feedback-card danger">
+                  <div class="responder-feedback-icon">
+                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  </div>
+                  <h4 id="qrErrorTitle" class="responder-feedback-title">Kamera Tidak Dapat Dibuka</h4>
+                  <p id="qrErrorDetail" class="responder-feedback-desc">Izinkan akses kamera pada pengaturan browser Anda.</p>
+                  <button id="retryQrScannerBtn" class="btn-responder-primary" type="button" style="min-height:42px;padding:0 20px;">Coba Lagi</button>
+                </div>
+
+                <!-- STATE: LOOKING UP (menunggu server response) -->
+                <div id="qrLookupView" style="display:none;text-align:center;padding:36px 16px;">
+                  <div class="responder-box-icon" style="animation: simataCorePulse 1s ease-in-out infinite alternate;">
+                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                  </div>
+                  <h4 class="responder-box-title">Mencari Data Siswa...</h4>
+                  <p class="responder-box-desc" style="margin-bottom:0;">Mohon tunggu sebentar, sistem sedang memverifikasi identitas siswa.</p>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+
+          <!-- RESPONDER FOOTER ACTION (Mobile Bottom Finish Session) -->
+          <div id="responderFooterActions" class="responder-footer-actions"></div>
+
+          <script>
+            (function() {
+              function syncResponderBtnLocation() {
+                var btn = document.getElementById('finishResponderBtn');
+                var header = document.getElementById('responderHeaderActions');
+                var footer = document.getElementById('responderFooterActions');
+                if (!btn || !header || !footer) return;
+                if (window.innerWidth <= 768) {
+                  if (btn.parentNode !== footer) footer.appendChild(btn);
+                } else {
+                  if (btn.parentNode !== header) header.appendChild(btn);
+                }
+              }
+              window.addEventListener('resize', syncResponderBtnLocation);
+              window.addEventListener('DOMContentLoaded', syncResponderBtnLocation);
+              if (document.readyState !== 'loading') syncResponderBtnLocation();
+              var sec = document.getElementById('responderContent');
+              if (sec && window.MutationObserver) {
+                new MutationObserver(syncResponderBtnLocation).observe(sec, { attributes: true, attributeFilter: ['style', 'class'] });
+              }
+            })();
+          </script>
+
+        </section>
+
+        <!-- ATTENDANCE CONTENT (hidden by default) -->
+        <section id="attendanceContent" class="content" style="display:none;">
+
+          <div class="section-heading">
+            <div>
+              <span class="section-label">PRESENSI SISWA</span>
+              <h2>Daftar Presensi Siswa</h2>
+            </div>
+            <div class="section-actions">
+              <input id="attendanceDateFilter" type="date" class="input-box" />
+              <select id="attendanceAcademicYearFilter" class="input-box" style="min-width:140px;"></select>
+              <select id="attendanceClassFilter" class="input-box" style="min-width:160px;"></select>
+              <select id="attendanceStudentFilter" class="input-box" style="min-width:180px;"></select>
+              <select id="attendancePeriodFilter" class="input-box" style="min-width:120px;">
+                <option value="">(Semua Jam)</option>
+                <option value="1">Jam ke-1</option>
+                <option value="2">Jam ke-2</option>
+                <option value="3">Jam ke-3</option>
+                <option value="4">Jam ke-4</option>
+                <option value="5">Jam ke-5</option>
+                <option value="6">Jam ke-6</option>
+                <option value="7">Jam ke-7</option>
+                <option value="8">Jam ke-8</option>
+                <option value="9">Jam ke-9</option>
+                <option value="10">Jam ke-10</option>
+              </select>
+              <select id="attendanceStatusFilter" class="input-box" style="min-width:120px;">
+                <option value="">(Status)</option>
+                <option value="Hadir">Hadir</option>
+                <option value="Izin">Izin</option>
+                <option value="Sakit">Sakit</option>
+                <option value="Alpa">Alpa</option>
+              </select>
+              <button id="filterAttendanceButton" class="login-button">Filter</button>
+              <button id="addAttendanceButton" class="login-button">Tambah Presensi</button>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table id="attendanceTable" class="simata-table" style="width:100%;border-collapse:collapse;min-width:860px;">
+              <thead>
+                <tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">
+                  <th style="padding:12px 8px;text-align:center;width:44px;font-size:12.5px;font-weight:700;color:#475569;">No</th>
+                  <th style="padding:12px 10px;text-align:center;width:115px;font-size:12.5px;font-weight:700;color:#475569;">Tanggal</th>
+                  <th style="padding:12px 10px;text-align:center;width:110px;font-size:12.5px;font-weight:700;color:#475569;">NIS / No Induk</th>
+                  <th style="padding:12px 14px;text-align:left;font-size:12.5px;font-weight:700;color:#475569;">Nama</th>
+                  <th style="padding:12px 10px;text-align:center;width:100px;font-size:12.5px;font-weight:700;color:#475569;">Kelas</th>
+                  <th style="padding:12px 10px;text-align:center;width:95px;font-size:12.5px;font-weight:700;color:#475569;">Jam ke-</th>
+                  <th style="padding:12px 10px;text-align:center;width:95px;font-size:12.5px;font-weight:700;color:#475569;">Status</th>
+                  <th style="padding:12px 10px;text-align:center;width:80px;font-size:12.5px;font-weight:700;color:#475569;">Waktu</th>
+                  <th style="padding:12px 12px;text-align:center;width:140px;font-size:12.5px;font-weight:700;color:#475569;">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="attendanceTbody"></tbody>
+            </table>
+          </div>
+
+        </section>
+
+        <!-- ATTENDANCE MODAL -->
+        <div id="attendanceModal" class="modal-backdrop" style="display:none;">
+          <div class="modal-card">
+            <h3 id="attendanceModalTitle">Tambah Presensi</h3>
+            <div style="margin-top:12px;display:flex;flex-direction:column;gap:10px;">
+              <div style="display:flex;gap:8px;">
+                <input id="a_attendanceId" class="input-box" placeholder="attendanceId" />
+                <button id="a_generateId" class="login-button" style="width:140px;">Generate ID</button>
+              </div>
+              <input id="a_date" type="date" class="input-box" />
+              <input id="a_academicYear" class="input-box" placeholder="Academic Year" />
+              <select id="a_studentId" class="input-box"></select>
+              <select id="a_classId" class="input-box"></select>
+              <div>
+                <label style="font-size:11px;font-weight:700;color:var(--s-text-2);text-transform:uppercase;margin-bottom:6px;display:block;">Jam ke- (Bisa pilih lebih dari satu untuk Tambah) <span style="color:#DC2626;">*</span></label>
+                <div id="sa_period_container" class="period-checkbox-container" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(88px, 1fr));gap:6px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:var(--s-radius,10px);padding:10px;">
+                  <label class="period-checkbox-label" style="display:inline-flex;align-items:center;gap:6px;padding:6px 10px;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:6px;font-size:12px;font-weight:600;color:#334155;cursor:pointer;user-select:none;">
+                    <input type="checkbox" name="sa_period" class="sa-period-checkbox" value="1" style="width:15px;height:15px;accent-color:var(--primary,#166534);cursor:pointer;" />
+                    <span>Jam ke-1</span>
+                  </label>
+                  <label class="period-checkbox-label" style="display:inline-flex;align-items:center;gap:6px;padding:6px 10px;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:6px;font-size:12px;font-weight:600;color:#334155;cursor:pointer;user-select:none;">
+                    <input type="checkbox" name="sa_period" class="sa-period-checkbox" value="2" style="width:15px;height:15px;accent-color:var(--primary,#166534);cursor:pointer;" />
+                    <span>Jam ke-2</span>
+                  </label>
+                  <label class="period-checkbox-label" style="display:inline-flex;align-items:center;gap:6px;padding:6px 10px;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:6px;font-size:12px;font-weight:600;color:#334155;cursor:pointer;user-select:none;">
+                    <input type="checkbox" name="sa_period" class="sa-period-checkbox" value="3" style="width:15px;height:15px;accent-color:var(--primary,#166534);cursor:pointer;" />
+                    <span>Jam ke-3</span>
+                  </label>
+                  <label class="period-checkbox-label" style="display:inline-flex;align-items:center;gap:6px;padding:6px 10px;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:6px;font-size:12px;font-weight:600;color:#334155;cursor:pointer;user-select:none;">
+                    <input type="checkbox" name="sa_period" class="sa-period-checkbox" value="4" style="width:15px;height:15px;accent-color:var(--primary,#166534);cursor:pointer;" />
+                    <span>Jam ke-4</span>
+                  </label>
+                  <label class="period-checkbox-label" style="display:inline-flex;align-items:center;gap:6px;padding:6px 10px;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:6px;font-size:12px;font-weight:600;color:#334155;cursor:pointer;user-select:none;">
+                    <input type="checkbox" name="sa_period" class="sa-period-checkbox" value="5" style="width:15px;height:15px;accent-color:var(--primary,#166534);cursor:pointer;" />
+                    <span>Jam ke-5</span>
+                  </label>
+                  <label class="period-checkbox-label" style="display:inline-flex;align-items:center;gap:6px;padding:6px 10px;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:6px;font-size:12px;font-weight:600;color:#334155;cursor:pointer;user-select:none;">
+                    <input type="checkbox" name="sa_period" class="sa-period-checkbox" value="6" style="width:15px;height:15px;accent-color:var(--primary,#166534);cursor:pointer;" />
+                    <span>Jam ke-6</span>
+                  </label>
+                  <label class="period-checkbox-label" style="display:inline-flex;align-items:center;gap:6px;padding:6px 10px;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:6px;font-size:12px;font-weight:600;color:#334155;cursor:pointer;user-select:none;">
+                    <input type="checkbox" name="sa_period" class="sa-period-checkbox" value="7" style="width:15px;height:15px;accent-color:var(--primary,#166534);cursor:pointer;" />
+                    <span>Jam ke-7</span>
+                  </label>
+                  <label class="period-checkbox-label" style="display:inline-flex;align-items:center;gap:6px;padding:6px 10px;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:6px;font-size:12px;font-weight:600;color:#334155;cursor:pointer;user-select:none;">
+                    <input type="checkbox" name="sa_period" class="sa-period-checkbox" value="8" style="width:15px;height:15px;accent-color:var(--primary,#166534);cursor:pointer;" />
+                    <span>Jam ke-8</span>
+                  </label>
+                  <label class="period-checkbox-label" style="display:inline-flex;align-items:center;gap:6px;padding:6px 10px;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:6px;font-size:12px;font-weight:600;color:#334155;cursor:pointer;user-select:none;">
+                    <input type="checkbox" name="sa_period" class="sa-period-checkbox" value="9" style="width:15px;height:15px;accent-color:var(--primary,#166534);cursor:pointer;" />
+                    <span>Jam ke-9</span>
+                  </label>
+                  <label class="period-checkbox-label" style="display:inline-flex;align-items:center;gap:6px;padding:6px 10px;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:6px;font-size:12px;font-weight:600;color:#334155;cursor:pointer;user-select:none;">
+                    <input type="checkbox" name="sa_period" class="sa-period-checkbox" value="10" style="width:15px;height:15px;accent-color:var(--primary,#166534);cursor:pointer;" />
+                    <span>Jam ke-10</span>
+                  </label>
+                </div>
+              </div>
+              <select id="a_status" class="input-box">
+                <option value="Hadir">Hadir</option>
+                <option value="Izin">Izin</option>
+                <option value="Sakit">Sakit</option>
+                <option value="Alpa">Alpa</option>
+              </select>
+              <select id="a_method" class="input-box">
+                <option value="Manual">Manual</option>
+                <option value="QR">QR</option>
+              </select>
+              <textarea id="a_note" class="input-box" placeholder="Note"></textarea>
+            </div>
+            <div class="modal-footer" style="display:flex;gap:8px;justify-content:flex-end;">
+              <button id="attendanceCancelBtn" class="login-button btn-secondary">Batal</button>
+              <button id="attendanceSaveBtn" class="login-button">Simpan</button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- TEACHER ATTENDANCE CONTENT (hidden by default) -->
+        <section id="teacherAttendanceContent" class="content" style="display:none;">
+
+          <div class="section-heading">
+            <div>
+              <span class="section-label">PRESENSI GURU</span>
+              <h2>Daftar Presensi Guru</h2>
+            </div>
+            <div class="section-actions">
+              <input id="teacherAttendanceDateFilter" type="date" class="input-box" />
+              <select id="teacherAttendanceAcademicYearFilter" class="input-box" style="min-width:140px;"></select>
+              <select id="teacherAttendanceTeacherFilter" class="input-box" style="min-width:200px;"></select>
+              <select id="teacherAttendancePeriodFilter" class="input-box" style="min-width:120px;">
+                <option value="">(Semua Jam)</option>
+                <option value="1">Jam ke-1</option>
+                <option value="2">Jam ke-2</option>
+                <option value="3">Jam ke-3</option>
+                <option value="4">Jam ke-4</option>
+                <option value="5">Jam ke-5</option>
+                <option value="6">Jam ke-6</option>
+                <option value="7">Jam ke-7</option>
+                <option value="8">Jam ke-8</option>
+                <option value="9">Jam ke-9</option>
+                <option value="10">Jam ke-10</option>
+              </select>
+              <select id="teacherAttendanceStatusFilter" class="input-box" style="min-width:120px;">
+                <option value="">(Status)</option>
+                <option value="Hadir">Hadir</option>
+                <option value="Izin">Izin</option>
+                <option value="Sakit">Sakit</option>
+                <option value="Alpa">Alpa</option>
+              </select>
+              <button id="filterTeacherAttendanceButton" class="login-button">Filter</button>
+              <button id="printTeacherAttendanceButton" class="login-button btn-secondary" style="background:#0f766e;border-color:#0f766e;color:#fff;">Cetak Presensi / Aktivitas</button>
+              <button id="addTeacherAttendanceButton" class="login-button">Tambah Presensi Guru</button>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table id="teacherAttendanceTable" class="simata-table" style="width:100%;border-collapse:collapse;min-width:920px;">
+              <thead>
+                <tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">
+                  <th style="padding:12px 8px;text-align:center;width:44px;font-size:12.5px;font-weight:700;color:#475569;">No</th>
+                  <th style="padding:12px 10px;text-align:center;width:115px;font-size:12.5px;font-weight:700;color:#475569;">Tanggal</th>
+                  <th style="padding:12px 14px;text-align:left;font-size:12.5px;font-weight:700;color:#475569;">Guru</th>
+                  <th style="padding:12px 10px;text-align:center;width:95px;font-size:12.5px;font-weight:700;color:#475569;">Jam ke-</th>
+                  <th style="padding:12px 10px;text-align:left;width:140px;font-size:12.5px;font-weight:700;color:#475569;">Mata Pelajaran</th>
+                  <th style="padding:12px 10px;text-align:left;font-size:12.5px;font-weight:700;color:#475569;">Materi</th>
+                  <th style="padding:12px 10px;text-align:center;width:95px;font-size:12.5px;font-weight:700;color:#475569;">Status</th>
+                  <th style="padding:12px 10px;text-align:center;width:80px;font-size:12.5px;font-weight:700;color:#475569;">Waktu</th>
+                  <th style="padding:12px 12px;text-align:center;width:140px;font-size:12.5px;font-weight:700;color:#475569;">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="teacherAttendanceTbody"></tbody>
+            </table>
+          </div>
+
+        </section>
+
+        <!-- TEACHER ATTENDANCE MODAL -->
+        <div id="teacherAttendanceModal" class="modal-backdrop" style="display:none;">
+          <div class="modal-card">
+            <h3 id="teacherAttendanceModalTitle">Tambah Presensi Guru</h3>
+            <div style="margin-top:12px;display:flex;flex-direction:column;gap:10px;">
+              <div style="display:flex;gap:8px;">
+                <input id="ta_attendanceId" class="input-box" placeholder="attendanceId" />
+                <button id="ta_generateId" class="login-button" style="width:140px;">Generate ID</button>
+              </div>
+              <input id="ta_date" type="date" class="input-box" />
+              <input id="ta_academicYear" class="input-box" placeholder="Academic Year" />
+              <select id="ta_teacherId" class="input-box"></select>
+              <select id="ta_classId" class="input-box">
+                <option value="">-- Pilih Kelas (Opsional) --</option>
+              </select>
+              <input id="ta_period" class="input-box" placeholder="Jam ke- (period)" />
+              <input id="ta_subject" class="input-box" placeholder="Mata Pelajaran" />
+              <input id="ta_materi" class="input-box" placeholder="Materi" />
+              <select id="ta_status" class="input-box">
+                <option value="Hadir">Hadir</option>
+                <option value="Izin">Izin</option>
+                <option value="Sakit">Sakit</option>
+                <option value="Alpa">Alpa</option>
+              </select>
+              <select id="ta_method" class="input-box">
+                <option value="Manual">Manual</option>
+                <option value="Camera">Camera</option>
+              </select>
+              <textarea id="ta_note" class="input-box" placeholder="Note"></textarea>
+            </div>
+            <div class="modal-footer" style="display:flex;gap:8px;justify-content:flex-end;">
+              <button id="teacherAttendanceCancelBtn" class="login-button btn-secondary">Batal</button>
+              <button id="teacherAttendanceSaveBtn" class="login-button">Simpan</button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- ATTENDANCE REPORTING HUB (REKAP & CETAK PRESENSI) -->
+        <section id="journalContent" class="content" style="display:none;">
+
+          <div class="section-heading" style="margin-bottom: 20px;">
+            <div>
+              <span class="section-label">REKAP &amp; CETAK PRESENSI</span>
+              <h2>Rekap &amp; Cetak Presensi</h2>
+              <p style="font-size:13px;color:#64748b;margin:4px 0 0 0;">Kelola rekapitulasi dan cetak laporan kehadiran siswa dan guru.</p>
+            </div>
+          </div>
+
+          <!-- LEVEL 1: JENIS REKAP (SISWA | GURU | GABUNGAN) -->
+          <div class="rpt-control-card">
+            <div class="rpt-level-title">1. Pilih Jenis Rekap:</div>
+            <div class="rpt-segmented-group" id="rptCategoryGroup">
+              <button type="button" class="rpt-seg-btn active" data-category="SISWA">Presensi Siswa</button>
+              <button type="button" class="rpt-seg-btn" data-category="GURU">Presensi Guru</button>
+              <button type="button" class="rpt-seg-btn" data-category="GABUNGAN">Gabungan (Guru &amp; Siswa)</button>
+            </div>
+
+            <!-- LEVEL 2 & 3: PERIODE & SUB-MODE -->
+            <div style="margin-top: 16px; display: flex; flex-wrap: wrap; gap: 20px;">
+              <div id="rptPeriodSubGroup" style="flex: 1; min-width: 240px;">
+                <div class="rpt-level-title">2. Periode Rekap:</div>
+                <div class="rpt-sub-group" id="rptPeriodGroup">
+                  <button type="button" class="rpt-sub-btn active" data-period="HARIAN">Harian</button>
+                  <button type="button" class="rpt-sub-btn" data-period="BULANAN">Bulanan</button>
+                </div>
+              </div>
+
+              <div id="rptScopeSubGroup" style="flex: 1; min-width: 260px;">
+                <div class="rpt-level-title">3. Cakupan / Sub-Mode:</div>
+                <div class="rpt-sub-group" id="rptScopeGroup">
+                  <button type="button" class="rpt-sub-btn active" data-scope="PER_ANAK">Per Anak</button>
+                  <button type="button" class="rpt-sub-btn" data-scope="PER_KELAS">Per Kelas</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- BLOCKED NOTICE (shown when Guru Harian Per Kelas is selected) -->
+          <div id="rptBlockedNotice" class="rpt-blocked-banner" style="display:none;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#dc2626;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+              </svg>
+              <strong style="color:#b91c1c;">Mode Presensi Guru Per Kelas: NOT AVAILABLE</strong>
+            </div>
+            <p style="margin:6px 0 0 0; font-size:12.5px; color:#991b1b; line-height:1.45;">
+              Fitur dinonaktifkan: Basis data presensi guru saat ini (<code>TeacherAttendance</code>) belum memiliki relasi Kelas dan tidak terdapat jadwal/timetable mengajar resmi di SIMATA. Silakan gunakan mode <strong>Semua Guru</strong>.
+            </p>
+          </div>
+
+          <!-- CONTEXT-AWARE FILTER BAR -->
+          <div class="rpt-filter-card" id="rptFilterCard">
+            <div class="rpt-filter-grid">
+
+              <!-- Filter: Tanggal (Harian) -->
+              <div class="rpt-filter-field" id="rptDateFieldWrapper">
+                <label for="rptDateFilter">Tanggal:</label>
+                <input type="date" id="rptDateFilter" class="input-box" />
+              </div>
+
+              <!-- Filter: Bulan (Bulanan) -->
+              <div class="rpt-filter-field" id="rptMonthFieldWrapper" style="display:none;">
+                <label for="rptMonthFilter">Bulan:</label>
+                <select id="rptMonthFilter" class="input-box">
+                  <option value="01">Januari</option>
+                  <option value="02">Februari</option>
+                  <option value="03">Maret</option>
+                  <option value="04">April</option>
+                  <option value="05">Mei</option>
+                  <option value="06">Juni</option>
+                  <option value="07">Juli</option>
+                  <option value="08">Agustus</option>
+                  <option value="09">September</option>
+                  <option value="10">Oktober</option>
+                  <option value="11">November</option>
+                  <option value="12">Desember</option>
+                </select>
+              </div>
+
+              <!-- Filter: Tahun (Bulanan) -->
+              <div class="rpt-filter-field" id="rptYearFieldWrapper" style="display:none;">
+                <label for="rptYearFilter">Tahun:</label>
+                <select id="rptYearFilter" class="input-box">
+                  <option value="2026">2026</option>
+                  <option value="2025">2025</option>
+                  <option value="2027">2027</option>
+                </select>
+              </div>
+
+              <!-- Filter: Kelas (Per Kelas or Per Anak helper) -->
+              <div class="rpt-filter-field" id="rptClassFieldWrapper">
+                <label for="rptClassFilter">Kelas:</label>
+                <select id="rptClassFilter" class="input-box">
+                  <option value="">(Semua / Pilih Kelas)</option>
+                </select>
+              </div>
+
+              <!-- Filter: Siswa (Per Anak) -->
+              <div class="rpt-filter-field" id="rptStudentFieldWrapper">
+                <label for="rptStudentFilter">Siswa:</label>
+                <select id="rptStudentFilter" class="input-box">
+                  <option value="">(Pilih Siswa)</option>
+                </select>
+              </div>
+
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="rpt-filter-actions">
+              <button type="button" id="rptApplyBtn" class="login-button">Terapkan Filter</button>
+              <button type="button" id="rptResetBtn" class="login-button btn-secondary">Reset</button>
+              <button type="button" id="rptPrintBtn" class="login-button" style="background:#0284c7;" disabled>
+                <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:inline-block;vertical-align:-2px;margin-right:4px;">
+                  <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                  <rect x="6" y="14" width="12" height="8"></rect>
+                </svg>
+                Cetak Laporan
+              </button>
+            </div>
+          </div>
+
+          <!-- PREVIEW CONTAINER -->
+          <div id="rptLoadingState" style="display:none; padding:40px; text-align:center;">
+            <div class="spinner" style="margin:0 auto 12px auto;"></div>
+            <p style="color:#64748b; font-weight:500;">Memuat data rekapitulasi presensi...</p>
+          </div>
+
+          <div id="rptEmptyState" style="padding:48px 24px; text-align:center; background:#ffffff; border:1px dashed #cbd5e1; border-radius:12px; margin-top:16px;">
+            <svg viewBox="0 0 24 24" style="width:48px;height:48px;stroke:#94a3b8;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;margin:0 auto 12px auto;">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            <h4 style="font-size:16px; font-weight:600; color:#334155; margin-bottom:4px;">Belum Ada Data yang Ditampilkan</h4>
+            <p style="font-size:13px; color:#64748b; margin:0;">Silakan tentukan jenis rekap dan parameter filter di atas, lalu klik <strong>Terapkan Filter</strong>.</p>
+          </div>
+
+          <!-- OUTPUT PREVIEW -->
+          <div id="rptPreviewContainer" style="display:none; margin-top:20px;"></div>
+
+        </section>
+        <!-- GRADES CONTENT (hidden by default) -->
+        <section id="gradesContent" class="content" style="display:none;">
+
+          <div class="section-heading">
+            <div>
+              <span class="section-label">NILAI</span>
+              <h2>Daftar Nilai</h2>
+            </div>
+            <div class="section-actions">
+              <input id="gradeSearch" class="input-box" placeholder="Cari gradeId, studentId, classId, subject, atau remarks" style="min-width:220px;" />
+              <select id="gradeStudentFilter" class="input-box" style="min-width:180px;"></select>
+              <select id="gradeClassFilter" class="input-box" style="min-width:170px;"></select>
+              <select id="gradeSubjectFilter" class="input-box" style="min-width:150px;"></select>
+              <select id="gradeAssessmentTypeFilter" class="input-box" style="min-width:170px;"></select>
+              <select id="gradeSemesterFilter" class="input-box" style="min-width:140px;"></select>
+              <select id="gradeAcademicYearFilter" class="input-box" style="min-width:150px;"></select>
+              <button id="filterGradeButton" class="login-button">Filter</button>
+              <button id="addGradeButton" class="login-button">Tambah Nilai</button>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table id="gradesTable" style="width:100%;border-collapse:collapse;min-width:1100px;">
+              <thead>
+                <tr style="text-align:left;border-bottom:1px solid #e5e7eb;">
+                  <th style="padding:8px">Grade ID</th>
+                  <th style="padding:8px">Student</th>
+                  <th style="padding:8px">Class</th>
+                  <th style="padding:8px">Subject</th>
+                  <th style="padding:8px">Assessment</th>
+                  <th style="padding:8px">Score</th>
+                  <th style="padding:8px">Semester</th>
+                  <th style="padding:8px">Academic Year</th>
+                  <th style="padding:8px">Date</th>
+                  <th style="padding:8px">Remarks</th>
+                  <th style="padding:8px">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="gradesTbody"></tbody>
+            </table>
+          </div>
+
+        </section>
+
+        <!-- GRADE MODAL -->
+        <div id="gradeModal" class="modal-backdrop" style="display:none;">
+          <div class="modal-card">
+            <h3 id="gradeModalTitle">Tambah Nilai</h3>
+            <div style="margin-top:12px;display:flex;flex-direction:column;gap:10px;">
+              <input id="g_gradeId" class="input-box" placeholder="gradeId" />
+              <select id="g_studentId" class="input-box"></select>
+              <select id="g_classId" class="input-box"></select>
+              <input id="g_subject" class="input-box" placeholder="Subject" />
+              <input id="g_assessmentType" class="input-box" placeholder="Assessment Type" />
+              <input id="g_score" type="number" step="any" class="input-box" placeholder="Score" />
+              <input id="g_semester" class="input-box" placeholder="Semester" />
+              <input id="g_academicYear" class="input-box" placeholder="Academic Year" />
+              <input id="g_date" type="date" class="input-box" />
+              <textarea id="g_remarks" class="input-box" placeholder="Remarks" rows="3"></textarea>
+            </div>
+            <div class="modal-footer" style="display:flex;gap:8px;justify-content:flex-end;">
+              <button id="gradeCancelBtn" class="login-button btn-secondary">Batal</button>
+              <button id="gradeSaveBtn" class="login-button">Simpan</button>
+            </div>
+          </div>
+        </div>
+
+        <section id="studentsContent" class="content" style="display:none;">
+
+          <div class="section-heading">
+            <div>
+              <span class="section-label">SISWA</span>
+              <h2>Daftar Siswa</h2>
+            </div>
+            <div class="section-actions">
+              <input id="studentSearch" class="input-box" placeholder="Cari berdasarkan nama, nis, nisn, atau studentId" />
+              <button id="addStudentButton" class="login-button">Tambah Siswa</button>
+              <button id="batchQrButton" class="login-button">Cetak QR Kelas</button>
+            </div>
+          </div>
+
+          <!-- FILTER & SUMMARY BAR -->
+          <div class="student-filter-bar" style="margin-top:16px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;background:#fff;padding:12px 16px;border-radius:12px;border:1px solid #e2e8f0;">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <label for="studentClassFilter" style="font-size:13px;font-weight:600;color:#475569;white-space:nowrap;">Filter Kelas:</label>
+              <select id="studentClassFilter" class="input-box" style="height:36px;padding:0 12px;font-size:13px;min-width:150px;">
+                <option value="">Semua Kelas</option>
+              </select>
+              <span id="studentFilterCountText" style="font-size:13px;font-weight:600;color:#166534;background:#f0fdf4;padding:6px 12px;border-radius:20px;border:1px solid #bbf7d0;">Total: 0 siswa</span>
+            </div>
+
+            <!-- Dynamic class summary chips -->
+            <div id="studentClassSummaryChips" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"></div>
+          </div>
+
+          <div class="table-responsive" style="margin-top:16px;overflow-x:auto;background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.05);border:1px solid #e2e8f0;">
+            <table id="studentsTable" class="simata-table" style="width:100%;border-collapse:collapse;min-width:760px;">
+              <thead>
+                <tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">
+                  <th style="padding:12px 8px;text-align:center;width:44px;font-size:12.5px;font-weight:700;color:#475569;">No</th>
+                  <th style="padding:12px 10px;text-align:center;width:110px;font-size:12.5px;font-weight:700;color:#475569;">NIS</th>
+                  <th style="padding:12px 10px;text-align:center;width:120px;font-size:12.5px;font-weight:700;color:#475569;">NISN</th>
+                  <th style="padding:12px 14px;text-align:left;font-size:12.5px;font-weight:700;color:#475569;">Nama</th>
+                  <th style="padding:12px 8px;text-align:center;width:100px;font-size:12.5px;font-weight:700;color:#475569;">Jenis Kelamin</th>
+                  <th style="padding:12px 10px;text-align:center;width:100px;font-size:12.5px;font-weight:700;color:#475569;">Kelas</th>
+                  <th style="padding:12px 10px;text-align:center;width:95px;font-size:12.5px;font-weight:700;color:#475569;">Status</th>
+                  <th style="padding:12px 12px;text-align:center;width:175px;font-size:12.5px;font-weight:700;color:#475569;">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="studentsTbody"></tbody>
+            </table>
+          </div>
+
+        </section>
+
+        <!-- STUDENT MODAL -->
+        <div id="studentModal" class="student-modal-backdrop" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.45);align-items:center;justify-content:center;z-index:10000;">
+          <div class="student-modal-card">
+            <!-- Modal Header -->
+            <div class="student-modal-header">
+              <h3 id="studentModalTitle">Tambah Siswa</h3>
+              <button type="button" onclick="closeStudentModal()" class="student-modal-close-btn" aria-label="Tutup">&times;</button>
+            </div>
+
+            <!-- Modal Body (2-column responsive form) -->
+            <div class="student-modal-body">
+
+              <!-- Section 1: Identitas Sistem -->
+              <div class="student-form-section">
+                <div class="student-section-title">
+                  <span>Identitas Sistem</span>
+                </div>
+                <div class="student-form-grid">
+                  <div class="student-form-group">
+                    <label for="f_studentId" class="student-form-label">Student ID <span class="field-hint">(Otomatis)</span></label>
+                    <input id="f_studentId" class="input-box" placeholder="studentId (Otomatis)" />
+                  </div>
+                  <div class="student-form-group">
+                    <label for="f_qrCodeId" class="student-form-label">QR Code ID <span class="field-hint">(Otomatis)</span></label>
+                    <input id="f_qrCodeId" class="input-box" placeholder="QR Code ID (Otomatis)" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Section 2: Data Pribadi -->
+              <div class="student-form-section">
+                <div class="student-section-title">
+                  <span>Data Pribadi</span>
+                </div>
+                <div class="student-form-grid">
+                  <div class="student-form-group">
+                    <label for="f_nis" class="student-form-label">NIS</label>
+                    <input id="f_nis" class="input-box" placeholder="NIS" />
+                  </div>
+                  <div class="student-form-group">
+                    <label for="f_nisn" class="student-form-label">NISN</label>
+                    <input id="f_nisn" class="input-box" placeholder="NISN" />
+                  </div>
+                  <div class="student-form-group student-col-span-2">
+                    <label for="f_name" class="student-form-label">Nama Lengkap <span class="field-required">*</span></label>
+                    <input id="f_name" class="input-box" placeholder="Nama Lengkap Siswa" />
+                  </div>
+                  <div class="student-form-group">
+                    <label for="f_gender" class="student-form-label">Jenis Kelamin</label>
+                    <select id="f_gender" class="input-box">
+                      <option value="">(Pilih Gender)</option>
+                      <option value="L">Laki-laki (L)</option>
+                      <option value="P">Perempuan (P)</option>
+                    </select>
+                  </div>
+                  <div class="student-form-group">
+                    <label for="f_birthDate" class="student-form-label">Tanggal Lahir</label>
+                    <input id="f_birthDate" type="date" class="input-box" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Section 3: Status Akademik -->
+              <div class="student-form-section">
+                <div class="student-section-title">
+                  <span>Status Akademik</span>
+                </div>
+                <div class="student-form-grid">
+                  <div class="student-form-group">
+                    <label for="f_classId" class="student-form-label">Kelas <span class="field-required">*</span></label>
+                    <select id="f_classId" class="input-box"></select>
+                  </div>
+                  <div class="student-form-group">
+                    <label for="f_status" class="student-form-label">Status Siswa</label>
+                    <select id="f_status" class="input-box">
+                      <option value="Active">Active</option>
+                      <option value="Inactive">Inactive</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="student-modal-footer">
+              <button type="button" id="studentCancelBtn" class="login-button student-btn-cancel">Batal</button>
+              <button type="button" id="studentSaveBtn" class="login-button student-btn-save">Simpan</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- STUDENT QR MODAL -->
+        <div id="studentQrModal" class="student-qr-modal-backdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;z-index:10000;">
+          <div class="student-qr-modal-card" style="background:white;padding:24px;border-radius:12px;width:100%;max-width:380px;box-shadow:0 10px 25px rgba(0,0,0,0.2);display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;margin:16px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;width:100%;margin-bottom:16px;">
+              <h3 style="margin:0;font-size:1.2rem;font-weight:600;color:#1e293b;">QR Siswa</h3>
+              <button type="button" onclick="closeStudentQrModal()" style="background:none;border:none;font-size:1.5rem;line-height:1;cursor:pointer;color:#64748b;padding:0 4px;" aria-label="Tutup">&times;</button>
+            </div>
+
+            <!-- QR Container -->
+            <div id="studentQrContainer" style="background:#f8fafc;padding:16px;border-radius:8px;border:1px solid #e2e8f0;display:flex;align-items:center;justify-content:center;min-height:200px;min-width:200px;margin-bottom:16px;box-sizing:border-box;">
+              <!-- QR Code generated client-side -->
+            </div>
+
+            <!-- Student Info -->
+            <div style="width:100%;background:#f1f5f9;border-radius:8px;padding:12px;text-align:left;font-size:0.9rem;color:#334155;margin-bottom:20px;box-sizing:border-box;">
+              <div style="margin-bottom:4px;"><strong>Nama:</strong> <span id="sqr_name">-</span></div>
+              <div style="margin-bottom:4px;"><strong>Student ID:</strong> <span id="sqr_studentId">-</span></div>
+              <div><strong>QR ID:</strong> <span id="sqr_qrCodeId" style="font-family:monospace;font-weight:600;color:#2563eb;">-</span></div>
+            </div>
+
+            <!-- Actions -->
+            <div style="display:flex;gap:10px;width:100%;justify-content:flex-end;">
+              <button type="button" onclick="printStudentQr()" class="login-button" style="background:#2563eb;flex:1;display:flex;align-items:center;justify-content:center;gap:6px;">
+                <svg style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;" viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
+                Cetak QR
+              </button>
+              <button type="button" onclick="closeStudentQrModal()" class="login-button" style="background:#e2e8f0;color:#334155;flex:1;">Tutup</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- BATCH STUDENT QR MODAL -->
+        <div id="batchQrModal" class="batch-qr-modal-backdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;z-index:10000;">
+          <div class="batch-qr-modal-card" style="background:white;padding:24px;border-radius:12px;width:100%;max-width:860px;max-height:90vh;box-shadow:0 10px 25px rgba(0,0,0,0.2);display:flex;flex-direction:column;box-sizing:border-box;margin:16px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;border-bottom:1px solid #e2e8f0;padding-bottom:12px;">
+              <div>
+                <h3 style="margin:0;font-size:1.25rem;font-weight:600;color:#1e293b;">Cetak QR Siswa Per Kelas</h3>
+                <p style="margin:4px 0 0 0;font-size:0.85rem;color:#64748b;">Pratinjau dan cetak kartu QR seluruh siswa dalam satu kelas</p>
+              </div>
+              <button type="button" onclick="closeBatchQrModal()" style="background:none;border:none;font-size:1.5rem;line-height:1;cursor:pointer;color:#64748b;padding:0 4px;" aria-label="Tutup">&times;</button>
+            </div>
+
+            <!-- Controls: Class Selector & Summary -->
+            <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;background:#f8fafc;padding:14px;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:16px;">
+              <div style="flex:1;min-width:200px;">
+                <label for="batchClassSelect" style="display:block;font-size:0.85rem;font-weight:600;color:#475569;margin-bottom:4px;">Pilih Kelas:</label>
+                <select id="batchClassSelect" class="input-box" style="width:100%;">
+                  <option value="">(Pilih Kelas)</option>
+                </select>
+              </div>
+              <div style="display:flex;flex-direction:column;justify-content:flex-end;">
+                <span style="font-size:0.85rem;color:#64748b;margin-bottom:4px;">Jumlah Siswa:</span>
+                <span id="batchCountBadge" style="font-size:0.9rem;font-weight:600;color:#0f172a;padding:8px 12px;background:#e2e8f0;border-radius:6px;display:inline-block;">0 siswa</span>
+              </div>
+              <div style="display:flex;align-items:flex-end;">
+                <button type="button" id="renderBatchBtn" onclick="renderBatchQrPreview()" class="login-button" style="background:#2563eb;height:38px;padding:0 16px;">Tampilkan QR</button>
+              </div>
+            </div>
+
+            <!-- Warning for students without QR (if any) -->
+            <div id="batchWarningNotice" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:#991b1b;padding:10px 14px;border-radius:6px;font-size:0.85rem;margin-bottom:16px;"></div>
+
+            <!-- Preview Grid Scrollable Container -->
+            <div id="batchPreviewScroll" style="flex:1;overflow-y:auto;min-height:220px;max-height:48vh;border:1px solid #e2e8f0;border-radius:8px;padding:16px;background:#f1f5f9;margin-bottom:16px;box-sizing:border-box;">
+              <div id="batchPreviewEmpty" style="text-align:center;color:#64748b;padding:40px 0;font-size:0.95rem;">
+                Silakan pilih kelas dan klik <strong>Tampilkan QR</strong> untuk memuat pratinjau kartu.
+              </div>
+              <div id="batchPreviewGrid" style="display:none;grid-template-columns:repeat(auto-fill, minmax(200px, 1fr));gap:16px;">
+                <!-- Dynamically populated QR cards -->
+              </div>
+            </div>
+
+            <!-- Modal Footer Actions -->
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+              <div id="batchReadyNotice" style="font-size:0.85rem;color:#64748b;"></div>
+              <div style="display:flex;gap:10px;">
+                <button type="button" id="printBatchBtn" onclick="printBatchQr()" class="login-button" style="background:#059669;display:flex;align-items:center;gap:6px;" disabled>
+                  <svg style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;" viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
+                  Cetak Semua
+                </button>
+                <button type="button" onclick="closeBatchQrModal()" class="login-button" style="background:#e2e8f0;color:#334155;">Tutup</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TEACHERS CONTENT (hidden by default) -->
+        <section id="teachersContent" class="content" style="display:none;">
+          <div class="section-heading">
+            <div>
+              <span class="section-label">GURU</span>
+              <h2>Daftar Guru</h2>
+            </div>
+            <div class="section-actions">
+              <input id="teacherSearch" class="input-box" placeholder="Cari nama, NIK, jabatan, mapel, NUPTK..." style="min-width:260px;" />
+              <button id="addTeacherButton" class="login-button">Tambah Guru</button>
+            </div>
+          </div>
+
+          <div class="table-responsive" style="margin-top:16px;overflow-x:auto;background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.05);border:1px solid #e2e8f0;">
+            <table id="teachersTable" class="simata-table" style="width:100%;border-collapse:collapse;min-width:880px;">
+              <thead>
+                <tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">
+                  <th style="padding:12px 8px;text-align:center;width:44px;font-size:12.5px;font-weight:700;color:#475569;">No</th>
+                  <th style="padding:12px 10px;text-align:center;width:145px;font-size:12.5px;font-weight:700;color:#475569;">NIK</th>
+                  <th style="padding:12px 14px;text-align:left;font-size:12.5px;font-weight:700;color:#475569;">Nama Lengkap</th>
+                  <th style="padding:12px 8px;text-align:center;width:105px;font-size:12.5px;font-weight:700;color:#475569;">Jenis Kelamin</th>
+                  <th style="padding:12px 10px;text-align:center;width:130px;font-size:12.5px;font-weight:700;color:#475569;">Jabatan</th>
+                  <th style="padding:12px 10px;text-align:center;width:150px;font-size:12.5px;font-weight:700;color:#475569;">Mata Pelajaran</th>
+                  <th style="padding:12px 10px;text-align:center;width:95px;font-size:12.5px;font-weight:700;color:#475569;">Status</th>
+                  <th style="padding:12px 12px;text-align:center;width:140px;font-size:12.5px;font-weight:700;color:#475569;">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="teachersTbody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- TEACHER MODAL -->
+        <div id="teacherModal" class="student-modal-backdrop" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.45);align-items:center;justify-content:center;z-index:10000;">
+          <div class="student-modal-card">
+            <!-- Modal Header -->
+            <div class="student-modal-header">
+              <h3 id="teacherModalTitle">Tambah Guru</h3>
+              <button type="button" onclick="closeTeacherModal()" class="student-modal-close-btn" aria-label="Tutup">&times;</button>
+            </div>
+
+            <!-- Modal Body (2-column responsive form) -->
+            <div class="student-modal-body">
+              <!-- Hidden inputs -->
+              <input type="hidden" id="t_teacherId" />
+              <input type="hidden" id="t_nip" />
+              <input type="hidden" id="t_qrCodeId" />
+
+              <!-- Section A: Identitas Utama -->
+              <div class="student-form-section">
+                <div class="student-section-title">
+                  <span>A. Identitas Utama</span>
+                </div>
+                <div class="student-form-grid">
+                  <div class="student-form-group">
+                    <label for="t_nuptk" class="student-form-label">NUPTK</label>
+                    <input id="t_nuptk" class="input-box" placeholder="Nomor Unik Pendidik" />
+                  </div>
+                  <div class="student-form-group">
+                    <label for="t_nik" class="student-form-label">NIK</label>
+                    <input id="t_nik" class="input-box" placeholder="Nomor Induk Kependudukan (16 digit)" />
+                  </div>
+                  <div class="student-form-group student-col-span-2">
+                    <label for="t_name" class="student-form-label">Nama Lengkap <span class="field-required">*</span></label>
+                    <input id="t_name" class="input-box" placeholder="Nama Lengkap beserta Gelar" />
+                  </div>
+                  <div class="student-form-group">
+                    <label for="t_gender" class="student-form-label">Jenis Kelamin</label>
+                    <select id="t_gender" class="input-box">
+                      <option value="">(Pilih Jenis Kelamin)</option>
+                      <option value="L">Laki-laki (L)</option>
+                      <option value="P">Perempuan (P)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Section B: Data Pribadi & Kontak -->
+              <div class="student-form-section">
+                <div class="student-section-title">
+                  <span>B. Data Pribadi &amp; Kontak</span>
+                </div>
+                <div class="student-form-grid">
+                  <div class="student-form-group">
+                    <label for="t_birthPlace" class="student-form-label">Tempat Lahir</label>
+                    <input id="t_birthPlace" class="input-box" placeholder="Kota / Kabupaten Kelahiran" />
+                  </div>
+                  <div class="student-form-group">
+                    <label for="t_birthDate" class="student-form-label">Tanggal Lahir</label>
+                    <input id="t_birthDate" type="date" class="input-box" />
+                  </div>
+                  <div class="student-form-group">
+                    <label for="t_village" class="student-form-label">Desa / Kelurahan</label>
+                    <input id="t_village" class="input-box" placeholder="Desa / Kelurahan" />
+                  </div>
+                  <div class="student-form-group">
+                    <label for="t_district" class="student-form-label">Kecamatan</label>
+                    <input id="t_district" class="input-box" placeholder="Kecamatan" />
+                  </div>
+                  <div class="student-form-group student-col-span-2">
+                    <label for="t_regency" class="student-form-label">Kabupaten / Kota</label>
+                    <input id="t_regency" class="input-box" placeholder="Kabupaten / Kota" />
+                  </div>
+                  <div class="student-form-group">
+                    <label for="t_phone" class="student-form-label">No HP / WhatsApp</label>
+                    <input id="t_phone" class="input-box" placeholder="08xxxxxxxxxx" />
+                  </div>
+                  <div class="student-form-group">
+                    <label for="t_email" class="student-form-label">Email</label>
+                    <input id="t_email" type="email" class="input-box" placeholder="email@contoh.com" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Section C: Riwayat Pendidikan -->
+              <div class="student-form-section">
+                <div class="student-section-title">
+                  <span>C. Riwayat Pendidikan</span>
+                </div>
+                <div class="student-form-grid">
+                  <div class="student-form-group">
+                    <label for="t_education" class="student-form-label">Pendidikan Terakhir</label>
+                    <input id="t_education" class="input-box" placeholder="Contoh: S1, S2, MA, MAN, SMA" />
+                  </div>
+                  <div class="student-form-group">
+                    <label for="t_major" class="student-form-label">Jurusan / Program Studi</label>
+                    <input id="t_major" class="input-box" placeholder="Contoh: Agama, Pend. Biologi, PAI" />
+                  </div>
+                  <div class="student-form-group student-col-span-2">
+                    <label for="t_graduationYear" class="student-form-label">Tahun Lulus</label>
+                    <input id="t_graduationYear" class="input-box" placeholder="Contoh: 2020" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Section D: Tugas di Sekolah -->
+              <div class="student-form-section">
+                <div class="student-section-title">
+                  <span>D. Tugas di Sekolah</span>
+                </div>
+                <div class="student-form-grid">
+                  <div class="student-form-group">
+                    <label for="t_position" class="student-form-label">Jabatan Utama</label>
+                    <input id="t_position" class="input-box" placeholder="Contoh: Kepala Sekolah, Guru Mapel, Waka Kurikulum" />
+                  </div>
+                  <div class="student-form-group">
+                    <label for="t_subject" class="student-form-label">Tugas Mengajar / Mata Pelajaran</label>
+                    <input id="t_subject" class="input-box" placeholder="Contoh: Fiqih, Bahasa Arab, Matematika" />
+                  </div>
+                  <div class="student-form-group">
+                    <label for="t_teachingHours" class="student-form-label">JJM per Minggu (Jam Pelajaran)</label>
+                    <input id="t_teachingHours" type="number" min="0" step="1" class="input-box" placeholder="Contoh: 12" />
+                  </div>
+                  <div class="student-form-group">
+                    <label for="t_status" class="student-form-label">Status Keaktifan</label>
+                    <select id="t_status" class="input-box">
+                      <option value="Active">Active (Aktif)</option>
+                      <option value="Inactive">Inactive (Tidak Aktif)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="student-modal-footer">
+              <button type="button" id="teacherCancelBtn" class="login-button student-btn-cancel">Batal</button>
+              <button type="button" id="teacherSaveBtn" class="login-button student-btn-save">Simpan</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- CLASSES CONTENT (hidden by default) -->
+        <section id="classesContent" class="content" style="display:none;">
+          <div class="section-heading">
+            <div>
+              <span class="section-label">KELAS</span>
+              <h2>Daftar Kelas</h2>
+            </div>
+            <div class="section-actions">
+              <input id="classSearch" class="input-box" placeholder="Cari nama kelas atau tingkat..." />
+              <button id="addClassButton" class="login-button">Tambah Kelas</button>
+            </div>
+          </div>
+          <div class="table-responsive" style="margin-top:16px;overflow-x:auto;background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.05);border:1px solid #e2e8f0;">
+            <table id="classesTable" class="simata-table" style="width:100%;border-collapse:collapse;min-width:700px;">
+              <thead>
+                <tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">
+                  <th style="padding:12px 14px;text-align:left;font-size:12.5px;font-weight:700;color:#475569;">Nama Kelas</th>
+                  <th style="padding:12px 10px;text-align:center;width:100px;font-size:12.5px;font-weight:700;color:#475569;">Tingkat</th>
+                  <th style="padding:12px 10px;text-align:center;width:140px;font-size:12.5px;font-weight:700;color:#475569;">Tahun Ajaran</th>
+                  <th style="padding:12px 14px;text-align:left;font-size:12.5px;font-weight:700;color:#475569;">Wali Kelas</th>
+                  <th style="padding:12px 10px;text-align:center;width:100px;font-size:12.5px;font-weight:700;color:#475569;">Status</th>
+                  <th style="padding:12px 12px;text-align:center;width:150px;font-size:12.5px;font-weight:700;color:#475569;">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="classesTbody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- CLASS MODAL -->
+        <div id="classModal" class="modal-backdrop" style="display:none;">
+          <div class="modal-card">
+            <h3 id="classModalTitle">Tambah Kelas</h3>
+            <div style="margin-top:12px;display:flex;flex-direction:column;gap:10px;">
+              <input id="c_classId" class="input-box" placeholder="classId (Otomatis)" />
+              <input id="c_className" class="input-box" placeholder="Nama Kelas" />
+              <input id="c_level" class="input-box" placeholder="Tingkat" />
+              <input id="c_academicYear" class="input-box" placeholder="Tahun Ajaran" />
+              <select id="c_homeroomTeacherId" class="input-box"></select>
+              <select id="c_status" class="input-box">
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+            </div>
+            <div class="modal-footer" style="display:flex;gap:8px;justify-content:flex-end;">
+              <button id="classCancelBtn" class="login-button btn-secondary">Batal</button>
+              <button id="classSaveBtn" class="login-button">Simpan</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- CLASS QR MODAL (BUG 29) -->
+        <div id="classQrModal" class="student-qr-modal-backdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;z-index:10000;">
+          <div class="student-qr-modal-card" style="background:white;padding:24px;border-radius:12px;width:100%;max-width:380px;box-shadow:0 10px 25px rgba(0,0,0,0.2);display:flex;flex-direction:column;align-items:center;text-align:center;box-sizing:border-box;margin:16px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;width:100%;margin-bottom:16px;">
+              <h3 style="margin:0;font-size:1.2rem;font-weight:600;color:#1e293b;">QR Presensi Kelas</h3>
+              <button type="button" onclick="closeClassQrModal()" style="background:none;border:none;font-size:1.5rem;line-height:1;cursor:pointer;color:#64748b;padding:0 4px;" aria-label="Tutup">&times;</button>
+            </div>
+
+            <!-- QR Container -->
+            <div id="classQrContainer" style="background:#f8fafc;padding:16px;border-radius:8px;border:1px solid #e2e8f0;display:flex;align-items:center;justify-content:center;min-height:200px;min-width:200px;margin-bottom:16px;box-sizing:border-box;">
+              <!-- QR Code generated client-side -->
+            </div>
+
+            <!-- Class Info (No technical classId) -->
+            <div style="width:100%;background:#f1f5f9;border-radius:8px;padding:12px;text-align:left;font-size:0.9rem;color:#334155;margin-bottom:20px;box-sizing:border-box;">
+              <div style="margin-bottom:4px;"><strong>Nama Kelas:</strong> <span id="cqr_className">-</span></div>
+              <div style="margin-bottom:4px;"><strong>Tingkat:</strong> <span id="cqr_level">-</span></div>
+              <div style="margin-bottom:4px;"><strong>Tahun Ajaran:</strong> <span id="cqr_academicYear">-</span></div>
+              <div><strong>Wali Kelas:</strong> <span id="cqr_homeroomTeacher">-</span></div>
+            </div>
+
+            <!-- Actions -->
+            <div style="display:flex;flex-direction:column;gap:8px;width:100%;">
+              <div style="display:flex;gap:10px;width:100%;">
+                <button type="button" onclick="printClassQr()" class="login-button" style="background:#2563eb;flex:1;display:flex;align-items:center;justify-content:center;gap:6px;">
+                  <svg style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;" viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
+                  Cetak QR
+                </button>
+                <button type="button" onclick="openBatchClassAttendanceFromQrModal()" class="login-button" style="background:#059669;flex:1;display:flex;align-items:center;justify-content:center;gap:6px;">
+                  <svg style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                  Buka Presensi
+                </button>
+              </div>
+              <button type="button" onclick="closeClassQrModal()" class="login-button" style="background:#e2e8f0;color:#334155;width:100%;">Tutup</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- BATCH CLASS ATTENDANCE MODAL (BUG 29) -->
+        <div id="batchClassAttendanceModal" class="student-modal-backdrop" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.45);backdrop-filter:blur(2px);align-items:center;justify-content:center;z-index:10000;padding:16px;box-sizing:border-box;">
+          <div class="student-modal-card" style="position:relative;background:#ffffff;border-radius:16px;width:100%;max-width:880px;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 20px 40px rgba(15,23,42,0.15);box-sizing:border-box;overflow:hidden;margin:auto;">
+            <!-- Modal Header -->
+            <div class="student-modal-header" style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #e2e8f0;background:#ffffff;flex-shrink:0;">
+              <div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span class="section-label" style="font-size:11px;font-weight:700;letter-spacing:0.05em;color:#059669;background:#d1fae5;padding:2px 8px;border-radius:4px;">PRESENSI BATCH</span>
+                  <h3 id="batchAttModalTitle" style="margin:0;font-size:1.15rem;font-weight:700;color:#0f172a;">Presensi Kelas</h3>
+                </div>
+                <div id="batchAttModalSubtitle" style="font-size:12px;color:#64748b;margin-top:3px;"></div>
+              </div>
+              <button type="button" class="student-modal-close-btn" onclick="closeBatchClassAttendanceModal()" aria-label="Tutup">&times;</button>
+            </div>
+
+            <!-- Jam Pelajaran Section (BUG 16 Canonical Pattern) -->
+            <div id="batchPeriodContainer" style="padding:10px 20px;background:#f8fafc;border-bottom:1px solid #e2e8f0;flex-shrink:0;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                  <label style="font-size:11px;font-weight:700;color:var(--s-text-2,#475569);text-transform:uppercase;letter-spacing:0.04em;margin:0;">
+                    Jam Pelajaran <span style="color:#DC2626;">*</span>
+                  </label>
+                  <span id="batchPeriodSelectedNotice" style="font-size:11px;font-weight:600;color:#059669;background:#d1fae5;padding:2px 8px;border-radius:4px;">Jam ke-1</span>
+                </div>
+                <div style="display:flex;gap:6px;">
+                  <button type="button" onclick="toggleAllBatchPeriods(true)" class="login-button" style="background:#e2e8f0;color:#334155;font-size:11px;padding:4px 8px;height:auto;font-weight:600;box-shadow:none;">Pilih Semua</button>
+                  <button type="button" onclick="toggleAllBatchPeriods(false)" class="login-button" style="background:#f1f5f9;color:#64748b;font-size:11px;padding:4px 8px;height:auto;font-weight:600;border:1px solid #cbd5e1;box-shadow:none;">Hapus Semua</button>
+                </div>
+              </div>
+              <div class="period-checkbox-container" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(78px, 1fr));gap:6px;">
+                <label class="period-checkbox-label" style="display:inline-flex;align-items:center;gap:6px;padding:5px 8px;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:6px;font-size:11.5px;font-weight:600;color:#334155;cursor:pointer;user-select:none;">
+                  <input type="checkbox" name="batch_period" class="batch-period-checkbox" value="1" onchange="handleBatchPeriodChange()" style="width:14px;height:14px;accent-color:var(--primary,#166534);cursor:pointer;" />
+                  <span>Jam ke-1</span>
+                </label>
+                <label class="period-checkbox-label" style="display:inline-flex;align-items:center;gap:6px;padding:5px 8px;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:6px;font-size:11.5px;font-weight:600;color:#334155;cursor:pointer;user-select:none;">
+                  <input type="checkbox" name="batch_period" class="batch-period-checkbox" value="2" onchange="handleBatchPeriodChange()" style="width:14px;height:14px;accent-color:var(--primary,#166534);cursor:pointer;" />
+                  <span>Jam ke-2</span>
+                </label>
+                <label class="period-checkbox-label" style="display:inline-flex;align-items:center;gap:6px;padding:5px 8px;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:6px;font-size:11.5px;font-weight:600;color:#334155;cursor:pointer;user-select:none;">
+                  <input type="checkbox" name="batch_period" class="batch-period-checkbox" value="3" onchange="handleBatchPeriodChange()" style="width:14px;height:14px;accent-color:var(--primary,#166534);cursor:pointer;" />
+                  <span>Jam ke-3</span>
+                </label>
+                <label class="period-checkbox-label" style="display:inline-flex;align-items:center;gap:6px;padding:5px 8px;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:6px;font-size:11.5px;font-weight:600;color:#334155;cursor:pointer;user-select:none;">
+                  <input type="checkbox" name="batch_period" class="batch-period-checkbox" value="4" onchange="handleBatchPeriodChange()" style="width:14px;height:14px;accent-color:var(--primary,#166534);cursor:pointer;" />
+                  <span>Jam ke-4</span>
+                </label>
+                <label class="period-checkbox-label" style="display:inline-flex;align-items:center;gap:6px;padding:5px 8px;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:6px;font-size:11.5px;font-weight:600;color:#334155;cursor:pointer;user-select:none;">
+                  <input type="checkbox" name="batch_period" class="batch-period-checkbox" value="5" onchange="handleBatchPeriodChange()" style="width:14px;height:14px;accent-color:var(--primary,#166534);cursor:pointer;" />
+                  <span>Jam ke-5</span>
+                </label>
+                <label class="period-checkbox-label" style="display:inline-flex;align-items:center;gap:6px;padding:5px 8px;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:6px;font-size:11.5px;font-weight:600;color:#334155;cursor:pointer;user-select:none;">
+                  <input type="checkbox" name="batch_period" class="batch-period-checkbox" value="6" onchange="handleBatchPeriodChange()" style="width:14px;height:14px;accent-color:var(--primary,#166534);cursor:pointer;" />
+                  <span>Jam ke-6</span>
+                </label>
+                <label class="period-checkbox-label" style="display:inline-flex;align-items:center;gap:6px;padding:5px 8px;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:6px;font-size:11.5px;font-weight:600;color:#334155;cursor:pointer;user-select:none;">
+                  <input type="checkbox" name="batch_period" class="batch-period-checkbox" value="7" onchange="handleBatchPeriodChange()" style="width:14px;height:14px;accent-color:var(--primary,#166534);cursor:pointer;" />
+                  <span>Jam ke-7</span>
+                </label>
+                <label class="period-checkbox-label" style="display:inline-flex;align-items:center;gap:6px;padding:5px 8px;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:6px;font-size:11.5px;font-weight:600;color:#334155;cursor:pointer;user-select:none;">
+                  <input type="checkbox" name="batch_period" class="batch-period-checkbox" value="8" onchange="handleBatchPeriodChange()" style="width:14px;height:14px;accent-color:var(--primary,#166534);cursor:pointer;" />
+                  <span>Jam ke-8</span>
+                </label>
+                <label class="period-checkbox-label" style="display:inline-flex;align-items:center;gap:6px;padding:5px 8px;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:6px;font-size:11.5px;font-weight:600;color:#334155;cursor:pointer;user-select:none;">
+                  <input type="checkbox" name="batch_period" class="batch-period-checkbox" value="9" onchange="handleBatchPeriodChange()" style="width:14px;height:14px;accent-color:var(--primary,#166534);cursor:pointer;" />
+                  <span>Jam ke-9</span>
+                </label>
+                <label class="period-checkbox-label" style="display:inline-flex;align-items:center;gap:6px;padding:5px 8px;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:6px;font-size:11.5px;font-weight:600;color:#334155;cursor:pointer;user-select:none;">
+                  <input type="checkbox" name="batch_period" class="batch-period-checkbox" value="10" onchange="handleBatchPeriodChange()" style="width:14px;height:14px;accent-color:var(--primary,#166534);cursor:pointer;" />
+                  <span>Jam ke-10</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Modal Action Bar: Filters & Quick Actions -->
+            <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:12px 20px;background:#f8fafc;border-bottom:1px solid #e2e8f0;flex-shrink:0;">
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                <button type="button" onclick="markAllBatchAttendance('Hadir')" class="login-button" style="background:#059669;font-size:12.5px;padding:6px 12px;display:flex;align-items:center;gap:5px;height:34px;">
+                  <svg style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+                  Tandai Semua Hadir
+                </button>
+                <div id="batchAttCounters" style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;">
+                  <span style="color:#059669;background:#d1fae5;padding:3px 8px;border-radius:12px;" id="cnt_hadir">Hadir: 0</span>
+                  <span style="color:#d97706;background:#fef3c7;padding:3px 8px;border-radius:12px;" id="cnt_sakit">Sakit: 0</span>
+                  <span style="color:#2563eb;background:#dbeafe;padding:3px 8px;border-radius:12px;" id="cnt_izin">Izin: 0</span>
+                  <span style="color:#dc2626;background:#fee2e2;padding:3px 8px;border-radius:12px;" id="cnt_alpa">Alpa: 0</span>
+                </div>
+              </div>
+              <div style="min-width:220px;flex:1;max-width:320px;">
+                <input id="batchAttSearch" class="input-box" placeholder="Cari siswa atau NIS..." style="height:34px;font-size:12.5px;width:100%;box-sizing:border-box;" oninput="filterBatchAttendanceRows(this.value)" />
+              </div>
+            </div>
+
+            <!-- Modal Body: Table Roster -->
+            <div class="student-modal-body" style="padding:0;overflow-y:auto;flex:1 1 auto;">
+              <div id="batchAttLoading" style="text-align:center;padding:40px;color:#64748b;">
+                <div class="loading-spinner" style="margin:0 auto 10px auto;"></div>
+                Memuat daftar siswa kelas...
+              </div>
+              <div id="batchAttTableContainer" style="display:none;width:100%;overflow-x:auto;">
+                <table id="batchAttTable" class="simata-table" style="width:100%;border-collapse:collapse;min-width:640px;">
+                  <thead style="background:#f8fafc;position:sticky;top:0;z-index:2;box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+                    <tr>
+                      <th style="padding:10px 12px;font-size:12px;font-weight:600;color:#475569;text-align:center;width:40px;">No</th>
+                      <th style="padding:10px 12px;font-size:12px;font-weight:600;color:#475569;text-align:left;width:110px;">NIS</th>
+                      <th style="padding:10px 12px;font-size:12px;font-weight:600;color:#475569;text-align:left;">Nama Siswa</th>
+                      <th style="padding:10px 12px;font-size:12px;font-weight:600;color:#475569;text-align:center;width:150px;">Status</th>
+                      <th style="padding:10px 12px;font-size:12px;font-weight:600;color:#475569;text-align:left;width:180px;">Keterangan</th>
+                    </tr>
+                  </thead>
+                  <tbody id="batchAttTbody">
+                    <!-- Dynamic rows -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="student-modal-footer" style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-top:1px solid #e2e8f0;background:#ffffff;flex-shrink:0;">
+              <div id="batchAttTotalInfo" style="font-size:12.5px;color:#64748b;font-weight:500;">
+                Total: <strong id="batchAttTotalCount" style="color:#0f172a;">0</strong> siswa
+              </div>
+              <div style="display:flex;gap:10px;">
+                <button type="button" onclick="closeBatchClassAttendanceModal()" class="login-button student-btn-cancel" style="padding:8px 16px;">Batal</button>
+                <button type="button" id="btnSubmitBatchAttendance" onclick="submitBatchClassAttendance()" class="login-button" style="background:#059669;padding:8px 18px;display:flex;align-items:center;gap:6px;">
+                  <svg style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                  <span>Simpan Presensi Kelas</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- EDIT ACCOUNT MODAL (BUG 19) -->
+        <div id="editAccountModal" class="modal-backdrop" style="display:none;">
+          <div class="modal-card" style="max-width:520px;">
+            <div class="modal-header">
+              <h3 id="editAccountModalTitle" style="margin:0;font-size:16.5px;font-weight:700;color:#0f172a;">Edit Akun Pengguna</h3>
+            </div>
+            <div class="modal-body" style="padding:16px 20px;display:flex;flex-direction:column;gap:14px;">
+              <input type="hidden" id="edit_acc_orig_username" />
+              <div>
+                <label for="edit_acc_username" style="display:block;font-size:12.5px;font-weight:600;color:#475569;margin-bottom:4px;">Username <span style="color:#ef4444;">*</span></label>
+                <input id="edit_acc_username" class="input-box" autocomplete="off" />
+              </div>
+              <div>
+                <label for="edit_acc_password" style="display:block;font-size:12.5px;font-weight:600;color:#475569;margin-bottom:4px;">Password Baru <small style="color:#64748b;font-weight:400;">(Kosongkan jika tidak diubah)</small></label>
+                <div style="position:relative;display:flex;align-items:center;">
+                  <input id="edit_acc_password" type="password" class="input-box" placeholder="Ketik untuk mengganti password" style="padding-right:40px;width:100%;" autocomplete="new-password" />
+                  <button type="button" id="toggleEditAccPasswordBtn" onclick="togglePasswordVisibility('edit_acc_password', this)" style="position:absolute;right:8px;background:none;border:none;cursor:pointer;color:#64748b;padding:6px;display:flex;align-items:center;justify-content:center;" title="Lihat/Sembunyikan Password" aria-label="Toggle visibility password">
+                    <svg class="eye-open" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <svg class="eye-closed" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;display:none;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label for="edit_acc_name" style="display:block;font-size:12.5px;font-weight:600;color:#475569;margin-bottom:4px;">Nama Lengkap <span style="color:#ef4444;">*</span></label>
+                <input id="edit_acc_name" class="input-box" />
+              </div>
+              <div>
+                <label for="edit_acc_role" style="display:block;font-size:12.5px;font-weight:600;color:#475569;margin-bottom:4px;">Role Pengguna <span style="color:#ef4444;">*</span></label>
+                <select id="edit_acc_role" class="input-box">
+                  <option value="Admin">Admin</option>
+                  <option value="Guru">Guru</option>
+                </select>
+              </div>
+            </div>
+            <div class="modal-footer" style="display:flex;gap:8px;justify-content:flex-end;">
+              <button id="editAccountCancelBtn" type="button" class="login-button btn-secondary" onclick="closeEditAccountModal()">Batal</button>
+              <button id="editAccountSaveBtn" type="button" class="login-button" onclick="saveEditAccount()">Simpan Perubahan</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- PENGATURAN VIEW (SETTINGS) -->
+        <section id="settingsContent" class="content" style="display:none;">
+          <!-- Header Halaman -->
+          <div class="section-heading" style="margin-bottom:20px;">
+            <div>
+              <span class="section-label">PENGATURAN SISTEM</span>
+              <h2 style="margin:4px 0 6px 0;">Pengaturan</h2>
+              <p style="color:#64748b;font-size:14px;margin:0;">Kelola akun dan konfigurasi akses SIMATA</p>
+            </div>
+          </div>
+
+          <!-- Settings Container Layout (Responsive) -->
+          <div class="settings-container">
+            <!-- In-Page Category Navigation -->
+            <nav class="settings-nav" aria-label="Kategori Pengaturan">
+              <!-- Tab 1: Akun -->
+              <button id="settingsTab_akun" class="settings-nav-item active" type="button" onclick="switchSettingsCategory('akun')">
+                <span class="settings-nav-icon">
+                  <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </span>
+                <span class="settings-nav-text">
+                  <strong>Akun</strong>
+                  <small>Informasi akun &amp; sesi</small>
+                </span>
+              </button>
+
+              <!-- Tab 2: Akses & Pengguna -->
+              <button id="settingsTab_akses" class="settings-nav-item" type="button" onclick="switchSettingsCategory('akses')">
+                <span class="settings-nav-icon">
+                  <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                </span>
+                <span class="settings-nav-text">
+                  <strong>Akses &amp; Pengguna</strong>
+                  <small>Pengelolaan pengguna &amp; hak</small>
+                </span>
+              </button>
+
+              <!-- Tab 3: Keamanan Sistem (Admin Only) -->
+              <button id="settingsTab_keamanan" class="settings-nav-item" type="button" onclick="switchSettingsCategory('keamanan')" style="display:none;">
+                <span class="settings-nav-icon">
+                  <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </span>
+                <span class="settings-nav-text">
+                  <strong>Keamanan Sistem</strong>
+                  <small>Arsitektur &amp; gateway</small>
+                </span>
+              </button>
+
+              <!-- Tab 4: Bukti Foto Responder (Admin Only - Bug 25) -->
+              <button id="settingsTab_bukti_foto" class="settings-nav-item" type="button" onclick="switchSettingsCategory('bukti_foto')" style="display:none;">
+                <span class="settings-nav-icon">
+                  <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                </span>
+                <span class="settings-nav-text">
+                  <strong>Bukti Foto Responder</strong>
+                  <small>Verifikasi foto guru</small>
+                </span>
+              </button>
+            </nav>
+
+            <!-- Settings Content Panels -->
+            <div class="settings-content-pane">
+              <!-- PANEL A: AKUN (Default Active) -->
+              <div id="settingsPanel_akun" class="settings-panel">
+                <div class="settings-panel-card">
+                  <div class="settings-panel-header">
+                    <h3 style="font-size:16px;font-weight:700;color:#0f172a;margin:0 0 4px 0;">Informasi Akun</h3>
+                    <p style="font-size:13px;color:#64748b;margin:0;">Data akun yang sedang digunakan untuk mengakses SIMATA.</p>
+                  </div>
+
+                  <!-- Profile Banner -->
+                  <div style="display:flex;align-items:center;gap:16px;margin:20px 0;padding-bottom:18px;border-bottom:1px solid #f1f5f9;">
+                    <div id="accProfileAvatar" style="width:58px;height:58px;border-radius:50%;background:#166534;color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;box-shadow:0 2px 6px rgba(22,101,52,0.2);">U</div>
+                    <div>
+                      <h4 id="accProfileName" style="font-size:17.5px;font-weight:700;color:#0f172a;margin:0 0 4px 0;">--</h4>
+                      <span id="accProfileRoleBadge" class="simata-badge simata-badge-info" style="font-weight:600;">--</span>
+                    </div>
+                  </div>
+
+                  <!-- Profile Details Grid -->
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));gap:16px;">
+                    <div>
+                      <label style="display:block;font-size:12px;font-weight:600;color:#64748b;margin-bottom:6px;">Nama Lengkap</label>
+                      <div id="accProfileFullName" class="settings-data-box">--</div>
+                    </div>
+                    <div>
+                      <label style="display:block;font-size:12px;font-weight:600;color:#64748b;margin-bottom:6px;">Username</label>
+                      <div id="accProfileUsername" class="settings-data-box" style="font-family:monospace;font-weight:600;">--</div>
+                    </div>
+                    <div>
+                      <label style="display:block;font-size:12px;font-weight:600;color:#64748b;margin-bottom:6px;">Role Pengguna</label>
+                      <div id="accProfileRole" class="settings-data-box" style="font-weight:600;">--</div>
+                    </div>
+                    <div>
+                      <label style="display:block;font-size:12px;font-weight:600;color:#64748b;margin-bottom:6px;">Status Sesi</label>
+                      <div class="settings-data-box" style="color:#166534;background:#f0fdf4;border-color:#bbf7d0;display:flex;align-items:center;gap:8px;">
+                        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;"></span>
+                        <span style="font-weight:600;">Sesi Aktif Terverifikasi</span>
+                      </div>
+                    </div>
+                    <div style="grid-column:1 / -1;">
+                      <label style="display:block;font-size:12px;font-weight:600;color:#64748b;margin-bottom:6px;">Lingkup Akses Pengguna</label>
+                      <div id="accProfilePermissionNote" style="font-size:13px;color:#334155;background:#f8fafc;padding:12px 14px;border-radius:8px;border:1px solid #e2e8f0;line-height:1.6;">
+                        --
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- PANEL B: AKSES & PENGGUNA -->
+              <div id="settingsPanel_akses" class="settings-panel" style="display:none;">
+                <!-- ADMIN CONTAINER (Form Tambah Akun + Daftar Akun) -->
+                <div id="aksesAdminContainer">
+                  <!-- Card: Form Tambah Akun -->
+                  <div id="addAccountCard" class="settings-panel-card" style="margin-bottom:24px;">
+                    <div class="settings-panel-header">
+                      <h3 style="font-size:16px;font-weight:700;color:#0f172a;margin:0 0 4px 0;">Tambah Akun Pengguna</h3>
+                      <p style="font-size:13px;color:#64748b;margin:0;">Pendaftaran akun baru dengan hak akses Admin atau Guru.</p>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));gap:14px;margin-top:16px;">
+                      <div>
+                        <label for="acc_username" style="display:block;font-size:12.5px;font-weight:600;color:#475569;margin-bottom:4px;">Username <span style="color:#ef4444;">*</span></label>
+                        <input id="acc_username" class="input-box" placeholder="Contoh: guru_fauzi" autocomplete="off" />
+                      </div>
+                      <div>
+                        <label for="acc_password" style="display:block;font-size:12.5px;font-weight:600;color:#475569;margin-bottom:4px;">Password <span style="color:#ef4444;">*</span></label>
+                        <div style="position:relative;display:flex;align-items:center;">
+                          <input id="acc_password" type="password" class="input-box" placeholder="Password akun" autocomplete="new-password" style="padding-right:40px;width:100%;" />
+                          <button type="button" id="toggleAccPasswordBtn" onclick="togglePasswordVisibility('acc_password', this)" style="position:absolute;right:8px;background:none;border:none;cursor:pointer;color:#64748b;padding:6px;display:flex;align-items:center;justify-content:center;" title="Lihat/Sembunyikan Password" aria-label="Toggle visibility password">
+                            <svg class="eye-open" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            <svg class="eye-closed" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;display:none;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <label for="acc_name" style="display:block;font-size:12.5px;font-weight:600;color:#475569;margin-bottom:4px;">Nama Lengkap <span style="color:#ef4444;">*</span></label>
+                        <input id="acc_name" class="input-box" placeholder="Contoh: AHMAD FAUZI, S.Pd" />
+                      </div>
+                      <div>
+                        <label for="acc_role" style="display:block;font-size:12.5px;font-weight:600;color:#475569;margin-bottom:4px;">Role Pengguna <span style="color:#ef4444;">*</span></label>
+                        <select id="acc_role" class="input-box">
+                          <option value="">(Pilih Role)</option>
+                          <option value="Admin">Admin</option>
+                          <option value="Guru">Guru</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div style="margin-top:18px;display:flex;justify-content:flex-end;">
+                      <button id="saveAccountBtn" class="login-button" type="button" style="padding:10px 22px;">Simpan Akun</button>
+                    </div>
+                  </div>
+
+                  <!-- Card: Daftar Akun Terdaftar -->
+                  <div id="accountsTableCard" class="settings-panel-card">
+                    <div class="settings-panel-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+                      <div>
+                        <h3 style="font-size:16px;font-weight:700;color:#0f172a;margin:0 0 4px 0;">Daftar Akun Terdaftar</h3>
+                        <p style="font-size:13px;color:#64748b;margin:0;">Seluruh akun pengguna SIMATA aktif pada basis data.</p>
+                      </div>
+                      <button id="refreshAccountsBtn" type="button" class="login-button btn-secondary" onclick="loadAccountsTable()" style="font-size:12.5px;padding:6px 14px;display:flex;align-items:center;gap:6px;">
+                        <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                        Segarkan
+                      </button>
+                    </div>
+
+                    <div class="table-responsive" style="margin-top:16px;overflow-x:auto;">
+                      <table class="simata-table" style="width:100%;border-collapse:collapse;">
+                        <thead>
+                          <tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">
+                            <th style="padding:10px 12px;text-align:center;width:50px;font-size:12.5px;font-weight:700;color:#475569;">No</th>
+                            <th style="padding:10px 14px;text-align:left;font-size:12.5px;font-weight:700;color:#475569;">Username</th>
+                            <th style="padding:10px 14px;text-align:left;font-size:12.5px;font-weight:700;color:#475569;">Nama Lengkap</th>
+                            <th style="padding:10px 14px;text-align:center;width:120px;font-size:12.5px;font-weight:700;color:#475569;">Role</th>
+                            <th style="padding:10px 14px;text-align:center;width:150px;font-size:12.5px;font-weight:700;color:#475569;">Aksi</th>
+                          </tr>
+                        </thead>
+                        <tbody id="accountsTbody">
+                          <tr class="table-loading-row">
+                            <td colspan="5" style="text-align:center;padding:36px 16px;color:#64748b;" role="status" aria-live="polite">
+                              <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;">
+                                <span class="simata-loading-spinner"></span>
+                                <span style="font-size:13px;font-weight:600;color:#475569;">Memuat data akun...</span>
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- GURU CONTAINER (Informasi Akses Terbatas) -->
+                <div id="aksesGuruContainer" style="display:none;">
+                  <div class="settings-panel-card" style="text-align:center;padding:40px 24px;">
+                    <div style="width:56px;height:56px;border-radius:50%;background:#fef3c7;color:#d97706;display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px;">
+                      <svg viewBox="0 0 24 24" style="width:28px;height:28px;stroke:currentColor;fill:none;stroke-width:2;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    </div>
+                    <h3 style="font-size:17px;font-weight:700;color:#0f172a;margin:0 0 8px 0;">Akses Pengguna Terbatas</h3>
+                    <p style="font-size:13.5px;color:#64748b;max-width:520px;margin:0 auto;line-height:1.7;">
+                      Pengelolaan akun pengguna, pendaftaran akun baru, dan daftar pengguna sistem dikhususkan untuk <strong>Administrator Sekolah</strong>.
+                      Jika Anda membutuhkan akun baru atau perubahan kredensial, silakan hubungi pihak Administrator SIMATA.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- PANEL C: KEAMANAN SISTEM (Admin Only) -->
+              <div id="settingsPanel_keamanan" class="settings-panel" style="display:none;">
+                <div class="settings-panel-card">
+                  <div class="settings-panel-header">
+                    <h3 style="font-size:16px;font-weight:700;color:#0f172a;margin:0 0 4px 0;">Keamanan &amp; Akses Sistem</h3>
+                    <p style="font-size:13px;color:#64748b;margin:0;">Informasi arsitektur, kebijakan otorisasi, dan gateway SIMATA (Read-Only).</p>
+                  </div>
+
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:16px;margin-top:20px;">
+                    <!-- Card 1: Status & Otorisasi -->
+                    <div style="background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;padding:18px;">
+                      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                        <span style="display:inline-flex;padding:6px;background:#e0f2fe;border-radius:8px;color:#0284c7;">
+                          <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        </span>
+                        <h4 style="font-size:14px;font-weight:700;color:#0f172a;margin:0;">Status &amp; Otorisasi</h4>
+                      </div>
+                      <div style="font-size:13px;color:#475569;line-height:1.7;">
+                        <div><strong>Status:</strong> <span class="simata-badge simata-badge-success" style="font-size:11px;padding:2px 8px;">Active / Operational</span></div>
+                        <div><strong>Authorization:</strong> Role-based access control</div>
+                        <div><strong>Roles:</strong> Admin / Guru</div>
+                        <div><strong>Siswa:</strong> Tidak memiliki akun login</div>
+                      </div>
+                    </div>
+
+                    <!-- Card 2: Sesi & Backend -->
+                    <div style="background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;padding:18px;">
+                      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                        <span style="display:inline-flex;padding:6px;background:#dcfce7;border-radius:8px;color:#16a34a;">
+                          <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        </span>
+                        <h4 style="font-size:14px;font-weight:700;color:#0f172a;margin:0;">Sesi &amp; Backend</h4>
+                      </div>
+                      <div style="font-size:13px;color:#475569;line-height:1.7;">
+                        <div><strong>Session:</strong> Authenticated session melalui SIMATA</div>
+                        <div><strong>Backend:</strong> Google Apps Script</div>
+                        <div><strong>Validasi Token:</strong> Server-side check pada mutasi master data</div>
+                        <div><strong>Konkurensi:</strong> LockService pada transaksi presensi</div>
+                      </div>
+                    </div>
+
+                    <!-- Card 3: Camera Evidence & QR Scanner -->
+                    <div style="background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;padding:18px;grid-column:1 / -1;">
+                      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                        <span style="display:inline-flex;padding:6px;background:#fef3c7;border-radius:8px;color:#d97706;">
+                          <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                        </span>
+                        <h4 style="font-size:14px;font-weight:700;color:#0f172a;margin:0;">Gateway Kamera &amp; Scanner QR</h4>
+                      </div>
+                      <div style="font-size:13px;color:#475569;line-height:1.8;">
+                        <div><strong>Camera Evidence:</strong> Captured directly through responder camera flow (<code>teacher-camera.html</code>)</div>
+                        <div><strong>QR Scanner:</strong> External scanner → QR identity → backend lookup (<code>scanner.html</code>)</div>
+                        <div><strong>Admin Client:</strong> Informational / read-only</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- PANEL D: BUKTI FOTO RESPONDER GURU (Admin Only - Bug 25) -->
+              <div id="settingsPanel_bukti_foto" class="settings-panel" style="display:none;">
+                <div class="settings-panel-card">
+                  <div class="settings-panel-header" style="margin-bottom: 20px;">
+                    <h3 style="font-size:16px;font-weight:700;color:#0f172a;margin:0 0 4px 0;">Bukti Foto Responder Guru</h3>
+                    <p style="font-size:13px;color:#64748b;margin:0;">Lihat bukti foto presensi guru berdasarkan tanggal untuk keperluan verifikasi.</p>
+                  </div>
+
+                  <!-- Date Filter Bar -->
+                  <div style="background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;padding:16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:20px;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                      <label for="bfr_dateFilter" style="font-size:13px;font-weight:600;color:#334155;">Tanggal:</label>
+                      <input type="date" id="bfr_dateFilter" class="simata-input" style="min-height:38px;padding:6px 12px;font-size:13px;border-radius:8px;border:1px solid #cbd5e1;background:#ffffff;" />
+                    </div>
+                    <button type="button" id="bfr_filterBtn" class="login-button" style="min-height:38px;padding:0 18px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;">
+                      <svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                      Tampilkan
+                    </button>
+                  </div>
+
+                  <!-- Loading State -->
+                  <div id="bfr_loadingState" style="display:none;text-align:center;padding:36px 16px;">
+                    <div class="simata-spinner" style="margin:0 auto 12px;"></div>
+                    <div style="font-size:13.5px;color:#64748b;font-weight:500;">Memuat daftar bukti foto presensi guru...</div>
+                  </div>
+
+                  <!-- Empty State -->
+                  <div id="bfr_emptyState" style="display:none;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;padding:32px 20px;text-align:center;">
+                    <div style="font-size:14px;font-weight:600;color:#64748b;">Tidak ada bukti foto Responder Guru pada tanggal ini.</div>
+                    <div style="font-size:12px;color:#94a3b8;margin-top:4px;">Silakan pilih tanggal lain yang memiliki riwayat presensi kamera.</div>
+                  </div>
+
+                  <!-- Error State -->
+                  <div id="bfr_errorState" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:16px;color:#b91c1c;font-size:13px;font-weight:600;margin-bottom:16px;">
+                  </div>
+
+                  <!-- Table Container -->
+                  <div id="bfr_tableContainer" style="display:none;" class="table-responsive">
+                    <table class="simata-table" style="width:100%;border-collapse:collapse;min-width:780px;">
+                      <thead>
+                        <tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">
+                          <th style="padding:10px 12px;text-align:center;width:40px;">No</th>
+                          <th style="padding:10px 14px;text-align:left;">Guru</th>
+                          <th style="padding:10px 14px;text-align:left;width:120px;">NIK/NONIK</th>
+                          <th style="padding:10px 14px;text-align:center;width:80px;">Jam</th>
+                          <th style="padding:10px 14px;text-align:center;width:100px;">Kelas</th>
+                          <th style="padding:10px 14px;text-align:center;width:85px;">Status</th>
+                          <th style="padding:10px 14px;text-align:center;width:110px;">Waktu Presensi</th>
+                          <th style="padding:10px 14px;text-align:center;width:130px;">Bukti Foto</th>
+                          <th style="padding:10px 14px;text-align:center;width:100px;">Aksi</th>
+                        </tr>
+                      </thead>
+                      <tbody id="bfr_tableBody">
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Inline Scoped Styles for Settings -->
+          <style>
+            .settings-container {
+              display: flex;
+              gap: 20px;
+              align-items: flex-start;
+              margin-top: 16px;
+            }
+            .settings-nav {
+              width: 250px;
+              flex-shrink: 0;
+              background: #ffffff;
+              border-radius: 12px;
+              border: 1px solid #e2e8f0;
+              box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+              padding: 8px;
+              display: flex;
+              flex-direction: column;
+              gap: 4px;
+            }
+            .settings-nav-item {
+              display: flex;
+              align-items: center;
+              gap: 12px;
+              padding: 10px 14px;
+              border-radius: 8px;
+              border: none;
+              background: transparent;
+              color: #475569;
+              font-family: inherit;
+              cursor: pointer;
+              text-align: left;
+              width: 100%;
+              transition: all 0.15s ease-in-out;
+            }
+            .settings-nav-item:hover {
+              background: #f1f5f9;
+              color: #0f172a;
+            }
+            .settings-nav-item.active {
+              background: #166534;
+              color: #ffffff;
+            }
+            .settings-nav-item.active svg {
+              stroke: #ffffff;
+            }
+            .settings-nav-item.active small {
+              color: #bbf7d0;
+            }
+            .settings-nav-text {
+              display: flex;
+              flex-direction: column;
+              line-height: 1.3;
+            }
+            .settings-nav-text strong {
+              font-size: 13.5px;
+            }
+            .settings-nav-text small {
+              font-size: 11px;
+              color: #64748b;
+            }
+            .settings-content-pane {
+              flex: 1;
+              min-width: 0;
+            }
+            .settings-panel-card {
+              position: relative;
+              overflow: hidden;
+              background: #ffffff;
+              border-radius: 12px;
+              box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+              border: 1px solid #e2e8f0;
+              padding: 24px;
+            }
+            .settings-data-box {
+              font-size: 13.5px;
+              color: #1e293b;
+              padding: 9px 12px;
+              background: #f8fafc;
+              border-radius: 8px;
+              border: 1px solid #e2e8f0;
+            }
+            @media (max-width: 768px) {
+              .settings-container {
+                flex-direction: column;
+              }
+              .settings-nav {
+                width: 100%;
+                flex-direction: row;
+                overflow-x: auto;
+                padding: 6px;
+              }
+              .settings-nav-item {
+                flex: 1;
+                justify-content: center;
+                padding: 8px 10px;
+              }
+              .settings-nav-text small {
+                display: none;
+              }
+            }
+          </style>
+        </section>
+
+        <!-- TEACHER PHOTO EVIDENCE LIGHTBOX MODAL (BUG 25) -->
+        <div id="teacherPhotoEvidenceModal" class="modal-backdrop" style="display:none;align-items:center;justify-content:center;">
+          <div class="modal-card" style="max-width:580px;width:92%;max-height:90vh;overflow-y:auto;padding:24px;border-radius:14px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;border-bottom:1px solid #f1f5f9;padding-bottom:12px;">
+              <div>
+                <h3 style="font-size:16.5px;font-weight:700;color:#0f172a;margin:0 0 2px 0;">Bukti Foto Kehadiran Guru</h3>
+                <span style="font-size:12px;color:#64748b;">Verifikasi kehadiran kamera Responder Guru</span>
+              </div>
+              <button type="button" onclick="closeTeacherPhotoModal()" style="background:none;border:none;cursor:pointer;color:#94a3b8;padding:4px;display:flex;" title="Tutup">
+                <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            <!-- Photo Container -->
+            <div style="background:#0f172a;border-radius:10px;overflow:hidden;min-height:260px;display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:16px;">
+              <img id="tpm_photoImg" src="" alt="Bukti Foto Presensi Guru" style="display:none;width:100%;max-height:420px;object-fit:contain;" />
+              <div id="tpm_photoLoading" style="text-align:center;padding:32px 16px;color:#94a3b8;">
+                <div class="simata-spinner" style="margin:0 auto 10px;"></div>
+                <div style="font-size:13px;">Memuat foto dari Google Drive...</div>
+              </div>
+            </div>
+
+            <!-- Metadata Card -->
+            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;font-size:12.5px;margin-bottom:18px;">
+              <div>
+                <span style="color:#64748b;display:block;font-size:11px;font-weight:600;">GURU</span>
+                <strong id="tpm_teacherName" style="color:#0f172a;font-size:13px;">--</strong>
+              </div>
+              <div>
+                <span style="color:#64748b;display:block;font-size:11px;font-weight:600;">STATUS</span>
+                <span id="tpm_status">--</span>
+              </div>
+              <div>
+                <span style="color:#64748b;display:block;font-size:11px;font-weight:600;">JAM &amp; KELAS</span>
+                <span id="tpm_periodClass" style="color:#334155;font-weight:600;">--</span>
+              </div>
+              <div>
+                <span style="color:#64748b;display:block;font-size:11px;font-weight:600;">WAKTU PRESENSI</span>
+                <span id="tpm_time" style="color:#334155;">--</span>
+              </div>
+              <div style="grid-column: 1 / -1;">
+                <span style="color:#64748b;display:block;font-size:11px;font-weight:600;">MAPEL &amp; MATERI</span>
+                <span id="tpm_subjectMateri" style="color:#334155;">--</span>
+              </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div style="display:flex;justify-content:flex-end;">
+              <button type="button" class="login-button btn-secondary" style="min-height:38px;padding:0 20px;font-size:13px;" onclick="closeTeacherPhotoModal()">Tutup</button>
+            </div>
+          </div>
+        </div>
+  </main>
+
+
+</div>
+
+
+<!-- TOAST NOTIFICATION -->
+<div id="toast" class="toast">
+  <div class="toast-icon" id="toastIcon">✔</div>
+  <div class="toast-content">
+    <div id="toastTitle" class="toast-title">Berhasil</div>
+    <div id="toastMessage" class="toast-message">Data siswa berhasil diperbarui</div>
+  </div>
+</div>
+
+<?!= include('DashboardScript'); ?>
+<?!= include('ChatbotView'); ?>
+<?!= include('ChatbotScript'); ?>
+
+
+</body>
+
+</html>

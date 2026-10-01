@@ -4,11 +4,26 @@ const JOURNAL_HEADERS = [
   "academicYear",
   "teacherId",
   "classId",
+  "period",
   "subject",
   "content",
   "note",
   "status"
 ];
+
+function ensureJournalHeaders(sheet) {
+  const headers = getSheetHeaders(sheet);
+  if (headers.indexOf("period") === -1) {
+    const classIdIdx = headers.indexOf("classId");
+    if (classIdIdx !== -1) {
+      sheet.insertColumnAfter(classIdIdx + 1);
+      sheet.getRange(1, classIdIdx + 2).setValue("period");
+    } else {
+      const lastCol = sheet.getLastColumn();
+      sheet.getRange(1, lastCol + 1).setValue("period");
+    }
+  }
+}
 
 function getJournalSheet() {
   const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
@@ -156,14 +171,79 @@ function getJournalById(journalId) {
   return { success: true, journal: buildJournalObject(journalRow.headers, journalRow.rowValues) };
 }
 
+function validateSinglePeriod(period) {
+  const normalized = normalizeString(period);
+  if (!normalized) {
+    return {
+      success: false,
+      message: "Jam ke- (period) wajib diisi."
+    };
+  }
+
+  // Canonical integer string 1 to 10 only (rejects 0, 11, -1, 01, 001, 1.0, abc, etc.)
+  if (!/^(?:[1-9]|10)$/.test(normalized)) {
+    return {
+      success: false,
+      message: "Nilai Jam ke- (period) tidak valid: \"" + normalized + "\". Hanya diperbolehkan Jam ke-1 sampai Jam ke-10."
+    };
+  }
+
+  return {
+    success: true,
+    value: normalized
+  };
+}
+
+function normalizeAndValidatePeriods(periodsInput) {
+  let rawList = [];
+  if (Array.isArray(periodsInput)) {
+    rawList = periodsInput;
+  } else if (periodsInput !== undefined && periodsInput !== null && String(periodsInput).trim() !== "") {
+    rawList = [periodsInput];
+  }
+
+  if (rawList.length === 0) {
+    return {
+      success: false,
+      message: "Pilih minimal satu Jam ke- (period) terlebih dahulu."
+    };
+  }
+
+  const validSet = new Set();
+  for (let i = 0; i < rawList.length; i++) {
+    const check = validateSinglePeriod(rawList[i]);
+    if (!check.success) {
+      return check;
+    }
+    validSet.add(check.value);
+  }
+
+  if (validSet.size === 0) {
+    return {
+      success: false,
+      message: "Pilih minimal satu Jam ke- (period) terlebih dahulu."
+    };
+  }
+
+  const sortedPeriods = Array.from(validSet).sort(function(a, b) {
+    return parseInt(a, 10) - parseInt(b, 10);
+  });
+
+  return {
+    success: true,
+    periods: sortedPeriods
+  };
+}
+
 function createJournal(data) {
   const sheetResult = getJournalSheet();
   if (!sheetResult.success) { return sheetResult; }
   const sheet = sheetResult.sheet;
 
-  const journalId = normalizeString(data.journalId);
-  if (!journalId) { return { success: false, message: "journalId wajib diisi." }; }
-  if (findJournalRowById(sheet, journalId)) { return { success: false, message: "journalId sudah digunakan." }; }
+  // Validate periods input: accepts array `periods` or single `period`/`jamKe`
+  const periodsValidation = normalizeAndValidatePeriods(data.periods || data.period || data.jamKe);
+  if (!periodsValidation.success) { return periodsValidation; }
+  const periods = periodsValidation.periods;
 
   const dateValidation = validateDateFormat(data.date);
   if (!dateValidation.success) { return dateValidation; }
@@ -186,36 +266,74 @@ function createJournal(data) {
 
   const note = normalizeString(data.note);
 
-  const row = [
-    journalId,
-    dateValidation.value,
-    academicYear,
-    teacherValidation.value,
-    classValidation.value,
-    subject,
-    content,
-    note,
-    statusValidation.value
-  ];
+  const lock = LockService.getScriptLock();
+  const lockAcquired = lock.tryLock(5000);
+  if (!lockAcquired) {
+    return {
+      success: false,
+      message: "Server sedang sibuk memproses jurnal. Silakan coba lagi."
+    };
+  }
 
-  // appendRow is intentionally present but should not be executed during static checks.
-  sheet.appendRow(row);
+  try {
+    ensureJournalHeaders(sheet);
 
-  return {
-    success: true,
-    message: "Journal berhasil ditambahkan.",
-    journal: {
-      journalId: journalId,
-      date: dateValidation.value,
-      academicYear: academicYear,
-      teacherId: teacherValidation.value,
-      classId: classValidation.value,
-      subject: subject,
-      content: content,
-      note: note,
-      status: statusValidation.value
+    // If single period with provided journalId, check uniqueness
+    if (periods.length === 1 && data.journalId) {
+      const singleId = normalizeString(data.journalId);
+      if (findJournalRowById(sheet, singleId)) {
+        return { success: false, message: "journalId sudah digunakan." };
+      }
     }
-  };
+
+    const now = new Date();
+    const createdJournals = [];
+
+    periods.forEach(function(p) {
+      const rowJournalId = (periods.length === 1 && data.journalId)
+        ? normalizeString(data.journalId)
+        : ("J-" + Utilities.formatDate(now, Session.getScriptTimeZone(), "yyyyMMdd-HHmmss") + "-P" + p + "-" + Utilities.getUuid().substring(0, 6));
+
+      const row = [
+        rowJournalId,
+        dateValidation.value,
+        academicYear,
+        teacherValidation.value,
+        classValidation.value,
+        p,
+        subject,
+        content,
+        note,
+        statusValidation.value
+      ];
+
+      sheet.appendRow(row);
+
+      createdJournals.push({
+        journalId: rowJournalId,
+        date: dateValidation.value,
+        academicYear: academicYear,
+        teacherId: teacherValidation.value,
+        classId: classValidation.value,
+        period: p,
+        subject: subject,
+        content: content,
+        note: note,
+        status: statusValidation.value
+      });
+    });
+
+    return {
+      success: true,
+      message: "Journal berhasil ditambahkan untuk " + periods.length + " jam pelajaran.",
+      count: periods.length,
+      periods: periods,
+      journals: createdJournals,
+      journal: createdJournals[0]
+    };
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 function updateJournal(data) {
@@ -226,6 +344,8 @@ function updateJournal(data) {
   if (!journalId) { return { success: false, message: "journalId tidak boleh kosong." }; }
 
   const sheet = sheetResult.sheet;
+  ensureJournalHeaders(sheet);
+
   const journalRow = findJournalRowById(sheet, journalId);
   if (!journalRow) { return { success: false, message: "Data journal tidak ditemukan." }; }
 
@@ -243,6 +363,14 @@ function updateJournal(data) {
 
   if (data.classId !== undefined && normalizeString(data.classId) !== normalizeString(rowValues[headerMap["classId"]])) {
     return { success: false, message: "classId tidak boleh diubah." };
+  }
+
+  if (data.period !== undefined) {
+    const periodValidation = validateSinglePeriod(data.period);
+    if (!periodValidation.success) { return periodValidation; }
+    if (headerMap["period"] !== undefined) {
+      rowValues[headerMap["period"]] = periodValidation.value;
+    }
   }
 
   const dateInput = data.date !== undefined ? data.date : rowValues[headerMap["date"]];

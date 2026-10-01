@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SIMATA — Pemindai QR Presensi</title>
+  <!-- jsQR Library via official jsDelivr CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+  <style>
+    :root {
+      --s-primary: #0F2419;
+      --s-primary-hover: #163826;
+      --s-accent: #4ADE80;
+      --s-accent-soft: rgba(74, 222, 128, 0.15);
+      --s-bg: #0F2419;
+      --s-surface: #1B3527;
+      --s-text: #FFFFFF;
+      --s-text-muted: #A3B8AD;
+      --s-danger: #EF4444;
+      --s-warning: #F59E0B;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--s-bg);
+      color: var(--s-text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Top Bar */
+    .scanner-header {
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--s-surface);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      z-index: 10;
+    }
+
+    .scanner-title-group h1 {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.2px;
+      color: #fff;
+    }
+
+    .scanner-title-group p {
+      font-size: 11px;
+      color: var(--s-text-muted);
+      margin-top: 2px;
+    }
+
+    .close-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s;
+    }
+
+    .close-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Main Viewport */
+    .scanner-viewport {
+      flex: 1;
+      position: relative;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    canvas#hiddenCanvas {
+      display: none;
+    }
+
+    /* Target Box Overlay */
+    .viewfinder-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .viewfinder-frame {
+      width: min(260px, 72vw);
+      height: min(260px, 72vw);
+      position: relative;
+      border-radius: 16px;
+      box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.55);
+    }
+
+    /* Viewfinder corner brackets */
+    .corner {
+      position: absolute;
+      width: 32px;
+      height: 32px;
+      border-color: var(--s-accent);
+      border-style: solid;
+      pointer-events: none;
+    }
+
+    .corner-tl {
+      top: 0;
+      left: 0;
+      border-width: 4px 0 0 4px;
+      border-top-left-radius: 12px;
+    }
+
+    .corner-tr {
+      top: 0;
+      right: 0;
+      border-width: 4px 4px 0 0;
+      border-top-right-radius: 12px;
+    }
+
+    .corner-bl {
+      bottom: 0;
+      left: 0;
+      border-width: 0 0 4px 4px;
+      border-bottom-left-radius: 12px;
+    }
+
+    .corner-br {
+      bottom: 0;
+      right: 0;
+      border-width: 0 4px 4px 0;
+      border-bottom-right-radius: 12px;
+    }
+
+    /* Laser scan line animation */
+    .laser-line {
+      position: absolute;
+      left: 4px;
+      right: 4px;
+      height: 2px;
+      background: var(--s-accent);
+      box-shadow: 0 0 12px var(--s-accent);
+      animation: scanLaser 2.2s infinite ease-in-out;
+    }
+
+    @keyframes scanLaser {
+      0% { top: 8%; opacity: 0.2; }
+      50% { top: 92%; opacity: 1; }
+      100% { top: 8%; opacity: 0.2; }
+    }
+
+    /* Bottom Control Bar */
+    .scanner-footer {
+      padding: 16px 20px;
+      background: var(--s-surface);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      z-index: 10;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--s-text-muted);
+    }
+
+    .status-badge.scanning {
+      background: var(--s-accent-soft);
+      color: var(--s-accent);
+    }
+
+    .status-badge.success {
+      background: rgba(74, 222, 128, 0.25);
+      color: #4ADE80;
+      font-weight: 700;
+    }
+
+    .status-badge.error {
+      background: rgba(239, 68, 68, 0.2);
+      color: #F87171;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .action-row {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+      max-width: 320px;
+    }
+
+    .switch-cam-btn {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #fff;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .switch-cam-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    /* Error Overlay Container */
+    .error-container {
+      position: absolute;
+      inset: 20px;
+      background: rgba(15, 36, 25, 0.95);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      border-radius: 12px;
+      padding: 24px 20px;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      z-index: 20;
+    }
+
+    .error-container h2 {
+      font-size: 16px;
+      color: #F87171;
+      margin-bottom: 8px;
+    }
+
+    .error-container p {
+      font-size: 12px;
+      color: var(--s-text-muted);
+      line-height: 1.5;
+      margin-bottom: 18px;
+      max-width: 280px;
+    }
+
+    .retry-btn {
+      background: var(--s-accent);
+      color: var(--s-primary);
+      border: none;
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header -->
+  <header class="scanner-header">
+    <div class="scanner-title-group">
+      <h1>SIMATA Scanner</h1>
+      <p>Arahkan kamera ke QR Code siswa</p>
+    </div>
+    <button class="close-btn" type="button" onclick="closeScannerWindow()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+      Tutup
+    </button>
+  </header>
+
+  <!-- Live Camera Viewport -->
+  <main class="scanner-viewport">
+    <video id="scannerVideo" autoplay playsinline muted></video>
+    <canvas id="hiddenCanvas"></canvas>
+
+    <!-- Viewfinder Box & Scan Guide -->
+    <div class="viewfinder-overlay" id="viewfinderOverlay">
+      <div class="viewfinder-frame">
+        <div class="corner corner-tl"></div>
+        <div class="corner corner-tr"></div>
+        <div class="corner corner-bl"></div>
+        <div class="corner corner-br"></div>
+        <div class="laser-line" id="laserLine"></div>
+      </div>
+    </div>
+
+    <!-- Error Notice Screen -->
+    <div class="error-container" id="errorContainer">
+      <div style="width:48px;height:48px;border-radius:50%;background:rgba(239,68,68,0.2);color:#EF4444;display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+      <h2 id="errorTitle">Akses Kamera Gagal</h2>
+      <p id="errorMessage">Tidak dapat mengakses perangkat kamera.</p>
+      <button class="retry-btn" type="button" onclick="startCamera()">Coba Lagi</button>
+    </div>
+  </main>
+
+  <!-- Bottom Control Bar -->
+  <footer class="scanner-footer">
+    <div class="status-badge" id="statusBadge">
+      <span class="status-dot"></span>
+      <span id="statusText">Menyiapkan kamera...</span>
+    </div>
+
+    <div class="action-row">
+      <button class="switch-cam-btn" type="button" id="switchCameraBtn" onclick="toggleCameraFacingMode()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+        </svg>
+        Ganti Kamera
+      </button>
+    </div>
+  </footer>
+
+  <script>
+    // Security & Target Origin Resolution
+    let trustedSimataOrigin = null;
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const originParam = urlParams.get('simataOrigin');
+      if (originParam) {
+        const parsedUrl = new URL(originParam);
+        // Ensure origin is valid http or https
+        if (parsedUrl.protocol === 'https:' || parsedUrl.protocol === 'http:') {
+          trustedSimataOrigin = parsedUrl.origin;
+        }
+      }
+    } catch (e) {
+      console.warn("[SIMATA SCANNER] Gagal mem-parse simataOrigin:", e);
+    }
+
+    // State Variables
+    let currentStream = null;
+    let isScanning = false;
+    let animationFrameId = null;
+    let currentFacingMode = "environment"; // default rear camera
+    let hasDetectedResult = false;
+
+    const videoEl = document.getElementById('scannerVideo');
+    const canvasEl = document.getElementById('hiddenCanvas');
+    const canvasCtx = canvasEl.getContext('2d');
+    const statusBadgeEl = document.getElementById('statusBadge');
+    const statusTextEl = document.getElementById('statusText');
+    const errorContainerEl = document.getElementById('errorContainer');
+    const errorTitleEl = document.getElementById('errorTitle');
+    const errorMessageEl = document.getElementById('errorMessage');
+    const laserLineEl = document.getElementById('laserLine');
+
+    function setStatus(text, state) {
+      if (statusTextEl) statusTextEl.textContent = text;
+      if (statusBadgeEl) {
+        statusBadgeEl.className = "status-badge " + (state || "");
+      }
+    }
+
+    function showError(title, msg) {
+      stopCameraStream();
+      if (errorTitleEl) errorTitleEl.textContent = title;
+      if (errorMessageEl) errorMessageEl.textContent = msg;
+      if (errorContainerEl) errorContainerEl.style.display = "flex";
+      setStatus("Kamera Bermasalah", "error");
+    }
+
+    function hideError() {
+      if (errorContainerEl) errorContainerEl.style.display = "none";
+    }
+
+    function closeScannerWindow() {
+      stopCameraStream();
+      window.close();
+    }
+
+    function stopCameraStream() {
+      isScanning = false;
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+      if (currentStream) {
+        try {
+          currentStream.getTracks().forEach(function(track) {
+            track.stop();
+          });
+        } catch (e) {
+          console.warn("[SIMATA SCANNER] Error stopping track:", e);
+        }
+        currentStream = null;
+      }
+      if (videoEl) {
+        videoEl.srcObject = null;
+      }
+    }
+
+    function toggleCameraFacingMode() {
+      currentFacingMode = (currentFacingMode === "environment") ? "user" : "environment";
+      startCamera();
+    }
+
+    function startCamera() {
+      hideError();
+      stopCameraStream();
+      hasDetectedResult = false;
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showError(
+          "Browser Tidak Didukung",
+          "Browser ini tidak mendukung akses kamera langsung (getUserMedia). Gunakan browser Chrome/Safari modern berprotokol HTTPS."
+        );
+        return;
+      }
+
+      if (typeof jsQR !== "function") {
+        showError(
+          "Library Scanner Gagal",
+          "Pustaka decoder jsQR gagal dimuat. Periksa koneksi internet Anda lalu coba lagi."
+        );
+        return;
+      }
+
+      setStatus("Meminta izin kamera...", "scanning");
+
+      const constraints = {
+        video: {
+          facingMode: { ideal: currentFacingMode },
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        audio: false
+      };
+
+      navigator.mediaDevices.getUserMedia(constraints)
+        .then(handleCameraSuccess)
+        .catch(function(error) {
+          console.warn("[SIMATA SCANNER] getUserMedia ideal facingMode failed, retrying generic video...", error);
+          // Fallback to generic video constraints without ideal facingMode
+          navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+            .then(handleCameraSuccess)
+            .catch(handleCameraError);
+        });
+    }
+
+    function handleCameraSuccess(stream) {
+      currentStream = stream;
+      videoEl.srcObject = stream;
+      videoEl.setAttribute('playsinline', 'true');
+      videoEl.setAttribute('autoplay', 'true');
+      videoEl.muted = true;
+
+      videoEl.play()
+        .then(function() {
+          isScanning = true;
+          setStatus("Memindai QR...", "scanning");
+          if (laserLineEl) laserLineEl.style.display = "block";
+          animationFrameId = requestAnimationFrame(scanLoop);
+        })
+        .catch(function(playError) {
+          console.warn("[SIMATA SCANNER] video.play error, retrying loop:", playError);
+          isScanning = true;
+          setStatus("Memindai QR...", "scanning");
+          animationFrameId = requestAnimationFrame(scanLoop);
+        });
+    }
+
+    function handleCameraError(error) {
+      console.error("[SIMATA SCANNER] Camera error:", error);
+      let title = "Akses Kamera Gagal";
+      let msg = "Tidak dapat mengakses perangkat kamera.";
+
+      if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
+        title = "Izin Kamera Ditolak";
+        msg = "Akses kamera diblokir oleh browser. Izinkan akses kamera pada ikon gembok/setelan situs di bilah alamat browser Anda, lalu klik Coba Lagi.";
+      } else if (error.name === "NotFoundError" || error.name === "DevicesNotFoundError") {
+        title = "Kamera Tidak Ditemukan";
+        msg = "Perangkat kamera tidak terdeteksi pada perangkat ini.";
+      } else if (error.name === "NotReadableError" || error.name === "TrackStartError") {
+        title = "Kamera Sedang Digunakan";
+        msg = "Kamera kemungkinan sedang digunakan oleh aplikasi lain.";
+      }
+
+      showError(title, msg);
+    }
+
+    function scanLoop() {
+      if (!isScanning || hasDetectedResult) return;
+
+      if (videoEl && videoEl.readyState === videoEl.HAVE_ENOUGH_DATA) {
+        canvasEl.width = videoEl.videoWidth;
+        canvasEl.height = videoEl.videoHeight;
+        canvasCtx.drawImage(videoEl, 0, 0, canvasEl.width, canvasEl.height);
+
+        const imageData = canvasCtx.getImageData(0, 0, canvasEl.width, canvasEl.height);
+        let code = null;
+
+        try {
+          code = jsQR(imageData.data, imageData.width, imageData.height, {
+            inversionAttempts: "dontInvert"
+          });
+        } catch (e) {
+          console.warn("[SIMATA SCANNER] jsQR decode exception:", e);
+        }
+
+        if (code && code.data && code.data.trim()) {
+          const rawQr = code.data.trim();
+          handleQrDetected(rawQr);
+          return; // Stop animation loop immediately
+        }
+      }
+
+      if (isScanning && !hasDetectedResult) {
+        animationFrameId = requestAnimationFrame(scanLoop);
+      }
+    }
+
+    function handleQrDetected(qrString) {
+      hasDetectedResult = true;
+      isScanning = false;
+      stopCameraStream();
+
+      setStatus("QR Berhasil: " + qrString, "success");
+      if (laserLineEl) laserLineEl.style.display = "none";
+
+      // Dispatch result strictly to trusted opener
+      if (window.opener && !window.opener.closed) {
+        if (!trustedSimataOrigin) {
+          console.error("[SIMATA SCANNER] trustedSimataOrigin tidak valid. Pembacaan dibatalkan demi keamanan.");
+          alert("Origin SIMATA tidak valid. Hubungi administrator.");
+          return;
+        }
+
+        const payload = {
+          type: "SIMATA_QR_RESULT",
+          qrCodeId: qrString
+        };
+
+        // Post message strictly to the verified parent origin (NEVER "*")
+        window.opener.postMessage(payload, trustedSimataOrigin);
+
+        // Close scanner window after 350ms to allow visual confirmation
+        setTimeout(function() {
+          window.close();
+        }, 350);
+      } else {
+        alert("QR Terdeteksi: " + qrString + "\n(Jendela induk SIMATA tidak ditemukan)");
+      }
+    }
+
+    // Auto-start camera on page load
+    window.addEventListener('DOMContentLoaded', function() {
+      startCamera();
+    });
+
+    // Cleanup on window unload
+    window.addEventListener('beforeunload', function() {
+      stopCameraStream();
+    });
+  </script>
+</body>
+</html>

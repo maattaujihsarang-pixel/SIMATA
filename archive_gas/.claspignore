@@ -1,0 +1,19 @@
+# Ignore scratch and test files
+scratch/**
+tests/**
+*.test.js
+
+# Ignore dev and config files
+.git/**
+.gitignore
+.clasp.json
+.clasprc.json
+README.md
+node_modules/**
+package.json
+package-lock.json
+
+# Ignore temporary CLI artifacts
+e.js*
+*relation*
+

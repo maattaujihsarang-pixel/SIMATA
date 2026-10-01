@@ -326,8 +326,13 @@ html, body {
     flex-shrink: 0;
   }
 
+  .dashboard-layout .user-profile-wrapper {
+    position: relative;
+  }
+
   .dashboard-layout .user-profile {
-    gap: 6px;
+    padding: 2px 4px;
+    gap: 4px;
   }
 
   .dashboard-layout .user-avatar {
@@ -335,6 +340,16 @@ html, body {
     height: 36px;
     font-size: 13px;
     font-weight: 700;
+  }
+
+  .dashboard-layout .profile-chevron {
+    display: none;
+  }
+
+  .dashboard-layout .profile-dropdown-menu {
+    right: 0;
+    min-width: 160px;
+    max-width: calc(100vw - 24px);
   }
 
   .dashboard-layout .live-clock,
@@ -499,7 +514,6 @@ html, body {
 
   #attendanceModal > div,
   #teacherAttendanceModal > div,
-  #journalModal > div,
   #gradeModal > div,
   #studentModal > div,
   #teacherModal > div,

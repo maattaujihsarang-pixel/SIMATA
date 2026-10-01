@@ -206,7 +206,15 @@ function getStudentById(studentId) {
   };
 }
 
-function createStudent(data) {
+function createStudent(token, data) {
+  const auth = validateAdminSession(token);
+  if (!auth || !auth.valid) {
+    return {
+      success: false,
+      message: auth ? auth.message : "Akses ditolak: Hanya Admin yang memiliki izin untuk operasi ini."
+    };
+  }
+
   const sheetResult = getStudentsSheet();
   if (!sheetResult.success) {
     return sheetResult;
@@ -311,7 +319,15 @@ function createStudent(data) {
   }
 }
 
-function updateStudent(studentId, data) {
+function updateStudent(token, studentId, data) {
+  const auth = validateAdminSession(token);
+  if (!auth || !auth.valid) {
+    return {
+      success: false,
+      message: auth ? auth.message : "Akses ditolak: Hanya Admin yang memiliki izin untuk operasi ini."
+    };
+  }
+
   const sheetResult = getStudentsSheet();
   if (!sheetResult.success) {
     return sheetResult;
@@ -396,7 +412,15 @@ function updateStudent(studentId, data) {
   };
 }
 
-function setStudentStatus(studentId, status) {
+function setStudentStatus(token, studentId, status) {
+  const auth = validateAdminSession(token);
+  if (!auth || !auth.valid) {
+    return {
+      success: false,
+      message: auth ? auth.message : "Akses ditolak: Hanya Admin yang memiliki izin untuk operasi ini."
+    };
+  }
+
   const sheetResult = getStudentsSheet();
   if (!sheetResult.success) {
     return sheetResult;

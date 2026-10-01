@@ -7,7 +7,8 @@ const STUDENT_ATTENDANCE_HEADERS = [
   "status",
   "method",
   "timestamp",
-  "note"
+  "note",
+  "period"
 ];
 
 function getStudentAttendanceSheet() {
@@ -29,12 +30,106 @@ function getStudentAttendanceSheet() {
 
 
 
+function normalizeDateValue(value) {
+  function isLeap(y) { return (y % 4 === 0 && y % 100 !== 0) || (y % 400 === 0); }
+  function daysInMonth(y, m) {
+    var dims = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    return (m === 2 && isLeap(y)) ? 29 : dims[m];
+  }
+  function validCalendar(y, m, d) {
+    return y >= 1 && m >= 1 && m <= 12 && d >= 1 && d <= daysInMonth(y, m);
+  }
+
+  if (value instanceof Date) {
+    if (isNaN(value.getTime())) return "";
+    var y = value.getFullYear();
+    var m = value.getMonth() + 1;
+    var d = value.getDate();
+    if (!validCalendar(y, m, d)) return "";
+    return y + "-" + String(m).padStart(2, "0") + "-" + String(d).padStart(2, "0");
+  }
+
+  if (typeof value === "string") {
+    var str = value.trim();
+    if (!str) return "";
+
+    // YYYY-MM-DD
+    var mIso = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (mIso) {
+      var y = parseInt(mIso[1], 10), mo = parseInt(mIso[2], 10), dy = parseInt(mIso[3], 10);
+      return validCalendar(y, mo, dy) ? (mIso[1] + "-" + mIso[2] + "-" + mIso[3]) : "";
+    }
+
+    // ISO timestamp YYYY-MM-DDTHH:mm:ss...
+    var mTs = str.match(/^(\d{4}-\d{2}-\d{2})T/);
+    if (mTs) {
+      var parts = mTs[1].split("-");
+      var y = parseInt(parts[0], 10), mo = parseInt(parts[1], 10), dy = parseInt(parts[2], 10);
+      return validCalendar(y, mo, dy) ? mTs[1] : "";
+    }
+
+    // YYYY/MM/DD
+    var mSlash = str.match(/^(\d{4})\/(\d{2})\/(\d{2})$/);
+    if (mSlash) {
+      var y = parseInt(mSlash[1], 10), mo = parseInt(mSlash[2], 10), dy = parseInt(mSlash[3], 10);
+      return validCalendar(y, mo, dy) ? (mSlash[1] + "-" + mSlash[2] + "-" + mSlash[3]) : "";
+    }
+
+    // DD/MM/YYYY (Indonesian format e.g. 16/09/2026 or 5/9/2026)
+    var mId = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (mId) {
+      var dy = parseInt(mId[1], 10), mo = parseInt(mId[2], 10), y = parseInt(mId[3], 10);
+      return validCalendar(y, mo, dy)
+        ? (mId[3] + "-" + String(mo).padStart(2, "0") + "-" + String(dy).padStart(2, "0")) : "";
+    }
+
+    return "";
+  }
+
+  return "";
+}
+
+/**
+ * Normalize the timestamp field read back from Google Sheets getValues().
+ *
+ * Google Sheets auto-parses ISO datetime strings stored via appendRow() into
+ * internal datetime cells. When getValues() reads them back, GAS returns a
+ * native Date object. Using normalizeString(Date) would produce
+ * Date.prototype.toString() — an engine-specific long string, not comparable.
+ *
+ * This function:
+ *   - native Date (valid)   → epoch milliseconds as number (Date.getTime())
+ *   - native Date (invalid) → empty string ""
+ *   - string               → pass through trimmed (ISO strings from write paths)
+ *   - other types          → empty string ""
+ */
+function normalizeTimestampValue(value) {
+  if (value instanceof Date) {
+    var ms = value.getTime();
+    return isNaN(ms) ? "" : ms;
+  }
+  if (typeof value === "string") {
+    return value.trim();
+  }
+  return "";
+}
+
 function buildStudentAttendanceObject(headers, row) {
   const attendance = {};
 
   STUDENT_ATTENDANCE_HEADERS.forEach(function(header) {
     const index = headers.indexOf(header);
-    attendance[header] = index !== -1 ? normalizeString(row[index]) : "";
+    if (index !== -1 && row[index] !== undefined) {
+      if (header === "date") {
+        attendance[header] = normalizeDateValue(row[index]);
+      } else if (header === "timestamp") {
+        attendance[header] = normalizeTimestampValue(row[index]);
+      } else {
+        attendance[header] = normalizeString(row[index]);
+      }
+    } else {
+      attendance[header] = "";
+    }
   });
 
   return attendance;
@@ -106,6 +201,70 @@ function validateAttendanceMethod(method) {
   return {
     success: true,
     value: normalized
+  };
+}
+
+function validateSinglePeriod(period) {
+  const normalized = normalizeString(period);
+  if (!normalized) {
+    return {
+      success: false,
+      message: "Jam ke- (period) wajib diisi."
+    };
+  }
+
+  // Canonical integer string 1 to 10 only (rejects 0, 11, -1, 01, 001, 1.0, abc, etc.)
+  if (!/^(?:[1-9]|10)$/.test(normalized)) {
+    return {
+      success: false,
+      message: "Nilai Jam ke- (period) tidak valid: \"" + normalized + "\". Hanya diperbolehkan Jam ke-1 sampai Jam ke-10."
+    };
+  }
+
+  return {
+    success: true,
+    value: normalized
+  };
+}
+
+function normalizeAndValidatePeriods(periodsInput) {
+  let rawList = [];
+  if (Array.isArray(periodsInput)) {
+    rawList = periodsInput;
+  } else if (periodsInput !== undefined && periodsInput !== null && String(periodsInput).trim() !== "") {
+    rawList = [periodsInput];
+  }
+
+  if (rawList.length === 0) {
+    return {
+      success: false,
+      message: "Pilih minimal satu Jam ke- (period) terlebih dahulu."
+    };
+  }
+
+  const validSet = new Set();
+  for (let i = 0; i < rawList.length; i++) {
+    const check = validateSinglePeriod(rawList[i]);
+    if (!check.success) {
+      return check;
+    }
+    validSet.add(check.value);
+  }
+
+  if (validSet.size === 0) {
+    return {
+      success: false,
+      message: "Pilih minimal satu Jam ke- (period) terlebih dahulu."
+    };
+  }
+
+  const sortedPeriods = Array.from(validSet).sort(function(a, b) {
+    return parseInt(a, 10) - parseInt(b, 10);
+  });
+
+  return {
+    success: true,
+    periods: sortedPeriods
   };
 }
 
@@ -294,20 +453,12 @@ function createStudentAttendance(data) {
 
   const sheet = sheetResult.sheet;
 
-  const attendanceId = normalizeString(data.attendanceId);
-  if (!attendanceId) {
-    return {
-      success: false,
-      message: "attendanceId wajib diisi."
-    };
+  // Validate periods input: accepts array `periods` or single `period`/`jamKe`
+  const periodsValidation = normalizeAndValidatePeriods(data.periods || data.period || data.jamKe);
+  if (!periodsValidation.success) {
+    return periodsValidation;
   }
-
-  if (findStudentAttendanceRowById(sheet, attendanceId)) {
-    return {
-      success: false,
-      message: "attendanceId sudah digunakan."
-    };
-  }
+  const periods = periodsValidation.periods;
 
   const dateValidation = validateDateFormat(data.date);
   if (!dateValidation.success) {
@@ -347,20 +498,9 @@ function createStudentAttendance(data) {
     return methodValidation;
   }
 
-  const timestamp = normalizeString(data.timestamp);
+  const now = new Date();
+  const timestamp = normalizeString(data.timestamp) || Utilities.formatDate(now, Session.getScriptTimeZone(), "yyyy-MM-dd'T'HH:mm:ss");
   const note = normalizeString(data.note);
-
-  const row = [
-    attendanceId,
-    dateValidation.value,
-    academicYear,
-    studentValidation.value,
-    classValidation.value,
-    statusValidation.value,
-    methodValidation.value,
-    timestamp,
-    note
-  ];
 
   const lock = LockService.getScriptLock();
   const lockAcquired = lock.tryLock(5000);
@@ -373,28 +513,60 @@ function createStudentAttendance(data) {
   }
 
   try {
-    // Duplicate protection: prevent multiple student attendance records for the
-    // same studentId + classId + date + academicYear combination.
+    // Duplicate protection (Atomic All-or-Nothing check across all requested periods)
     const existing = getStudentAttendance({
       studentId: studentValidation.value,
       classId: classValidation.value,
       date: dateValidation.value,
       academicYear: academicYear
     });
-    if (existing && existing.success && existing.attendances && existing.attendances.length > 0) {
+
+    const duplicatePeriods = [];
+    if (existing && existing.success && existing.attendances) {
+      const existingPeriodSet = new Set(
+        existing.attendances.map(function(att) {
+          return normalizeString(att.period);
+        })
+      );
+      periods.forEach(function(p) {
+        if (existingPeriodSet.has(p)) {
+          duplicatePeriods.push(p);
+        }
+      });
+    }
+
+    if (duplicatePeriods.length > 0) {
+      const dupText = duplicatePeriods.map(function(p) { return "Jam ke-" + p; }).join(", ");
       return {
         success: false,
-        message: "Student attendance untuk siswa, kelas, tanggal, dan tahun akademik tersebut sudah ada."
+        message: "Student attendance untuk siswa tersebut pada tanggal " + dateValidation.value + " untuk " + dupText + " sudah tercatat. Tidak ada perubahan yang disimpan.",
+        duplicatePeriods: duplicatePeriods
       };
     }
 
-    sheet.appendRow(row);
+    const createdAttendances = [];
+    periods.forEach(function(p) {
+      const rowAttendanceId = (periods.length === 1 && data.attendanceId)
+        ? normalizeString(data.attendanceId)
+        : ("ATT-STD-" + Utilities.formatDate(now, Session.getScriptTimeZone(), "yyyyMMdd-HHmmss") + "-P" + p + "-" + Utilities.getUuid().substring(0, 6));
 
-    return {
-      success: true,
-      message: "Student attendance berhasil ditambahkan.",
-      attendance: {
-        attendanceId: attendanceId,
+      const row = [
+        rowAttendanceId,
+        dateValidation.value,
+        academicYear,
+        studentValidation.value,
+        classValidation.value,
+        statusValidation.value,
+        methodValidation.value,
+        timestamp,
+        note,
+        p
+      ];
+
+      sheet.appendRow(row);
+
+      createdAttendances.push({
+        attendanceId: rowAttendanceId,
         date: dateValidation.value,
         academicYear: academicYear,
         studentId: studentValidation.value,
@@ -402,8 +574,18 @@ function createStudentAttendance(data) {
         status: statusValidation.value,
         method: methodValidation.value,
         timestamp: timestamp,
-        note: note
-      }
+        note: note,
+        period: p
+      });
+    });
+
+    return {
+      success: true,
+      message: "Student attendance berhasil ditambahkan untuk " + periods.length + " jam pelajaran.",
+      count: periods.length,
+      periods: periods,
+      attendances: createdAttendances,
+      attendance: createdAttendances[0]
     };
   } finally {
     lock.releaseLock();
@@ -480,6 +662,39 @@ function updateStudentAttendance(data) {
   const timestamp = data.timestamp !== undefined ? normalizeString(data.timestamp) : normalizeString(rowValues[headerMap["timestamp"]]);
   const note = data.note !== undefined ? normalizeString(data.note) : normalizeString(rowValues[headerMap["note"]]);
 
+  // Handle single period update
+  let targetPeriod = headerMap["period"] !== undefined && rowValues[headerMap["period"]] !== undefined
+    ? normalizeString(rowValues[headerMap["period"]])
+    : "";
+
+  if (data.period !== undefined && normalizeString(data.period) !== "") {
+    const periodValidation = validateSinglePeriod(data.period);
+    if (!periodValidation.success) {
+      return periodValidation;
+    }
+    targetPeriod = periodValidation.value;
+
+    // Check duplicate against other records for same student + class + date + academicYear
+    const existing = getStudentAttendance({
+      studentId: studentId,
+      classId: classValidation.value,
+      date: dateValidation.value,
+      academicYear: academicYear
+    });
+
+    if (existing && existing.success && existing.attendances) {
+      const isDuplicate = existing.attendances.some(function(att) {
+        return normalizeString(att.attendanceId) !== attendanceId && normalizeString(att.period) === targetPeriod;
+      });
+      if (isDuplicate) {
+        return {
+          success: false,
+          message: "Student attendance untuk siswa tersebut pada tanggal " + dateValidation.value + " dan Jam ke-" + targetPeriod + " sudah ada pada record lain."
+        };
+      }
+    }
+  }
+
   rowValues[headerMap["date"]] = dateValidation.value;
   rowValues[headerMap["academicYear"]] = academicYear;
   rowValues[headerMap["classId"]] = classValidation.value;
@@ -487,6 +702,9 @@ function updateStudentAttendance(data) {
   rowValues[headerMap["method"]] = methodValidation.value;
   rowValues[headerMap["timestamp"]] = timestamp;
   rowValues[headerMap["note"]] = note;
+  if (headerMap["period"] !== undefined) {
+    rowValues[headerMap["period"]] = targetPeriod;
+  }
 
   sheet.getRange(attendanceRow.rowIndex, 1, 1, rowValues.length).setValues([rowValues]);
 

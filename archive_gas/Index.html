@@ -10,7 +10,8 @@
 
 <?!= include('style'); ?>
 <?!= HtmlService.createHtmlOutputFromFile('LoginResponsive').getContent(); ?>
-
+<?!= include('assets'); ?>
+  <script src="/js/simata-client.js"></script>
 </head>
 
 <body>
@@ -20,16 +21,23 @@
     <section class="branding-panel">
 
         <div class="branding-overlay"></div>
+        <div class="branding-pattern"></div>
 
         <div class="branding-content">
+
+            <div class="branding-badge">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                </svg>
+                <span>Portal Akademik Resmi</span>
+            </div>
 
             <h1>SIMATA</h1>
 
             <h2>Sistem Informasi MA At-Taujih Sarang</h2>
 
-            <p>
-                Membangun pendidikan yang modern,
-                terintegrasi, dan mudah diakses.
+            <p class="branding-desc">
+                Layanan terpadu presensi dan administrasi akademik madrasah yang modern, cepat, dan terpercaya.
             </p>
 
         </div>
@@ -42,70 +50,117 @@
 
             <img
                 class="school-logo"
-                src="https://lh3.googleusercontent.com/d/1tlvabViqrOOR5NvCTnX-zjZME_s2SF1Q"
-                alt="Logo">
+                src="<?!= getSimataLogo(); ?>"
+                alt="Logo SIMATA">
 
             <h1 class="title">
                 Selamat Datang
             </h1>
 
             <p class="subtitle">
-                Silakan masuk ke akun Anda.
+                Silakan masuk ke akun SIMATA Anda.
             </p>
 
 <form class="login-form" onsubmit="return false;">
 
-    <input
-        type="text"
-        id="username"
-        class="input-box"
-        placeholder="Username"
-        autocomplete="username"
-        oninput="clearUsernameError()">
-    
-<div id="usernameError" class="error-message"></div>
+    <div class="form-group">
+        <label class="input-label" for="username">Username</label>
+        <div class="input-wrapper">
+            <span class="input-icon">
+                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+            </span>
+            <input
+                type="text"
+                id="username"
+                class="input-box"
+                placeholder="Masukkan username Anda"
+                autocomplete="username"
+                oninput="clearUsernameError()">
+        </div>
+        <div id="usernameError" class="error-message"></div>
+    </div>
 
-<div class="input-group password-group">
+    <div class="form-group">
+        <label class="input-label" for="password">Password</label>
+        <div class="input-group password-group">
+            <div class="input-wrapper">
+                <span class="input-icon">
+                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                </span>
+                <input
+                    type="password"
+                    id="password"
+                    class="input-box"
+                    placeholder="Masukkan password Anda"
+                    autocomplete="current-password"
+                    oninput="clearPasswordError()">
 
-    <input
-        type="password"
-        id="password"
-        class="input-box"
-        placeholder="Password"
-        autocomplete="current-password"
-        oninput="clearPasswordError()">
+                <button
+                    type="button"
+                    class="toggle-password"
+                    onclick="togglePassword()"
+                    aria-label="Lihat Password">
+                    <svg class="icon-eye" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="7" r="3"></circle>
+                    </svg>
+                    <svg class="icon-eye-off" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div id="passwordError" class="error-message"></div>
+    </div>
+
+    <div class="login-options-row">
+        <label class="remember-label" for="rememberMe">
+            <input type="checkbox" id="rememberMe" name="rememberMe">
+            <span class="remember-text">Ingatkan saya</span>
+        </label>
+        <button type="button" class="btn-forgot-password" id="forgotPasswordBtn" onclick="toggleForgotPassword()">
+            Lupa Password?
+        </button>
+    </div>
+
+    <div id="forgotPasswordNotice" class="forgot-notice" style="display: none;">
+        <span class="notice-icon">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+        </span>
+        <span class="notice-text">Silakan <strong>hubungi admin</strong> SIMATA untuk mereset kata sandi Anda.</span>
+    </div>
 
     <button
-        type="button"
-        class="toggle-password"
-        onclick="togglePassword()"
-        aria-label="Lihat Password">
-
-        👁
-
+        id="loginButton"
+        class="login-button"
+        type="button">
+        <span class="btn-icon">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                <polyline points="10 17 15 12 10 7"></polyline>
+                <line x1="15" y1="12" x2="3" y2="12"></line>
+            </svg>
+        </span>
+        <span id="buttonText">
+            Masuk ke SIMATA
+        </span>
     </button>
-
-</div>
-
-<div id="passwordError" class="error-message"></div>
-
-<button
-    id="loginButton"
-    class="login-button"
-    type="button">
-
-    <span id="buttonText">
-        Masuk ke SIMATA
-    </span>
-
-</button>
 
 </form>
 
 <div class="login-footer">
-
-    © 2026 SIMATA • v0.1.1-dev
-
+    © 2026 SIMATA • v0.2.1-dev
 </div>
 
         </div>
@@ -137,6 +192,40 @@
 <script>
 
 
+function toggleForgotPassword() {
+    var notice = document.getElementById("forgotPasswordNotice");
+    if (notice) {
+        if (notice.style.display === "none" || notice.style.display === "") {
+            notice.style.display = "flex";
+        } else {
+            notice.style.display = "none";
+        }
+    }
+}
+
+function loadRememberedUser() {
+    try {
+        var saved = localStorage.getItem("SIMATA_REMEMBER_USER");
+        if (saved) {
+            var u = document.getElementById("username");
+            var r = document.getElementById("rememberMe");
+            if (u && !u.value) u.value = saved;
+            if (r) r.checked = true;
+        }
+    } catch(e) {}
+}
+
+function saveRememberedUser(username) {
+    try {
+        var r = document.getElementById("rememberMe");
+        if (r && r.checked && username) {
+            localStorage.setItem("SIMATA_REMEMBER_USER", username);
+        } else {
+            localStorage.removeItem("SIMATA_REMEMBER_USER");
+        }
+    } catch(e) {}
+}
+
 function togglePassword() {
 
     const pass = document.getElementById("password");
@@ -157,6 +246,8 @@ function login(){
     const buttonText = document.getElementById("buttonText");
     const usernameError = document.getElementById("usernameError");
     const passwordError = document.getElementById("passwordError");
+    
+    saveRememberedUser(username);
     
 
 // Bersihkan pesan sebelumnya
@@ -184,7 +275,7 @@ if(password === ""){
 
     showLoading();
 
-        google.script.run
+        simataClient
             .withSuccessHandler(function(result) {
                 hideLoading();
 
@@ -201,12 +292,8 @@ if(password === ""){
                     );
 
                 setTimeout(function() {
-
-                const appUrl = '<?!= ScriptApp.getService().getUrl(); ?>';
-
-                window.top.location.replace(appUrl + "?page=dashboard");
-
-            }, 1200);
+                    window.top.location.replace("/dashboard");
+                }, 1200);
 
                 } else {
                     showToast(
@@ -243,15 +330,13 @@ function checkExistingSession() {
     return;
   }
 
-  google.script.run
+  simataClient
     .withSuccessHandler(function(result) {
 
       if (result && result.valid) {
 
-        const appUrl = '<?!= ScriptApp.getService().getUrl(); ?>';
-
         // Session masih valid → langsung kembali ke Dashboard
-        window.top.location.replace(appUrl + "?page=dashboard");
+        window.top.location.replace("/dashboard");
 
       } else {
 
@@ -361,6 +446,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Cek session yang masih aktif
   checkExistingSession();
+
+  // Muat username tersimpan jika ada (Ingatkan saya)
+  loadRememberedUser();
 
   var btn = document.getElementById('loginButton');
 
