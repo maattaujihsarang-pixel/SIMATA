@@ -17,3 +17,20 @@ Thumbs.db
 
 # Clasp credentials
 .clasprc.json
+
+# Runtime Uploads & Generated Media
+backend/uploads/evidences/*
+!backend/uploads/evidences/.gitkeep
+backend/uploads/profile_photos/*
+!backend/uploads/profile_photos/.gitkeep
+
+# Sensitive Production Data
+backend/data/production_seed_data.json
+backend/data/production_raw_data.json
+
+# Scratch & Local Staging Artifacts
+scratch/
+
+# Backup & Delta Files
+*.bak
+*.pre_f003

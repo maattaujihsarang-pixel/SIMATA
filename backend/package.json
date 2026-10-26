@@ -1,0 +1,36 @@
+{
+  "name": "simata-backend",
+  "version": "1.0.0",
+  "description": "SIMATA - Sistem Informasi MA At-Taujih Backend (Node.js + PostgreSQL)",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "migrate": "node migrations/migrate.js",
+    "seed": "node scripts/migrate_legacy_data.js",
+    "reconcile": "node scripts/reconcile_data.js",
+    "prune-storage": "node scripts/reconcile_evidence_storage.js",
+    "test": "node tests/run_all_tests.js"
+  },
+  "keywords": [
+    "simata",
+    "madrasah",
+    "attendance",
+    "express",
+    "postgresql"
+  ],
+  "author": "MA At-Taujih Sarang",
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "helmet": "^8.0.0",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "pg": "^8.13.1"
+  }
+}
+
