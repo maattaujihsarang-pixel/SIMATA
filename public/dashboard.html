@@ -1104,11 +1104,11 @@ html, body {
 
       <div class="topbar-left">
 
-        <span class="topbar-label">
+        <span class="topbar-label" id="topbarCategoryLabel">
           SISTEM INFORMASI
         </span>
 
-        <h1>
+        <h1 id="topbarPageTitle">
           Dashboard
         </h1>
 
@@ -1238,7 +1238,7 @@ html, body {
           </span>
 
           <h2>
-            Selamat Datang
+            Selamat Datang<span id="welcomeGreetingNameWrapper">, <span id="welcomeGreetingName"></span></span>
           </h2>
 
           <p>
@@ -1257,6 +1257,75 @@ html, body {
         </div>
 
       </div>
+
+      <!-- MOBILE QUICK ACCESS SECTION (FEATURE 003) -->
+      <section class="mobile-quick-actions" aria-label="Akses Cepat SIMATA">
+        <div class="quick-actions-header">
+          <div class="quick-actions-title-wrap">
+            <span class="quick-badge">AKSES CEPAT</span>
+            <h3 class="quick-title">Menu Utama Hari Ini</h3>
+          </div>
+          <span class="quick-date" id="mobileCurrentDate"></span>
+        </div>
+        <div class="quick-actions-grid">
+          <!-- 1. Scan QR Siswa (Center Quick Access) -->
+          <button type="button" class="quick-action-card card-scan-qr" id="homeQuickScanQr" aria-label="Scan QR Siswa">
+            <div class="quick-icon-wrap icon-qr-pulse">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+              </svg>
+            </div>
+            <div class="quick-text-wrap">
+              <span class="quick-label">Scan QR Siswa</span>
+              <span class="quick-sub">Presensi cepat</span>
+            </div>
+            <div class="quick-pill">Mulai</div>
+          </button>
+
+          <!-- 2. Responder Guru (Role-governed) -->
+          <button type="button" class="quick-action-card card-responder" id="homeQuickResponder" aria-label="Responder Guru">
+            <div class="quick-icon-wrap icon-camera">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                <circle cx="12" cy="13" r="4"/>
+              </svg>
+            </div>
+            <div class="quick-text-wrap">
+              <span class="quick-label">Responder Guru</span>
+              <span class="quick-sub">Presensi terpadu</span>
+            </div>
+            <div class="quick-pill">Buka</div>
+          </button>
+
+          <!-- 3. Presensi Siswa -->
+          <button type="button" class="quick-action-card card-attendance" id="homeQuickAttendance" aria-label="Presensi Siswa">
+            <div class="quick-icon-wrap icon-clipboard">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/><path d="m9 15 2 2 4-4"/>
+              </svg>
+            </div>
+            <div class="quick-text-wrap">
+              <span class="quick-label">Presensi Siswa</span>
+              <span class="quick-sub">Input &amp; riwayat</span>
+            </div>
+          </button>
+
+          <!-- 4. Rekap & Cetak -->
+          <button type="button" class="quick-action-card card-journal" id="homeQuickJournal" aria-label="Rekap Presensi">
+            <div class="quick-icon-wrap icon-report">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+              </svg>
+            </div>
+            <div class="quick-text-wrap">
+              <span class="quick-label">Rekap Presensi</span>
+              <span class="quick-sub">Cetak laporan</span>
+            </div>
+          </button>
+        </div>
+      </section>
 
 
 
@@ -4035,6 +4104,16 @@ html, body {
 
 <script>
 
+function updatePageContext(viewKey, categoryLabel, pageTitle) {
+    if (typeof window.updateActiveNavAndTitle === 'function') {
+        window.updateActiveNavAndTitle(viewKey, categoryLabel, pageTitle);
+    } else {
+        const lbl = document.getElementById('topbarCategoryLabel');
+        const ttl = document.getElementById('topbarPageTitle');
+        if (lbl && categoryLabel) lbl.textContent = categoryLabel;
+        if (ttl && pageTitle) ttl.textContent = pageTitle;
+    }
+}
 
 document.addEventListener("DOMContentLoaded", function() {
 
@@ -4591,6 +4670,7 @@ function showStudentsView() {
     // highlight menu
     document.querySelectorAll('.sidebar-menu li').forEach(function(li){ li.classList.remove('active'); });
     const menu = document.getElementById('menu-students'); if (menu) menu.classList.add('active');
+    updatePageContext('students', 'MASTER DATA', 'Data Siswa');
     loadStudents();
 }
 
@@ -5769,6 +5849,7 @@ function showTeachersView() {
     document.getElementById('teachersContent').style.display = '';
     document.querySelectorAll('.sidebar-menu li').forEach(function(li){ li.classList.remove('active'); });
     const menu = document.getElementById('menu-teachers'); if (menu) menu.classList.add('active');
+    updatePageContext('teachers', 'MASTER DATA', 'Data Guru');
     loadTeachers();
 }
 
@@ -6213,6 +6294,7 @@ function showClassesView() {
     document.getElementById('classesContent').style.display = '';
     document.querySelectorAll('.sidebar-menu li').forEach(function(li){ li.classList.remove('active'); });
     const menu = document.getElementById('menu-classes'); if (menu) menu.classList.add('active');
+    updatePageContext('classes', 'MASTER DATA', 'Data Kelas');
     loadClasses();
 }
 
@@ -6833,6 +6915,7 @@ function showGradesView() {
     if (gradesContent) gradesContent.style.display = '';
     document.querySelectorAll('.sidebar-menu li').forEach(function(li){ li.classList.remove('active'); });
     const menu = document.getElementById('menu-grades'); if (menu) menu.classList.add('active');
+    updatePageContext('grades', 'AKADEMIK', 'Nilai Siswa');
 }
 
 function showReportsView() {
@@ -6841,6 +6924,7 @@ function showReportsView() {
     if (reportsContent) reportsContent.style.display = '';
     document.querySelectorAll('.sidebar-menu li').forEach(function(li){ li.classList.remove('active'); });
     const menu = document.getElementById('menu-reports'); if (menu) menu.classList.add('active');
+    updatePageContext('reports', 'LAPORAN', 'Laporan Akademik');
 }
 
 function populateGradeSelects() {
@@ -7969,6 +8053,7 @@ function showAttendanceView() {
     document.getElementById('attendanceContent').style.display = '';
     document.querySelectorAll('.sidebar-menu li').forEach(function(li){ li.classList.remove('active'); });
     const menu = document.getElementById('menu-attendance'); if (menu) menu.classList.add('active');
+    updatePageContext('attendance', 'PRESENSI SISWA', 'Presensi Siswa');
     loadStudentAttendance();
 }
 
@@ -9387,6 +9472,7 @@ function showTeacherAttendanceView() {
     document.getElementById('teacherAttendanceContent').style.display = '';
     document.querySelectorAll('.sidebar-menu li').forEach(function(li){ li.classList.remove('active'); });
     const menu = document.getElementById('menu-teacher-attendance'); if (menu) menu.classList.add('active');
+    updatePageContext('teacher-attendance', 'PRESENSI GURU', 'Presensi Guru');
     loadTeacherAttendance();
 }
 
@@ -9994,6 +10080,7 @@ function showJournalView() {
     document.querySelectorAll('.sidebar-menu li').forEach(function(li) { li.classList.remove('active'); });
     const menu = document.getElementById('menu-journal');
     if (menu) menu.classList.add('active');
+    updatePageContext('journal', 'REKAPITULASI', 'Rekap & Jurnal Presensi');
     ensureReportingLookups();
     updateReportingFilterVisibility();
 }
@@ -12612,12 +12699,15 @@ function openQrScanner() {
 
     if (!qrScannerWindow || qrScannerWindow.closed || typeof qrScannerWindow.closed === "undefined") {
         isQrScanning = false;
+        document.body.classList.remove('scanner-mode-active');
         showQrScannerError(
             "Popup Diblokir",
             "Browser memblokir jendela pemindai QR. Izinkan pop-up untuk situs ini pada pengaturan browser lalu klik Coba Lagi."
         );
         return;
     }
+
+    document.body.classList.add('scanner-mode-active');
 
     // Monitor for user closing window manually
     if (qrScannerPollTimer) {
@@ -12627,6 +12717,7 @@ function openQrScanner() {
         if (qrScannerWindow && qrScannerWindow.closed) {
             clearInterval(qrScannerPollTimer);
             qrScannerPollTimer = null;
+            document.body.classList.remove('scanner-mode-active');
             if (isQrScanning) {
                 isQrScanning = false;
                 setQrScannerViewMode("idle");
@@ -12901,6 +12992,7 @@ function closeQrScanner() {
 
 function stopQrScannerStream() {
     isQrScanning = false;
+    document.body.classList.remove('scanner-mode-active');
 
     if (qrScannerPollTimer) {
         clearInterval(qrScannerPollTimer);
@@ -13074,6 +13166,7 @@ function showResponderView() {
     });
     const menu = document.getElementById('menu-responder');
     if (menu) menu.classList.add('active');
+    updatePageContext('responder', 'SESI OPERATOR', 'Responder Guru');
 
     populateResponderTeachers();
     populateResponderClasses();
@@ -13161,6 +13254,7 @@ function showDashboardView() {
     });
     const dashMenu = document.getElementById('menu-dashboard') || document.querySelector('.sidebar-menu li');
     if (dashMenu) dashMenu.classList.add('active');
+    updatePageContext('dashboard', 'SISTEM INFORMASI', 'Dashboard');
 }
 
 
@@ -13187,6 +13281,11 @@ function onDashboardLoaded(data) {
 
     document.getElementById("userRole").textContent =
         data.user.role;
+
+    const welcomeGreeting = document.getElementById("welcomeGreetingName");
+    if (welcomeGreeting) {
+        welcomeGreeting.textContent = data.user.name || (data.user.role === 'ADMIN' ? 'Admin' : 'Guru');
+    }
 
 
     document.getElementById("totalStudents").textContent =
@@ -13318,6 +13417,26 @@ function onDashboardLoaded(data) {
         console.error('Error processing role for journal', e);
     }
 
+    // Sync Mobile Bottom Sheet & Quick Access RBAC (Feature 003)
+    try {
+        const sheetTeacherAtt = document.getElementById('sheetMenuTeacherAttendance');
+        if (sheetTeacherAtt) sheetTeacherAtt.style.display = isAdmin ? '' : 'none';
+
+        const sheetTeachers = document.getElementById('sheetMenuTeachers');
+        if (sheetTeachers) sheetTeachers.style.display = (isAdmin || isGuru) ? '' : 'none';
+
+        const sheetClasses = document.getElementById('sheetMenuClasses');
+        if (sheetClasses) sheetClasses.style.display = (isAdmin || isGuru) ? '' : 'none';
+
+        const homeQuickResp = document.getElementById('homeQuickResponder');
+        if (homeQuickResp) homeQuickResp.style.display = (isAdmin || isGuru) ? '' : 'none';
+
+        const sheetResp = document.getElementById('sheetMenuResponder');
+        if (sheetResp) sheetResp.style.display = (isAdmin || isGuru) ? '' : 'none';
+    } catch (e) {
+        console.error('Error syncing mobile RBAC', e);
+    }
+
     hideGlobalLoading();
 
 }
@@ -13336,6 +13455,7 @@ function showSettingsView(initialCategory) {
     });
     const m = document.getElementById('menu-settings');
     if (m) m.classList.add('active');
+    updatePageContext('settings', 'PENGATURAN', 'Pengaturan & Akun');
 
     // Configure role-based tab visibility
     const tabKeamanan = document.getElementById('settingsTab_keamanan');
@@ -14827,6 +14947,402 @@ window.addEventListener('beforeunload', function() {
 
 </script>
 
+<!-- ==========================================================================
+     APP-LIKE MOBILE BOTTOM NAVIGATION & MORE SHEET (FEATURE 003)
+     ========================================================================== -->
+<nav id="mobileBottomNav" class="mobile-bottom-nav" aria-label="Navigasi Aplikasi Mobile">
+  <div class="bottom-nav-inner">
+    <!-- 1. Home -->
+    <button type="button" class="bottom-nav-item active" id="btnBottomHome" data-view="dashboard" aria-label="Halaman Utama Home">
+      <div class="nav-icon-wrapper">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12L12 4l9 8"/>
+          <path d="M5 10v10h14V10"/>
+          <path d="M9 20v-6h6v6"/>
+        </svg>
+      </div>
+      <span class="nav-item-label">Home</span>
+      <span class="nav-active-dot" aria-hidden="true"></span>
+    </button>
+
+    <!-- 2. Presensi Siswa -->
+    <button type="button" class="bottom-nav-item" id="btnBottomAttendance" data-view="attendance" aria-label="Presensi Siswa">
+      <div class="nav-icon-wrapper">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="5" width="18" height="16" rx="2"/>
+          <path d="M16 3v4M8 3v4M3 10h18"/>
+          <path d="m9 15 2 2 4-4"/>
+        </svg>
+      </div>
+      <span class="nav-item-label">Presensi</span>
+      <span class="nav-active-dot" aria-hidden="true"></span>
+    </button>
+
+    <!-- 3. CENTER ACTION: SCAN QR (Elevated Hero Button) -->
+    <div class="bottom-nav-center-wrap">
+      <button type="button" class="bottom-nav-center-btn" id="btnBottomScanQr" aria-label="Scan QR Presensi Cepat">
+        <div class="scan-qr-glow" aria-hidden="true"></div>
+        <div class="scan-qr-circle">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"/>
+            <rect x="14" y="3" width="7" height="7"/>
+            <rect x="14" y="14" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/>
+            <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+          </svg>
+        </div>
+        <span class="scan-qr-label">Scan QR</span>
+      </button>
+    </div>
+
+    <!-- 4. Rekap & Cetak Laporan -->
+    <button type="button" class="bottom-nav-item" id="btnBottomJournal" data-view="journal" aria-label="Rekap dan Cetak Laporan Presensi">
+      <div class="nav-icon-wrapper">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+        </svg>
+      </div>
+      <span class="nav-item-label">Rekap</span>
+      <span class="nav-active-dot" aria-hidden="true"></span>
+    </button>
+
+    <!-- 5. Lainnya -->
+    <button type="button" class="bottom-nav-item" id="btnBottomMore" aria-label="Menu Fitur Lainnya" aria-expanded="false" aria-controls="mobileMoreSheet">
+      <div class="nav-icon-wrapper">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="1.8"/>
+          <circle cx="19" cy="12" r="1.8"/>
+          <circle cx="5" cy="12" r="1.8"/>
+        </svg>
+      </div>
+      <span class="nav-item-label">Lainnya</span>
+      <span class="nav-active-dot" aria-hidden="true"></span>
+    </button>
+  </div>
+</nav>
+
+<!-- BOTTOM SHEET MENU LAINNYA (MOBILE) -->
+<div id="mobileMoreSheet" class="mobile-more-sheet" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="moreSheetTitle">
+  <div class="more-sheet-backdrop" id="moreSheetBackdrop"></div>
+  <div class="more-sheet-container">
+    <div class="more-sheet-handle-wrap" id="moreSheetHandle">
+      <div class="more-sheet-handle"></div>
+    </div>
+    <div class="more-sheet-header">
+      <div class="more-sheet-brand">
+        <img src="/assets/logo.png" alt="Logo MA At-Taujih" class="more-sheet-logo" width="32" height="32">
+        <div>
+          <h3 id="moreSheetTitle" class="more-sheet-title">SIMATA — MA At-Taujih</h3>
+          <p class="more-sheet-sub">Menu Akademik &amp; Administrasi Madrasah</p>
+        </div>
+      </div>
+      <button type="button" class="more-sheet-close" id="moreSheetCloseBtn" aria-label="Tutup menu">
+        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="more-sheet-body">
+      <!-- Section: Akademik & Master Data -->
+      <div class="more-group-label">MASTER DATA &amp; AKADEMIK</div>
+      <div class="more-grid">
+        <button type="button" class="more-grid-item" id="sheetMenuStudents">
+          <div class="more-item-icon icon-students">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-7 7-7"/><path d="M16 8a4 4 0 0 1 0 8"/><path d="M17 14c3 .7 5 2.7 5 6"/>
+            </svg>
+          </div>
+          <span class="more-item-name">Data Siswa</span>
+        </button>
+
+        <button type="button" class="more-grid-item" id="sheetMenuTeachers">
+          <div class="more-item-icon icon-teachers">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="7" r="4"/><path d="M5 21c0-4 3-7 7-7s7 3 7 7"/>
+            </svg>
+          </div>
+          <span class="more-item-name">Data Guru</span>
+        </button>
+
+        <button type="button" class="more-grid-item" id="sheetMenuClasses">
+          <div class="more-item-icon icon-classes">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 21V5l9-3 9 3v16"/><path d="M7 21v-6h10v6"/><path d="M8 9h2"/><path d="M14 9h2"/>
+            </svg>
+          </div>
+          <span class="more-item-name">Data Kelas</span>
+        </button>
+
+        <button type="button" class="more-grid-item" id="sheetMenuGrades">
+          <div class="more-item-icon icon-grades">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </svg>
+          </div>
+          <span class="more-item-name">Nilai</span>
+        </button>
+      </div>
+
+      <!-- Section: Presensi Lanjutan (Admin & Guru) -->
+      <div class="more-group-label" id="sheetLabelPresensiLanjutan">PRESENSI &amp; OPERASIONAL</div>
+      <div class="more-grid">
+        <button type="button" class="more-grid-item" id="sheetMenuResponder">
+          <div class="more-item-icon icon-responder">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+            </svg>
+          </div>
+          <span class="more-item-name">Responder Guru</span>
+        </button>
+
+        <button type="button" class="more-grid-item" id="sheetMenuTeacherAttendance" style="display:none;">
+          <div class="more-item-icon icon-teacher-att">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/>
+            </svg>
+          </div>
+          <span class="more-item-name">Presensi Guru</span>
+        </button>
+
+        <button type="button" class="more-grid-item" id="sheetMenuReports">
+          <div class="more-item-icon icon-reports">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+            </svg>
+          </div>
+          <span class="more-item-name">Laporan</span>
+        </button>
+      </div>
+
+      <!-- Section: Pengaturan & Sesi -->
+      <div class="more-group-label">PENGATURAN &amp; AKUN</div>
+      <div class="more-grid">
+        <button type="button" class="more-grid-item" id="sheetMenuSettings">
+          <div class="more-item-icon icon-settings">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+          </div>
+          <span class="more-item-name">Pengaturan</span>
+        </button>
+
+        <button type="button" class="more-grid-item item-logout" id="sheetMenuLogout">
+          <div class="more-item-icon icon-logout">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+          </div>
+          <span class="more-item-name">Keluar</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==========================================================================
+// FEATURE 003: MOBILE NAVIGATION, QUICK ACCESS & DYNAMIC HEADER CONTROLLER
+// ==========================================================================
+(function initMobileUiController() {
+  window.updateActiveNavAndTitle = function(viewKey, categoryLabel, pageTitle) {
+    const lbl = document.getElementById('topbarCategoryLabel');
+    const ttl = document.getElementById('topbarPageTitle');
+    if (lbl && categoryLabel) lbl.textContent = categoryLabel;
+    if (ttl && pageTitle) ttl.textContent = pageTitle;
+
+    // Update bottom nav active state
+    document.querySelectorAll('.bottom-nav-item').forEach(function(btn) {
+      btn.classList.remove('active');
+    });
+
+    if (viewKey === 'dashboard') {
+      const b = document.getElementById('btnBottomHome');
+      if (b) b.classList.add('active');
+    } else if (viewKey === 'attendance') {
+      const b = document.getElementById('btnBottomAttendance');
+      if (b) b.classList.add('active');
+    } else if (viewKey === 'journal') {
+      const b = document.getElementById('btnBottomJournal');
+      if (b) b.classList.add('active');
+    } else if (['students', 'teachers', 'classes', 'settings', 'grades', 'reports', 'teacher-attendance', 'responder'].includes(viewKey)) {
+      const b = document.getElementById('btnBottomMore');
+      if (b) b.classList.add('active');
+    }
+
+    // Close mobile drawer and more sheet
+    closeMobileDrawer();
+    closeMobileMoreSheet();
+
+    // Scroll smoothly to top
+    try { window.scrollTo({ top: 0, behavior: 'instant' }); } catch (_) {}
+  };
+
+  function closeMobileDrawer() {
+    const sidebar = document.getElementById('mainSidebar');
+    const backdrop = document.getElementById('sidebarBackdrop');
+    if (sidebar) sidebar.classList.remove('open');
+    if (backdrop) backdrop.classList.remove('open');
+    const hamburger = document.getElementById('hamburgerBtn');
+    if (hamburger) hamburger.setAttribute('aria-expanded', 'false');
+  }
+
+  function openMobileMoreSheet() {
+    const sheet = document.getElementById('mobileMoreSheet');
+    if (sheet) {
+      sheet.classList.add('open');
+      sheet.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      const moreBtn = document.getElementById('btnBottomMore');
+      if (moreBtn) moreBtn.setAttribute('aria-expanded', 'true');
+    }
+  }
+
+  function closeMobileMoreSheet() {
+    const sheet = document.getElementById('mobileMoreSheet');
+    if (sheet) {
+      sheet.classList.remove('open');
+      sheet.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+      const moreBtn = document.getElementById('btnBottomMore');
+      if (moreBtn) moreBtn.setAttribute('aria-expanded', 'false');
+    }
+  }
+
+  window.triggerMobileQuickScan = function() {
+    closeMobileMoreSheet();
+    closeMobileDrawer();
+    if (typeof currentResponderSession !== 'undefined' && currentResponderSession && currentResponderSession.sessionId && currentResponderSession.status === 'ACTIVE') {
+      showResponderView();
+      if (typeof openQrScanner === 'function') openQrScanner();
+    } else {
+      if (typeof showToast === 'function') {
+        showToast("info", "Menyiapkan Presensi", "Memulai sesi responder untuk pemindaian QR...");
+      }
+      if (typeof startOrOpenResponder === 'function') {
+        startOrOpenResponder();
+      } else {
+        showResponderView();
+      }
+    }
+  };
+
+  // Populate formatted Indonesian date on Home mobile
+  try {
+    const dtEl = document.getElementById('mobileCurrentDate');
+    if (dtEl) {
+      const now = new Date();
+      const options = { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' };
+      dtEl.textContent = now.toLocaleDateString('id-ID', options);
+    }
+  } catch (_) {}
+
+  // Wire Bottom Nav buttons
+  const bHome = document.getElementById('btnBottomHome');
+  if (bHome) bHome.addEventListener('click', function() { showDashboardView(); });
+
+  const bAtt = document.getElementById('btnBottomAttendance');
+  if (bAtt) bAtt.addEventListener('click', function() { showAttendanceView(); });
+
+  const bScan = document.getElementById('btnBottomScanQr');
+  if (bScan) bScan.addEventListener('click', function() { triggerMobileQuickScan(); });
+
+  const bJournal = document.getElementById('btnBottomJournal');
+  if (bJournal) bJournal.addEventListener('click', function() { showJournalView(); });
+
+  const bMore = document.getElementById('btnBottomMore');
+  if (bMore) bMore.addEventListener('click', function() {
+    const sheet = document.getElementById('mobileMoreSheet');
+    if (sheet && sheet.classList.contains('open')) {
+      closeMobileMoreSheet();
+    } else {
+      openMobileMoreSheet();
+    }
+  });
+
+  // Wire Sheet Backdrop & Close button
+  const sBackdrop = document.getElementById('moreSheetBackdrop');
+  if (sBackdrop) sBackdrop.addEventListener('click', closeMobileMoreSheet);
+
+  const sClose = document.getElementById('moreSheetCloseBtn');
+  if (sClose) sClose.addEventListener('click', closeMobileMoreSheet);
+
+  // Wire Home Quick Access buttons
+  const hScan = document.getElementById('homeQuickScanQr');
+  if (hScan) hScan.addEventListener('click', function() { triggerMobileQuickScan(); });
+
+  const hResp = document.getElementById('homeQuickResponder');
+  if (hResp) hResp.addEventListener('click', function() {
+    if (typeof startOrOpenResponder === 'function') startOrOpenResponder();
+    else showResponderView();
+  });
+
+  const hAtt = document.getElementById('homeQuickAttendance');
+  if (hAtt) hAtt.addEventListener('click', function() { showAttendanceView(); });
+
+  const hJournal = document.getElementById('homeQuickJournal');
+  if (hJournal) hJournal.addEventListener('click', function() { showJournalView(); });
+
+  // Wire Sheet Items
+  const smStudents = document.getElementById('sheetMenuStudents');
+  if (smStudents) smStudents.addEventListener('click', function() { showStudentsView(); });
+
+  const smTeachers = document.getElementById('sheetMenuTeachers');
+  if (smTeachers) smTeachers.addEventListener('click', function() { showTeachersView(); });
+
+  const smClasses = document.getElementById('sheetMenuClasses');
+  if (smClasses) smClasses.addEventListener('click', function() { showClassesView(); });
+
+  const smGrades = document.getElementById('sheetMenuGrades');
+  if (smGrades) smGrades.addEventListener('click', function() { showGradesView(); });
+
+  const smResponder = document.getElementById('sheetMenuResponder');
+  if (smResponder) smResponder.addEventListener('click', function() {
+    if (typeof startOrOpenResponder === 'function') startOrOpenResponder();
+    else showResponderView();
+  });
+
+  const smTeacherAtt = document.getElementById('sheetMenuTeacherAttendance');
+  if (smTeacherAtt) smTeacherAtt.addEventListener('click', function() { showTeacherAttendanceView(); });
+
+  const smReports = document.getElementById('sheetMenuReports');
+  if (smReports) smReports.addEventListener('click', function() { showReportsView(); });
+
+  const smSettings = document.getElementById('sheetMenuSettings');
+  if (smSettings) smSettings.addEventListener('click', function() { showSettingsView(); });
+
+  const smLogout = document.getElementById('sheetMenuLogout');
+  if (smLogout) smLogout.addEventListener('click', function() {
+    const lgBtn = document.getElementById('logout-button');
+    if (lgBtn) lgBtn.click();
+    else {
+      sessionStorage.removeItem('SIMATA_TOKEN');
+      window.location.replace('/');
+    }
+  });
+
+  // Touch Drag-to-dismiss for Bottom Sheet
+  let touchStartY = 0;
+  const sheetHandle = document.getElementById('moreSheetHandle');
+  if (sheetHandle) {
+    sheetHandle.addEventListener('touchstart', function(e) {
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    sheetHandle.addEventListener('touchmove', function(e) {
+      const touchY = e.touches[0].clientY;
+      if (touchY - touchStartY > 60) {
+        closeMobileMoreSheet();
+      }
+    }, { passive: true });
+  }
+})();
+</script>
 
 </body>
 
