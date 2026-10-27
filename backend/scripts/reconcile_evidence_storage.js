@@ -51,6 +51,7 @@ async function reconcileEvidenceStorage(options = false) {
   };
 
   for (const filename of filesOnDisk) {
+    if (filename.startsWith('.')) continue;
     const filePath = path.join(storageDir, filename);
     const stats = fs.statSync(filePath);
 
