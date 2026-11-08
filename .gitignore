@@ -23,6 +23,8 @@ backend/uploads/evidences/*
 !backend/uploads/evidences/.gitkeep
 backend/uploads/profile_photos/*
 !backend/uploads/profile_photos/.gitkeep
+backend/uploads/student_documents/*
+!backend/uploads/student_documents/.gitkeep
 
 # Sensitive Production Data
 backend/data/production_seed_data.json

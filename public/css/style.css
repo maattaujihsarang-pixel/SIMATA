@@ -4360,3 +4360,270 @@ select.attendance-filter-control {
   }
 }
 
+
+/* ==========================================================================
+   BUG 36: MASTER DATA FILTER GRIDS STANDARDIZATION (SISWA & GURU)
+   ========================================================================== */
+@media (min-width: 1025px) {
+  .attendance-filter-grid.master-student-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .attendance-filter-grid.master-student-grid .attendance-filter-actions {
+    grid-column: span 1;
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+  }
+  .attendance-filter-grid.master-teacher-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .attendance-filter-grid.master-teacher-grid .attendance-filter-actions {
+    grid-column: span 1;
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .attendance-filter-grid.master-student-grid,
+  .attendance-filter-grid.master-teacher-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .attendance-filter-grid.master-student-grid .attendance-filter-actions,
+  .attendance-filter-grid.master-teacher-grid .attendance-filter-actions {
+    grid-column: span 2;
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+  }
+}
+
+/* ============================================================
+   FEATURE 004: KARTU PELAJAR SISWA (STUDENT DOCUMENTS)
+   ============================================================ */
+.student-document-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.student-document-card:hover {
+  border-color: #cbd5e1;
+}
+
+.student-document-card.has-doc {
+  background: #ffffff;
+  border-color: #bbf7d0;
+  box-shadow: 0 1px 3px rgba(22, 101, 52, 0.05);
+}
+
+.document-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.document-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.document-icon-badge {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: #e0f2fe;
+  color: #0284c7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.document-type-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.document-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+.document-status-badge.badge-available {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.document-status-badge.badge-unavailable {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.document-meta-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 12px;
+  color: #475569;
+  background: #f8fafc;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #f1f5f9;
+}
+
+.document-meta-filename {
+  font-weight: 600;
+  color: #1e293b;
+  word-break: break-all;
+}
+
+.document-meta-sub {
+  font-size: 11.5px;
+  color: #64748b;
+}
+
+.document-empty-notice {
+  font-size: 12px;
+  color: #94a3b8;
+  font-style: italic;
+  padding: 4px 0;
+}
+
+.document-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.student-doc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: none;
+  outline: none;
+}
+
+.student-doc-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.btn-doc-preview {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.btn-doc-preview:hover:not(:disabled) {
+  background: #1d4ed8;
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+}
+
+.btn-doc-download {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+}
+
+.btn-doc-download:hover:not(:disabled) {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.btn-doc-upload {
+  background: #059669;
+  color: #ffffff;
+}
+
+.btn-doc-upload:hover:not(:disabled) {
+  background: #047857;
+  box-shadow: 0 2px 4px rgba(5, 150, 105, 0.2);
+}
+
+.btn-doc-delete {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+}
+
+.btn-doc-delete:hover:not(:disabled) {
+  background: #fecaca;
+  color: #991b1b;
+}
+
+.student-doc-pending-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: #eff6ff;
+  border: 1px dashed #93c5fd;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #1e40af;
+}
+
+.student-doc-hint {
+  font-size: 11.5px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+/* Document Preview Modal */
+.document-preview-card {
+  position: relative;
+  background: #ffffff;
+  border-radius: 16px;
+  width: 95%;
+  max-width: 860px;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.25);
+  box-sizing: border-box;
+  overflow: hidden;
+  margin: auto;
+}
+
+.document-preview-viewport {
+  background: #0f172a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 380px;
+  max-height: 72vh;
+  padding: 12px;
+  box-sizing: border-box;
+  overflow: auto;
+}

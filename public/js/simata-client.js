@@ -1190,6 +1190,75 @@
         method: 'DELETE'
       });
       return { success: true, message: res.message };
+    },
+
+    // 43. Student Documents (FEATURE 004 - Kartu Pelajar)
+    getStudentKartuPelajarMeta: async function (studentId) {
+      try {
+        const res = await apiFetch(`/students/${encodeURIComponent(studentId)}/documents/kartu-pelajar/meta`);
+        return { success: true, data: res.data };
+      } catch (err) {
+        return { success: false, message: err.message, data: { available: false } };
+      }
+    },
+
+    getStudentKartuPelajarBlob: async function (studentId) {
+      const token = getStoredToken();
+      const headers = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await window.fetch(`${API_BASE}/students/${encodeURIComponent(studentId)}/documents/kartu-pelajar`, {
+        method: 'GET',
+        headers
+      });
+      if (res.status === 404) return null;
+      if (!res.ok) throw new Error(`Gagal memuat dokumen kartu pelajar (HTTP ${res.status})`);
+      const contentType = res.headers.get('content-type') || 'application/pdf';
+      const blob = await res.blob();
+      return { blob, contentType };
+    },
+
+    uploadStudentKartuPelajar: async function (studentId, fileOrBlob) {
+      const formData = new FormData();
+      formData.append('document', fileOrBlob);
+      const res = await apiFetch(`/students/${encodeURIComponent(studentId)}/documents/kartu-pelajar`, {
+        method: 'POST',
+        body: formData
+      });
+      return { success: true, message: res.message, data: res.data };
+    },
+
+    deleteStudentKartuPelajar: async function (studentId) {
+      const res = await apiFetch(`/students/${encodeURIComponent(studentId)}/documents/kartu-pelajar`, {
+        method: 'DELETE'
+      });
+      return { success: true, message: res.message };
+    },
+
+    downloadStudentKartuPelajar: async function (studentId, studentName) {
+      const token = getStoredToken();
+      const headers = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await window.fetch(`${API_BASE}/students/${encodeURIComponent(studentId)}/documents/kartu-pelajar?download=1`, {
+        method: 'GET',
+        headers
+      });
+      if (!res.ok) throw new Error(`Gagal mengunduh Kartu Pelajar (HTTP ${res.status})`);
+      const disposition = res.headers.get('content-disposition') || '';
+      let filename = `Kartu_Pelajar_${studentId}.pdf`;
+      const match = disposition.match(/filename="?([^";]+)"?/);
+      if (match && match[1]) filename = match[1];
+      const blob = await res.blob();
+      const objUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(objUrl);
+      }, 300);
+      return { success: true, filename };
     }
   };
 

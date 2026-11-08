@@ -15,6 +15,7 @@ const env = {
   STORAGE_PROVIDER: process.env.STORAGE_PROVIDER || 'local',
   STORAGE_PATH: path.resolve(__dirname, '../../', process.env.STORAGE_PATH || './uploads/evidences'),
   PROFILE_PHOTO_STORAGE_PATH: path.resolve(__dirname, '../../', process.env.PROFILE_PHOTO_STORAGE_PATH || './uploads/profile_photos'),
+  STUDENT_DOCUMENT_STORAGE_PATH: path.resolve(__dirname, '../../', process.env.STUDENT_DOCUMENT_STORAGE_PATH || './uploads/student_documents'),
   INITIAL_ADMIN_PASSWORD: process.env.INITIAL_ADMIN_PASSWORD || 'Admin@SIMATA2026',
 };
 

@@ -2849,42 +2849,124 @@ html, body {
               <h2>Daftar Siswa</h2>
             </div>
             <div class="section-actions">
-              <input id="studentSearch" class="input-box" placeholder="Cari berdasarkan nama, nis, nisn, atau studentId" />
-              <button id="addStudentButton" class="login-button">Tambah Siswa</button>
-              <button id="batchQrButton" class="login-button">Cetak QR Kelas</button>
+              <button id="addStudentButton" class="login-button" style="margin-top:0;">Tambah Siswa</button>
+              <button id="batchQrButton" class="login-button" style="margin-top:0;">Cetak QR Kelas</button>
             </div>
           </div>
 
-          <!-- FILTER & SUMMARY BAR -->
-          <div class="student-filter-bar" style="margin-top:16px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;background:#fff;padding:12px 16px;border-radius:12px;border:1px solid #e2e8f0;">
-            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-              <label for="studentClassFilter" style="font-size:13px;font-weight:600;color:#475569;white-space:nowrap;">Filter Kelas:</label>
-              <select id="studentClassFilter" class="input-box" style="height:36px;padding:0 12px;font-size:13px;min-width:150px;">
-                <option value="">Semua Kelas</option>
-              </select>
-              <span id="studentFilterCountText" style="font-size:13px;font-weight:600;color:#166534;background:#f0fdf4;padding:6px 12px;border-radius:20px;border:1px solid #bbf7d0;">Total: 0 siswa</span>
+          <!-- MASTER STUDENT FILTER CARD -->
+          <div class="attendance-filter-card">
+            <div class="attendance-filter-grid master-student-grid">
+              <div class="attendance-filter-field">
+                <label for="masterStudentClassFilter" class="attendance-filter-label">Kelas</label>
+                <select id="masterStudentClassFilter" class="input-box attendance-filter-control">
+                  <option value="">(Semua Kelas)</option>
+                </select>
+              </div>
+              <div class="attendance-filter-field">
+                <label for="masterStudentStatusFilter" class="attendance-filter-label">Status Siswa</label>
+                <select id="masterStudentStatusFilter" class="input-box attendance-filter-control">
+                  <option value="">(Semua Status)</option>
+                  <option value="Active">Aktif</option>
+                  <option value="Inactive">Tidak Aktif</option>
+                </select>
+              </div>
+              <div class="attendance-filter-actions">
+                <button id="filterMasterStudentButton" type="button" class="btn-filter-apply">Terapkan</button>
+                <button id="resetMasterStudentButton" type="button" class="btn-filter-reset">Reset</button>
+              </div>
             </div>
-
-            <!-- Dynamic class summary chips -->
-            <div id="studentClassSummaryChips" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"></div>
           </div>
 
-          <div class="table-responsive" style="margin-top:16px;overflow-x:auto;background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.05);border:1px solid #e2e8f0;">
-            <table id="studentsTable" class="simata-table" style="width:100%;border-collapse:collapse;min-width:760px;">
-              <thead>
-                <tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">
-                  <th style="padding:12px 8px;text-align:center;width:44px;font-size:12.5px;font-weight:700;color:#475569;">No</th>
-                  <th style="padding:12px 10px;text-align:center;width:110px;font-size:12.5px;font-weight:700;color:#475569;">NIS</th>
-                  <th style="padding:12px 10px;text-align:center;width:120px;font-size:12.5px;font-weight:700;color:#475569;">NISN</th>
-                  <th style="padding:12px 14px;text-align:left;font-size:12.5px;font-weight:700;color:#475569;">Nama</th>
-                  <th style="padding:12px 8px;text-align:center;width:100px;font-size:12.5px;font-weight:700;color:#475569;">Jenis Kelamin</th>
-                  <th style="padding:12px 10px;text-align:center;width:100px;font-size:12.5px;font-weight:700;color:#475569;">Kelas</th>
-                  <th style="padding:12px 10px;text-align:center;width:95px;font-size:12.5px;font-weight:700;color:#475569;">Status</th>
-                  <th style="padding:12px 12px;text-align:center;width:175px;font-size:12.5px;font-weight:700;color:#475569;">Aksi</th>
-                </tr>
-              </thead>
+          <!-- DYNAMIC CLASS SUMMARY CHIPS (PRESERVED) -->
+          <div id="masterStudentClassSummaryChipsBar" class="student-filter-bar" style="margin-top:-6px;margin-bottom:14px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;background:#f8fafc;padding:10px 14px;border-radius:10px;border:1px solid #e2e8f0;">
+            <span style="font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.03em;">Ringkasan Kelas:</span>
+            <div id="studentClassSummaryChips" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:1 1 auto;"></div>
+            <span id="studentFilterCountText" style="font-size:12px;font-weight:600;color:#166534;background:#f0fdf4;padding:4px 10px;border-radius:16px;border:1px solid #bbf7d0;">Total: 0 siswa</span>
+          </div>
+
+          <!-- ACTIVE FILTER INDICATOR -->
+          <div class="attendance-active-filters-bar" id="masterStudentActiveFiltersBar" style="display:none;">
+            <span class="active-filters-label">Filter aktif:</span>
+            <div class="active-filter-chips" id="masterStudentActiveFilterChips"></div>
+            <button type="button" class="btn-clear-all-filters" id="masterStudentClearAllFiltersBtn" onclick="resetAllMasterStudentFilters()">Reset Filter</button>
+          </div>
+
+          <!-- TABLE CONTROLS TOOLBAR -->
+          <div class="attendance-table-toolbar">
+            <div class="table-toolbar-left">
+              <div class="entries-select-group">
+                <label for="masterStudentEntriesSelect">Tampilkan:</label>
+                <select id="masterStudentEntriesSelect" class="table-entries-select">
+                  <option value="10" selected>10</option>
+                  <option value="20">20</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                  <option value="all">Semua</option>
+                </select>
+              </div>
+            </div>
+            <div class="table-toolbar-right">
+              <div class="table-search-group">
+                <svg class="table-search-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="masterStudentSearchInput" class="table-search-input" placeholder="Cari siswa (nama, NIS, NISN)..." autocomplete="off" />
+                <button type="button" id="masterStudentSearchClearBtn" class="table-search-clear" style="display:none;" title="Hapus pencarian">&times;</button>
+              </div>
+
+              <!-- Column Visibility -->
+              <div class="table-dropdown-wrapper" id="masterStudentColVisDropdownWrapper">
+                <button type="button" class="btn-table-tool" id="masterStudentColVisBtn" title="Atur kolom">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+                  <span>Kolom</span>
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="table-dropdown-menu col-vis-menu" id="masterStudentColVisMenu" style="display:none;">
+                  <div class="dropdown-menu-header">Tampilkan Kolom</div>
+                  <div class="col-vis-options" id="masterStudentColVisOptions"></div>
+                </div>
+              </div>
+
+              <!-- Export Dropdown -->
+              <div class="table-dropdown-wrapper" id="masterStudentExportDropdownWrapper">
+                <button type="button" class="btn-table-tool" id="masterStudentExportBtn" title="Export data">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  <span>Export</span>
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="table-dropdown-menu export-menu" id="masterStudentExportMenu" style="display:none;">
+                  <button type="button" class="dropdown-menu-item" id="masterStudentExportCsvBtn">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <span>Export CSV (.csv)</span>
+                  </button>
+                  <button type="button" class="dropdown-menu-item" id="masterStudentExportExcelBtn">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <span>Export Excel (CSV)</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Print Button -->
+              <button type="button" class="btn-table-tool" id="printMasterStudentButton" title="Cetak Data Siswa">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                <span>Cetak</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- TABLE WRAPPER WITH STICKY HEADER -->
+          <div class="table-responsive attendance-table-wrapper">
+            <table id="studentsTable" class="simata-table" style="width:100%;border-collapse:collapse;min-width:860px;">
+              <thead id="studentsThead"></thead>
               <tbody id="studentsTbody"></tbody>
             </table>
+          </div>
+
+          <!-- TABLE FOOTER (COUNTER & PAGINATION) -->
+          <div class="attendance-table-footer">
+            <div class="table-footer-counter" id="masterStudentCounter">
+              Menampilkan 0–0 dari 0 data
+            </div>
+            <div class="table-footer-pagination" id="masterStudentPagination"></div>
           </div>
 
         </section>
@@ -2999,12 +3081,138 @@ html, body {
                 </div>
               </div>
 
+              <!-- Section 4: DOKUMEN (FEATURE 004 - Kartu Pelajar) -->
+              <div class="student-form-section" id="student_documents_section">
+                <div class="student-section-title">
+                  <span>Dokumen</span>
+                </div>
+                
+                <div class="student-document-card" id="student_card_doc_card">
+                  <!-- Header row: Title + Badge -->
+                  <div class="document-header-row">
+                    <div class="document-title-wrap">
+                      <div class="document-icon-badge">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                          <line x1="2" y1="10" x2="22" y2="10"></line>
+                        </svg>
+                      </div>
+                      <div>
+                        <h4 class="document-type-title">Kartu Pelajar</h4>
+                      </div>
+                    </div>
+                    <span id="student_card_status_badge" class="document-status-badge badge-unavailable">
+                      <span id="student_card_status_dot" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#94a3b8;"></span>
+                      <span id="student_card_status_text">Belum Tersedia</span>
+                    </span>
+                  </div>
+
+                  <!-- Metadata info box (visible when card exists) -->
+                  <div id="student_card_meta_box" class="document-meta-info" style="display:none;">
+                    <div class="document-meta-filename" id="student_card_filename">-</div>
+                    <div class="document-meta-sub" id="student_card_filesize">-</div>
+                  </div>
+
+                  <!-- Empty notice (visible when card not available) -->
+                  <div id="student_card_empty_notice" class="document-empty-notice">
+                    Dokumen kartu pelajar belum diunggah.
+                  </div>
+
+                  <!-- Pending file box (when a new file is chosen in Edit/Create mode) -->
+                  <div id="student_card_pending_box" class="student-doc-pending-box" style="display:none;">
+                    <div style="display:flex;align-items:center;gap:6px;overflow:hidden;">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                      <span style="font-weight:600;">File Baru:</span>
+                      <span id="student_card_pending_name" style="text-overflow:ellipsis;overflow:hidden;white-space:nowrap;"></span>
+                      <span id="student_card_pending_size" style="opacity:0.85;flex-shrink:0;"></span>
+                    </div>
+                    <button type="button" onclick="cancelPendingStudentCard()" style="background:none;border:none;color:#ef4444;font-size:12px;font-weight:700;cursor:pointer;padding:2px 6px;" title="Batalkan pilihan file">&times; Batal</button>
+                  </div>
+
+                  <!-- Action Buttons Row for DETAIL Mode (Read-Only) -->
+                  <div id="student_card_detail_actions" class="document-actions-row" style="display:none;">
+                    <button type="button" id="student_card_preview_btn" class="student-doc-btn btn-doc-preview" onclick="previewCurrentStudentKartuPelajar()">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                      <span>Pratinjau</span>
+                    </button>
+                    <button type="button" id="student_card_download_btn" class="student-doc-btn btn-doc-download" onclick="downloadCurrentStudentKartuPelajar()">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                      <span>Unduh</span>
+                    </button>
+                  </div>
+
+                  <!-- Action Controls Row for EDIT / CREATE Mode -->
+                  <div id="student_card_edit_actions" class="document-actions-row" style="display:none;">
+                    <input type="file" id="student_card_file_input" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" style="display:none;" onchange="handleStudentCardFileSelect(this)" />
+                    <button type="button" id="student_card_upload_trigger_btn" class="student-doc-btn btn-doc-upload" onclick="document.getElementById('student_card_file_input').click()">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                      <span id="student_card_upload_btn_text">Unggah Kartu Pelajar</span>
+                    </button>
+                    <button type="button" id="student_card_delete_btn" class="student-doc-btn btn-doc-delete" style="display:none;" onclick="handleDeleteStudentKartuPelajar()">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                      <span>Hapus Kartu</span>
+                    </button>
+                    <!-- Preview and download are also available in edit mode for saved doc -->
+                    <button type="button" id="student_card_edit_preview_btn" class="student-doc-btn btn-doc-preview" style="display:none;" onclick="previewCurrentStudentKartuPelajar()">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                      <span>Pratinjau</span>
+                    </button>
+                    <button type="button" id="student_card_edit_download_btn" class="student-doc-btn btn-doc-download" style="display:none;" onclick="downloadCurrentStudentKartuPelajar()">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                      <span>Unduh</span>
+                    </button>
+                  </div>
+                  
+                  <div class="student-doc-hint" id="student_card_format_hint">
+                    Format yang didukung: JPG, JPEG, PNG, PDF (Maks. 5 MB).
+                  </div>
+                </div>
+              </div>
+
             </div>
 
             <!-- Modal Footer -->
             <div class="student-modal-footer">
               <button type="button" id="studentCancelBtn" class="login-button student-btn-cancel">Batal</button>
               <button type="button" id="studentSaveBtn" class="login-button student-btn-save">Simpan</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- DOCUMENT PREVIEW MODAL (FEATURE 004) -->
+        <div id="documentPreviewModal" class="student-modal-backdrop" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.65);backdrop-filter:blur(2px);align-items:center;justify-content:center;z-index:10005;padding:16px;box-sizing:border-box;">
+          <div class="document-preview-card">
+            <!-- Modal Header -->
+            <div class="student-modal-header" style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #e2e8f0;background:#ffffff;flex-shrink:0;">
+              <div>
+                <h3 id="docPreviewTitle" style="font-size:16px;font-weight:700;color:#0f172a;margin:0;">Pratinjau Dokumen</h3>
+                <div id="docPreviewSubtitle" style="font-size:12px;color:#64748b;margin-top:2px;"></div>
+              </div>
+              <button type="button" onclick="closeDocumentPreviewModal()" class="student-modal-close-btn" aria-label="Tutup">&times;</button>
+            </div>
+
+            <!-- Modal Viewport -->
+            <div id="docPreviewViewport" class="document-preview-viewport">
+              <div id="docPreviewLoading" style="display:none;padding:48px 0;text-align:center;color:#94a3b8;">
+                <div class="table-loading-spinner" style="margin:0 auto 12px auto;"></div>
+                <span>Memuat pratinjau dokumen...</span>
+              </div>
+              <img id="docPreviewImg" src="" alt="Pratinjau Dokumen" style="display:none;max-width:100%;max-height:68vh;object-fit:contain;margin:auto;" />
+              <iframe id="docPreviewIframe" src="" style="display:none;width:100%;height:68vh;border:none;border-radius:6px;background:#fff;" title="Pratinjau Dokumen"></iframe>
+              <div id="docPreviewError" style="display:none;padding:48px 24px;text-align:center;color:#fca5a5;">
+                <p style="font-size:14px;font-weight:600;margin-bottom:8px;">Gagal menampilkan pratinjau dokumen.</p>
+                <p style="font-size:12px;color:#cbd5e1;margin-bottom:16px;">Browser Anda mungkin tidak mendukung pratinjau file ini secara langsung.</p>
+                <button type="button" class="login-button" onclick="downloadCurrentStudentKartuPelajar()" style="height:36px;padding:0 16px;background:#2563eb;font-size:12.5px;">Unduh Berkas Saja</button>
+              </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="student-modal-footer" style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-top:1px solid #e2e8f0;background:#ffffff;flex-shrink:0;">
+              <button type="button" id="docPreviewDownloadBtn" onclick="downloadCurrentStudentKartuPelajar()" class="student-doc-btn btn-doc-download" style="height:38px;padding:0 16px;font-size:13px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                <span>Unduh Dokumen</span>
+              </button>
+              <button type="button" onclick="closeDocumentPreviewModal()" class="login-button student-btn-cancel" style="height:38px;padding:0 16px;">Tutup</button>
             </div>
           </div>
         </div>
@@ -3103,27 +3311,122 @@ html, body {
               <h2>Daftar Guru</h2>
             </div>
             <div class="section-actions">
-              <input id="teacherSearch" class="input-box" placeholder="Cari nama, NIK, jabatan, mapel, NUPTK..." style="min-width:260px;" />
-              <button id="addTeacherButton" class="login-button">Tambah Guru</button>
+              <button id="addTeacherButton" class="login-button" style="margin-top:0;">Tambah Guru</button>
             </div>
           </div>
 
-          <div class="table-responsive" style="margin-top:16px;overflow-x:auto;background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.05);border:1px solid #e2e8f0;">
+          <!-- MASTER TEACHER FILTER CARD -->
+          <div class="attendance-filter-card">
+            <div class="attendance-filter-grid master-teacher-grid">
+              <div class="attendance-filter-field">
+                <label for="masterTeacherPositionFilter" class="attendance-filter-label">Jabatan</label>
+                <select id="masterTeacherPositionFilter" class="input-box attendance-filter-control">
+                  <option value="">(Semua Jabatan)</option>
+                </select>
+              </div>
+              <div class="attendance-filter-field">
+                <label for="masterTeacherSubjectFilter" class="attendance-filter-label">Mata Pelajaran</label>
+                <select id="masterTeacherSubjectFilter" class="input-box attendance-filter-control">
+                  <option value="">(Semua Mapel)</option>
+                </select>
+              </div>
+              <div class="attendance-filter-field">
+                <label for="masterTeacherStatusFilter" class="attendance-filter-label">Status Guru</label>
+                <select id="masterTeacherStatusFilter" class="input-box attendance-filter-control">
+                  <option value="">(Semua Status)</option>
+                  <option value="Active">Aktif</option>
+                  <option value="Inactive">Tidak Aktif</option>
+                </select>
+              </div>
+              <div class="attendance-filter-actions">
+                <button id="filterMasterTeacherButton" type="button" class="btn-filter-apply">Terapkan</button>
+                <button id="resetMasterTeacherButton" type="button" class="btn-filter-reset">Reset</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ACTIVE FILTER INDICATOR -->
+          <div class="attendance-active-filters-bar" id="masterTeacherActiveFiltersBar" style="display:none;">
+            <span class="active-filters-label">Filter aktif:</span>
+            <div class="active-filter-chips" id="masterTeacherActiveFilterChips"></div>
+            <button type="button" class="btn-clear-all-filters" id="masterTeacherClearAllFiltersBtn" onclick="resetAllMasterTeacherFilters()">Reset Filter</button>
+          </div>
+
+          <!-- TABLE CONTROLS TOOLBAR -->
+          <div class="attendance-table-toolbar">
+            <div class="table-toolbar-left">
+              <div class="entries-select-group">
+                <label for="masterTeacherEntriesSelect">Tampilkan:</label>
+                <select id="masterTeacherEntriesSelect" class="table-entries-select">
+                  <option value="10" selected>10</option>
+                  <option value="20">20</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                  <option value="all">Semua</option>
+                </select>
+              </div>
+            </div>
+            <div class="table-toolbar-right">
+              <div class="table-search-group">
+                <svg class="table-search-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="masterTeacherSearchInput" class="table-search-input" placeholder="Cari guru (nama, NIK, NIP, mapel)..." autocomplete="off" />
+                <button type="button" id="masterTeacherSearchClearBtn" class="table-search-clear" style="display:none;" title="Hapus pencarian">&times;</button>
+              </div>
+
+              <!-- Column Visibility -->
+              <div class="table-dropdown-wrapper" id="masterTeacherColVisDropdownWrapper">
+                <button type="button" class="btn-table-tool" id="masterTeacherColVisBtn" title="Atur kolom">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+                  <span>Kolom</span>
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="table-dropdown-menu col-vis-menu" id="masterTeacherColVisMenu" style="display:none;">
+                  <div class="dropdown-menu-header">Tampilkan Kolom</div>
+                  <div class="col-vis-options" id="masterTeacherColVisOptions"></div>
+                </div>
+              </div>
+
+              <!-- Export Dropdown -->
+              <div class="table-dropdown-wrapper" id="masterTeacherExportDropdownWrapper">
+                <button type="button" class="btn-table-tool" id="masterTeacherExportBtn" title="Export data">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  <span>Export</span>
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="table-dropdown-menu export-menu" id="masterTeacherExportMenu" style="display:none;">
+                  <button type="button" class="dropdown-menu-item" id="masterTeacherExportCsvBtn">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <span>Export CSV (.csv)</span>
+                  </button>
+                  <button type="button" class="dropdown-menu-item" id="masterTeacherExportExcelBtn">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <span>Export Excel (CSV)</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Print Button -->
+              <button type="button" class="btn-table-tool" id="printMasterTeacherButton" title="Cetak Data Guru">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                <span>Cetak</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- TABLE WRAPPER WITH STICKY HEADER -->
+          <div class="table-responsive attendance-table-wrapper">
             <table id="teachersTable" class="simata-table" style="width:100%;border-collapse:collapse;min-width:880px;">
-              <thead>
-                <tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">
-                  <th style="padding:12px 8px;text-align:center;width:44px;font-size:12.5px;font-weight:700;color:#475569;">No</th>
-                  <th style="padding:12px 10px;text-align:center;width:145px;font-size:12.5px;font-weight:700;color:#475569;">NIK</th>
-                  <th style="padding:12px 14px;text-align:left;font-size:12.5px;font-weight:700;color:#475569;">Nama Lengkap</th>
-                  <th style="padding:12px 8px;text-align:center;width:105px;font-size:12.5px;font-weight:700;color:#475569;">Jenis Kelamin</th>
-                  <th style="padding:12px 10px;text-align:center;width:130px;font-size:12.5px;font-weight:700;color:#475569;">Jabatan</th>
-                  <th style="padding:12px 10px;text-align:center;width:150px;font-size:12.5px;font-weight:700;color:#475569;">Mata Pelajaran</th>
-                  <th style="padding:12px 10px;text-align:center;width:95px;font-size:12.5px;font-weight:700;color:#475569;">Status</th>
-                  <th style="padding:12px 12px;text-align:center;width:140px;font-size:12.5px;font-weight:700;color:#475569;">Aksi</th>
-                </tr>
-              </thead>
+              <thead id="teachersThead"></thead>
               <tbody id="teachersTbody"></tbody>
             </table>
+          </div>
+
+          <!-- TABLE FOOTER (COUNTER & PAGINATION) -->
+          <div class="attendance-table-footer">
+            <div class="table-footer-counter" id="masterTeacherCounter">
+              Menampilkan 0–0 dari 0 data
+            </div>
+            <div class="table-footer-pagination" id="masterTeacherPagination"></div>
           </div>
         </section>
 
@@ -4591,28 +4894,611 @@ function initDashboard() {
       });
     }
 
-// Attach additional UI handlers for pages (Students)
+/* ==========================================================================
+   FEATURE: MASTER DATA SISWA TABLE CONTROLLER & STATE ENGINE (BUG 36)
+   ========================================================================== */
+
 let allLoadedStudents = [];
 let loadedClassesList = [];
 let studentClassMap = {};
-let allLoadedTeachers = [];
-let studentTableState = {
+
+const masterStudentTableState = {
     pageSize: 10,
     currentPage: 1,
     searchQuery: '',
     sortField: 'name',
     sortDirection: 'asc',
-    activeClassId: ''
+    visibleColumns: {
+        no: true,
+        studentId: false,
+        nis: true,
+        nisn: true,
+        name: true,
+        gender: true,
+        class: true,
+        birthDate: false,
+        status: true,
+        action: true
+    }
 };
-let teacherTableState = {
-    pageSize: 10,
-    currentPage: 1,
-    searchQuery: '',
-    sortField: 'name',
-    sortDirection: 'asc',
-    activeStatus: '',
-    activePosition: ''
-};
+
+const masterStudentColumnDefs = [
+    { key: 'no', label: 'No', defaultVisible: true, sortable: false, width: '44px', align: 'center' },
+    { key: 'studentId', label: 'Student ID', defaultVisible: false, sortable: true, width: '130px', align: 'center' },
+    { key: 'nis', label: 'NIS', defaultVisible: true, sortable: true, width: '110px', align: 'center' },
+    { key: 'nisn', label: 'NISN', defaultVisible: true, sortable: true, width: '120px', align: 'center' },
+    { key: 'name', label: 'Nama Lengkap', defaultVisible: true, sortable: true, width: 'auto', align: 'left' },
+    { key: 'gender', label: 'Jenis Kelamin', defaultVisible: true, sortable: true, width: '100px', align: 'center' },
+    { key: 'class', label: 'Kelas', defaultVisible: true, sortable: true, width: '100px', align: 'center' },
+    { key: 'birthDate', label: 'Tanggal Lahir', defaultVisible: false, sortable: true, width: '115px', align: 'center' },
+    { key: 'status', label: 'Status', defaultVisible: true, sortable: true, width: '95px', align: 'center' },
+    { key: 'action', label: 'Aksi', defaultVisible: true, sortable: false, width: '175px', align: 'center' }
+];
+
+function initMasterStudentColumnVisibility() {
+    try {
+        const stored = localStorage.getItem('simata_master_students_cols');
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            Object.keys(parsed).forEach(function(k) {
+                if (k in masterStudentTableState.visibleColumns) {
+                    masterStudentTableState.visibleColumns[k] = parsed[k];
+                }
+            });
+        }
+    } catch (_) {}
+    renderMasterStudentColVisMenu();
+}
+
+function renderMasterStudentColVisMenu() {
+    const container = document.getElementById('masterStudentColVisOptions');
+    if (!container) return;
+    container.innerHTML = masterStudentColumnDefs
+        .filter(function(c) { return c.key !== 'no' && c.key !== 'action'; })
+        .map(function(c) {
+            const checked = masterStudentTableState.visibleColumns[c.key] ? 'checked' : '';
+            return '<label class="col-vis-item">' +
+                '<input type="checkbox" data-col="' + c.key + '" ' + checked + ' onchange="toggleMasterStudentColVisibility(\'' + c.key + '\', this.checked)" />' +
+                '<span>' + escapeHtml(c.label) + '</span>' +
+            '</label>';
+        }).join('');
+}
+
+function toggleMasterStudentColVisibility(colKey, isVisible) {
+    masterStudentTableState.visibleColumns[colKey] = isVisible;
+    try {
+        localStorage.setItem('simata_master_students_cols', JSON.stringify(masterStudentTableState.visibleColumns));
+    } catch (_) {}
+    renderMasterStudentThead();
+    renderMasterStudentTbody();
+}
+
+function getFilteredMasterStudentList() {
+    const classFilter = document.getElementById('masterStudentClassFilter');
+    const selectedClassId = classFilter ? classFilter.value.trim() : '';
+
+    const statusFilter = document.getElementById('masterStudentStatusFilter');
+    const selectedStatus = statusFilter ? statusFilter.value.trim() : '';
+
+    const query = (masterStudentTableState.searchQuery || '').toLowerCase();
+
+    return allLoadedStudents.filter(function(s) {
+        if (selectedClassId && String(s.classId || '').toLowerCase() !== selectedClassId.toLowerCase()) {
+            return false;
+        }
+
+        if (selectedStatus) {
+            const sStat = (s.status || 'Active').toLowerCase();
+            const filterStat = selectedStatus.toLowerCase();
+            if (filterStat === 'active' || filterStat === 'aktif') {
+                if (sStat !== 'active' && sStat !== 'aktif') return false;
+            } else if (filterStat === 'inactive' || filterStat === 'tidak aktif') {
+                if (sStat === 'active' || sStat === 'aktif') return false;
+            } else {
+                if (sStat !== filterStat) return false;
+            }
+        }
+
+        if (query) {
+            const name = String(s.name || '').toLowerCase();
+            const nis = String(s.nis || '').toLowerCase();
+            const nisn = String(s.nisn || '').toLowerCase();
+            const sid = String(s.studentId || '').toLowerCase();
+            const gender = String(s.gender || '').toLowerCase();
+            const className = String((studentClassMap && studentClassMap[s.classId]) || s.classId || '').toLowerCase();
+            const sStat = (s.status || 'Active').toLowerCase();
+            const statText = (sStat === 'active' || sStat === 'aktif') ? 'aktif' : 'tidak aktif';
+
+            const match = name.includes(query) ||
+                          nis.includes(query) ||
+                          nisn.includes(query) ||
+                          sid.includes(query) ||
+                          gender.includes(query) ||
+                          className.includes(query) ||
+                          statText.includes(query) ||
+                          sStat.includes(query);
+            if (!match) return false;
+        }
+
+        return true;
+    });
+}
+
+function sortMasterStudentRecords(records, sortField, sortDirection) {
+    const dir = sortDirection === 'asc' ? 1 : -1;
+    return records.slice().sort(function(a, b) {
+        let valA = '', valB = '';
+        switch (sortField) {
+            case 'studentId': valA = a.studentId || ''; valB = b.studentId || ''; break;
+            case 'nis': valA = a.nis || ''; valB = b.nis || ''; break;
+            case 'nisn': valA = a.nisn || ''; valB = b.nisn || ''; break;
+            case 'name': valA = a.name || ''; valB = b.name || ''; break;
+            case 'gender': valA = a.gender || ''; valB = b.gender || ''; break;
+            case 'class':
+                valA = (studentClassMap && studentClassMap[a.classId]) || a.classId || '';
+                valB = (studentClassMap && studentClassMap[b.classId]) || b.classId || '';
+                break;
+            case 'birthDate': valA = a.birthDate || ''; valB = b.birthDate || ''; break;
+            case 'status':
+                valA = (a.status || 'Active').toLowerCase() === 'active' ? 'Aktif' : 'Tidak Aktif';
+                valB = (b.status || 'Active').toLowerCase() === 'active' ? 'Aktif' : 'Tidak Aktif';
+                break;
+            default:
+                valA = a.name || ''; valB = b.name || '';
+        }
+        return String(valA).localeCompare(String(valB), undefined, { numeric: true, sensitivity: 'base' }) * dir;
+    });
+}
+
+function renderMasterStudentThead() {
+    const thead = document.getElementById('studentsThead');
+    if (!thead) return;
+    const cols = masterStudentColumnDefs.filter(function(c) { return masterStudentTableState.visibleColumns[c.key]; });
+    thead.innerHTML = '<tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">' +
+        cols.map(function(c) {
+            if (!c.sortable) {
+                return '<th style="padding:12px 8px;text-align:' + c.align + ';width:' + c.width + ';font-size:12.5px;font-weight:700;color:#475569;">' + escapeHtml(c.label) + '</th>';
+            }
+            const isSorted = masterStudentTableState.sortField === c.key;
+            const sortClass = isSorted ? (masterStudentTableState.sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc') : '';
+            const indicator = isSorted ? (masterStudentTableState.sortDirection === 'asc' ? '↑' : '↓') : '↕';
+            return '<th class="sortable-th ' + sortClass + '" data-col="' + c.key + '" data-align="' + c.align + '" onclick="handleMasterStudentSort(\'' + c.key + '\')" style="padding:12px 10px;text-align:' + c.align + ';width:' + c.width + ';font-size:12.5px;font-weight:700;color:#475569;">' +
+                '<div class="th-content">' +
+                    '<span>' + escapeHtml(c.label) + '</span>' +
+                    '<span class="sort-indicator">' + indicator + '</span>' +
+                '</div>' +
+            '</th>';
+        }).join('') +
+    '</tr>';
+}
+
+function handleMasterStudentSort(colKey) {
+    if (masterStudentTableState.sortField === colKey) {
+        masterStudentTableState.sortDirection = masterStudentTableState.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        masterStudentTableState.sortField = colKey;
+        masterStudentTableState.sortDirection = 'asc';
+    }
+    masterStudentTableState.currentPage = 1;
+    renderMasterStudentThead();
+    renderMasterStudentTbody();
+}
+
+function renderMasterStudentTbody() {
+    const tbody = document.getElementById('studentsTbody');
+    if (!tbody) return;
+
+    renderMasterStudentActiveFilterChips();
+    updateStudentSummaryChips();
+
+    const filtered = getFilteredMasterStudentList();
+    const sorted = sortMasterStudentRecords(filtered, masterStudentTableState.sortField, masterStudentTableState.sortDirection);
+    const visibleCols = masterStudentColumnDefs.filter(function(c) { return masterStudentTableState.visibleColumns[c.key]; });
+    const totalVisibleColCount = visibleCols.length || 8;
+
+    const total = sorted.length;
+    const pageSize = masterStudentTableState.pageSize;
+    const totalPages = pageSize === 'all' ? 1 : Math.ceil(total / pageSize) || 1;
+    if (masterStudentTableState.currentPage > totalPages) {
+        masterStudentTableState.currentPage = totalPages;
+    }
+    const curPage = masterStudentTableState.currentPage;
+
+    // Counter
+    const counterEl = document.getElementById('masterStudentCounter');
+    if (counterEl) {
+        if (total === 0) {
+            counterEl.textContent = '0 dari 0 data';
+        } else if (pageSize === 'all') {
+            counterEl.textContent = 'Menampilkan 1–' + total + ' dari ' + total + ' data';
+        } else {
+            const start = (curPage - 1) * pageSize + 1;
+            const end = Math.min(curPage * pageSize, total);
+            counterEl.textContent = 'Menampilkan ' + start + '–' + end + ' dari ' + total + ' data';
+        }
+    }
+
+    // Pagination
+    renderPaginationControl('masterStudentPagination', curPage, totalPages, pageSize, 'goToMasterStudentPage');
+
+    if (total === 0) {
+        if (allLoadedStudents.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="' + totalVisibleColCount + '" class="attendance-empty-cell">' +
+                '<div class="empty-state-content">' +
+                    '<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#94a3b8" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' +
+                    '<p class="empty-state-title">Belum ada data siswa</p>' +
+                '</div>' +
+            '</td></tr>';
+        } else {
+            tbody.innerHTML = '<tr><td colspan="' + totalVisibleColCount + '" class="attendance-empty-cell">' +
+                '<div class="empty-state-content">' +
+                    '<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#94a3b8" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>' +
+                    '<p class="empty-state-title">Tidak ada data siswa yang sesuai kriteria</p>' +
+                    '<p class="empty-state-sub">Coba sesuaikan filter atau kata kunci pencarian Anda.</p>' +
+                    '<button type="button" class="btn-empty-reset" onclick="resetAllMasterStudentFilters()">Reset Filter</button>' +
+                '</div>' +
+            '</td></tr>';
+        }
+        return;
+    }
+
+    const pageRows = pageSize === 'all' ? sorted : sorted.slice((curPage - 1) * pageSize, curPage * pageSize);
+    const startIdx = pageSize === 'all' ? 0 : (curPage - 1) * pageSize;
+
+    tbody.innerHTML = pageRows.map(function(s, idx) {
+        const no = startIdx + idx + 1;
+        const nis = escapeHtml(s.nis || '-');
+        const nisn = escapeHtml(s.nisn || '-');
+        const name = escapeHtml(s.name || '-');
+        const gender = escapeHtml(s.gender || '-');
+        const className = escapeHtml((studentClassMap && studentClassMap[s.classId]) || s.classId || '-');
+        const birthDate = escapeHtml(s.birthDate || '-');
+        const status = (s.status || 'Active');
+        const isAktif = status.toLowerCase() === 'active' || status.toLowerCase() === 'aktif';
+        const statusBadge = isAktif
+            ? '<span class="status-badge status-badge-active">Aktif</span>'
+            : '<span class="status-badge status-badge-inactive">Tidak Aktif</span>';
+
+        const actionButtons = '<div class="student-action-group" style="justify-content:center;">' +
+            (isCurrentUserAdmin ? '<button type="button" class="btn-action btn-action-edit" onclick="openStudentModal(\'edit\', \'' + escapeAttr(s.studentId) + '\')" title="Edit Siswa">' +
+              '<svg viewBox="0 0 24 24" class="btn-action-icon"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' +
+              '<span>Edit</span>' +
+            '</button>' : '') +
+            '<button type="button" class="btn-action btn-action-detail" onclick="openStudentModal(\'view\', \'' + escapeAttr(s.studentId) + '\')" title="Detail Siswa">' +
+              '<svg viewBox="0 0 24 24" class="btn-action-icon"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>' +
+              '<span>Detail</span>' +
+            '</button>' +
+            '<button type="button" class="btn-action btn-action-qr" onclick="showStudentQrModal(\'' + escapeAttr(s.studentId) + '\')" title="Lihat QR Siswa">' +
+              '<svg viewBox="0 0 24 24" class="btn-action-icon"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>' +
+              '<span>QR</span>' +
+            '</button>' +
+          '</div>';
+
+        const cells = [];
+        if (masterStudentTableState.visibleColumns.no) {
+            cells.push('<td style="padding:10px 8px;text-align:center;color:#64748b;font-size:12.5px;">' + no + '</td>');
+        }
+        if (masterStudentTableState.visibleColumns.studentId) {
+            cells.push('<td style="padding:10px 10px;text-align:center;font-size:12px;font-family:monospace;color:#64748b;">' + escapeHtml(s.studentId || '-') + '</td>');
+        }
+        if (masterStudentTableState.visibleColumns.nis) {
+            cells.push('<td style="padding:10px 10px;text-align:center;font-size:12.5px;font-family:monospace;color:#334155;">' + nis + '</td>');
+        }
+        if (masterStudentTableState.visibleColumns.nisn) {
+            cells.push('<td style="padding:10px 10px;text-align:center;font-size:12.5px;font-family:monospace;color:#334155;">' + nisn + '</td>');
+        }
+        if (masterStudentTableState.visibleColumns.name) {
+            cells.push('<td style="padding:10px 14px;text-align:left;font-size:13px;font-weight:600;color:#0f172a;">' + name + '</td>');
+        }
+        if (masterStudentTableState.visibleColumns.gender) {
+            cells.push('<td style="padding:10px 8px;text-align:center;font-size:12.5px;color:#334155;">' + gender + '</td>');
+        }
+        if (masterStudentTableState.visibleColumns.class) {
+            cells.push('<td style="padding:10px 8px;text-align:center;font-size:12.5px;color:#334155;">' + className + '</td>');
+        }
+        if (masterStudentTableState.visibleColumns.birthDate) {
+            cells.push('<td style="padding:10px 8px;text-align:center;font-size:12.5px;color:#334155;">' + birthDate + '</td>');
+        }
+        if (masterStudentTableState.visibleColumns.status) {
+            cells.push('<td style="padding:10px 8px;text-align:center;">' + statusBadge + '</td>');
+        }
+        if (masterStudentTableState.visibleColumns.action) {
+            cells.push('<td style="padding:10px 12px;text-align:center;">' + actionButtons + '</td>');
+        }
+
+        return '<tr class="simata-table-row">' + cells.join('') + '</tr>';
+    }).join('');
+}
+
+function goToMasterStudentPage(page) {
+    masterStudentTableState.currentPage = page;
+    renderMasterStudentTbody();
+    const tableWrapper = document.querySelector('#studentsContent .attendance-table-wrapper');
+    if (tableWrapper) tableWrapper.scrollTop = 0;
+}
+
+function updateStudentSummaryChips() {
+    const classSelect = document.getElementById('masterStudentClassFilter');
+    const selectedClassId = classSelect ? classSelect.value : '';
+    const countText = document.getElementById('studentFilterCountText');
+    const summaryChips = document.getElementById('studentClassSummaryChips');
+
+    if (summaryChips && Array.isArray(loadedClassesList)) {
+        summaryChips.innerHTML = loadedClassesList.map(function(c) {
+            const count = allLoadedStudents.filter(function(s) { return s.classId === c.classId; }).length;
+            const isSelected = selectedClassId === c.classId;
+            const activeClass = isSelected ? ' active' : '';
+            return '<button type="button" class="class-summary-chip' + activeClass + '" onclick="setStudentClassFilter(\'' + escapeAttr(c.classId) + '\')" title="Klik untuk memfilter ' + escapeHtml(c.className || c.classId) + '">' +
+                '<span class="chip-label">' + escapeHtml(c.className || c.classId) + '</span>' +
+                '<span class="chip-badge">' + count + '</span>' +
+                '</button>';
+        }).join('');
+    }
+
+    if (countText) {
+        const filtered = getFilteredMasterStudentList();
+        if (selectedClassId || masterStudentTableState.searchQuery || (document.getElementById('masterStudentStatusFilter') && document.getElementById('masterStudentStatusFilter').value)) {
+            countText.textContent = 'Menampilkan: ' + filtered.length + ' siswa';
+        } else {
+            countText.textContent = 'Total: ' + allLoadedStudents.length + ' siswa';
+        }
+    }
+}
+
+function setStudentClassFilter(classId) {
+    const select = document.getElementById('masterStudentClassFilter');
+    if (select) {
+        select.value = classId || '';
+        masterStudentTableState.currentPage = 1;
+        renderMasterStudentTbody();
+    }
+}
+
+function renderMasterStudentActiveFilterChips() {
+    const bar = document.getElementById('masterStudentActiveFiltersBar');
+    const chipsContainer = document.getElementById('masterStudentActiveFilterChips');
+    if (!bar || !chipsContainer) return;
+
+    const classVal = document.getElementById('masterStudentClassFilter') ? document.getElementById('masterStudentClassFilter').value : '';
+    const statusVal = document.getElementById('masterStudentStatusFilter') ? document.getElementById('masterStudentStatusFilter').value : '';
+    const searchVal = masterStudentTableState.searchQuery;
+
+    const chips = [];
+    if (classVal) {
+        const className = (studentClassMap && studentClassMap[classVal]) || classVal;
+        chips.push({
+            id: 'class',
+            label: 'Kelas: <strong>' + escapeHtml(className) + '</strong>',
+            clear: function() {
+                const el = document.getElementById('masterStudentClassFilter');
+                if (el) el.value = '';
+                masterStudentTableState.currentPage = 1;
+                renderMasterStudentTbody();
+            }
+        });
+    }
+    if (statusVal) {
+        const statusLabel = (statusVal === 'Active' || statusVal === 'Aktif') ? 'Aktif' : 'Tidak Aktif';
+        chips.push({
+            id: 'status',
+            label: 'Status: <strong>' + escapeHtml(statusLabel) + '</strong>',
+            clear: function() {
+                const el = document.getElementById('masterStudentStatusFilter');
+                if (el) el.value = '';
+                masterStudentTableState.currentPage = 1;
+                renderMasterStudentTbody();
+            }
+        });
+    }
+    if (searchVal) {
+        chips.push({
+            id: 'search',
+            label: 'Cari: <strong>"' + escapeHtml(searchVal) + '"</strong>',
+            clear: function() {
+                const sInput = document.getElementById('masterStudentSearchInput');
+                if (sInput) sInput.value = '';
+                const cBtn = document.getElementById('masterStudentSearchClearBtn');
+                if (cBtn) cBtn.style.display = 'none';
+                masterStudentTableState.searchQuery = '';
+                masterStudentTableState.currentPage = 1;
+                renderMasterStudentTbody();
+            }
+        });
+    }
+
+    if (chips.length === 0) {
+        bar.style.display = 'none';
+        chipsContainer.innerHTML = '';
+        return;
+    }
+
+    bar.style.display = 'flex';
+    window._masterStudentActiveFilterChipsMap = chips;
+    chipsContainer.innerHTML = chips.map(function(c, i) {
+        return '<span class="active-filter-chip">' +
+            '<span>' + c.label + '</span>' +
+            '<button type="button" class="chip-remove-btn" onclick="window._masterStudentActiveFilterChipsMap[' + i + '].clear()" title="Hapus filter ini">&times;</button>' +
+        '</span>';
+    }).join('');
+}
+
+function resetAllMasterStudentFilters() {
+    const classEl = document.getElementById('masterStudentClassFilter');
+    if (classEl) classEl.value = '';
+    const statusEl = document.getElementById('masterStudentStatusFilter');
+    if (statusEl) statusEl.value = '';
+    const sInput = document.getElementById('masterStudentSearchInput');
+    if (sInput) sInput.value = '';
+    const cBtn = document.getElementById('masterStudentSearchClearBtn');
+    if (cBtn) cBtn.style.display = 'none';
+
+    masterStudentTableState.searchQuery = '';
+    masterStudentTableState.currentPage = 1;
+    renderMasterStudentTbody();
+}
+
+let masterStudentSearchDebounceTimer = null;
+function handleMasterStudentSearchInput(e) {
+    const query = e.target.value;
+    const clearBtn = document.getElementById('masterStudentSearchClearBtn');
+    if (clearBtn) clearBtn.style.display = query ? 'inline-flex' : 'none';
+
+    clearTimeout(masterStudentSearchDebounceTimer);
+    masterStudentSearchDebounceTimer = setTimeout(function() {
+        masterStudentTableState.searchQuery = query.trim();
+        masterStudentTableState.currentPage = 1;
+        renderMasterStudentTbody();
+    }, 300);
+}
+
+function exportMasterStudentData(format) {
+    const data = getFilteredMasterStudentList();
+    const sorted = sortMasterStudentRecords(data, masterStudentTableState.sortField, masterStudentTableState.sortDirection);
+    if (!sorted || sorted.length === 0) {
+        alert('Tidak ada data siswa untuk diekspor.');
+        return;
+    }
+    const headers = ['No', 'Student ID', 'NIS', 'NISN', 'Nama Siswa', 'Jenis Kelamin', 'Kelas', 'Tanggal Lahir', 'Status'];
+    const rows = sorted.map(function(s, idx) {
+        const className = (studentClassMap && studentClassMap[s.classId]) || s.classId || '-';
+        const isAktif = (s.status || 'Active').toLowerCase() === 'active' || (s.status || '').toLowerCase() === 'aktif';
+        return [
+            idx + 1,
+            s.studentId || '',
+            s.nis || '-',
+            s.nisn || '-',
+            s.name || '',
+            s.gender || '-',
+            className,
+            s.birthDate || '-',
+            isAktif ? 'Aktif' : 'Tidak Aktif'
+        ];
+    });
+    const today = new Date().toISOString().split('T')[0];
+    const filename = 'Daftar_Siswa_' + today + '.csv';
+    exportCsvFile(filename, headers, rows);
+}
+
+function printMasterStudentReport() {
+    const classVal = document.getElementById('masterStudentClassFilter') ? document.getElementById('masterStudentClassFilter').value : '';
+    const statusVal = document.getElementById('masterStudentStatusFilter') ? document.getElementById('masterStudentStatusFilter').value : '';
+
+    const data = getFilteredMasterStudentList();
+    const sorted = sortMasterStudentRecords(data, masterStudentTableState.sortField, masterStudentTableState.sortDirection);
+    if (!sorted || sorted.length === 0) {
+        alert('Tidak ada data siswa untuk dicetak.');
+        return;
+    }
+
+    const className = classVal ? ((studentClassMap && studentClassMap[classVal]) || classVal) : 'Semua Kelas';
+    let statusLabel = 'Semua Status';
+    if (statusVal) {
+        statusLabel = (statusVal === 'Active' || statusVal === 'Aktif') ? 'Aktif' : 'Tidak Aktif';
+    }
+    const today = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    const rowsHtml = sorted.map(function(s, idx) {
+        const no = idx + 1;
+        const nis = escapeHtml(s.nis || '-');
+        const nisn = escapeHtml(s.nisn || '-');
+        const name = escapeHtml(s.name || '-');
+        const gender = escapeHtml(s.gender || '-');
+        const cName = escapeHtml((studentClassMap && studentClassMap[s.classId]) || s.classId || '-');
+        const isAktif = (s.status || 'Active').toLowerCase() === 'active' || (s.status || '').toLowerCase() === 'aktif';
+        const statusText = isAktif ? 'Aktif' : 'Tidak Aktif';
+        const statusColor = isAktif ? '#15803d' : '#b91c1c';
+
+        return '<tr>' +
+            '<td style="text-align:center;">' + no + '</td>' +
+            '<td class="col-nis">' + nis + '</td>' +
+            '<td class="col-nis">' + nisn + '</td>' +
+            '<td class="col-name">' + name + '</td>' +
+            '<td style="text-align:center;">' + gender + '</td>' +
+            '<td style="text-align:center;">' + cName + '</td>' +
+            '<td style="text-align:center;font-weight:700;color:' + statusColor + ';">' + statusText + '</td>' +
+        '</tr>';
+    }).join('');
+
+    const printHtml = '<!DOCTYPE html>' +
+        '<html><head><meta charset="utf-8">' +
+        '<title>Cetak Data Siswa - ' + escapeHtml(className) + '</title>' +
+        '<style>' +
+        '@page { size: A4 portrait; margin: 12mm 15mm; }' +
+        'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; margin: 0; padding: 0; color: #0f172a; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }' +
+        '.print-container { width: 100%; }' +
+        '.report-header { text-align: center; margin-bottom: 14px; border-bottom: 2px solid #0f172a; padding-bottom: 6px; }' +
+        '.report-school { font-size: 15pt; font-weight: 800; color: #0f172a; margin: 0 0 2px 0; letter-spacing: 0.5px; }' +
+        '.report-title { font-size: 12pt; font-weight: 700; color: #1e293b; margin: 0 0 2px 0; text-transform: uppercase; }' +
+        '.report-meta-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 10pt; color: #334155; font-weight: 600; }' +
+        '.report-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 9.5pt; }' +
+        '.report-table thead { display: table-header-group; }' +
+        '.report-table tr { break-inside: avoid; page-break-inside: avoid; }' +
+        '.report-table th, .report-table td { border: 1px solid #334155; padding: 6px 6px; }' +
+        '.report-table th { background-color: #f1f5f9 !important; font-weight: 700; color: #0f172a; font-size: 9pt; text-align: center; }' +
+        '.report-table td.col-name { text-align: left; padding-left: 8px; font-weight: 600; color: #0f172a; }' +
+        '.report-table td.col-nis { font-family: monospace; font-size: 9pt; color: #334155; text-align: center; }' +
+        '.report-signatures { display: flex; justify-content: space-between; margin-top: 24px; font-size: 10pt; break-inside: avoid; page-break-inside: avoid; }' +
+        '.sig-block { text-align: center; width: 220px; }' +
+        '.sig-space { height: 55px; }' +
+        '.sig-name { font-weight: 700; text-decoration: underline; }' +
+        '@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }' +
+        '</style></head><body>' +
+        '<div class="print-container">' +
+          '<div class="report-header">' +
+            '<div class="report-school">SIMATA — MA AT-TAUJIH</div>' +
+            '<div class="report-title">DAFTAR MASTER DATA SISWA</div>' +
+          '</div>' +
+          '<div class="report-meta-bar">' +
+            '<div><strong>Kelas:</strong> ' + escapeHtml(className) + ' | <strong>Status:</strong> ' + escapeHtml(statusLabel) + '</div>' +
+            '<div><strong>Total:</strong> ' + sorted.length + ' Siswa | <strong>Tanggal Cetak:</strong> ' + escapeHtml(today) + '</div>' +
+          '</div>' +
+          '<table class="report-table">' +
+            '<thead>' +
+              '<tr>' +
+                '<th style="width:36px;">NO</th>' +
+                '<th style="width:95px;">NIS</th>' +
+                '<th style="width:105px;">NISN</th>' +
+                '<th>NAMA LENGKAP</th>' +
+                '<th style="width:45px;">L/P</th>' +
+                '<th style="width:85px;">KELAS</th>' +
+                '<th style="width:75px;">STATUS</th>' +
+              '</tr>' +
+            '</thead>' +
+            '<tbody>' +
+              rowsHtml +
+            '</tbody>' +
+          '</table>' +
+          '<div class="report-signatures">' +
+            '<div class="sig-block">' +
+              '<div>Mengetahui,</div>' +
+              '<div>Kepala Madrasah</div>' +
+              '<div class="sig-space"></div>' +
+              '<div class="sig-name">( ........................................ )</div>' +
+              '<div>NIP. ....................................</div>' +
+            '</div>' +
+            '<div class="sig-block">' +
+              '<div>Waka Kesiswaan</div>' +
+              '<div>MA At-Taujih</div>' +
+              '<div class="sig-space"></div>' +
+              '<div class="sig-name">( ........................................ )</div>' +
+              '<div>NIP. ....................................</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<script>' +
+        'window.onload = function() { window.print(); setTimeout(function() { window.close(); }, 500); };' +
+        '<' + '/script>' +
+        '</body></html>';
+
+    const pWin = window.open('', '_blank');
+    if (!pWin) {
+        alert('Gagal membuka jendela cetak. Periksa apakah browser memblokir pop-up.');
+        return;
+    }
+    pWin.document.open();
+    pWin.document.write(printHtml);
+    pWin.document.close();
+}
 
 function initStudentsModule() {
     const menuStudents = document.getElementById('menu-students');
@@ -4632,19 +5518,70 @@ function initStudentsModule() {
         batchBtn.addEventListener('click', openBatchQrModal);
     }
 
-    const searchInput = document.getElementById('studentSearch');
-    if (searchInput) {
-        let timer = null;
-        searchInput.addEventListener('input', function() {
-            clearTimeout(timer);
-            timer = setTimeout(applyStudentFilters, 250);
+    // Filter Apply & Reset
+    const filterBtn = document.getElementById('filterMasterStudentButton');
+    if (filterBtn) {
+        filterBtn.addEventListener('click', function() {
+            masterStudentTableState.currentPage = 1;
+            renderMasterStudentTbody();
         });
     }
 
-    const classFilter = document.getElementById('studentClassFilter');
+    const resetBtn = document.getElementById('resetMasterStudentButton');
+    if (resetBtn) resetBtn.addEventListener('click', resetAllMasterStudentFilters);
+
+    const classFilter = document.getElementById('masterStudentClassFilter');
     if (classFilter) {
-        classFilter.addEventListener('change', applyStudentFilters);
+        classFilter.addEventListener('change', function() {
+            masterStudentTableState.currentPage = 1;
+            renderMasterStudentTbody();
+        });
     }
+
+    const statusFilter = document.getElementById('masterStudentStatusFilter');
+    if (statusFilter) {
+        statusFilter.addEventListener('change', function() {
+            masterStudentTableState.currentPage = 1;
+            renderMasterStudentTbody();
+        });
+    }
+
+    // Toolbar Entries & Search
+    const entriesSelect = document.getElementById('masterStudentEntriesSelect');
+    if (entriesSelect) {
+        entriesSelect.addEventListener('change', function() {
+            const val = this.value;
+            masterStudentTableState.pageSize = (val === 'all') ? 'all' : parseInt(val, 10);
+            masterStudentTableState.currentPage = 1;
+            renderMasterStudentTbody();
+        });
+    }
+
+    const searchInput = document.getElementById('masterStudentSearchInput');
+    if (searchInput) searchInput.addEventListener('input', handleMasterStudentSearchInput);
+
+    const searchClearBtn = document.getElementById('masterStudentSearchClearBtn');
+    if (searchClearBtn) {
+        searchClearBtn.addEventListener('click', function() {
+            if (searchInput) searchInput.value = '';
+            searchClearBtn.style.display = 'none';
+            masterStudentTableState.searchQuery = '';
+            masterStudentTableState.currentPage = 1;
+            renderMasterStudentTbody();
+        });
+    }
+
+    // Export Buttons
+    const exportCsvBtn = document.getElementById('masterStudentExportCsvBtn');
+    if (exportCsvBtn) exportCsvBtn.addEventListener('click', function() { exportMasterStudentData('csv'); });
+    const exportExcelBtn = document.getElementById('masterStudentExportExcelBtn');
+    if (exportExcelBtn) exportExcelBtn.addEventListener('click', function() { exportMasterStudentData('excel'); });
+
+    // Print Button
+    const printBtn = document.getElementById('printMasterStudentButton');
+    if (printBtn) printBtn.addEventListener('click', printMasterStudentReport);
+
+    initMasterStudentColumnVisibility();
 
     // Modal buttons
     const cancelBtn = document.getElementById('studentCancelBtn');
@@ -4682,116 +5619,12 @@ function hideStudentsView() {
     document.querySelector('.sidebar-menu li').classList.add('active');
 }
 
-function setStudentClassFilter(classId) {
-    const select = document.getElementById('studentClassFilter');
-    if (select) {
-        select.value = classId || '';
-        applyStudentFilters();
-    }
-}
-
-function applyStudentFilters() {
-    const tbody = document.getElementById('studentsTbody');
-    if (!tbody) return;
-
-    const searchInput = document.getElementById('studentSearch');
-    const q = (searchInput ? searchInput.value : '').trim().toLowerCase();
-
-    const classSelect = document.getElementById('studentClassFilter');
-    const selectedClassId = classSelect ? classSelect.value : '';
-
-    const countText = document.getElementById('studentFilterCountText');
-    const summaryChips = document.getElementById('studentClassSummaryChips');
-
-    // Calculate class counts across full dataset & render summary chips
-    if (summaryChips && Array.isArray(loadedClassesList)) {
-        summaryChips.innerHTML = loadedClassesList.map(function(c) {
-            const count = allLoadedStudents.filter(function(s) { return s.classId === c.classId; }).length;
-            const isSelected = selectedClassId === c.classId;
-            const activeClass = isSelected ? ' active' : '';
-            return '<button type="button" class="class-summary-chip' + activeClass + '" onclick="setStudentClassFilter(\'' + escapeAttr(c.classId) + '\')" title="Klik untuk memfilter ' + escapeHtml(c.className || c.classId) + '">' +
-                '<span class="chip-label">' + escapeHtml(c.className || c.classId) + '</span>' +
-                '<span class="chip-badge">' + count + '</span>' +
-                '</button>';
-        }).join('');
-    }
-
-    // Filter students in-memory
-    let filtered = allLoadedStudents.slice();
-
-    if (selectedClassId) {
-        filtered = filtered.filter(function(s) {
-            return s.classId === selectedClassId;
-        });
-    }
-
-    if (q) {
-        filtered = filtered.filter(function(s) {
-            return (s.studentId || '').toLowerCase().includes(q) ||
-                (s.name || '').toLowerCase().includes(q) ||
-                (s.nis || '').toLowerCase().includes(q) ||
-                (s.nisn || '').toLowerCase().includes(q);
-        });
-    }
-
-    // Update count display
-    if (countText) {
-        if (selectedClassId) {
-            countText.textContent = 'Menampilkan: ' + filtered.length + ' siswa';
-        } else {
-            countText.textContent = 'Total: ' + allLoadedStudents.length + ' siswa';
-        }
-    }
-
-    if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:#64748b;">Tidak ada data siswa yang sesuai.</td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = filtered.map(function(s, idx) {
-        const no = idx + 1;
-        const nis = escapeHtml(s.nis || '-');
-        const nisn = escapeHtml(s.nisn || '-');
-        const name = escapeHtml(s.name || '-');
-        const gender = escapeHtml(s.gender || '-');
-        const className = escapeHtml((studentClassMap && studentClassMap[s.classId]) || s.classId || '-');
-        const status = (s.status || 'Active');
-        const statusBadge = (status.toLowerCase() === 'active' || status.toLowerCase() === 'aktif')
-            ? '<span class="status-badge status-badge-active">Aktif</span>'
-            : '<span class="status-badge status-badge-inactive">Tidak Aktif</span>';
-
-        return '<tr class="simata-table-row">' +
-            '<td style="padding:10px 8px;text-align:center;color:#64748b;font-size:12.5px;">' + no + '</td>' +
-            '<td style="padding:10px 8px;text-align:center;font-size:12.5px;font-family:monospace;color:#334155;">' + nis + '</td>' +
-            '<td style="padding:10px 8px;text-align:center;font-size:12.5px;font-family:monospace;color:#334155;">' + nisn + '</td>' +
-            '<td style="padding:10px 14px;text-align:left;font-size:13px;font-weight:600;color:#0f172a;">' + name + '</td>' +
-            '<td style="padding:10px 8px;text-align:center;font-size:12.5px;color:#334155;">' + gender + '</td>' +
-            '<td style="padding:10px 8px;text-align:center;font-size:12.5px;color:#334155;">' + className + '</td>' +
-            '<td style="padding:10px 8px;text-align:center;">' + statusBadge + '</td>' +
-            '<td style="padding:10px 12px;text-align:center;">' +
-              '<div class="student-action-group" style="justify-content:center;">' +
-                (isCurrentUserAdmin ? '<button type="button" class="btn-action btn-action-edit" onclick="openStudentModal(\'edit\', \'' + escapeAttr(s.studentId) + '\')" title="Edit Siswa">' +
-                  '<svg viewBox="0 0 24 24" class="btn-action-icon"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' +
-                  '<span>Edit</span>' +
-                '</button>' : '') +
-                '<button type="button" class="btn-action btn-action-detail" onclick="openStudentModal(\'view\', \'' + escapeAttr(s.studentId) + '\')" title="Detail Siswa">' +
-                  '<svg viewBox="0 0 24 24" class="btn-action-icon"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>' +
-                  '<span>Detail</span>' +
-                '</button>' +
-                '<button type="button" class="btn-action btn-action-qr" onclick="showStudentQrModal(\'' + escapeAttr(s.studentId) + '\')" title="Lihat QR Siswa">' +
-                  '<svg viewBox="0 0 24 24" class="btn-action-icon"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>' +
-                  '<span>QR</span>' +
-                '</button>' +
-              '</div>' +
-            '</td>' +
-          '</tr>';
-    }).join('');
-}
-
 function loadStudents(filter) {
     const tbody = document.getElementById('studentsTbody');
     if (!tbody) return;
-    renderTableLoading(tbody, 8, 'Memuat data siswa...');
+    renderMasterStudentThead();
+    const visibleCols = masterStudentColumnDefs.filter(function(c) { return masterStudentTableState.visibleColumns[c.key]; });
+    renderTableLoading(tbody, visibleCols.length || 8, 'Memuat data siswa...');
 
     // load classes for class select and class name mapping
     simataClient.withSuccessHandler(function(classesRes) {
@@ -4809,10 +5642,10 @@ function loadStudents(filter) {
                 }).join('');
             }
 
-            const filterSelect = document.getElementById('studentClassFilter');
+            const filterSelect = document.getElementById('masterStudentClassFilter');
             if (filterSelect) {
                 const currentVal = filterSelect.value;
-                filterSelect.innerHTML = '<option value="">Semua Kelas</option>' + classesRes.classes.map(function(c) {
+                filterSelect.innerHTML = '<option value="">(Semua Kelas)</option>' + classesRes.classes.map(function(c) {
                     return '<option value="' + escapeAttr(c.classId) + '">' + escapeHtml(c.className || c.classId) + '</option>';
                 }).join('');
                 filterSelect.value = currentVal || '';
@@ -4827,9 +5660,13 @@ function loadStudents(filter) {
         }
 
         allLoadedStudents = result.students || [];
-        applyStudentFilters();
+        masterStudentTableState.currentPage = 1;
+        renderMasterStudentThead();
+        renderMasterStudentTbody();
     }).withFailureHandler(function() {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:#ef4444;">Gagal memuat data siswa.</td></tr>';
+        allLoadedStudents = [];
+        const colCount = masterStudentColumnDefs.filter(function(c) { return masterStudentTableState.visibleColumns[c.key]; }).length || 8;
+        tbody.innerHTML = '<tr><td colspan="' + colCount + '" style="text-align:center;padding:24px;color:#ef4444;">Gagal memuat data siswa.</td></tr>';
     }).getStudents(filter ? { search: filter } : {});
 }
 
@@ -5217,9 +6054,318 @@ function handleStudentPhotoDownload() {
     simataClient.downloadStudentPhoto(currentStudentModalId, currentStudentModalName || 'siswa');
 }
 
+// ============================================================
+// FEATURE 004: KARTU PELAJAR SISWA (STUDENT DOCUMENTS)
+// ============================================================
+let currentStudentKartuPelajarMeta = null;
+let pendingStudentCardFile = null;
+let currentDocPreviewObjectUrl = null;
+
+function formatDocumentFileSize(bytes) {
+    if (!bytes || isNaN(bytes)) return '0 B';
+    const b = parseInt(bytes, 10);
+    if (b < 1024) return b + ' B';
+    if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
+    return (b / (1024 * 1024)).toFixed(2) + ' MB';
+}
+
+function resetStudentCardUI() {
+    pendingStudentCardFile = null;
+    const fileInput = document.getElementById('student_card_file_input');
+    if (fileInput) fileInput.value = '';
+
+    const pendingBox = document.getElementById('student_card_pending_box');
+    if (pendingBox) pendingBox.style.display = 'none';
+
+    currentStudentKartuPelajarMeta = null;
+
+    const card = document.getElementById('student_card_doc_card');
+    if (card) card.classList.remove('has-doc');
+
+    const badge = document.getElementById('student_card_status_badge');
+    if (badge) badge.className = 'document-status-badge badge-unavailable';
+
+    const dot = document.getElementById('student_card_status_dot');
+    if (dot) dot.style.background = '#94a3b8';
+
+    const text = document.getElementById('student_card_status_text');
+    if (text) text.textContent = 'Belum Tersedia';
+
+    const metaBox = document.getElementById('student_card_meta_box');
+    if (metaBox) metaBox.style.display = 'none';
+
+    const emptyNotice = document.getElementById('student_card_empty_notice');
+    if (emptyNotice) emptyNotice.style.display = 'block';
+
+    const detailActions = document.getElementById('student_card_detail_actions');
+    if (detailActions) detailActions.style.display = 'none';
+
+    const editActions = document.getElementById('student_card_edit_actions');
+    if (editActions) editActions.style.display = 'none';
+
+    const deleteBtn = document.getElementById('student_card_delete_btn');
+    if (deleteBtn) deleteBtn.style.display = 'none';
+
+    const editPrevBtn = document.getElementById('student_card_edit_preview_btn');
+    if (editPrevBtn) editPrevBtn.style.display = 'none';
+
+    const editDownBtn = document.getElementById('student_card_edit_download_btn');
+    if (editDownBtn) editDownBtn.style.display = 'none';
+
+    const uploadBtnText = document.getElementById('student_card_upload_btn_text');
+    if (uploadBtnText) uploadBtnText.textContent = 'Unggah Kartu Pelajar';
+
+    const formatHint = document.getElementById('student_card_format_hint');
+    if (formatHint) formatHint.style.display = 'block';
+}
+
+async function loadStudentKartuPelajarInModal(studentId, isView) {
+    resetStudentCardUI();
+    const card = document.getElementById('student_card_doc_card');
+    const badge = document.getElementById('student_card_status_badge');
+    const dot = document.getElementById('student_card_status_dot');
+    const text = document.getElementById('student_card_status_text');
+    const metaBox = document.getElementById('student_card_meta_box');
+    const filenameEl = document.getElementById('student_card_filename');
+    const filesizeEl = document.getElementById('student_card_filesize');
+    const emptyNotice = document.getElementById('student_card_empty_notice');
+    const detailActions = document.getElementById('student_card_detail_actions');
+    const editActions = document.getElementById('student_card_edit_actions');
+    const uploadBtnText = document.getElementById('student_card_upload_btn_text');
+    const deleteBtn = document.getElementById('student_card_delete_btn');
+    const editPrevBtn = document.getElementById('student_card_edit_preview_btn');
+    const editDownBtn = document.getElementById('student_card_edit_download_btn');
+    const formatHint = document.getElementById('student_card_format_hint');
+
+    try {
+        const res = await simataClient.getStudentKartuPelajarMeta(studentId);
+        const doc = (res && res.success && res.data && res.data.available) ? res.data : null;
+        currentStudentKartuPelajarMeta = doc;
+
+        if (doc) {
+            if (card) card.classList.add('has-doc');
+            if (badge) badge.className = 'document-status-badge badge-available';
+            if (dot) dot.style.background = '#15803d';
+            if (text) text.textContent = 'Tersedia';
+            if (filenameEl) filenameEl.textContent = doc.file_name || 'Kartu_Pelajar.pdf';
+            if (filesizeEl) filesizeEl.textContent = 'Ukuran: ' + formatDocumentFileSize(doc.file_size) + ' • Diperbarui: ' + (doc.updated_at ? new Date(doc.updated_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-');
+            if (metaBox) metaBox.style.display = 'flex';
+            if (emptyNotice) emptyNotice.style.display = 'none';
+
+            if (isView) {
+                // MODE DETAIL: READ-ONLY (LIHAT, PRATINJAU, UNDUH)
+                // DILARANG MENAMPILKAN TOMBOL UPLOAD, GANTI, HAPUS!
+                if (detailActions) detailActions.style.display = 'flex';
+                if (editActions) editActions.style.display = 'none';
+                if (formatHint) formatHint.style.display = 'none';
+            } else {
+                // MODE EDIT: PENGELOLAAN DOKUMEN (GANTI, HAPUS, PRATINJAU, UNDUH)
+                if (detailActions) detailActions.style.display = 'none';
+                if (editActions) editActions.style.display = 'flex';
+                if (uploadBtnText) uploadBtnText.textContent = 'Ganti Kartu Pelajar';
+                if (deleteBtn) deleteBtn.style.display = 'inline-flex';
+                if (editPrevBtn) editPrevBtn.style.display = 'inline-flex';
+                if (editDownBtn) editDownBtn.style.display = 'inline-flex';
+                if (formatHint) formatHint.style.display = 'block';
+            }
+        } else {
+            // Belum tersedia
+            if (card) card.classList.remove('has-doc');
+            if (badge) badge.className = 'document-status-badge badge-unavailable';
+            if (dot) dot.style.background = '#94a3b8';
+            if (text) text.textContent = 'Belum Tersedia';
+            if (metaBox) metaBox.style.display = 'none';
+            if (emptyNotice) emptyNotice.style.display = 'block';
+
+            if (isView) {
+                // MODE DETAIL: READ-ONLY (Hanya tampilkan keterangan belum tersedia)
+                if (detailActions) detailActions.style.display = 'none';
+                if (editActions) editActions.style.display = 'none';
+                if (formatHint) formatHint.style.display = 'none';
+            } else {
+                // MODE EDIT: UPLOAD TERSEDIA
+                if (detailActions) detailActions.style.display = 'none';
+                if (editActions) editActions.style.display = 'flex';
+                if (uploadBtnText) uploadBtnText.textContent = 'Unggah Kartu Pelajar';
+                if (deleteBtn) deleteBtn.style.display = 'none';
+                if (editPrevBtn) editPrevBtn.style.display = 'none';
+                if (editDownBtn) editDownBtn.style.display = 'none';
+                if (formatHint) formatHint.style.display = 'block';
+            }
+        }
+    } catch (err) {
+        console.warn('[KartuPelajar] Gagal memuat metadata:', err);
+    }
+}
+
+function handleStudentCardFileSelect(inputEl) {
+    const file = inputEl.files && inputEl.files[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+        alert('Ukuran berkas melebihi batas maksimal 5 MB.');
+        inputEl.value = '';
+        return;
+    }
+
+    const validExtensions = ['.jpg', '.jpeg', '.png', '.pdf'];
+    const fileNameLower = file.name.toLowerCase();
+    const hasValidExt = validExtensions.some(ext => fileNameLower.endsWith(ext));
+    const validMimeTypes = ['image/jpeg', 'image/png', 'application/pdf', 'image/jpg'];
+    const hasValidMime = validMimeTypes.includes(file.type.toLowerCase()) || file.type === '';
+
+    if (!hasValidExt && !hasValidMime) {
+        alert('Format file tidak didukung. Harap pilih berkas dengan format JPG, JPEG, PNG, atau PDF.');
+        inputEl.value = '';
+        return;
+    }
+
+    pendingStudentCardFile = file;
+
+    const pendingBox = document.getElementById('student_card_pending_box');
+    const pendingName = document.getElementById('student_card_pending_name');
+    const pendingSize = document.getElementById('student_card_pending_size');
+
+    if (pendingName) pendingName.textContent = file.name;
+    if (pendingSize) pendingSize.textContent = '(' + formatDocumentFileSize(file.size) + ')';
+    if (pendingBox) pendingBox.style.display = 'flex';
+}
+
+function cancelPendingStudentCard() {
+    pendingStudentCardFile = null;
+    const fileInput = document.getElementById('student_card_file_input');
+    if (fileInput) fileInput.value = '';
+    const pendingBox = document.getElementById('student_card_pending_box');
+    if (pendingBox) pendingBox.style.display = 'none';
+}
+
+async function handleDeleteStudentKartuPelajar() {
+    if (!currentStudentModalId) return;
+    const fileName = (currentStudentKartuPelajarMeta && currentStudentKartuPelajarMeta.file_name) || 'Kartu Pelajar';
+    const confirmMsg = "Apakah Anda yakin ingin menghapus dokumen Kartu Pelajar '" + fileName + "'?\nTindakan ini tidak dapat dibatalkan.";
+    if (typeof window.simataConfirm === 'function') {
+        if (!await window.simataConfirm(confirmMsg)) return;
+    } else {
+        if (!confirm(confirmMsg)) return;
+    }
+
+    showModalProcessing('studentModal', 'Menghapus Kartu Pelajar...', 'Mohon tunggu sebentar...');
+    try {
+        const res = await simataClient.deleteStudentKartuPelajar(currentStudentModalId);
+        hideModalProcessing('studentModal');
+        if (res && res.success) {
+            showToast('success', 'Berhasil', 'Kartu Pelajar berhasil dihapus.');
+            await loadStudentKartuPelajarInModal(currentStudentModalId, false);
+        } else {
+            showToast('error', 'Gagal', (res && res.message) || 'Gagal menghapus Kartu Pelajar.');
+        }
+    } catch (err) {
+        hideModalProcessing('studentModal');
+        showToast('error', 'Kesalahan', 'Gagal menghapus Kartu Pelajar: ' + (err.message || err));
+    }
+}
+
+async function previewCurrentStudentKartuPelajar() {
+    if (!currentStudentModalId) return;
+
+    const modal = document.getElementById('documentPreviewModal');
+    if (!modal) return;
+
+    const titleEl = document.getElementById('docPreviewTitle');
+    const subtitleEl = document.getElementById('docPreviewSubtitle');
+    const loadingEl = document.getElementById('docPreviewLoading');
+    const imgEl = document.getElementById('docPreviewImg');
+    const iframeEl = document.getElementById('docPreviewIframe');
+    const errorEl = document.getElementById('docPreviewError');
+
+    if (titleEl) titleEl.textContent = 'Pratinjau Dokumen — Kartu Pelajar';
+    if (subtitleEl) subtitleEl.textContent = 'Siswa: ' + (currentStudentModalName || currentStudentModalId);
+
+    // Reset preview view
+    if (imgEl) { imgEl.style.display = 'none'; imgEl.src = ''; }
+    if (iframeEl) { iframeEl.style.display = 'none'; iframeEl.src = ''; }
+    if (errorEl) errorEl.style.display = 'none';
+    if (loadingEl) loadingEl.style.display = 'block';
+
+    if (currentDocPreviewObjectUrl) {
+        URL.revokeObjectURL(currentDocPreviewObjectUrl);
+        currentDocPreviewObjectUrl = null;
+    }
+
+    modal.style.display = 'flex';
+
+    try {
+        const result = await simataClient.getStudentKartuPelajarBlob(currentStudentModalId);
+        if (!result || !result.blob) {
+            if (loadingEl) loadingEl.style.display = 'none';
+            if (errorEl) errorEl.style.display = 'block';
+            return;
+        }
+
+        const blob = result.blob;
+        const contentType = result.contentType || blob.type || 'application/pdf';
+        currentDocPreviewObjectUrl = URL.createObjectURL(blob);
+
+        if (loadingEl) loadingEl.style.display = 'none';
+
+        if (contentType.startsWith('image/')) {
+            if (imgEl) {
+                imgEl.src = currentDocPreviewObjectUrl;
+                imgEl.style.display = 'block';
+            }
+        } else {
+            // PDF or other document
+            if (iframeEl) {
+                iframeEl.src = currentDocPreviewObjectUrl + '#toolbar=1';
+                iframeEl.style.display = 'block';
+            }
+        }
+    } catch (err) {
+        console.error('[DocumentPreview] Error fetching document blob:', err);
+        if (loadingEl) loadingEl.style.display = 'none';
+        if (errorEl) errorEl.style.display = 'block';
+    }
+}
+
+function closeDocumentPreviewModal() {
+    const modal = document.getElementById('documentPreviewModal');
+    if (modal) modal.style.display = 'none';
+
+    const imgEl = document.getElementById('docPreviewImg');
+    if (imgEl) { imgEl.src = ''; imgEl.style.display = 'none'; }
+
+    const iframeEl = document.getElementById('docPreviewIframe');
+    if (iframeEl) {
+        iframeEl.removeAttribute('src');
+        iframeEl.src = 'about:blank';
+        iframeEl.style.display = 'none';
+    }
+
+    if (currentDocPreviewObjectUrl) {
+        URL.revokeObjectURL(currentDocPreviewObjectUrl);
+        currentDocPreviewObjectUrl = null;
+    }
+}
+
+async function downloadCurrentStudentKartuPelajar() {
+    if (!currentStudentModalId) return;
+    try {
+        await simataClient.downloadStudentKartuPelajar(currentStudentModalId, currentStudentModalName);
+    } catch (err) {
+        alert('Gagal mengunduh Kartu Pelajar: ' + (err.message || err));
+    }
+}
+
 function openStudentModal(mode, studentId) {
     const modal = document.getElementById('studentModal');
     if (!modal) return;
+
+    // RBAC Frontend Guard: Non-admin users are strictly restricted to 'view' mode
+    if (!isCurrentUserAdmin) {
+        if (mode === 'create') return;
+        mode = 'view';
+    }
+
     const title = document.getElementById('studentModalTitle');
     const idField = document.getElementById('f_studentId');
     const qrField = document.getElementById('f_qrCodeId');
@@ -5252,6 +6398,9 @@ function openStudentModal(mode, studentId) {
         if (hint) { hint.textContent = ''; hint.style.display = 'none'; }
         const cropBtn = document.getElementById('student_photo_crop_btn');
         if (cropBtn) cropBtn.style.display = 'none';
+        resetStudentCardUI();
+        const editActions = document.getElementById('student_card_edit_actions');
+        if (editActions) editActions.style.display = 'flex';
         modal.style.display = 'flex';
         return;
     }
@@ -5310,6 +6459,9 @@ function openStudentModal(mode, studentId) {
 
         // Load photo asynchronously using authenticated blob request
         loadStudentPhotoInModal(s.studentId, isView);
+
+        // Load Kartu Pelajar (FEATURE 004)
+        loadStudentKartuPelajarInModal(s.studentId, isView);
     }).withFailureHandler(function(){ alert('Gagal memuat data siswa.'); }).getStudentById(studentId);
 }
 
@@ -5317,6 +6469,7 @@ function closeStudentModal() {
     const m = document.getElementById('studentModal');
     if (m && m.querySelector('.modal-processing-overlay.active')) return;
     resetStudentPhotoUI();
+    resetStudentCardUI();
     if (m) m.style.display = 'none';
 }
 
@@ -5357,11 +6510,19 @@ function saveStudentFromModal() {
                         alert('Data siswa tersimpan, namun foto gagal diunggah: ' + (photoErr.message || photoErr));
                     }
                 }
+                if (pendingStudentCardFile) {
+                    try {
+                        await simataClient.uploadStudentKartuPelajar(id, pendingStudentCardFile);
+                    } catch (cardErr) {
+                        console.error('Gagal mengunggah Kartu Pelajar:', cardErr);
+                        alert('Data siswa berhasil disimpan, namun Kartu Pelajar gagal diunggah: ' + (cardErr.message || cardErr) + '. Silakan coba upload kembali melalui Edit Siswa.');
+                    }
+                }
                 hideModalProcessing('studentModal');
                 setButtonLoading(saveBtn, false, '', 'Simpan');
                 closeStudentModal();
                 loadStudents();
-                showToast("success", "Berhasil", pendingPhotoFile ? "Data siswa dan pasfoto berhasil diperbarui" : "Data siswa berhasil diperbarui");
+                showToast("success", "Berhasil", "Data siswa berhasil diperbarui.");
             } else {
                 hideModalProcessing('studentModal');
                 setButtonLoading(saveBtn, false, '', 'Simpan');
@@ -5374,13 +6535,24 @@ function saveStudentFromModal() {
         }).updateStudent(token, id, payload);
     } else {
         // create -> server generates studentId & qrCodeId
-        simataClient.withSuccessHandler(function(cRes){
-            hideModalProcessing('studentModal');
-            setButtonLoading(saveBtn, false, '', 'Simpan');
+        simataClient.withSuccessHandler(async function(cRes){
             if (cRes && cRes.success) {
+                const newStudentId = (cRes.data && cRes.data.student_id) || (cRes.student && cRes.student.studentId);
+                if (newStudentId && pendingStudentCardFile) {
+                    try {
+                        await simataClient.uploadStudentKartuPelajar(newStudentId, pendingStudentCardFile);
+                    } catch (cardErr) {
+                        console.error('Gagal mengunggah Kartu Pelajar pada siswa baru:', cardErr);
+                        alert('Siswa berhasil ditambahkan, namun Kartu Pelajar gagal diunggah: ' + (cardErr.message || cardErr) + '. Silakan coba upload kembali melalui Edit Siswa.');
+                    }
+                }
+                hideModalProcessing('studentModal');
+                setButtonLoading(saveBtn, false, '', 'Simpan');
                 closeStudentModal(); loadStudents();
                 showToast("success", "Berhasil", "Siswa berhasil ditambahkan.");
             } else {
+                hideModalProcessing('studentModal');
+                setButtonLoading(saveBtn, false, '', 'Simpan');
                 alert((cRes && cRes.message) || 'Gagal menambahkan siswa.');
             }
         }).withFailureHandler(function(){
@@ -5816,7 +6988,649 @@ function loadDashboard() {
 
 }
 
-// Teachers module
+/* ==========================================================================
+   FEATURE: MASTER DATA GURU TABLE CONTROLLER & STATE ENGINE (BUG 36)
+   ========================================================================== */
+
+let allLoadedTeachers = [];
+
+const masterTeacherTableState = {
+    pageSize: 10,
+    currentPage: 1,
+    searchQuery: '',
+    sortField: 'name',
+    sortDirection: 'asc',
+    visibleColumns: {
+        no: true,
+        teacherId: false,
+        nik: true,
+        nip: false,
+        nuptk: false,
+        name: true,
+        gender: true,
+        position: true,
+        subject: true,
+        status: true,
+        action: true
+    }
+};
+
+const masterTeacherColumnDefs = [
+    { key: 'no', label: 'No', defaultVisible: true, sortable: false, width: '44px', align: 'center' },
+    { key: 'teacherId', label: 'Teacher ID', defaultVisible: false, sortable: true, width: '130px', align: 'center' },
+    { key: 'nik', label: 'NIK', defaultVisible: true, sortable: true, width: '145px', align: 'center' },
+    { key: 'nip', label: 'NIP', defaultVisible: false, sortable: true, width: '140px', align: 'center' },
+    { key: 'nuptk', label: 'NUPTK', defaultVisible: false, sortable: true, width: '140px', align: 'center' },
+    { key: 'name', label: 'Nama Lengkap', defaultVisible: true, sortable: true, width: 'auto', align: 'left' },
+    { key: 'gender', label: 'Jenis Kelamin', defaultVisible: true, sortable: true, width: '105px', align: 'center' },
+    { key: 'position', label: 'Jabatan', defaultVisible: true, sortable: true, width: '130px', align: 'center' },
+    { key: 'subject', label: 'Mata Pelajaran', defaultVisible: true, sortable: true, width: '150px', align: 'center' },
+    { key: 'status', label: 'Status', defaultVisible: true, sortable: true, width: '95px', align: 'center' },
+    { key: 'action', label: 'Aksi', defaultVisible: true, sortable: false, width: '140px', align: 'center' }
+];
+
+function initMasterTeacherColumnVisibility() {
+    try {
+        const stored = localStorage.getItem('simata_master_teachers_cols');
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            Object.keys(parsed).forEach(function(k) {
+                if (k in masterTeacherTableState.visibleColumns) {
+                    masterTeacherTableState.visibleColumns[k] = parsed[k];
+                }
+            });
+        }
+    } catch (_) {}
+    renderMasterTeacherColVisMenu();
+}
+
+function renderMasterTeacherColVisMenu() {
+    const container = document.getElementById('masterTeacherColVisOptions');
+    if (!container) return;
+    container.innerHTML = masterTeacherColumnDefs
+        .filter(function(c) { return c.key !== 'no' && c.key !== 'action'; })
+        .map(function(c) {
+            const checked = masterTeacherTableState.visibleColumns[c.key] ? 'checked' : '';
+            return '<label class="col-vis-item">' +
+                '<input type="checkbox" data-col="' + c.key + '" ' + checked + ' onchange="toggleMasterTeacherColVisibility(\'' + c.key + '\', this.checked)" />' +
+                '<span>' + escapeHtml(c.label) + '</span>' +
+            '</label>';
+        }).join('');
+}
+
+function toggleMasterTeacherColVisibility(colKey, isVisible) {
+    masterTeacherTableState.visibleColumns[colKey] = isVisible;
+    try {
+        localStorage.setItem('simata_master_teachers_cols', JSON.stringify(masterTeacherTableState.visibleColumns));
+    } catch (_) {}
+    renderMasterTeacherThead();
+    renderMasterTeacherTbody();
+}
+
+function populateMasterTeacherFilters(teachers) {
+    const posSelect = document.getElementById('masterTeacherPositionFilter');
+    const subjSelect = document.getElementById('masterTeacherSubjectFilter');
+    if (!posSelect && !subjSelect) return;
+
+    if (posSelect) {
+        const currentPos = posSelect.value;
+        const positions = Array.from(new Set(teachers.map(function(t) { return (t.position || '').trim(); }).filter(Boolean))).sort();
+        posSelect.innerHTML = '<option value="">(Semua Jabatan)</option>' +
+            positions.map(function(p) { return '<option value="' + escapeAttr(p) + '">' + escapeHtml(p) + '</option>'; }).join('');
+        posSelect.value = currentPos || '';
+    }
+
+    if (subjSelect) {
+        const currentSubj = subjSelect.value;
+        const subjects = Array.from(new Set(teachers.map(function(t) { return (t.subject || '').trim(); }).filter(Boolean))).sort();
+        subjSelect.innerHTML = '<option value="">(Semua Mapel)</option>' +
+            subjects.map(function(s) { return '<option value="' + escapeAttr(s) + '">' + escapeHtml(s) + '</option>'; }).join('');
+        subjSelect.value = currentSubj || '';
+    }
+}
+
+function getFilteredMasterTeacherList() {
+    const posFilter = document.getElementById('masterTeacherPositionFilter');
+    const selectedPosition = posFilter ? posFilter.value.trim() : '';
+
+    const subjFilter = document.getElementById('masterTeacherSubjectFilter');
+    const selectedSubject = subjFilter ? subjFilter.value.trim() : '';
+
+    const statusFilter = document.getElementById('masterTeacherStatusFilter');
+    const selectedStatus = statusFilter ? statusFilter.value.trim() : '';
+
+    const query = (masterTeacherTableState.searchQuery || '').toLowerCase();
+
+    return allLoadedTeachers.filter(function(t) {
+        if (selectedPosition && String(t.position || '').toLowerCase() !== selectedPosition.toLowerCase()) {
+            return false;
+        }
+
+        if (selectedSubject && String(t.subject || '').toLowerCase() !== selectedSubject.toLowerCase()) {
+            return false;
+        }
+
+        if (selectedStatus) {
+            const tStat = (t.status || 'Active').toLowerCase();
+            const filterStat = selectedStatus.toLowerCase();
+            if (filterStat === 'active' || filterStat === 'aktif') {
+                if (tStat !== 'active' && tStat !== 'aktif') return false;
+            } else if (filterStat === 'inactive' || filterStat === 'tidak aktif') {
+                if (tStat === 'active' || tStat === 'aktif') return false;
+            } else {
+                if (tStat !== filterStat) return false;
+            }
+        }
+
+        if (query) {
+            const name = String(t.name || '').toLowerCase();
+            const nik = String(t.nik || '').toLowerCase();
+            const nip = String(t.nip || '').toLowerCase();
+            const nuptk = String(t.nuptk || '').toLowerCase();
+            const pos = String(t.position || '').toLowerCase();
+            const subj = String(t.subject || '').toLowerCase();
+            const tid = String(t.teacherId || '').toLowerCase();
+            const gender = String(t.gender || '').toLowerCase();
+            const village = String(t.village || '').toLowerCase();
+            const district = String(t.district || '').toLowerCase();
+            const regency = String(t.regency || '').toLowerCase();
+            const tStat = (t.status || 'Active').toLowerCase();
+            const statText = (tStat === 'active' || tStat === 'aktif') ? 'aktif' : 'tidak aktif';
+
+            const match = name.includes(query) ||
+                          nik.includes(query) ||
+                          nip.includes(query) ||
+                          nuptk.includes(query) ||
+                          pos.includes(query) ||
+                          subj.includes(query) ||
+                          tid.includes(query) ||
+                          gender.includes(query) ||
+                          village.includes(query) ||
+                          district.includes(query) ||
+                          regency.includes(query) ||
+                          statText.includes(query) ||
+                          tStat.includes(query);
+            if (!match) return false;
+        }
+
+        return true;
+    });
+}
+
+function sortMasterTeacherRecords(records, sortField, sortDirection) {
+    const dir = sortDirection === 'asc' ? 1 : -1;
+    return records.slice().sort(function(a, b) {
+        let valA = '', valB = '';
+        switch (sortField) {
+            case 'teacherId': valA = a.teacherId || ''; valB = b.teacherId || ''; break;
+            case 'nik': valA = a.nik || ''; valB = b.nik || ''; break;
+            case 'nip': valA = a.nip || ''; valB = b.nip || ''; break;
+            case 'nuptk': valA = a.nuptk || ''; valB = b.nuptk || ''; break;
+            case 'name': valA = a.name || ''; valB = b.name || ''; break;
+            case 'gender': valA = a.gender || ''; valB = b.gender || ''; break;
+            case 'position': valA = a.position || ''; valB = b.position || ''; break;
+            case 'subject': valA = a.subject || ''; valB = b.subject || ''; break;
+            case 'status':
+                valA = (a.status || 'Active').toLowerCase() === 'active' ? 'Aktif' : 'Tidak Aktif';
+                valB = (b.status || 'Active').toLowerCase() === 'active' ? 'Aktif' : 'Tidak Aktif';
+                break;
+            default:
+                valA = a.name || ''; valB = b.name || '';
+        }
+        return String(valA).localeCompare(String(valB), undefined, { numeric: true, sensitivity: 'base' }) * dir;
+    });
+}
+
+function renderMasterTeacherThead() {
+    const thead = document.getElementById('teachersThead');
+    if (!thead) return;
+    const cols = masterTeacherColumnDefs.filter(function(c) { return masterTeacherTableState.visibleColumns[c.key]; });
+    thead.innerHTML = '<tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">' +
+        cols.map(function(c) {
+            if (!c.sortable) {
+                return '<th style="padding:12px 8px;text-align:' + c.align + ';width:' + c.width + ';font-size:12.5px;font-weight:700;color:#475569;">' + escapeHtml(c.label) + '</th>';
+            }
+            const isSorted = masterTeacherTableState.sortField === c.key;
+            const sortClass = isSorted ? (masterTeacherTableState.sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc') : '';
+            const indicator = isSorted ? (masterTeacherTableState.sortDirection === 'asc' ? '↑' : '↓') : '↕';
+            return '<th class="sortable-th ' + sortClass + '" data-col="' + c.key + '" data-align="' + c.align + '" onclick="handleMasterTeacherSort(\'' + c.key + '\')" style="padding:12px 10px;text-align:' + c.align + ';width:' + c.width + ';font-size:12.5px;font-weight:700;color:#475569;">' +
+                '<div class="th-content">' +
+                    '<span>' + escapeHtml(c.label) + '</span>' +
+                    '<span class="sort-indicator">' + indicator + '</span>' +
+                '</div>' +
+            '</th>';
+        }).join('') +
+    '</tr>';
+}
+
+function handleMasterTeacherSort(colKey) {
+    if (masterTeacherTableState.sortField === colKey) {
+        masterTeacherTableState.sortDirection = masterTeacherTableState.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        masterTeacherTableState.sortField = colKey;
+        masterTeacherTableState.sortDirection = 'asc';
+    }
+    masterTeacherTableState.currentPage = 1;
+    renderMasterTeacherThead();
+    renderMasterTeacherTbody();
+}
+
+function renderMasterTeacherTbody() {
+    const tbody = document.getElementById('teachersTbody');
+    if (!tbody) return;
+
+    renderMasterTeacherActiveFilterChips();
+
+    const filtered = getFilteredMasterTeacherList();
+    const sorted = sortMasterTeacherRecords(filtered, masterTeacherTableState.sortField, masterTeacherTableState.sortDirection);
+    const visibleCols = masterTeacherColumnDefs.filter(function(c) { return masterTeacherTableState.visibleColumns[c.key]; });
+    const totalVisibleColCount = visibleCols.length || 8;
+
+    const total = sorted.length;
+    const pageSize = masterTeacherTableState.pageSize;
+    const totalPages = pageSize === 'all' ? 1 : Math.ceil(total / pageSize) || 1;
+    if (masterTeacherTableState.currentPage > totalPages) {
+        masterTeacherTableState.currentPage = totalPages;
+    }
+    const curPage = masterTeacherTableState.currentPage;
+
+    // Counter
+    const counterEl = document.getElementById('masterTeacherCounter');
+    if (counterEl) {
+        if (total === 0) {
+            counterEl.textContent = '0 dari 0 data';
+        } else if (pageSize === 'all') {
+            counterEl.textContent = 'Menampilkan 1–' + total + ' dari ' + total + ' data';
+        } else {
+            const start = (curPage - 1) * pageSize + 1;
+            const end = Math.min(curPage * pageSize, total);
+            counterEl.textContent = 'Menampilkan ' + start + '–' + end + ' dari ' + total + ' data';
+        }
+    }
+
+    // Pagination
+    renderPaginationControl('masterTeacherPagination', curPage, totalPages, pageSize, 'goToMasterTeacherPage');
+
+    if (total === 0) {
+        if (allLoadedTeachers.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="' + totalVisibleColCount + '" class="attendance-empty-cell">' +
+                '<div class="empty-state-content">' +
+                    '<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#94a3b8" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' +
+                    '<p class="empty-state-title">Belum ada data guru</p>' +
+                '</div>' +
+            '</td></tr>';
+        } else {
+            tbody.innerHTML = '<tr><td colspan="' + totalVisibleColCount + '" class="attendance-empty-cell">' +
+                '<div class="empty-state-content">' +
+                    '<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#94a3b8" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>' +
+                    '<p class="empty-state-title">Tidak ada data guru yang sesuai kriteria</p>' +
+                    '<p class="empty-state-sub">Coba sesuaikan filter atau kata kunci pencarian Anda.</p>' +
+                    '<button type="button" class="btn-empty-reset" onclick="resetAllMasterTeacherFilters()">Reset Filter</button>' +
+                '</div>' +
+            '</td></tr>';
+        }
+        return;
+    }
+
+    const pageRows = pageSize === 'all' ? sorted : sorted.slice((curPage - 1) * pageSize, curPage * pageSize);
+    const startIdx = pageSize === 'all' ? 0 : (curPage - 1) * pageSize;
+
+    tbody.innerHTML = pageRows.map(function(t, idx) {
+        const no = startIdx + idx + 1;
+        const nik = escapeHtml(t.nik || '-');
+        const nip = escapeHtml(t.nip || '-');
+        const nuptk = escapeHtml(t.nuptk || '-');
+        const name = escapeHtml(t.name || '-');
+        let genderText = '-';
+        if (t.gender) {
+            const g = String(t.gender).trim().toUpperCase();
+            if (g === 'L' || g === 'LAKI-LAKI' || g === 'LAKI LAKI') genderText = 'L';
+            else if (g === 'P' || g === 'PEREMPUAN') genderText = 'P';
+            else genderText = escapeHtml(t.gender);
+        }
+        const position = escapeHtml(t.position || '-');
+        const subject = escapeHtml(t.subject || '-');
+        const status = (t.status || 'Active');
+        const isAktif = status.toLowerCase() === 'active' || status.toLowerCase() === 'aktif';
+        const statusBadge = isAktif
+            ? '<span class="status-badge status-badge-active">Aktif</span>'
+            : '<span class="status-badge status-badge-inactive">Tidak Aktif</span>';
+
+        const actionButtons = '<div class="student-action-group" style="justify-content:center;">' +
+            (isCurrentUserAdmin ? '<button type="button" class="btn-action btn-action-edit" onclick="openTeacherModal(\'edit\', \'' + escapeAttr(t.teacherId) + '\')" title="Edit Guru">' +
+              '<svg viewBox="0 0 24 24" class="btn-action-icon"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' +
+              '<span>Edit</span>' +
+            '</button>' : '') +
+            '<button type="button" class="btn-action btn-action-detail" onclick="openTeacherModal(\'view\', \'' + escapeAttr(t.teacherId) + '\')" title="Detail Guru">' +
+              '<svg viewBox="0 0 24 24" class="btn-action-icon"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>' +
+              '<span>Detail</span>' +
+            '</button>' +
+          '</div>';
+
+        const cells = [];
+        if (masterTeacherTableState.visibleColumns.no) {
+            cells.push('<td style="padding:10px 8px;text-align:center;color:#64748b;font-size:12.5px;">' + no + '</td>');
+        }
+        if (masterTeacherTableState.visibleColumns.teacherId) {
+            cells.push('<td style="padding:10px 10px;text-align:center;font-size:12px;font-family:monospace;color:#64748b;">' + escapeHtml(t.teacherId || '-') + '</td>');
+        }
+        if (masterTeacherTableState.visibleColumns.nik) {
+            cells.push('<td style="padding:10px 10px;text-align:center;font-size:12.5px;color:#334155;font-family:monospace;">' + nik + '</td>');
+        }
+        if (masterTeacherTableState.visibleColumns.nip) {
+            cells.push('<td style="padding:10px 10px;text-align:center;font-size:12.5px;color:#334155;font-family:monospace;">' + nip + '</td>');
+        }
+        if (masterTeacherTableState.visibleColumns.nuptk) {
+            cells.push('<td style="padding:10px 10px;text-align:center;font-size:12.5px;color:#334155;font-family:monospace;">' + nuptk + '</td>');
+        }
+        if (masterTeacherTableState.visibleColumns.name) {
+            cells.push('<td style="padding:10px 14px;text-align:left;font-size:13px;font-weight:600;color:#0f172a;">' + name + '</td>');
+        }
+        if (masterTeacherTableState.visibleColumns.gender) {
+            cells.push('<td style="padding:10px 8px;text-align:center;font-size:12.5px;color:#334155;">' + genderText + '</td>');
+        }
+        if (masterTeacherTableState.visibleColumns.position) {
+            cells.push('<td style="padding:10px 8px;text-align:center;font-size:12.5px;color:#334155;">' + position + '</td>');
+        }
+        if (masterTeacherTableState.visibleColumns.subject) {
+            cells.push('<td style="padding:10px 8px;text-align:center;font-size:12.5px;color:#334155;">' + subject + '</td>');
+        }
+        if (masterTeacherTableState.visibleColumns.status) {
+            cells.push('<td style="padding:10px 8px;text-align:center;">' + statusBadge + '</td>');
+        }
+        if (masterTeacherTableState.visibleColumns.action) {
+            cells.push('<td style="padding:10px 12px;text-align:center;">' + actionButtons + '</td>');
+        }
+
+        return '<tr class="simata-table-row">' + cells.join('') + '</tr>';
+    }).join('');
+}
+
+function goToMasterTeacherPage(page) {
+    masterTeacherTableState.currentPage = page;
+    renderMasterTeacherTbody();
+    const tableWrapper = document.querySelector('#teachersContent .attendance-table-wrapper');
+    if (tableWrapper) tableWrapper.scrollTop = 0;
+}
+
+function renderMasterTeacherActiveFilterChips() {
+    const bar = document.getElementById('masterTeacherActiveFiltersBar');
+    const chipsContainer = document.getElementById('masterTeacherActiveFilterChips');
+    if (!bar || !chipsContainer) return;
+
+    const posVal = document.getElementById('masterTeacherPositionFilter') ? document.getElementById('masterTeacherPositionFilter').value : '';
+    const subjVal = document.getElementById('masterTeacherSubjectFilter') ? document.getElementById('masterTeacherSubjectFilter').value : '';
+    const statusVal = document.getElementById('masterTeacherStatusFilter') ? document.getElementById('masterTeacherStatusFilter').value : '';
+    const searchVal = masterTeacherTableState.searchQuery;
+
+    const chips = [];
+    if (posVal) {
+        chips.push({
+            id: 'position',
+            label: 'Jabatan: <strong>' + escapeHtml(posVal) + '</strong>',
+            clear: function() {
+                const el = document.getElementById('masterTeacherPositionFilter');
+                if (el) el.value = '';
+                masterTeacherTableState.currentPage = 1;
+                renderMasterTeacherTbody();
+            }
+        });
+    }
+    if (subjVal) {
+        chips.push({
+            id: 'subject',
+            label: 'Mapel: <strong>' + escapeHtml(subjVal) + '</strong>',
+            clear: function() {
+                const el = document.getElementById('masterTeacherSubjectFilter');
+                if (el) el.value = '';
+                masterTeacherTableState.currentPage = 1;
+                renderMasterTeacherTbody();
+            }
+        });
+    }
+    if (statusVal) {
+        const statusLabel = (statusVal === 'Active' || statusVal === 'Aktif') ? 'Aktif' : 'Tidak Aktif';
+        chips.push({
+            id: 'status',
+            label: 'Status: <strong>' + escapeHtml(statusLabel) + '</strong>',
+            clear: function() {
+                const el = document.getElementById('masterTeacherStatusFilter');
+                if (el) el.value = '';
+                masterTeacherTableState.currentPage = 1;
+                renderMasterTeacherTbody();
+            }
+        });
+    }
+    if (searchVal) {
+        chips.push({
+            id: 'search',
+            label: 'Cari: <strong>"' + escapeHtml(searchVal) + '"</strong>',
+            clear: function() {
+                const sInput = document.getElementById('masterTeacherSearchInput');
+                if (sInput) sInput.value = '';
+                const cBtn = document.getElementById('masterTeacherSearchClearBtn');
+                if (cBtn) cBtn.style.display = 'none';
+                masterTeacherTableState.searchQuery = '';
+                masterTeacherTableState.currentPage = 1;
+                renderMasterTeacherTbody();
+            }
+        });
+    }
+
+    if (chips.length === 0) {
+        bar.style.display = 'none';
+        chipsContainer.innerHTML = '';
+        return;
+    }
+
+    bar.style.display = 'flex';
+    window._masterTeacherActiveFilterChipsMap = chips;
+    chipsContainer.innerHTML = chips.map(function(c, i) {
+        return '<span class="active-filter-chip">' +
+            '<span>' + c.label + '</span>' +
+            '<button type="button" class="chip-remove-btn" onclick="window._masterTeacherActiveFilterChipsMap[' + i + '].clear()" title="Hapus filter ini">&times;</button>' +
+        '</span>';
+    }).join('');
+}
+
+function resetAllMasterTeacherFilters() {
+    const posEl = document.getElementById('masterTeacherPositionFilter');
+    if (posEl) posEl.value = '';
+    const subjEl = document.getElementById('masterTeacherSubjectFilter');
+    if (subjEl) subjEl.value = '';
+    const statusEl = document.getElementById('masterTeacherStatusFilter');
+    if (statusEl) statusEl.value = '';
+    const sInput = document.getElementById('masterTeacherSearchInput');
+    if (sInput) sInput.value = '';
+    const cBtn = document.getElementById('masterTeacherSearchClearBtn');
+    if (cBtn) cBtn.style.display = 'none';
+
+    masterTeacherTableState.searchQuery = '';
+    masterTeacherTableState.currentPage = 1;
+    renderMasterTeacherTbody();
+}
+
+let masterTeacherSearchDebounceTimer = null;
+function handleMasterTeacherSearchInput(e) {
+    const query = e.target.value;
+    const clearBtn = document.getElementById('masterTeacherSearchClearBtn');
+    if (clearBtn) clearBtn.style.display = query ? 'inline-flex' : 'none';
+
+    clearTimeout(masterTeacherSearchDebounceTimer);
+    masterTeacherSearchDebounceTimer = setTimeout(function() {
+        masterTeacherTableState.searchQuery = query.trim();
+        masterTeacherTableState.currentPage = 1;
+        renderMasterTeacherTbody();
+    }, 300);
+}
+
+function exportMasterTeacherData(format) {
+    const data = getFilteredMasterTeacherList();
+    const sorted = sortMasterTeacherRecords(data, masterTeacherTableState.sortField, masterTeacherTableState.sortDirection);
+    if (!sorted || sorted.length === 0) {
+        alert('Tidak ada data guru untuk diekspor.');
+        return;
+    }
+    const headers = ['No', 'Teacher ID', 'NIK', 'NIP', 'NUPTK', 'Nama Lengkap', 'Jenis Kelamin', 'Jabatan', 'Mata Pelajaran', 'Status'];
+    const rows = sorted.map(function(t, idx) {
+        let genderText = '-';
+        if (t.gender) {
+            const g = String(t.gender).trim().toUpperCase();
+            if (g === 'L' || g === 'LAKI-LAKI' || g === 'LAKI LAKI') genderText = 'L';
+            else if (g === 'P' || g === 'PEREMPUAN') genderText = 'P';
+            else genderText = t.gender;
+        }
+        const isAktif = (t.status || 'Active').toLowerCase() === 'active' || (t.status || '').toLowerCase() === 'aktif';
+        return [
+            idx + 1,
+            t.teacherId || '',
+            t.nik || '-',
+            t.nip || '-',
+            t.nuptk || '-',
+            t.name || '',
+            genderText,
+            t.position || '-',
+            t.subject || '-',
+            isAktif ? 'Aktif' : 'Tidak Aktif'
+        ];
+    });
+    const today = new Date().toISOString().split('T')[0];
+    const filename = 'Daftar_Guru_' + today + '.csv';
+    exportCsvFile(filename, headers, rows);
+}
+
+function printMasterTeacherReport() {
+    const posVal = document.getElementById('masterTeacherPositionFilter') ? document.getElementById('masterTeacherPositionFilter').value : '';
+    const subjVal = document.getElementById('masterTeacherSubjectFilter') ? document.getElementById('masterTeacherSubjectFilter').value : '';
+    const statusVal = document.getElementById('masterTeacherStatusFilter') ? document.getElementById('masterTeacherStatusFilter').value : '';
+
+    const data = getFilteredMasterTeacherList();
+    const sorted = sortMasterTeacherRecords(data, masterTeacherTableState.sortField, masterTeacherTableState.sortDirection);
+    if (!sorted || sorted.length === 0) {
+        alert('Tidak ada data guru untuk dicetak.');
+        return;
+    }
+
+    const posLabel = posVal || 'Semua Jabatan';
+    const subjLabel = subjVal || 'Semua Mapel';
+    let statusLabel = 'Semua Status';
+    if (statusVal) {
+        statusLabel = (statusVal === 'Active' || statusVal === 'Aktif') ? 'Aktif' : 'Tidak Aktif';
+    }
+    const today = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    const rowsHtml = sorted.map(function(t, idx) {
+        const no = idx + 1;
+        const nik = escapeHtml(t.nik || '-');
+        const nip = escapeHtml(t.nip || '-');
+        const name = escapeHtml(t.name || '-');
+        let genderText = '-';
+        if (t.gender) {
+            const g = String(t.gender).trim().toUpperCase();
+            if (g === 'L' || g === 'LAKI-LAKI' || g === 'LAKI LAKI') genderText = 'L';
+            else if (g === 'P' || g === 'PEREMPUAN') genderText = 'P';
+            else genderText = escapeHtml(t.gender);
+        }
+        const position = escapeHtml(t.position || '-');
+        const subject = escapeHtml(t.subject || '-');
+        const isAktif = (t.status || 'Active').toLowerCase() === 'active' || (t.status || '').toLowerCase() === 'aktif';
+        const statusText = isAktif ? 'Aktif' : 'Tidak Aktif';
+        const statusColor = isAktif ? '#15803d' : '#b91c1c';
+
+        return '<tr>' +
+            '<td style="text-align:center;">' + no + '</td>' +
+            '<td class="col-nik">' + nik + '</td>' +
+            '<td class="col-nik">' + nip + '</td>' +
+            '<td class="col-name">' + name + '</td>' +
+            '<td style="text-align:center;">' + genderText + '</td>' +
+            '<td style="text-align:center;">' + position + '</td>' +
+            '<td style="text-align:center;">' + subject + '</td>' +
+            '<td style="text-align:center;font-weight:700;color:' + statusColor + ';">' + statusText + '</td>' +
+        '</tr>';
+    }).join('');
+
+    const printHtml = '<!DOCTYPE html>' +
+        '<html><head><meta charset="utf-8">' +
+        '<title>Cetak Data Guru - SIMATA</title>' +
+        '<style>' +
+        '@page { size: A4 landscape; margin: 12mm 15mm; }' +
+        'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; margin: 0; padding: 0; color: #0f172a; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }' +
+        '.print-container { width: 100%; }' +
+        '.report-header { text-align: center; margin-bottom: 14px; border-bottom: 2px solid #0f172a; padding-bottom: 6px; }' +
+        '.report-school { font-size: 15pt; font-weight: 800; color: #0f172a; margin: 0 0 2px 0; letter-spacing: 0.5px; }' +
+        '.report-title { font-size: 12pt; font-weight: 700; color: #1e293b; margin: 0 0 2px 0; text-transform: uppercase; }' +
+        '.report-meta-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 10pt; color: #334155; font-weight: 600; }' +
+        '.report-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 9.5pt; }' +
+        '.report-table thead { display: table-header-group; }' +
+        '.report-table tr { break-inside: avoid; page-break-inside: avoid; }' +
+        '.report-table th, .report-table td { border: 1px solid #334155; padding: 6px 6px; }' +
+        '.report-table th { background-color: #f1f5f9 !important; font-weight: 700; color: #0f172a; font-size: 9pt; text-align: center; }' +
+        '.report-table td.col-name { text-align: left; padding-left: 8px; font-weight: 600; color: #0f172a; }' +
+        '.report-table td.col-nik { font-family: monospace; font-size: 9pt; color: #334155; text-align: center; }' +
+        '.report-signatures { display: flex; justify-content: space-between; margin-top: 24px; font-size: 10pt; break-inside: avoid; page-break-inside: avoid; }' +
+        '.sig-block { text-align: center; width: 220px; }' +
+        '.sig-space { height: 55px; }' +
+        '.sig-name { font-weight: 700; text-decoration: underline; }' +
+        '@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }' +
+        '</style></head><body>' +
+        '<div class="print-container">' +
+          '<div class="report-header">' +
+            '<div class="report-school">SIMATA — MA AT-TAUJIH</div>' +
+            '<div class="report-title">DAFTAR MASTER DATA GURU & TENAGA PENDIDIK</div>' +
+          '</div>' +
+          '<div class="report-meta-bar">' +
+            '<div><strong>Jabatan:</strong> ' + escapeHtml(posLabel) + ' | <strong>Mapel:</strong> ' + escapeHtml(subjLabel) + ' | <strong>Status:</strong> ' + escapeHtml(statusLabel) + '</div>' +
+            '<div><strong>Total:</strong> ' + sorted.length + ' Guru | <strong>Tanggal Cetak:</strong> ' + escapeHtml(today) + '</div>' +
+          '</div>' +
+          '<table class="report-table">' +
+            '<thead>' +
+              '<tr>' +
+                '<th style="width:36px;">NO</th>' +
+                '<th style="width:125px;">NIK</th>' +
+                '<th style="width:120px;">NIP</th>' +
+                '<th>NAMA LENGKAP</th>' +
+                '<th style="width:45px;">L/P</th>' +
+                '<th style="width:120px;">JABATAN</th>' +
+                '<th style="width:130px;">MATA PELAJARAN</th>' +
+                '<th style="width:75px;">STATUS</th>' +
+              '</tr>' +
+            '</thead>' +
+            '<tbody>' +
+              rowsHtml +
+            '</tbody>' +
+          '</table>' +
+          '<div class="report-signatures">' +
+            '<div class="sig-block">' +
+              '<div>Mengetahui,</div>' +
+              '<div>Kepala Madrasah</div>' +
+              '<div class="sig-space"></div>' +
+              '<div class="sig-name">( ........................................ )</div>' +
+              '<div>NIP. ....................................</div>' +
+            '</div>' +
+            '<div class="sig-block">' +
+              '<div>Waka Kurikulum</div>' +
+              '<div>MA At-Taujih</div>' +
+              '<div class="sig-space"></div>' +
+              '<div class="sig-name">( ........................................ )</div>' +
+              '<div>NIP. ....................................</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<script>' +
+        'window.onload = function() { window.print(); setTimeout(function() { window.close(); }, 500); };' +
+        '<' + '/script>' +
+        '</body></html>';
+
+    const pWin = window.open('', '_blank');
+    if (!pWin) {
+        alert('Gagal membuka jendela cetak. Periksa apakah browser memblokir pop-up.');
+        return;
+    }
+    pWin.document.open();
+    pWin.document.write(printHtml);
+    pWin.document.close();
+}
+
 function initTeachersModule() {
     const menu = document.getElementById('menu-teachers');
     if (menu) menu.addEventListener('click', function(){ showTeachersView(); });
@@ -5824,12 +7638,80 @@ function initTeachersModule() {
     const addBtn = document.getElementById('addTeacherButton');
     if (addBtn) addBtn.addEventListener('click', function(){ openTeacherModal('create'); });
 
-    const searchInput = document.getElementById('teacherSearch');
-    if (searchInput) {
-        let timer = null;
-        searchInput.addEventListener('input', function(){ clearTimeout(timer); timer = setTimeout(function(){ loadTeachers(searchInput.value.trim()); }, 300); });
+    // Filter Apply & Reset
+    const filterBtn = document.getElementById('filterMasterTeacherButton');
+    if (filterBtn) {
+        filterBtn.addEventListener('click', function() {
+            masterTeacherTableState.currentPage = 1;
+            renderMasterTeacherTbody();
+        });
     }
 
+    const resetBtn = document.getElementById('resetMasterTeacherButton');
+    if (resetBtn) resetBtn.addEventListener('click', resetAllMasterTeacherFilters);
+
+    const posFilter = document.getElementById('masterTeacherPositionFilter');
+    if (posFilter) {
+        posFilter.addEventListener('change', function() {
+            masterTeacherTableState.currentPage = 1;
+            renderMasterTeacherTbody();
+        });
+    }
+
+    const subjFilter = document.getElementById('masterTeacherSubjectFilter');
+    if (subjFilter) {
+        subjFilter.addEventListener('change', function() {
+            masterTeacherTableState.currentPage = 1;
+            renderMasterTeacherTbody();
+        });
+    }
+
+    const statusFilter = document.getElementById('masterTeacherStatusFilter');
+    if (statusFilter) {
+        statusFilter.addEventListener('change', function() {
+            masterTeacherTableState.currentPage = 1;
+            renderMasterTeacherTbody();
+        });
+    }
+
+    // Toolbar Entries & Search
+    const entriesSelect = document.getElementById('masterTeacherEntriesSelect');
+    if (entriesSelect) {
+        entriesSelect.addEventListener('change', function() {
+            const val = this.value;
+            masterTeacherTableState.pageSize = (val === 'all') ? 'all' : parseInt(val, 10);
+            masterTeacherTableState.currentPage = 1;
+            renderMasterTeacherTbody();
+        });
+    }
+
+    const searchInput = document.getElementById('masterTeacherSearchInput');
+    if (searchInput) searchInput.addEventListener('input', handleMasterTeacherSearchInput);
+
+    const searchClearBtn = document.getElementById('masterTeacherSearchClearBtn');
+    if (searchClearBtn) {
+        searchClearBtn.addEventListener('click', function() {
+            if (searchInput) searchInput.value = '';
+            searchClearBtn.style.display = 'none';
+            masterTeacherTableState.searchQuery = '';
+            masterTeacherTableState.currentPage = 1;
+            renderMasterTeacherTbody();
+        });
+    }
+
+    // Export Buttons
+    const exportCsvBtn = document.getElementById('masterTeacherExportCsvBtn');
+    if (exportCsvBtn) exportCsvBtn.addEventListener('click', function() { exportMasterTeacherData('csv'); });
+    const exportExcelBtn = document.getElementById('masterTeacherExportExcelBtn');
+    if (exportExcelBtn) exportExcelBtn.addEventListener('click', function() { exportMasterTeacherData('excel'); });
+
+    // Print Button
+    const printBtn = document.getElementById('printMasterTeacherButton');
+    if (printBtn) printBtn.addEventListener('click', printMasterTeacherReport);
+
+    initMasterTeacherColumnVisibility();
+
+    // Modal buttons
     const cancelBtn = document.getElementById('teacherCancelBtn'); if (cancelBtn) cancelBtn.addEventListener('click', closeTeacherModal);
     const saveBtn = document.getElementById('teacherSaveBtn'); if (saveBtn) saveBtn.addEventListener('click', saveTeacherFromModal);
 
@@ -5855,7 +7737,9 @@ function showTeachersView() {
 
 function loadTeachers(filter) {
     const tbody = document.getElementById('teachersTbody'); if (!tbody) return;
-    renderTableLoading(tbody, 8, 'Memuat data guru...');
+    renderMasterTeacherThead();
+    const visibleCols = masterTeacherColumnDefs.filter(function(c) { return masterTeacherTableState.visibleColumns[c.key]; });
+    renderTableLoading(tbody, visibleCols.length || 8, 'Memuat data guru...');
 
     simataClient.withSuccessHandler(function(result){
         if (!result || !result.success) {
@@ -5863,72 +7747,15 @@ function loadTeachers(filter) {
             return;
         }
 
-        let teachers = result.teachers || [];
-        if (filter) {
-            const q = filter.toLowerCase();
-            teachers = teachers.filter(function(t){
-                return (t.teacherId||'').toLowerCase().includes(q) ||
-                       (t.nik||'').toLowerCase().includes(q) ||
-                       (t.name||'').toLowerCase().includes(q) ||
-                       (t.gender||'').toLowerCase().includes(q) ||
-                       (t.nip||'').toLowerCase().includes(q) ||
-                       (t.nuptk||'').toLowerCase().includes(q) ||
-                       (t.position||'').toLowerCase().includes(q) ||
-                       (t.subject||'').toLowerCase().includes(q) ||
-                       (t.village||'').toLowerCase().includes(q) ||
-                       (t.district||'').toLowerCase().includes(q) ||
-                       (t.regency||'').toLowerCase().includes(q);
-            });
-        }
-
-        if (teachers.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:#64748b;">Tidak ada data guru yang sesuai.</td></tr>';
-            return;
-        }
-
-        tbody.innerHTML = teachers.map(function(t, idx){
-            const no = idx + 1;
-            const nik = escapeHtml(t.nik || '-');
-            const name = escapeHtml(t.name || '-');
-            let genderText = '-';
-            if (t.gender) {
-                const g = String(t.gender).trim().toUpperCase();
-                if (g === 'L' || g === 'LAKI-LAKI' || g === 'LAKI LAKI') genderText = 'L';
-                else if (g === 'P' || g === 'PEREMPUAN') genderText = 'P';
-                else genderText = escapeHtml(t.gender);
-            }
-            const position = escapeHtml(t.position || '-');
-            const subject = escapeHtml(t.subject || '-');
-            const status = (t.status || 'Active');
-            const statusBadge = (status.toLowerCase() === 'active' || status.toLowerCase() === 'aktif')
-                ? '<span class="status-badge status-badge-active">Aktif</span>'
-                : '<span class="status-badge status-badge-inactive">Tidak Aktif</span>';
-
-            return '<tr class="simata-table-row">' +
-                '<td style="padding:10px 8px;text-align:center;color:#64748b;font-size:12.5px;">' + no + '</td>' +
-                '<td style="padding:10px 10px;text-align:center;font-size:12.5px;color:#334155;font-family:monospace;">' + nik + '</td>' +
-                '<td style="padding:10px 14px;text-align:left;font-size:13px;font-weight:600;color:#0f172a;">' + name + '</td>' +
-                '<td style="padding:10px 8px;text-align:center;font-size:12.5px;color:#334155;">' + genderText + '</td>' +
-                '<td style="padding:10px 8px;text-align:center;font-size:12.5px;color:#334155;">' + position + '</td>' +
-                '<td style="padding:10px 8px;text-align:center;font-size:12.5px;color:#334155;">' + subject + '</td>' +
-                '<td style="padding:10px 8px;text-align:center;">' + statusBadge + '</td>' +
-                '<td style="padding:10px 12px;text-align:center;">' +
-                  '<div class="student-action-group" style="justify-content:center;">' +
-                    (isCurrentUserAdmin ? '<button type="button" class="btn-action btn-action-edit" onclick="openTeacherModal(\'edit\', \'' + escapeAttr(t.teacherId) + '\')" title="Edit Guru">' +
-                      '<svg viewBox="0 0 24 24" class="btn-action-icon"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' +
-                      '<span>Edit</span>' +
-                    '</button>' : '') +
-                    '<button type="button" class="btn-action btn-action-detail" onclick="openTeacherModal(\'view\', \'' + escapeAttr(t.teacherId) + '\')" title="Detail Guru">' +
-                      '<svg viewBox="0 0 24 24" class="btn-action-icon"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>' +
-                      '<span>Detail</span>' +
-                    '</button>' +
-                  '</div>' +
-                '</td>' +
-              '</tr>';
-        }).join('');
-
+        allLoadedTeachers = result.teachers || [];
+        populateMasterTeacherFilters(allLoadedTeachers);
+        masterTeacherTableState.currentPage = 1;
+        renderMasterTeacherThead();
+        renderMasterTeacherTbody();
     }).withFailureHandler(function(){
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:#ef4444;">Gagal memuat guru.</td></tr>';
+        allLoadedTeachers = [];
+        const colCount = masterTeacherColumnDefs.filter(function(c) { return masterTeacherTableState.visibleColumns[c.key]; }).length || 8;
+        tbody.innerHTML = '<tr><td colspan="' + colCount + '" style="text-align:center;padding:24px;color:#ef4444;">Gagal memuat guru.</td></tr>';
     }).getTeachers();
 }
 
@@ -7389,7 +9216,7 @@ function exportCsvFile(filename, headers, rows) {
     const csvContent = '\uFEFF' + [
         headers.map(escapeCsvCell).join(','),
         ...rows.map(r => r.map(escapeCsvCell).join(','))
-    ].join('\r\n');
+    ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -7454,7 +9281,11 @@ document.addEventListener('click', function(e) {
         { btn: 'studentColVisBtn', menu: 'studentColVisMenu' },
         { btn: 'studentExportBtn', menu: 'studentExportMenu' },
         { btn: 'teacherColVisBtn', menu: 'teacherColVisMenu' },
-        { btn: 'teacherExportBtn', menu: 'teacherExportMenu' }
+        { btn: 'teacherExportBtn', menu: 'teacherExportMenu' },
+        { btn: 'masterStudentColVisBtn', menu: 'masterStudentColVisMenu' },
+        { btn: 'masterStudentExportBtn', menu: 'masterStudentExportMenu' },
+        { btn: 'masterTeacherColVisBtn', menu: 'masterTeacherColVisMenu' },
+        { btn: 'masterTeacherExportBtn', menu: 'masterTeacherExportMenu' }
     ];
     dropdowns.forEach(function(d) {
         const btn = document.getElementById(d.btn);

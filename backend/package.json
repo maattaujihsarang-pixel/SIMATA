@@ -10,6 +10,7 @@
     "seed": "node scripts/migrate_legacy_data.js",
     "reconcile": "node scripts/reconcile_data.js",
     "prune-storage": "node scripts/reconcile_evidence_storage.js",
+    "prune-student-docs": "node scripts/reconcile_student_documents.js --force",
     "test": "node tests/run_all_tests.js"
   },
   "keywords": [
