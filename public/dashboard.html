@@ -7981,7 +7981,13 @@ function openTeacherModal(mode, teacherId) {
             const el = document.getElementById(id);
             if (!el) return;
             const fieldName = id.replace(/^t_/, '');
-            el.value = (t[fieldName] !== undefined && t[fieldName] !== null) ? t[fieldName] : '';
+            const snakeCaseName = fieldName.replace(/([A-Z])/g, '_$1').toLowerCase();
+            let val = (t[fieldName] !== undefined && t[fieldName] !== null) ? t[fieldName] : t[snakeCaseName];
+            if (val === undefined || val === null) val = '';
+            if (fieldName === 'birthDate' && val) {
+                val = String(val).split('T')[0];
+            }
+            el.value = val;
             el.disabled = isView;
         });
 
@@ -8033,9 +8039,13 @@ function saveTeacherFromModal() {
     teacherInputIds.forEach(function(id) {
         const el = document.getElementById(id);
         const fieldName = id.replace(/^t_/, '');
-        payload[fieldName] = el ? el.value.trim() : '';
+        const val = el ? el.value.trim() : '';
+        payload[fieldName] = val;
+        const snakeCaseName = fieldName.replace(/([A-Z])/g, '_$1').toLowerCase();
+        payload[snakeCaseName] = val;
     });
     payload.name = name;
+    payload.full_name = name;
     if (!payload.status) payload.status = 'Active';
 
     const photoFileInput = document.getElementById('teacher_photo_input');

@@ -8,6 +8,7 @@ const runPublicAssetsTest = require('./test_public_assets');
 const runFrontendMigrationTest = require('./test_frontend_migration');
 const runBug30RegressionTests = require('./test_bug30_responder_evidence');
 const runFeature004Tests = require('./test_feature004_kartu_pelajar');
+const runBug37TeacherDetailsTest = require('./test_bug37_teacher_details');
 
 async function runAllTests() {
   console.log('===============================================================');
@@ -24,7 +25,8 @@ async function runAllTests() {
     public_assets: false,
     frontend_migration: false,
     bug30_evidence: false,
-    feature004_kartu_pelajar: false
+    feature004_kartu_pelajar: false,
+    bug37_teacher_details: false
   };
 
   try {
@@ -38,6 +40,7 @@ async function runAllTests() {
     results.frontend_migration = await runFrontendMigrationTest();
     results.bug30_evidence = await runBug30RegressionTests();
     results.feature004_kartu_pelajar = await runFeature004Tests();
+    results.bug37_teacher_details = await runBug37TeacherDetailsTest();
 
     console.log('\n===============================================================');
     console.log('VERIFICATION SUMMARY');

@@ -1,5 +1,34 @@
 const db = require('../config/database');
 
+function sanitizeDate(val) {
+  if (val === undefined || val === null) return null;
+  const s = String(val).trim();
+  if (!s) return null;
+  return s.split('T')[0];
+}
+
+function sanitizeInt(val) {
+  if (val === undefined || val === null) return null;
+  const s = String(val).trim();
+  if (!s) return null;
+  const n = parseInt(s, 10);
+  return isNaN(n) ? null : n;
+}
+
+function sanitizeGender(val) {
+  if (val === undefined || val === null) return null;
+  const g = String(val).trim().toUpperCase();
+  if (g === 'L' || g.startsWith('LAKI')) return 'L';
+  if (g === 'P' || g.startsWith('PEREMPUAN')) return 'P';
+  return null;
+}
+
+function sanitizeString(val) {
+  if (val === undefined || val === null) return null;
+  const s = String(val).trim();
+  return s === '' ? null : s;
+}
+
 class TeacherRepository {
   async findAll({ status = null } = {}) {
     let sql = `SELECT teacher_id, name, position, status, subject, gender, nip, nuptk, nik,
@@ -44,6 +73,28 @@ class TeacherRepository {
   }
 
   async create(data) {
+    const teacherId = sanitizeString(data.teacher_id || data.teacherId);
+    const name = sanitizeString(data.name || data.full_name || data.fullName);
+    const position = sanitizeString(data.position) || 'Guru Mapel';
+    const status = sanitizeString(data.status) || 'Active';
+    const subject = sanitizeString(data.subject || data.subject_specialty || data.subjectSpecialty);
+    const gender = sanitizeGender(data.gender);
+    const nip = sanitizeString(data.nip);
+    const nuptk = sanitizeString(data.nuptk);
+    const nik = sanitizeString(data.nik);
+    const qrCodeId = sanitizeString(data.qr_code_id !== undefined ? data.qr_code_id : data.qrCodeId);
+    const birthPlace = sanitizeString(data.birth_place !== undefined ? data.birth_place : data.birthPlace);
+    const birthDate = sanitizeDate(data.birth_date !== undefined ? data.birth_date : data.birthDate);
+    const village = sanitizeString(data.village);
+    const district = sanitizeString(data.district);
+    const regency = sanitizeString(data.regency);
+    const phone = sanitizeString(data.phone);
+    const email = sanitizeString(data.email);
+    const education = sanitizeString(data.education);
+    const major = sanitizeString(data.major);
+    const graduationYear = sanitizeString(data.graduation_year !== undefined ? data.graduation_year : data.graduationYear);
+    const teachingHours = sanitizeInt(data.teaching_hours !== undefined ? data.teaching_hours : data.teachingHours);
+
     const res = await db.query(
       `INSERT INTO teachers (
         teacher_id, name, position, status, subject, gender, nip, nuptk, nik,
@@ -52,18 +103,98 @@ class TeacherRepository {
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
       RETURNING *`,
       [
-        data.teacher_id, data.name, data.position || 'Guru Mapel', data.status || 'Active',
-        data.subject, data.gender || null, data.nip || null, data.nuptk || null, data.nik || null,
-        data.qr_code_id || null, data.birth_place || null, data.birth_date || null,
-        data.village || null, data.district || null, data.regency || null,
-        data.phone || null, data.email || null, data.education || null,
-        data.major || null, data.graduation_year || null, data.teaching_hours || null
+        teacherId, name, position, status, subject, gender, nip, nuptk, nik,
+        qrCodeId, birthPlace, birthDate, village, district, regency,
+        phone, email, education, major, graduationYear, teachingHours
       ]
     );
     return res.rows[0];
   }
 
   async update(teacherId, data) {
+    const existing = await this.findById(teacherId);
+    if (!existing) return null;
+
+    const name = ('name' in data || 'full_name' in data || 'fullName' in data)
+      ? (sanitizeString(data.name || data.full_name || data.fullName) || existing.name)
+      : existing.name;
+
+    const position = ('position' in data)
+      ? (sanitizeString(data.position) || existing.position)
+      : existing.position;
+
+    const status = ('status' in data)
+      ? (sanitizeString(data.status) || existing.status)
+      : existing.status;
+
+    const subject = ('subject' in data || 'subject_specialty' in data || 'subjectSpecialty' in data)
+      ? (sanitizeString(data.subject || data.subject_specialty || data.subjectSpecialty) || existing.subject)
+      : existing.subject;
+
+    const gender = ('gender' in data)
+      ? sanitizeGender(data.gender)
+      : existing.gender;
+
+    const nip = ('nip' in data)
+      ? sanitizeString(data.nip)
+      : existing.nip;
+
+    const nuptk = ('nuptk' in data)
+      ? sanitizeString(data.nuptk)
+      : existing.nuptk;
+
+    const nik = ('nik' in data)
+      ? sanitizeString(data.nik)
+      : existing.nik;
+
+    const qrCodeId = ('qr_code_id' in data || 'qrCodeId' in data)
+      ? sanitizeString(data.qr_code_id !== undefined ? data.qr_code_id : data.qrCodeId)
+      : existing.qr_code_id;
+
+    const birthPlace = ('birth_place' in data || 'birthPlace' in data)
+      ? sanitizeString(data.birth_place !== undefined ? data.birth_place : data.birthPlace)
+      : existing.birth_place;
+
+    const birthDate = ('birth_date' in data || 'birthDate' in data)
+      ? sanitizeDate(data.birth_date !== undefined ? data.birth_date : data.birthDate)
+      : existing.birth_date;
+
+    const village = ('village' in data)
+      ? sanitizeString(data.village)
+      : existing.village;
+
+    const district = ('district' in data)
+      ? sanitizeString(data.district)
+      : existing.district;
+
+    const regency = ('regency' in data)
+      ? sanitizeString(data.regency)
+      : existing.regency;
+
+    const phone = ('phone' in data)
+      ? sanitizeString(data.phone)
+      : existing.phone;
+
+    const email = ('email' in data)
+      ? sanitizeString(data.email)
+      : existing.email;
+
+    const education = ('education' in data)
+      ? sanitizeString(data.education)
+      : existing.education;
+
+    const major = ('major' in data)
+      ? sanitizeString(data.major)
+      : existing.major;
+
+    const graduationYear = ('graduation_year' in data || 'graduationYear' in data)
+      ? sanitizeString(data.graduation_year !== undefined ? data.graduation_year : data.graduationYear)
+      : existing.graduation_year;
+
+    const teachingHours = ('teaching_hours' in data || 'teachingHours' in data)
+      ? sanitizeInt(data.teaching_hours !== undefined ? data.teaching_hours : data.teachingHours)
+      : existing.teaching_hours;
+
     const res = await db.query(
       `UPDATE teachers SET
         name = COALESCE($2, name),
@@ -90,11 +221,11 @@ class TeacherRepository {
       WHERE teacher_id = $1
       RETURNING *`,
       [
-        teacherId, data.name, data.position, data.status, data.subject,
-        data.gender, data.nip, data.nuptk, data.nik, data.qr_code_id,
-        data.birth_place, data.birth_date, data.village, data.district,
-        data.regency, data.phone, data.email, data.education,
-        data.major, data.graduation_year, data.teaching_hours
+        teacherId, name, position, status, subject,
+        gender, nip, nuptk, nik, qrCodeId,
+        birthPlace, birthDate, village, district,
+        regency, phone, email, education,
+        major, graduationYear, teachingHours
       ]
     );
     return res.rows[0] || null;

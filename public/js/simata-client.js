@@ -249,17 +249,43 @@
         if (params) q = `?${params}`;
       }
       const res = await apiFetch(`/teachers${q}`);
-      const teachers = (res.data || []).map((t) => ({
-        teacherId: t.teacher_id,
-        name: t.full_name,
-        fullName: t.full_name,
-        nip: t.nip,
-        gender: t.gender,
-        subjectSpecialty: t.subject_specialty,
-        phone: t.phone,
-        status: t.status,
-        ...t
-      }));
+      const teachers = (res.data || []).map((t) => {
+        const birthDateClean = t.birth_date ? String(t.birth_date).split('T')[0] : (t.birthDate ? String(t.birthDate).split('T')[0] : null);
+        return {
+          ...t,
+          teacherId: t.teacher_id || t.teacherId,
+          teacher_id: t.teacher_id || t.teacherId,
+          name: t.name || t.full_name || t.fullName,
+          fullName: t.name || t.full_name || t.fullName,
+          full_name: t.name || t.full_name || t.fullName,
+          position: t.position || 'Guru Mapel',
+          status: t.status || 'Active',
+          subject: t.subject || t.subject_specialty || t.subjectSpecialty,
+          subjectSpecialty: t.subject || t.subject_specialty || t.subjectSpecialty,
+          subject_specialty: t.subject || t.subject_specialty || t.subjectSpecialty,
+          gender: t.gender || null,
+          nip: t.nip || null,
+          nuptk: t.nuptk || null,
+          nik: t.nik || null,
+          qrCodeId: t.qr_code_id || t.qrCodeId || null,
+          qr_code_id: t.qr_code_id || t.qrCodeId || null,
+          birthPlace: t.birth_place || t.birthPlace || null,
+          birth_place: t.birth_place || t.birthPlace || null,
+          birthDate: birthDateClean,
+          birth_date: birthDateClean,
+          village: t.village || null,
+          district: t.district || null,
+          regency: t.regency || null,
+          phone: t.phone || null,
+          email: t.email || null,
+          education: t.education || null,
+          major: t.major || null,
+          graduationYear: t.graduation_year || t.graduationYear || null,
+          graduation_year: t.graduation_year || t.graduationYear || null,
+          teachingHours: (t.teaching_hours !== undefined && t.teaching_hours !== null) ? t.teaching_hours : ((t.teachingHours !== undefined && t.teachingHours !== null) ? t.teachingHours : null),
+          teaching_hours: (t.teaching_hours !== undefined && t.teaching_hours !== null) ? t.teaching_hours : ((t.teachingHours !== undefined && t.teachingHours !== null) ? t.teachingHours : null)
+        };
+      });
       return { success: true, teachers: teachers };
     },
 
@@ -267,16 +293,40 @@
     getTeacherById: async function (teacherId) {
       const res = await apiFetch(`/teachers/${encodeURIComponent(teacherId)}`);
       const t = res.data;
+      const birthDateClean = t.birth_date ? String(t.birth_date).split('T')[0] : (t.birthDate ? String(t.birthDate).split('T')[0] : null);
       const teacherObj = {
-        teacherId: t.teacher_id,
-        name: t.full_name,
-        fullName: t.full_name,
-        nip: t.nip,
-        gender: t.gender,
-        subjectSpecialty: t.subject_specialty,
-        phone: t.phone,
-        status: t.status,
-        ...t
+        ...t,
+        teacherId: t.teacher_id || t.teacherId,
+        teacher_id: t.teacher_id || t.teacherId,
+        name: t.name || t.full_name || t.fullName,
+        fullName: t.name || t.full_name || t.fullName,
+        full_name: t.name || t.full_name || t.fullName,
+        position: t.position || 'Guru Mapel',
+        status: t.status || 'Active',
+        subject: t.subject || t.subject_specialty || t.subjectSpecialty,
+        subjectSpecialty: t.subject || t.subject_specialty || t.subjectSpecialty,
+        subject_specialty: t.subject || t.subject_specialty || t.subjectSpecialty,
+        gender: t.gender || null,
+        nip: t.nip || null,
+        nuptk: t.nuptk || null,
+        nik: t.nik || null,
+        qrCodeId: t.qr_code_id || t.qrCodeId || null,
+        qr_code_id: t.qr_code_id || t.qrCodeId || null,
+        birthPlace: t.birth_place || t.birthPlace || null,
+        birth_place: t.birth_place || t.birthPlace || null,
+        birthDate: birthDateClean,
+        birth_date: birthDateClean,
+        village: t.village || null,
+        district: t.district || null,
+        regency: t.regency || null,
+        phone: t.phone || null,
+        email: t.email || null,
+        education: t.education || null,
+        major: t.major || null,
+        graduationYear: t.graduation_year || t.graduationYear || null,
+        graduation_year: t.graduation_year || t.graduationYear || null,
+        teachingHours: (t.teaching_hours !== undefined && t.teaching_hours !== null) ? t.teaching_hours : ((t.teachingHours !== undefined && t.teachingHours !== null) ? t.teachingHours : null),
+        teaching_hours: (t.teaching_hours !== undefined && t.teaching_hours !== null) ? t.teaching_hours : ((t.teachingHours !== undefined && t.teachingHours !== null) ? t.teachingHours : null)
       };
       return { success: true, teacher: teacherObj };
     },
@@ -284,17 +334,25 @@
     // 10. Teachers: createTeacher
     createTeacher: async function (...args) {
       const data = args.find((a) => a && typeof a === 'object') || {};
-      const payload = {
-        teacher_id: data.teacherId || data.teacher_id,
-        name: data.name || data.fullName || data.full_name,
-        full_name: data.name || data.fullName || data.full_name,
-        subject: data.subject || data.subjectSpecialty || data.subject_specialty,
-        subject_specialty: data.subject || data.subjectSpecialty || data.subject_specialty,
-        nip: data.nip || null,
-        gender: data.gender || null,
-        phone: data.phone || null,
-        status: data.status || 'Active'
-      };
+      const payload = { ...data };
+      delete payload.token;
+      if (data.name || data.fullName || data.full_name) {
+        payload.name = data.name || data.fullName || data.full_name;
+        payload.full_name = payload.name;
+      }
+      if (data.subject || data.subjectSpecialty || data.subject_specialty) {
+        payload.subject = data.subject || data.subjectSpecialty || data.subject_specialty;
+        payload.subject_specialty = payload.subject;
+      }
+      if ('teacherId' in data && !('teacher_id' in payload)) payload.teacher_id = data.teacherId;
+      if ('birthPlace' in data && !('birth_place' in payload)) payload.birth_place = data.birthPlace;
+      if ('birthDate' in data && !('birth_date' in payload)) payload.birth_date = data.birthDate;
+      if ('graduationYear' in data && !('graduation_year' in payload)) payload.graduation_year = data.graduationYear;
+      if ('teachingHours' in data && !('teaching_hours' in payload)) payload.teaching_hours = data.teachingHours;
+      if ('qrCodeId' in data && !('qr_code_id' in payload)) payload.qr_code_id = data.qrCodeId;
+      if (!payload.position) payload.position = 'Guru Mapel';
+      if (!payload.status) payload.status = 'Active';
+
       const res = await apiFetch('/teachers', {
         method: 'POST',
         body: JSON.stringify(payload)
@@ -306,16 +364,25 @@
     updateTeacher: async function (...args) {
       const data = args.find((a) => a && typeof a === 'object') || {};
       const id = data.teacherId || data.teacher_id || data.id;
-      const payload = {
-        name: data.name || data.fullName || data.full_name,
-        full_name: data.name || data.fullName || data.full_name,
-        subject: data.subject || data.subjectSpecialty || data.subject_specialty,
-        subject_specialty: data.subject || data.subjectSpecialty || data.subject_specialty,
-        nip: data.nip || null,
-        gender: data.gender || null,
-        phone: data.phone || null,
-        status: data.status || 'Active'
-      };
+      const payload = { ...data };
+      delete payload.token;
+      delete payload.teacherId;
+      delete payload.teacher_id;
+      delete payload.id;
+      if (data.name || data.fullName || data.full_name) {
+        payload.name = data.name || data.fullName || data.full_name;
+        payload.full_name = payload.name;
+      }
+      if (data.subject || data.subjectSpecialty || data.subject_specialty) {
+        payload.subject = data.subject || data.subjectSpecialty || data.subject_specialty;
+        payload.subject_specialty = payload.subject;
+      }
+      if ('birthPlace' in data && !('birth_place' in payload)) payload.birth_place = data.birthPlace;
+      if ('birthDate' in data && !('birth_date' in payload)) payload.birth_date = data.birthDate;
+      if ('graduationYear' in data && !('graduation_year' in payload)) payload.graduation_year = data.graduationYear;
+      if ('teachingHours' in data && !('teaching_hours' in payload)) payload.teaching_hours = data.teachingHours;
+      if ('qrCodeId' in data && !('qr_code_id' in payload)) payload.qr_code_id = data.qrCodeId;
+
       const res = await apiFetch(`/teachers/${encodeURIComponent(id)}`, {
         method: 'PUT',
         body: JSON.stringify(payload)

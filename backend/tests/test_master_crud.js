@@ -21,6 +21,46 @@ async function runMasterCrudTests() {
     subject: 'Matematika'
   });
   assert.strictEqual(newTeacher.teacher_id, 'TCH-0003');
+
+  // Bug 37: Test updating teacher detail fields (NIK, NUPTK, birth info, contact, education, etc.)
+  const updatedTeacher = await masterService.updateTeacher('TCH-0003', {
+    nik: '3317010101900003',
+    nuptk: '1234567890123458',
+    birthPlace: 'Rembang',
+    birthDate: '1990-05-15',
+    village: 'Karangmangu',
+    district: 'Sarang',
+    regency: 'Rembang',
+    phone: '081299998888',
+    email: 'hasan@attaujih.sch.id',
+    education: 'S1',
+    major: 'Pendidikan Matematika',
+    graduationYear: '2015',
+    teachingHours: 24,
+    gender: 'L',
+    position: 'Guru Mapel'
+  });
+  assert.strictEqual(updatedTeacher.nik, '3317010101900003');
+  assert.strictEqual(updatedTeacher.birth_place, 'Rembang');
+  assert.strictEqual(updatedTeacher.birth_date, '1990-05-15');
+  assert.strictEqual(updatedTeacher.teaching_hours, 24);
+
+  const reloadedTeacher = await masterService.getTeacherById('TCH-0003');
+  assert.strictEqual(reloadedTeacher.nik, '3317010101900003');
+  assert.strictEqual(reloadedTeacher.nuptk, '1234567890123458');
+  assert.strictEqual(reloadedTeacher.birth_place, 'Rembang');
+  assert.strictEqual(reloadedTeacher.birth_date, '1990-05-15');
+  assert.strictEqual(reloadedTeacher.village, 'Karangmangu');
+  assert.strictEqual(reloadedTeacher.district, 'Sarang');
+  assert.strictEqual(reloadedTeacher.regency, 'Rembang');
+  assert.strictEqual(reloadedTeacher.phone, '081299998888');
+  assert.strictEqual(reloadedTeacher.email, 'hasan@attaujih.sch.id');
+  assert.strictEqual(reloadedTeacher.education, 'S1');
+  assert.strictEqual(reloadedTeacher.major, 'Pendidikan Matematika');
+  assert.strictEqual(reloadedTeacher.graduation_year, '2015');
+  assert.strictEqual(reloadedTeacher.teaching_hours, 24);
+  assert.strictEqual(reloadedTeacher.gender, 'L');
+
   await masterService.setTeacherStatus('TCH-0003', 'Inactive');
   console.log('   PASS: Teachers CRUD validated.');
 

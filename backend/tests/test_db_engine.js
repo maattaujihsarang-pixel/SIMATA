@@ -176,14 +176,62 @@ class TestDbEngine {
       return { rows: [...this.teachers], rowCount: this.teachers.length };
     }
     if (q.startsWith('INSERT INTO teachers')) {
-      const t = { teacher_id: params[0], name: params[1], position: params[2], status: params[3], subject: params[4] };
+      const t = {
+        teacher_id: params[0],
+        name: params[1],
+        position: params[2] || 'Guru Mapel',
+        status: params[3] || 'Active',
+        subject: params[4],
+        gender: params[5] || null,
+        nip: params[6] || null,
+        nuptk: params[7] || null,
+        nik: params[8] || null,
+        qr_code_id: params[9] || null,
+        birth_place: params[10] || null,
+        birth_date: params[11] || null,
+        village: params[12] || null,
+        district: params[13] || null,
+        regency: params[14] || null,
+        phone: params[15] || null,
+        email: params[16] || null,
+        education: params[17] || null,
+        major: params[18] || null,
+        graduation_year: params[19] || null,
+        teaching_hours: params[20] !== undefined ? params[20] : null
+      };
       this.teachers.push(t);
-      return { rows: [t], rowCount: 1 };
+      return { rows: [{ ...t }], rowCount: 1 };
     }
     if (q.startsWith('UPDATE teachers') && q.includes('status = $2')) {
       const t = this.teachers.find(t => t.teacher_id === params[0]);
       if (t) t.status = params[1];
-      return { rows: t ? [t] : [], rowCount: t ? 1 : 0 };
+      return { rows: t ? [{ ...t }] : [], rowCount: t ? 1 : 0 };
+    }
+    if (q.startsWith('UPDATE teachers')) {
+      const t = this.teachers.find(t => t.teacher_id === params[0]);
+      if (t) {
+        if (params[1]) t.name = params[1];
+        if (params[2]) t.position = params[2];
+        if (params[3]) t.status = params[3];
+        if (params[4]) t.subject = params[4];
+        t.gender = params[5];
+        t.nip = params[6];
+        t.nuptk = params[7];
+        t.nik = params[8];
+        t.qr_code_id = params[9];
+        t.birth_place = params[10];
+        t.birth_date = params[11];
+        t.village = params[12];
+        t.district = params[13];
+        t.regency = params[14];
+        t.phone = params[15];
+        t.email = params[16];
+        t.education = params[17];
+        t.major = params[18];
+        t.graduation_year = params[19];
+        t.teaching_hours = params[20];
+      }
+      return { rows: t ? [{ ...t }] : [], rowCount: t ? 1 : 0 };
     }
 
     // 4. Classes queries

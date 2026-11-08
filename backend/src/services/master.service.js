@@ -41,13 +41,13 @@ class MasterService {
   }
 
   async createTeacher(data) {
-    const name = data.name || data.full_name;
-    const subject = data.subject || data.subject_specialty;
+    const name = data.name || data.full_name || data.fullName;
+    const subject = data.subject || data.subject_specialty || data.subjectSpecialty;
     if (!name || !subject) {
       throw new BadRequestError('Nama guru dan mata pelajaran wajib diisi');
     }
 
-    let teacherId = data.teacher_id;
+    let teacherId = data.teacher_id || data.teacherId;
     if (!teacherId) {
       const seq = await teacherRepository.getNextSequence();
       teacherId = generateTeacherId(seq);
