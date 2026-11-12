@@ -812,7 +812,7 @@ html, body {
   }
 }
 </style>
-  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/dashboard.css?v=bug41">
   <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
   <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
@@ -3763,131 +3763,132 @@ html, body {
           </div>
         </div>
 
-        <!-- BATCH CLASS ATTENDANCE MODAL (BUG 29) -->
-        <div id="batchClassAttendanceModal" class="student-modal-backdrop" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.45);backdrop-filter:blur(2px);align-items:center;justify-content:center;z-index:10000;padding:16px;box-sizing:border-box;">
-          <div class="student-modal-card" style="position:relative;background:#ffffff;border-radius:16px;width:100%;max-width:880px;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 20px 40px rgba(15,23,42,0.15);box-sizing:border-box;overflow:hidden;margin:auto;">
+        <!-- BATCH CLASS ATTENDANCE MODAL (BUG 29 / BUG 41) -->
+        <div id="batchClassAttendanceModal" class="student-modal-backdrop batch-att-modal-backdrop" style="display:none;">
+          <div class="student-modal-card batch-att-modal-card">
             <!-- Modal Header -->
-            <div class="student-modal-header" style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #e2e8f0;background:#ffffff;flex-shrink:0;">
-              <div>
-                <div style="display:flex;align-items:center;gap:8px;">
-                  <span class="section-label" style="font-size:11px;font-weight:700;letter-spacing:0.05em;color:#059669;background:#d1fae5;padding:2px 8px;border-radius:4px;">PRESENSI BATCH</span>
-                  <h3 id="batchAttModalTitle" style="margin:0;font-size:1.15rem;font-weight:700;color:#0f172a;">Presensi Kelas</h3>
+            <div class="student-modal-header batch-att-modal-header">
+              <div class="batch-att-title-wrap">
+                <div class="batch-att-title-row">
+                  <span class="section-label batch-att-badge">PRESENSI BATCH</span>
+                  <h3 id="batchAttModalTitle" class="batch-att-modal-title">Presensi Kelas</h3>
                 </div>
-                <div id="batchAttModalSubtitle" style="font-size:12px;color:#64748b;margin-top:3px;"></div>
+                <div id="batchAttModalSubtitle" class="batch-att-modal-subtitle"></div>
               </div>
               <button type="button" class="student-modal-close-btn" onclick="closeBatchClassAttendanceModal()" aria-label="Tutup">&times;</button>
             </div>
 
             <!-- Jam Pelajaran Section (BUG 16 Canonical Pattern) -->
-            <div id="batchPeriodContainer" style="padding:10px 20px;background:#f8fafc;border-bottom:1px solid #e2e8f0;flex-shrink:0;">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
-                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                  <label style="font-size:11px;font-weight:700;color:var(--s-text-2,#475569);text-transform:uppercase;letter-spacing:0.04em;margin:0;">
+            <div id="batchPeriodContainer" class="batch-period-section">
+              <div class="batch-period-header">
+                <div class="batch-period-title-group">
+                  <label class="batch-period-label">
                     Jam Pelajaran <span style="color:#DC2626;">*</span>
                   </label>
-                  <span id="batchPeriodSelectedNotice" style="font-size:11px;font-weight:600;color:#059669;background:#d1fae5;padding:2px 8px;border-radius:4px;">Jam ke-1</span>
+                  <span id="batchPeriodSelectedNotice" class="batch-period-notice">Jam ke-1</span>
                 </div>
-                <div style="display:flex;gap:6px;">
-                  <button type="button" onclick="toggleAllBatchPeriods(true)" class="login-button" style="background:#e2e8f0;color:#334155;font-size:11px;padding:4px 8px;height:auto;font-weight:600;box-shadow:none;">Pilih Semua</button>
-                  <button type="button" onclick="toggleAllBatchPeriods(false)" class="login-button" style="background:#f1f5f9;color:#64748b;font-size:11px;padding:4px 8px;height:auto;font-weight:600;border:1px solid #cbd5e1;box-shadow:none;">Hapus Semua</button>
+                <div class="batch-period-actions">
+                  <button type="button" onclick="toggleAllBatchPeriods(true)" class="login-button batch-period-action-btn batch-period-select-all">Pilih Semua</button>
+                  <button type="button" onclick="toggleAllBatchPeriods(false)" class="login-button batch-period-action-btn batch-period-clear-all">Hapus Semua</button>
                 </div>
               </div>
-              <div class="period-checkbox-container" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(78px, 1fr));gap:6px;">
-                <label class="period-checkbox-label" style="display:inline-flex;align-items:center;gap:6px;padding:5px 8px;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:6px;font-size:11.5px;font-weight:600;color:#334155;cursor:pointer;user-select:none;">
-                  <input type="checkbox" name="batch_period" class="batch-period-checkbox" value="1" onchange="handleBatchPeriodChange()" style="width:14px;height:14px;accent-color:var(--primary,#166534);cursor:pointer;" />
+              <div class="period-checkbox-container">
+                <label class="period-checkbox-label">
+                  <input type="checkbox" name="batch_period" class="batch-period-checkbox" value="1" onchange="handleBatchPeriodChange()" />
                   <span>Jam ke-1</span>
                 </label>
-                <label class="period-checkbox-label" style="display:inline-flex;align-items:center;gap:6px;padding:5px 8px;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:6px;font-size:11.5px;font-weight:600;color:#334155;cursor:pointer;user-select:none;">
-                  <input type="checkbox" name="batch_period" class="batch-period-checkbox" value="2" onchange="handleBatchPeriodChange()" style="width:14px;height:14px;accent-color:var(--primary,#166534);cursor:pointer;" />
+                <label class="period-checkbox-label">
+                  <input type="checkbox" name="batch_period" class="batch-period-checkbox" value="2" onchange="handleBatchPeriodChange()" />
                   <span>Jam ke-2</span>
                 </label>
-                <label class="period-checkbox-label" style="display:inline-flex;align-items:center;gap:6px;padding:5px 8px;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:6px;font-size:11.5px;font-weight:600;color:#334155;cursor:pointer;user-select:none;">
-                  <input type="checkbox" name="batch_period" class="batch-period-checkbox" value="3" onchange="handleBatchPeriodChange()" style="width:14px;height:14px;accent-color:var(--primary,#166534);cursor:pointer;" />
+                <label class="period-checkbox-label">
+                  <input type="checkbox" name="batch_period" class="batch-period-checkbox" value="3" onchange="handleBatchPeriodChange()" />
                   <span>Jam ke-3</span>
                 </label>
-                <label class="period-checkbox-label" style="display:inline-flex;align-items:center;gap:6px;padding:5px 8px;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:6px;font-size:11.5px;font-weight:600;color:#334155;cursor:pointer;user-select:none;">
-                  <input type="checkbox" name="batch_period" class="batch-period-checkbox" value="4" onchange="handleBatchPeriodChange()" style="width:14px;height:14px;accent-color:var(--primary,#166534);cursor:pointer;" />
+                <label class="period-checkbox-label">
+                  <input type="checkbox" name="batch_period" class="batch-period-checkbox" value="4" onchange="handleBatchPeriodChange()" />
                   <span>Jam ke-4</span>
                 </label>
-                <label class="period-checkbox-label" style="display:inline-flex;align-items:center;gap:6px;padding:5px 8px;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:6px;font-size:11.5px;font-weight:600;color:#334155;cursor:pointer;user-select:none;">
-                  <input type="checkbox" name="batch_period" class="batch-period-checkbox" value="5" onchange="handleBatchPeriodChange()" style="width:14px;height:14px;accent-color:var(--primary,#166534);cursor:pointer;" />
+                <label class="period-checkbox-label">
+                  <input type="checkbox" name="batch_period" class="batch-period-checkbox" value="5" onchange="handleBatchPeriodChange()" />
                   <span>Jam ke-5</span>
                 </label>
-                <label class="period-checkbox-label" style="display:inline-flex;align-items:center;gap:6px;padding:5px 8px;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:6px;font-size:11.5px;font-weight:600;color:#334155;cursor:pointer;user-select:none;">
-                  <input type="checkbox" name="batch_period" class="batch-period-checkbox" value="6" onchange="handleBatchPeriodChange()" style="width:14px;height:14px;accent-color:var(--primary,#166534);cursor:pointer;" />
+                <label class="period-checkbox-label">
+                  <input type="checkbox" name="batch_period" class="batch-period-checkbox" value="6" onchange="handleBatchPeriodChange()" />
                   <span>Jam ke-6</span>
                 </label>
-                <label class="period-checkbox-label" style="display:inline-flex;align-items:center;gap:6px;padding:5px 8px;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:6px;font-size:11.5px;font-weight:600;color:#334155;cursor:pointer;user-select:none;">
-                  <input type="checkbox" name="batch_period" class="batch-period-checkbox" value="7" onchange="handleBatchPeriodChange()" style="width:14px;height:14px;accent-color:var(--primary,#166534);cursor:pointer;" />
+                <label class="period-checkbox-label">
+                  <input type="checkbox" name="batch_period" class="batch-period-checkbox" value="7" onchange="handleBatchPeriodChange()" />
                   <span>Jam ke-7</span>
                 </label>
-                <label class="period-checkbox-label" style="display:inline-flex;align-items:center;gap:6px;padding:5px 8px;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:6px;font-size:11.5px;font-weight:600;color:#334155;cursor:pointer;user-select:none;">
-                  <input type="checkbox" name="batch_period" class="batch-period-checkbox" value="8" onchange="handleBatchPeriodChange()" style="width:14px;height:14px;accent-color:var(--primary,#166534);cursor:pointer;" />
+                <label class="period-checkbox-label">
+                  <input type="checkbox" name="batch_period" class="batch-period-checkbox" value="8" onchange="handleBatchPeriodChange()" />
                   <span>Jam ke-8</span>
                 </label>
-                <label class="period-checkbox-label" style="display:inline-flex;align-items:center;gap:6px;padding:5px 8px;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:6px;font-size:11.5px;font-weight:600;color:#334155;cursor:pointer;user-select:none;">
-                  <input type="checkbox" name="batch_period" class="batch-period-checkbox" value="9" onchange="handleBatchPeriodChange()" style="width:14px;height:14px;accent-color:var(--primary,#166534);cursor:pointer;" />
+                <label class="period-checkbox-label">
+                  <input type="checkbox" name="batch_period" class="batch-period-checkbox" value="9" onchange="handleBatchPeriodChange()" />
                   <span>Jam ke-9</span>
                 </label>
-                <label class="period-checkbox-label" style="display:inline-flex;align-items:center;gap:6px;padding:5px 8px;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:6px;font-size:11.5px;font-weight:600;color:#334155;cursor:pointer;user-select:none;">
-                  <input type="checkbox" name="batch_period" class="batch-period-checkbox" value="10" onchange="handleBatchPeriodChange()" style="width:14px;height:14px;accent-color:var(--primary,#166534);cursor:pointer;" />
+                <label class="period-checkbox-label">
+                  <input type="checkbox" name="batch_period" class="batch-period-checkbox" value="10" onchange="handleBatchPeriodChange()" />
                   <span>Jam ke-10</span>
                 </label>
               </div>
             </div>
 
             <!-- Modal Action Bar: Filters & Quick Actions -->
-            <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:12px 20px;background:#f8fafc;border-bottom:1px solid #e2e8f0;flex-shrink:0;">
-              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-                <button type="button" onclick="markAllBatchAttendance('Hadir')" class="login-button" style="background:#059669;font-size:12.5px;padding:6px 12px;display:flex;align-items:center;gap:5px;height:34px;">
-                  <svg style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
-                  Tandai Semua Hadir
+            <div class="batch-att-toolbar">
+              <div class="batch-att-toolbar-left">
+                <button type="button" onclick="markAllBatchAttendance('Hadir')" class="login-button batch-att-mark-all-btn">
+                  <svg style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.2;flex-shrink:0;" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+                  <span>Tandai Semua Hadir</span>
                 </button>
-                <div id="batchAttCounters" style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;">
-                  <span style="color:#059669;background:#d1fae5;padding:3px 8px;border-radius:12px;" id="cnt_hadir">Hadir: 0</span>
-                  <span style="color:#d97706;background:#fef3c7;padding:3px 8px;border-radius:12px;" id="cnt_sakit">Sakit: 0</span>
-                  <span style="color:#2563eb;background:#dbeafe;padding:3px 8px;border-radius:12px;" id="cnt_izin">Izin: 0</span>
-                  <span style="color:#dc2626;background:#fee2e2;padding:3px 8px;border-radius:12px;" id="cnt_alpa">Alpa: 0</span>
+                <div id="batchAttCounters" class="batch-att-counters">
+                  <span class="batch-cnt-pill batch-cnt-hadir" id="cnt_hadir">Hadir: 0</span>
+                  <span class="batch-cnt-pill batch-cnt-sakit" id="cnt_sakit">Sakit: 0</span>
+                  <span class="batch-cnt-pill batch-cnt-izin" id="cnt_izin">Izin: 0</span>
+                  <span class="batch-cnt-pill batch-cnt-alpa" id="cnt_alpa">Alpa: 0</span>
                 </div>
               </div>
-              <div style="min-width:220px;flex:1;max-width:320px;">
-                <input id="batchAttSearch" class="input-box" placeholder="Cari siswa atau NIS..." style="height:34px;font-size:12.5px;width:100%;box-sizing:border-box;" oninput="filterBatchAttendanceRows(this.value)" />
+              <div class="batch-att-search-wrap">
+                <input id="batchAttSearch" type="search" class="input-box batch-att-search-input" placeholder="Cari siswa atau NIS..." oninput="filterBatchAttendanceRows(this.value)" onsearch="filterBatchAttendanceRows(this.value)" autocomplete="off" />
               </div>
             </div>
 
             <!-- Modal Body: Table Roster -->
-            <div class="student-modal-body" style="padding:0;overflow-y:auto;flex:1 1 auto;">
-              <div id="batchAttLoading" style="text-align:center;padding:40px;color:#64748b;">
+            <div class="student-modal-body batch-att-modal-body">
+              <div id="batchAttLoading" class="batch-att-loading">
                 <div class="loading-spinner" style="margin:0 auto 10px auto;"></div>
                 Memuat daftar siswa kelas...
               </div>
-              <div id="batchAttTableContainer" style="display:none;width:100%;overflow-x:auto;">
-                <table id="batchAttTable" class="simata-table" style="width:100%;border-collapse:collapse;min-width:640px;">
-                  <thead style="background:#f8fafc;position:sticky;top:0;z-index:2;box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+              <div id="batchAttTableContainer" class="batch-att-table-wrap" style="display:none;" role="region" aria-label="Daftar presensi siswa" tabindex="0">
+                <table id="batchAttTable" class="simata-table batch-att-table">
+                  <thead>
                     <tr>
-                      <th style="padding:10px 12px;font-size:12px;font-weight:600;color:#475569;text-align:center;width:40px;">No</th>
-                      <th style="padding:10px 12px;font-size:12px;font-weight:600;color:#475569;text-align:left;width:110px;">NIS</th>
-                      <th style="padding:10px 12px;font-size:12px;font-weight:600;color:#475569;text-align:left;">Nama Siswa</th>
-                      <th style="padding:10px 12px;font-size:12px;font-weight:600;color:#475569;text-align:center;width:150px;">Status</th>
-                      <th style="padding:10px 12px;font-size:12px;font-weight:600;color:#475569;text-align:left;width:180px;">Keterangan</th>
+                      <th style="width:44px;text-align:center;">No</th>
+                      <th style="width:130px;text-align:left;">NIS</th>
+                      <th style="text-align:left;">Nama Siswa</th>
+                      <th style="width:150px;text-align:center;">Status</th>
+                      <th style="width:190px;text-align:left;">Keterangan</th>
                     </tr>
                   </thead>
                   <tbody id="batchAttTbody">
                     <!-- Dynamic rows -->
                   </tbody>
                 </table>
+                <div id="batchAttNoMatch" class="batch-att-no-match" style="display:none;">Tidak ada siswa yang cocok dengan pencarian.</div>
               </div>
             </div>
 
             <!-- Modal Footer -->
-            <div class="student-modal-footer" style="display:flex;align-items:center;justify-content:space-between;padding:14px 24px;border-top:1px solid #f1f5f9;background:#ffffff;flex-shrink:0;">
-              <div id="batchAttTotalInfo" style="font-size:13px;color:#64748b;font-weight:500;display:flex;align-items:center;gap:4px;">
-                <span>Total:</span> <strong id="batchAttTotalCount" style="color:#0f172a;font-weight:700;">0</strong> <span>siswa</span>
+            <div class="student-modal-footer batch-att-footer">
+              <div id="batchAttTotalInfo" class="batch-att-total-info">
+                <span>Total:</span> <strong id="batchAttTotalCount">0</strong> <span>siswa</span>
               </div>
-              <div style="display:flex;align-items:center;gap:10px;">
-                <button type="button" onclick="closeBatchClassAttendanceModal()" class="login-button student-btn-cancel">Batal</button>
-                <button type="button" id="btnSubmitBatchAttendance" onclick="submitBatchClassAttendance()" class="login-button student-btn-save" style="background:#059669;gap:8px;">
-                  <svg style="width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2.2;flex-shrink:0;" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              <div class="batch-att-footer-actions">
+                <button type="button" onclick="closeBatchClassAttendanceModal()" class="login-button student-btn-cancel batch-att-cancel-btn">Batal</button>
+                <button type="button" id="btnSubmitBatchAttendance" onclick="submitBatchClassAttendance()" class="login-button student-btn-save batch-att-save-btn">
+                  <svg style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.2;flex-shrink:0;" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
                   <span>Simpan Presensi Kelas</span>
                 </button>
               </div>
@@ -8931,14 +8932,20 @@ function openBatchClassAttendance(classId) {
 
     // Open modal in loading state
     const modal = document.getElementById('batchClassAttendanceModal');
-    if (modal) modal.style.display = 'flex';
+    if (modal) {
+        modal.style.display = 'flex';
+        const modalCard = modal.querySelector('.student-modal-card');
+        if (modalCard) modalCard.scrollTop = 0;
+    }
 
     const loadingEl = document.getElementById('batchAttLoading');
     const tableContainer = document.getElementById('batchAttTableContainer');
     const searchInput = document.getElementById('batchAttSearch');
+    const noMatchEl = document.getElementById('batchAttNoMatch');
     if (loadingEl) loadingEl.style.display = 'block';
     if (tableContainer) tableContainer.style.display = 'none';
     if (searchInput) searchInput.value = '';
+    if (noMatchEl) noMatchEl.style.display = 'none';
 
     simataClient
         .withSuccessHandler(function(res) {
@@ -9054,26 +9061,29 @@ function renderBatchClassAttendanceRoster(data) {
     const tbody = document.getElementById('batchAttTbody');
     if (!tbody) return;
 
+    const noMatchEl = document.getElementById('batchAttNoMatch');
+    if (noMatchEl) noMatchEl.style.display = 'none';
+
     const students = data.students || [];
     if (students.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:#64748b;">Tidak ada siswa aktif di kelas ini.</td></tr>';
+        tbody.innerHTML = '<tr class="batch-att-empty-row"><td colspan="5" style="text-align:center;padding:24px;color:#64748b;">Tidak ada siswa aktif di kelas ini.</td></tr>';
     } else {
         tbody.innerHTML = students.map(function(s, idx) {
             const statusVal = s.status || 'Hadir';
-            return '<tr class="batch-att-row" data-student-id="' + escapeAttr(s.studentId) + '" data-name="' + escapeAttr((s.name || '').toLowerCase()) + '" data-nis="' + escapeAttr((s.nis || '').toLowerCase()) + '" style="border-bottom:1px solid #f1f5f9;">' +
-                '<td style="padding:10px 12px;text-align:center;font-size:12.5px;color:#64748b;">' + (idx + 1) + '</td>' +
-                '<td style="padding:10px 12px;text-align:left;font-size:12.5px;font-family:monospace;color:#334155;">' + escapeHtml(s.nis || '-') + '</td>' +
-                '<td style="padding:10px 12px;text-align:left;font-size:13px;font-weight:600;color:#0f172a;">' + escapeHtml(s.name || '-') + '</td>' +
-                '<td style="padding:10px 12px;text-align:center;">' +
-                  '<select class="batch-status-select" data-student-id="' + escapeAttr(s.studentId) + '" onchange="handleBatchStatusChange(this)" style="padding:5px 10px;border-radius:6px;font-size:12.5px;font-weight:600;border:1.5px solid #cbd5e1;cursor:pointer;outline:none;">' +
+            return '<tr class="batch-att-row" data-student-id="' + escapeAttr(s.studentId) + '" data-name="' + escapeAttr((s.name || '').toLowerCase()) + '" data-nis="' + escapeAttr((s.nis || '').toLowerCase()) + '">' +
+                '<td class="batch-col-no">' + (idx + 1) + '</td>' +
+                '<td class="batch-col-nis">' + escapeHtml(s.nis || '-') + '</td>' +
+                '<td class="batch-col-name">' + escapeHtml(s.name || '-') + '</td>' +
+                '<td class="batch-col-status">' +
+                  '<select class="batch-status-select" data-student-id="' + escapeAttr(s.studentId) + '" onchange="handleBatchStatusChange(this)">' +
                     '<option value="Hadir"' + (statusVal === 'Hadir' ? ' selected' : '') + '>Hadir</option>' +
                     '<option value="Sakit"' + (statusVal === 'Sakit' ? ' selected' : '') + '>Sakit</option>' +
                     '<option value="Izin"' + (statusVal === 'Izin' ? ' selected' : '') + '>Izin</option>' +
                     '<option value="Alpa"' + (statusVal === 'Alpa' ? ' selected' : '') + '>Alpa</option>' +
                   '</select>' +
                 '</td>' +
-                '<td style="padding:10px 12px;text-align:left;">' +
-                  '<input type="text" class="batch-note-input" data-student-id="' + escapeAttr(s.studentId) + '" placeholder="Catatan (opsional)" style="width:100%;padding:5px 8px;border-radius:6px;font-size:12px;border:1px solid #cbd5e1;box-sizing:border-box;" />' +
+                '<td class="batch-col-note">' +
+                  '<input type="text" class="batch-note-input" data-student-id="' + escapeAttr(s.studentId) + '" placeholder="Catatan (opsional)" />' +
                 '</td>' +
               '</tr>';
         }).join('');
@@ -9153,19 +9163,26 @@ function updateBatchAttendanceCounters() {
 function filterBatchAttendanceRows(query) {
     const q = (query || '').trim().toLowerCase();
     const rows = document.querySelectorAll('#batchAttTbody .batch-att-row');
+    let visibleCount = 0;
     rows.forEach(function(r) {
         if (!q) {
             r.style.display = '';
+            visibleCount++;
             return;
         }
         const name = r.getAttribute('data-name') || '';
         const nis = r.getAttribute('data-nis') || '';
         if (name.includes(q) || nis.includes(q)) {
             r.style.display = '';
+            visibleCount++;
         } else {
             r.style.display = 'none';
         }
     });
+    const noMatchEl = document.getElementById('batchAttNoMatch');
+    if (noMatchEl) {
+        noMatchEl.style.display = (rows.length > 0 && visibleCount === 0) ? 'block' : 'none';
+    }
 }
 
 function submitBatchClassAttendance() {
