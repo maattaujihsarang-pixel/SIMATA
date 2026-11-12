@@ -11,6 +11,7 @@ const runFeature004Tests = require('./test_feature004_kartu_pelajar');
 const runBug37TeacherDetailsTest = require('./test_bug37_teacher_details');
 const runFeature005aTests = require('./test_feature005a_foundation');
 const runFeature005bTests = require('./test_feature005b_invoicing');
+const runBug40AdminEditTest = require('./test_bug40_admin_edit');
 
 async function runAllTests() {
   console.log('===============================================================');
@@ -30,7 +31,8 @@ async function runAllTests() {
     feature004_kartu_pelajar: false,
     bug37_teacher_details: false,
     feature005a_foundation: false,
-    feature005b_invoicing: false
+    feature005b_invoicing: false,
+    bug40_admin_edit: false
   };
 
   try {
@@ -47,6 +49,7 @@ async function runAllTests() {
     results.bug37_teacher_details = await runBug37TeacherDetailsTest();
     results.feature005a_foundation = await runFeature005aTests();
     results.feature005b_invoicing = await runFeature005bTests();
+    results.bug40_admin_edit = await runBug40AdminEditTest();
 
     console.log('\n===============================================================');
     console.log('VERIFICATION SUMMARY');

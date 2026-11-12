@@ -3902,16 +3902,17 @@ html, body {
               <h3 id="editAccountModalTitle" style="margin:0;font-size:16.5px;font-weight:700;color:#0f172a;">Edit Akun Pengguna</h3>
             </div>
             <div class="modal-body" style="padding:16px 20px;display:flex;flex-direction:column;gap:14px;">
+              <input type="hidden" id="edit_acc_user_id" />
               <input type="hidden" id="edit_acc_orig_username" />
               <div>
                 <label for="edit_acc_username" style="display:block;font-size:12.5px;font-weight:600;color:#475569;margin-bottom:4px;">Username <span style="color:#ef4444;">*</span></label>
-                <input id="edit_acc_username" class="input-box" autocomplete="off" />
+                <input id="edit_acc_username" class="input-box" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" />
               </div>
               <div>
                 <label for="edit_acc_password" style="display:block;font-size:12.5px;font-weight:600;color:#475569;margin-bottom:4px;">Password Baru <small style="color:#64748b;font-weight:400;">(Kosongkan jika tidak diubah)</small></label>
                 <div style="position:relative;display:flex;align-items:center;">
                   <input id="edit_acc_password" type="password" class="input-box" placeholder="Ketik untuk mengganti password" style="padding-right:40px;width:100%;" autocomplete="new-password" />
-                  <button type="button" id="toggleEditAccPasswordBtn" onclick="togglePasswordVisibility('edit_acc_password', this)" style="position:absolute;right:8px;background:none;border:none;cursor:pointer;color:#64748b;padding:6px;display:flex;align-items:center;justify-content:center;" title="Lihat/Sembunyikan Password" aria-label="Toggle visibility password">
+                  <button type="button" id="toggleEditAccPasswordBtn" onclick="togglePasswordVisibility('edit_acc_password', this)" aria-pressed="false" style="position:absolute;right:8px;background:none;border:none;cursor:pointer;color:#64748b;padding:6px;display:flex;align-items:center;justify-content:center;" title="Lihat/Sembunyikan Password" aria-label="Toggle visibility password">
                     <svg class="eye-open" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                     <svg class="eye-closed" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;display:none;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
                   </button>
@@ -4060,13 +4061,13 @@ html, body {
                     <div class="settings-form-grid" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(min(100%, 220px), 1fr));gap:14px;margin-top:16px;">
                       <div>
                         <label for="acc_username" style="display:block;font-size:12.5px;font-weight:600;color:#475569;margin-bottom:4px;">Username <span style="color:#ef4444;">*</span></label>
-                        <input id="acc_username" class="input-box" placeholder="Contoh: guru_fauzi" autocomplete="off" />
+                        <input id="acc_username" class="input-box" placeholder="Contoh: guru_fauzi" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" />
                       </div>
                       <div>
                         <label for="acc_password" style="display:block;font-size:12.5px;font-weight:600;color:#475569;margin-bottom:4px;">Password <span style="color:#ef4444;">*</span></label>
                         <div style="position:relative;display:flex;align-items:center;">
                           <input id="acc_password" type="password" class="input-box" placeholder="Password akun" autocomplete="new-password" style="padding-right:40px;width:100%;" />
-                          <button type="button" id="toggleAccPasswordBtn" onclick="togglePasswordVisibility('acc_password', this)" style="position:absolute;right:8px;background:none;border:none;cursor:pointer;color:#64748b;padding:6px;display:flex;align-items:center;justify-content:center;" title="Lihat/Sembunyikan Password" aria-label="Toggle visibility password">
+                          <button type="button" id="toggleAccPasswordBtn" onclick="togglePasswordVisibility('acc_password', this)" aria-pressed="false" style="position:absolute;right:8px;background:none;border:none;cursor:pointer;color:#64748b;padding:6px;display:flex;align-items:center;justify-content:center;" title="Lihat/Sembunyikan Password" aria-label="Toggle visibility password">
                             <svg class="eye-open" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                             <svg class="eye-closed" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;display:none;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
                           </button>
@@ -16637,6 +16638,7 @@ function togglePasswordVisibility(inputId, btnEl) {
 
     const isCurrentlyPassword = (input.type === 'password');
     input.type = isCurrentlyPassword ? 'text' : 'password';
+    if (btnEl) btnEl.setAttribute('aria-pressed', isCurrentlyPassword ? 'true' : 'false');
 
     if (btnEl) {
         const eyeOpen = btnEl.querySelector('.eye-open');
@@ -16702,7 +16704,7 @@ function renderAccountsRows() {
             ? '<button type="button" disabled class="acc-action-btn acc-btn-self" title="Akun yang sedang aktif tidak dapat dihapus">' + activeIcon + 'Akun Aktif</button>'
             : '<button type="button" class="acc-action-btn acc-btn-delete" onclick="confirmDeleteAccount(\'' + escapeAttr(acc.username) + '\', this)">' + deleteIcon + 'Hapus</button>';
 
-        const editBtnHtml = '<button type="button" class="acc-action-btn acc-btn-edit" onclick="openEditAccountModal(\'' + escapeAttr(acc.username) + '\', \'' + escapeAttr(acc.name) + '\', \'' + escapeAttr(acc.role) + '\')">' + editIcon + 'Edit</button>';
+        const editBtnHtml = '<button type="button" class="acc-action-btn acc-btn-edit" onclick="openEditAccountModal(\'' + escapeAttr(acc.username) + '\', \'' + escapeAttr(acc.name) + '\', \'' + escapeAttr(acc.role) + '\', \'' + escapeAttr(acc.userId || '') + '\')">' + editIcon + 'Edit</button>';
 
         return '<tr class="simata-table-row accounts-card-row' + (isSelf ? ' accounts-self-row' : '') + '">' +
             '<td class="acc-col-no" style="padding:10px 12px;text-align:center;color:#64748b;font-size:12.5px;">' + (idx + 1) + '</td>' +
@@ -16756,7 +16758,7 @@ function loadAccountsTable() {
         .getAccounts(token);
 }
 
-function openEditAccountModal(username, name, role) {
+function openEditAccountModal(username, name, role, userId) {
     const modal = document.getElementById('editAccountModal');
     if (!modal) return;
 
@@ -16766,6 +16768,8 @@ function openEditAccountModal(username, name, role) {
     const nEl = document.getElementById('edit_acc_name');
     const rEl = document.getElementById('edit_acc_role');
 
+    const userIdEl = document.getElementById('edit_acc_user_id');
+    if (userIdEl) userIdEl.value = userId || '';
     if (origEl) origEl.value = username || '';
     if (uEl) uEl.value = username || '';
     if (pEl) {
@@ -16773,6 +16777,7 @@ function openEditAccountModal(username, name, role) {
         pEl.type = 'password';
     }
     const toggleBtn = document.getElementById('toggleEditAccPasswordBtn');
+    if (toggleBtn) toggleBtn.setAttribute('aria-pressed', 'false');
     if (toggleBtn) {
         const eyeOpen = toggleBtn.querySelector('.eye-open');
         const eyeClosed = toggleBtn.querySelector('.eye-closed');
@@ -16784,7 +16789,19 @@ function openEditAccountModal(username, name, role) {
     if (nEl) nEl.value = name || '';
     if (rEl) {
         const rNorm = String(role || '').toUpperCase();
-        rEl.value = (rNorm === 'ADMIN') ? 'Admin' : 'Guru';
+        Array.from(rEl.querySelectorAll('option[data-temp-role="true"]')).forEach(function(opt) { opt.remove(); });
+        if (rNorm === 'ADMIN') {
+            rEl.value = 'Admin';
+        } else if (rNorm === 'GURU' || !rNorm) {
+            rEl.value = 'Guru';
+        } else {
+            const tempOpt = document.createElement('option');
+            tempOpt.value = rNorm;
+            tempOpt.textContent = rNorm;
+            tempOpt.dataset.tempRole = 'true';
+            rEl.appendChild(tempOpt);
+            rEl.value = rNorm;
+        }
     }
 
     modal.style.display = 'flex';
@@ -16832,6 +16849,7 @@ function saveEditAccount() {
                 // If user updated their own username, force clean re-login
                 if (res.requiresRelogin) {
                     sessionStorage.removeItem('SIMATA_TOKEN');
+                    sessionStorage.removeItem('simata_token');
                     redirectToLogin();
                     return;
                 }
@@ -16847,6 +16865,7 @@ function saveEditAccount() {
             alert('Terjadi kesalahan saat memperbarui akun: ' + (err && err.message ? err.message : err));
         })
         .updateAccount(token, {
+            userId: (document.getElementById('edit_acc_user_id') ? document.getElementById('edit_acc_user_id').value.trim() : ''),
             originalUsername: originalUsername,
             username: newUsername,
             password: newPassword,
@@ -17345,6 +17364,7 @@ function redirectToLogin() {
         "SIMATA_TOKEN"
     );
 
+    sessionStorage.removeItem("simata_token");
     window.top.location.replace("/");
 
 }

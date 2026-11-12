@@ -118,6 +118,32 @@ class TestDbEngine {
       }
       return { rows: u ? [u] : [], rowCount: u ? 1 : 0 };
     }
+    if (q.startsWith('UPDATE users') && q.includes('username = COALESCE($2, username)')) {
+      const u = this.users.find(u => u.user_id === parseInt(params[0], 10));
+      if (u) {
+        if (params[1] !== null && params[1] !== undefined) u.username = params[1];
+        if (params[2] !== null && params[2] !== undefined) u.password_hash = params[2];
+        if (params[3] !== null && params[3] !== undefined) u.full_name = params[3];
+        if (params[4] !== null && params[4] !== undefined) u.role = params[4];
+        if (params[5] !== null && params[5] !== undefined) u.status = params[5];
+        u.teacher_id = params[6] !== undefined ? params[6] : null;
+        if (params[7] !== null && params[7] !== undefined) u.must_change_password = params[7];
+        u.updated_at = new Date().toISOString();
+      }
+      return {
+        rows: u ? [{
+          user_id: u.user_id,
+          username: u.username,
+          full_name: u.full_name,
+          role: u.role,
+          status: u.status,
+          teacher_id: u.teacher_id,
+          must_change_password: u.must_change_password,
+          updated_at: u.updated_at
+        }] : [],
+        rowCount: u ? 1 : 0
+      };
+    }
     if (q.startsWith('DELETE FROM users')) {
       const idx = this.users.findIndex(u => u.user_id === parseInt(params[0], 10));
       if (idx !== -1) {

@@ -184,6 +184,7 @@
 
       const res = await apiFetch('/users');
       const accounts = (res.data || []).map((u) => ({
+        userId: u.user_id,
         username: u.username,
         role: u.role,
         name: u.full_name || u.username,
@@ -216,7 +217,7 @@
     // 6. Users: updateAccount
     updateAccount: async function (...args) {
       const data = args.find((a) => a && typeof a === 'object') || {};
-      const id = data.originalUsername || data.username || data.user_id || data.id;
+      const id = data.userId || data.user_id || data.originalUsername || data.username || data.id;
       const body = {
         username: data.username,
         full_name: data.name || data.fullName || data.full_name,
@@ -229,7 +230,12 @@
         method: 'PUT',
         body: JSON.stringify(body)
       });
-      return { success: true, message: res.message, user: res.data };
+      return {
+        success: true,
+        message: res.message,
+        user: res.data,
+        requiresRelogin: Boolean(res.requires_relogin)
+      };
     },
 
     // 7. Users: deleteAccount

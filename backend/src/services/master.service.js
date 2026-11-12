@@ -276,8 +276,33 @@ class MasterService {
     });
   }
 
-  async updateUser(userId, data) {
+  async updateUser(userId, data = {}, currentUserId = null) {
     const user = await this.getUserById(userId);
+    const updateFields = {
+      teacher_id: user.teacher_id ?? null
+    };
+
+    if (data.username !== undefined && data.username !== null) {
+      const trimmedUsername = String(data.username).trim();
+      if (!trimmedUsername) {
+        throw new BadRequestError('Username tidak boleh kosong');
+      }
+      if (trimmedUsername !== user.username) {
+        const existing = await userRepository.findByUsername(trimmedUsername);
+        if (existing && Number(existing.user_id) !== Number(user.user_id)) {
+          throw new ConflictError(`Username '${trimmedUsername}' sudah digunakan`);
+        }
+      }
+      updateFields.username = trimmedUsername;
+    }
+
+    if (data.full_name !== undefined && data.full_name !== null) {
+      const trimmedFullName = String(data.full_name).trim();
+      if (!trimmedFullName) {
+        throw new BadRequestError('Nama lengkap tidak boleh kosong');
+      }
+      updateFields.full_name = trimmedFullName;
+    }
 
     if (data.role) {
       const normalizedRole = data.role.trim().toUpperCase().replace(/\s+/g, '_');
@@ -285,14 +310,64 @@ class MasterService {
       if (!allowedRoles.includes(normalizedRole)) {
         throw new BadRequestError(`Peran harus bernilai salah satu dari: ${allowedRoles.join(', ')}`);
       }
-      data.role = normalizedRole;
+      updateFields.role = normalizedRole;
     }
 
-    if (data.teacher_id) {
-      await this.getTeacherById(data.teacher_id);
+    if (data.status !== undefined && data.status !== null && String(data.status).trim() !== '') {
+      const rawStatus = String(data.status).trim().toLowerCase();
+      if (rawStatus !== 'active' && rawStatus !== 'inactive') {
+        throw new BadRequestError('Status pengguna harus bernilai Active atau Inactive');
+      }
+      updateFields.status = rawStatus === 'active' ? 'Active' : 'Inactive';
     }
 
-    return userRepository.update(user.user_id, data);
+    if (data.teacher_id !== undefined) {
+      if (data.teacher_id) {
+        await this.getTeacherById(data.teacher_id);
+        updateFields.teacher_id = data.teacher_id;
+      } else {
+        updateFields.teacher_id = null;
+      }
+    }
+
+    if (data.password !== undefined && data.password !== null && String(data.password) !== '') {
+      const trimmedPassword = String(data.password).trim();
+      if (!trimmedPassword) {
+        throw new BadRequestError('Password baru tidak boleh hanya berisi spasi');
+      }
+      updateFields.password_hash = await hashPassword(trimmedPassword);
+    }
+
+    if (data.must_change_password !== undefined) {
+      updateFields.must_change_password = Boolean(data.must_change_password);
+    } else if (updateFields.password_hash) {
+      updateFields.must_change_password = false;
+    }
+
+    const updated = await userRepository.update(user.user_id, updateFields);
+
+    const usernameChanged = Boolean(updateFields.username && updateFields.username !== user.username);
+    const passwordChanged = Boolean(updateFields.password_hash);
+    const deactivated = Boolean(updateFields.status && updateFields.status !== 'Active' && user.status === 'Active');
+    const isSelf = Boolean(
+      currentUserId !== null &&
+      currentUserId !== undefined &&
+      Number(user.user_id) === Number(currentUserId)
+    );
+    const requiresRelogin = Boolean(isSelf && (usernameChanged || passwordChanged || deactivated));
+
+    if (passwordChanged || deactivated || requiresRelogin) {
+      await authSessionRepository.revokeAllUserSessions(user.user_id);
+    }
+
+    if (updated) {
+      Object.defineProperty(updated, '_requiresRelogin', {
+        value: requiresRelogin,
+        enumerable: false
+      });
+    }
+
+    return updated;
   }
 
   async deleteUser(userId, currentUserId) {

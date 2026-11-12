@@ -40,10 +40,18 @@ class UsersController {
 
   async update(req, res, next) {
     try {
-      const updated = await masterService.updateUser(req.params.id, req.body);
+      const updated = await masterService.updateUser(
+        req.params.id,
+        req.body,
+        req.user ? req.user.user_id : null
+      );
+      const requiresRelogin = Boolean(updated && updated._requiresRelogin);
       return res.status(200).json({
         status: 'success',
-        message: 'Data pengguna berhasil diperbarui',
+        message: requiresRelogin
+          ? 'Data pengguna berhasil diperbarui. Silakan login kembali dengan kredensial baru Anda.'
+          : 'Data pengguna berhasil diperbarui',
+        requires_relogin: requiresRelogin,
         data: updated
       });
     } catch (error) {

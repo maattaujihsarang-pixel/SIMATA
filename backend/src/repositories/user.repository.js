@@ -40,18 +40,29 @@ class UserRepository {
     return res.rows[0];
   }
 
-  async update(userId, { full_name, role, status, teacher_id, must_change_password }) {
+  async update(userId, { username, password_hash, full_name, role, status, teacher_id, must_change_password }) {
     const res = await db.query(
       `UPDATE users 
-       SET full_name = COALESCE($2, full_name),
-           role = COALESCE($3, role),
-           status = COALESCE($4, status),
-           teacher_id = $5,
-           must_change_password = COALESCE($6, must_change_password),
+       SET username = COALESCE($2, username),
+           password_hash = COALESCE($3, password_hash),
+           full_name = COALESCE($4, full_name),
+           role = COALESCE($5, role),
+           status = COALESCE($6, status),
+           teacher_id = $7,
+           must_change_password = COALESCE($8, must_change_password),
            updated_at = CURRENT_TIMESTAMP
        WHERE user_id = $1
        RETURNING user_id, username, full_name, role, status, teacher_id, must_change_password, updated_at`,
-      [userId, full_name, role, status, teacher_id, must_change_password]
+      [
+        userId,
+        username ?? null,
+        password_hash ?? null,
+        full_name ?? null,
+        role ?? null,
+        status ?? null,
+        teacher_id ?? null,
+        must_change_password ?? null
+      ]
     );
     return res.rows[0] || null;
   }
