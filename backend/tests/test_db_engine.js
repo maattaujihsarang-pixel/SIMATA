@@ -44,6 +44,25 @@ class TestDbEngine {
     this.responder_sessions = [];
     this.attendance_evidences = [];
     this.student_documents = [];
+    this.parent_student_mappings = [];
+    this.finance_settings = [
+      { setting_key: 'bank_account_holder', setting_value: 'MA At-Taujih Keuangan', description: 'Nama pemilik rekening bank resmi', updated_by_user_id: null, updated_at: new Date().toISOString() },
+      { setting_key: 'bank_account_number', setting_value: '1234567890', description: 'Nomor rekening bank penerima tagihan', updated_by_user_id: null, updated_at: new Date().toISOString() },
+      { setting_key: 'bank_name', setting_value: 'BSI (Bank Syariah Indonesia)', description: 'Nama bank penampung resmi pembayaran', updated_by_user_id: null, updated_at: new Date().toISOString() },
+      { setting_key: 'receipt_footer_note', setting_value: 'Bukti pembayaran sah diterbitkan oleh Sistem Informasi MA At-Taujih (SIMATA).', description: 'Catatan kaki cetak bukti kuitansi', updated_by_user_id: null, updated_at: new Date().toISOString() },
+      { setting_key: 'school_name', setting_value: 'MA At-Taujih', description: 'Nama resmi lembaga/madrasah', updated_by_user_id: null, updated_at: new Date().toISOString() },
+      { setting_key: 'treasurer_name', setting_value: 'Bendahara Madrasah', description: 'Nama pejabat bendahara madrasah', updated_by_user_id: null, updated_at: new Date().toISOString() }
+    ];
+
+    this.fee_categories = [
+      { fee_category_id: 'FEE-SPP', name: 'SPP Bulanan', description: 'Biaya SPP bulanan madrasah', default_amount: 150000.00, billing_cycle: 'MONTHLY', is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+      { fee_category_id: 'FEE-GEDUNG', name: 'Uang Gedung', description: 'Infaq pembangunan gedung madrasah', default_amount: 1500000.00, billing_cycle: 'ONCE', is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+      { fee_category_id: 'FEE-SERAGAM', name: 'Seragam & Atribut', description: 'Biaya seragam dan atribut madrasah', default_amount: 500000.00, billing_cycle: 'ONCE', is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+      { fee_category_id: 'FEE-PTS', name: 'Ujian Tengah Semester (PTS)', description: 'Biaya pelaksanaan PTS', default_amount: 100000.00, billing_cycle: 'SEMESTER', is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+      { fee_category_id: 'FEE-PAS-PAT', name: 'Ujian Semester (PAS/PAT)', description: 'Biaya pelaksanaan PAS / PAT', default_amount: 125000.00, billing_cycle: 'SEMESTER', is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+      { fee_category_id: 'FEE-KEGIATAN', name: 'Iuran Kegiatan Tahunan', description: 'Biaya kegiatan kesiswaan tahunan', default_amount: 250000.00, billing_cycle: 'ANNUAL', is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
+    ];
+    this.student_invoices = [];
   }
 
   get tables() {
@@ -562,6 +581,294 @@ class TestDbEngine {
     if (q.includes('SELECT') && q.includes('FROM student_documents') && q.includes('document_id = $1')) {
       const doc = this.student_documents.find(d => d.document_id === params[0]);
       return { rows: doc ? [{ ...doc }] : [], rowCount: doc ? 1 : 0 };
+    }
+
+    // 12. Finance Settings (FEATURE 005-A)
+    if (q.includes('FROM finance_settings') && q.includes('ORDER BY setting_key')) {
+      const sorted = [...this.finance_settings].sort((a, b) => a.setting_key.localeCompare(b.setting_key));
+      return { rows: sorted, rowCount: sorted.length };
+    }
+    if (q.includes('FROM finance_settings') && q.includes('setting_key = $1')) {
+      const found = this.finance_settings.find(s => s.setting_key === params[0]);
+      return { rows: found ? [{ ...found }] : [], rowCount: found ? 1 : 0 };
+    }
+    if (q.startsWith('INSERT INTO finance_settings') && q.includes('ON CONFLICT (setting_key)')) {
+      const key = params[0];
+      const val = params[1];
+      const userId = params[2];
+      const existing = this.finance_settings.find(s => s.setting_key === key);
+      if (existing) {
+        existing.setting_value = val;
+        existing.updated_by_user_id = userId;
+        existing.updated_at = new Date().toISOString();
+      } else {
+        this.finance_settings.push({
+          setting_key: key,
+          setting_value: val,
+          description: null,
+          updated_by_user_id: userId,
+          updated_at: new Date().toISOString()
+        });
+      }
+      return { rows: [{ setting_key: key, setting_value: val }], rowCount: 1 };
+    }
+
+    // 13. Parent Student Mappings (FEATURE 005-A)
+    if (q.includes('FROM users u') && q.includes('parent_student_mappings') && q.includes("u.role = 'ORANG_TUA'")) {
+      const parents = this.users.filter(u => u.role === 'ORANG_TUA');
+      const rows = [];
+      for (const p of parents) {
+        const mappings = this.parent_student_mappings.filter(m => m.parent_user_id === p.user_id);
+        if (mappings.length === 0) {
+          rows.push({
+            user_id: p.user_id,
+            username: p.username,
+            parent_name: p.full_name,
+            status: p.status,
+            created_at: new Date().toISOString(),
+            student_id: null,
+            relationship_type: null,
+            linked_at: null,
+            nisn: null,
+            student_name: null,
+            student_status: null,
+            class_name: null
+          });
+        } else {
+          for (const m of mappings) {
+            const student = this.students.find(s => s.student_id === m.student_id) || {};
+            const cls = this.classes.find(c => c.class_id === student.class_id) || {};
+            rows.push({
+              user_id: p.user_id,
+              username: p.username,
+              parent_name: p.full_name,
+              status: p.status,
+              created_at: new Date().toISOString(),
+              student_id: m.student_id,
+              relationship_type: m.relationship_type,
+              linked_at: m.created_at,
+              nisn: student.nisn || null,
+              student_name: student.name || student.full_name || null,
+              student_status: student.status || 'Active',
+              class_name: cls.class_name || null
+            });
+          }
+        }
+      }
+      return { rows, rowCount: rows.length };
+    }
+    if (q.includes('FROM parent_student_mappings psm') && q.includes('psm.parent_user_id = $1')) {
+      const parentId = parseInt(params[0], 10);
+      const mappings = this.parent_student_mappings.filter(m => m.parent_user_id === parentId);
+      const rows = mappings.map(m => {
+        const student = this.students.find(s => s.student_id === m.student_id) || {};
+        const cls = this.classes.find(c => c.class_id === student.class_id) || {};
+        return {
+          student_id: m.student_id,
+          nisn: student.nisn,
+          full_name: student.name || student.full_name,
+          gender: student.gender,
+          status: student.status,
+          class_id: cls.class_id,
+          class_name: cls.class_name,
+          relationship_type: m.relationship_type,
+          linked_at: m.created_at
+        };
+      });
+      return { rows, rowCount: rows.length };
+    }
+    if (q.startsWith('INSERT INTO parent_student_mappings') && q.includes('ON CONFLICT (parent_user_id, student_id)')) {
+      const pId = parseInt(params[0], 10);
+      const sId = params[1];
+      const rel = params[2] || 'ORANG_TUA';
+      const now = new Date().toISOString();
+      const existing = this.parent_student_mappings.find(m => m.parent_user_id === pId && m.student_id === sId);
+      if (existing) {
+        existing.relationship_type = rel;
+        return { rows: [{ ...existing }], rowCount: 1 };
+      }
+      const entry = {
+        parent_user_id: pId,
+        student_id: sId,
+        relationship_type: rel,
+        created_at: now
+      };
+      this.parent_student_mappings.push(entry);
+      return { rows: [entry], rowCount: 1 };
+    }
+    if (q.includes('DELETE FROM parent_student_mappings') && q.includes('parent_user_id = $1 AND student_id = $2')) {
+      const pId = parseInt(params[0], 10);
+      const sId = params[1];
+      const idx = this.parent_student_mappings.findIndex(m => m.parent_user_id === pId && m.student_id === sId);
+      if (idx !== -1) {
+        const deleted = this.parent_student_mappings.splice(idx, 1)[0];
+        return { rows: [deleted], rowCount: 1 };
+      }
+      return { rows: [], rowCount: 0 };
+    }
+    if (q.includes('SELECT student_id, full_name FROM students WHERE student_id = $1') || q.includes('SELECT student_id, name FROM students WHERE student_id = $1')) {
+      const st = this.students.find(s => s.student_id === params[0]);
+      return { rows: st ? [{ student_id: st.student_id, name: st.name, full_name: st.name }] : [], rowCount: st ? 1 : 0 };
+    }
+
+    // 14. Fee Categories (FEATURE 005-B)
+    if (q.includes('FROM fee_categories') && q.includes('WHERE fee_category_id = $1')) {
+      const cat = this.fee_categories.find(c => c.fee_category_id === params[0]);
+      return { rows: cat ? [{ ...cat }] : [], rowCount: cat ? 1 : 0 };
+    }
+    if (q.includes('FROM fee_categories') && q.includes('WHERE is_active = TRUE')) {
+      const active = this.fee_categories.filter(c => c.is_active);
+      return { rows: active, rowCount: active.length };
+    }
+    if (q.includes('FROM fee_categories') && q.includes('ORDER BY name ASC')) {
+      return { rows: [...this.fee_categories], rowCount: this.fee_categories.length };
+    }
+    if (q.includes('FROM fee_categories') && q.includes('fee_category_id = $1 OR LOWER(name) = LOWER($2)')) {
+      const match = this.fee_categories.filter(c => c.fee_category_id === params[0] || c.name.toLowerCase() === params[1].toLowerCase());
+      return { rows: match, rowCount: match.length };
+    }
+    if (q.includes('FROM fee_categories') && q.includes('LOWER(name) = LOWER($1) AND fee_category_id <> $2')) {
+      const match = this.fee_categories.filter(c => c.name.toLowerCase() === params[0].toLowerCase() && c.fee_category_id !== params[1]);
+      return { rows: match, rowCount: match.length };
+    }
+    if (q.startsWith('INSERT INTO fee_categories')) {
+      const cat = {
+        fee_category_id: params[0],
+        name: params[1],
+        description: params[2],
+        default_amount: params[3],
+        billing_cycle: params[4],
+        is_active: params[5] !== undefined ? params[5] : true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      this.fee_categories.push(cat);
+      return { rows: [cat], rowCount: 1 };
+    }
+    if (q.startsWith('UPDATE fee_categories') && q.includes('SET name = $1')) {
+      const cat = this.fee_categories.find(c => c.fee_category_id === params[5]);
+      if (cat) {
+        cat.name = params[0];
+        cat.description = params[1];
+        cat.default_amount = params[2];
+        cat.billing_cycle = params[3];
+        cat.is_active = params[4];
+        cat.updated_at = new Date().toISOString();
+        return { rows: [cat], rowCount: 1 };
+      }
+      return { rows: [], rowCount: 0 };
+    }
+    if (q.startsWith('UPDATE fee_categories') && q.includes('SET is_active = $1')) {
+      const cat = this.fee_categories.find(c => c.fee_category_id === params[1]);
+      if (cat) {
+        cat.is_active = params[0];
+        cat.updated_at = new Date().toISOString();
+        return { rows: [cat], rowCount: 1 };
+      }
+      return { rows: [], rowCount: 0 };
+    }
+
+    // 15. Student Invoices (FEATURE 005-B)
+    if (q.includes('FROM student_invoices') && q.includes("status <> 'CANCELLED'") && q.includes('fee_category_id = $1')) {
+      const catId = params[0];
+      const ayId = params[1];
+      const periodKey = params[2];
+      const found = this.student_invoices.filter(i => 
+        i.fee_category_id === catId && 
+        i.academic_year_id === ayId && 
+        i.period_key === periodKey && 
+        i.status !== 'CANCELLED'
+      );
+      return { rows: found.map(f => ({ ...f })), rowCount: found.length };
+    }
+    if (q.includes('FROM student_invoices') && q.includes('FOR UPDATE') && q.includes('invoice_id = $1')) {
+      const inv = this.student_invoices.find(i => i.invoice_id === params[0]);
+      return { rows: inv ? [{ ...inv }] : [], rowCount: inv ? 1 : 0 };
+    }
+    if (q.startsWith('UPDATE student_invoices') && q.includes("SET status = 'CANCELLED'")) {
+      const inv = this.student_invoices.find(i => i.invoice_id === params[1]);
+      if (inv) {
+        inv.status = 'CANCELLED';
+        inv.cancellation_reason = params[0];
+        inv.cancelled_at = new Date().toISOString();
+        inv.updated_at = new Date().toISOString();
+        return { rows: [inv], rowCount: 1 };
+      }
+      return { rows: [], rowCount: 0 };
+    }
+    if (q.startsWith('INSERT INTO student_invoices')) {
+      const inv = {
+        invoice_id: params[0],
+        student_id: params[1],
+        academic_year_id: params[2],
+        fee_category_id: params[3],
+        period_key: params[4],
+        title: params[5],
+        total_amount: params[6],
+        amount_paid: 0.00,
+        status: 'UNPAID',
+        due_date: params[7] || null,
+        notes: params[8] || null,
+        cancellation_reason: null,
+        cancelled_at: null,
+        created_by_user_id: params[9],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      // Check partial unique index constraint
+      const dup = this.student_invoices.find(i => 
+        i.student_id === inv.student_id && 
+        i.academic_year_id === inv.academic_year_id && 
+        i.fee_category_id === inv.fee_category_id && 
+        i.period_key === inv.period_key && 
+        i.status !== 'CANCELLED'
+      );
+      if (dup) {
+        if (q.includes('DO NOTHING')) {
+          return { rows: [], rowCount: 0 };
+        }
+        throw new Error('duplicate key value violates unique constraint "uq_invoices_student_category_period"');
+      }
+      this.student_invoices.push(inv);
+      return { rows: [inv], rowCount: 1 };
+    }
+    if (q.includes('FROM student_invoices i') && q.includes('WHERE i.invoice_id = $1')) {
+      const inv = this.student_invoices.find(i => i.invoice_id === params[0]);
+      if (!inv) return { rows: [], rowCount: 0 };
+      const st = this.students.find(s => s.student_id === inv.student_id) || {};
+      const cls = this.classes.find(c => c.class_id === st.class_id) || {};
+      const cat = this.fee_categories.find(c => c.fee_category_id === inv.fee_category_id) || {};
+      return {
+        rows: [{
+          ...inv,
+          student_name: st.name || st.full_name,
+          nisn: st.nisn,
+          class_id: cls.class_id,
+          class_name: cls.class_name,
+          fee_category_name: cat.name,
+          remaining_amount: Number(inv.total_amount) - Number(inv.amount_paid)
+        }],
+        rowCount: 1
+      };
+    }
+    if (q.includes('FROM student_invoices i') && q.includes('JOIN students s')) {
+      let filtered = [...this.student_invoices];
+      // Basic simulation of filters if needed
+      const rows = filtered.map(inv => {
+        const st = this.students.find(s => s.student_id === inv.student_id) || {};
+        const cls = this.classes.find(c => c.class_id === st.class_id) || {};
+        const cat = this.fee_categories.find(c => c.fee_category_id === inv.fee_category_id) || {};
+        return {
+          ...inv,
+          student_name: st.name || st.full_name,
+          nisn: st.nisn,
+          class_id: cls.class_id,
+          class_name: cls.class_name,
+          fee_category_name: cat.name,
+          remaining_amount: Number(inv.total_amount) - Number(inv.amount_paid)
+        };
+      });
+      return { rows, rowCount: rows.length };
     }
 
     // Default empty result

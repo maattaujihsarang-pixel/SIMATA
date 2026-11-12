@@ -248,9 +248,10 @@ class MasterService {
       throw new BadRequestError('Username, password, nama lengkap, dan peran wajib diisi');
     }
 
-    const normalizedRole = data.role.toUpperCase();
-    if (!['ADMIN', 'GURU'].includes(normalizedRole)) {
-      throw new BadRequestError("Peran harus bernilai 'ADMIN' atau 'GURU'");
+    const normalizedRole = data.role.trim().toUpperCase().replace(/\s+/g, '_');
+    const allowedRoles = ['ADMIN', 'GURU', 'BENDAHARA', 'ORANG_TUA'];
+    if (!allowedRoles.includes(normalizedRole)) {
+      throw new BadRequestError(`Peran harus bernilai salah satu dari: ${allowedRoles.join(', ')}`);
     }
 
     const existing = await userRepository.findByUsername(data.username);
@@ -279,9 +280,10 @@ class MasterService {
     const user = await this.getUserById(userId);
 
     if (data.role) {
-      const normalizedRole = data.role.toUpperCase();
-      if (!['ADMIN', 'GURU'].includes(normalizedRole)) {
-        throw new BadRequestError("Peran harus bernilai 'ADMIN' atau 'GURU'");
+      const normalizedRole = data.role.trim().toUpperCase().replace(/\s+/g, '_');
+      const allowedRoles = ['ADMIN', 'GURU', 'BENDAHARA', 'ORANG_TUA'];
+      if (!allowedRoles.includes(normalizedRole)) {
+        throw new BadRequestError(`Peran harus bernilai salah satu dari: ${allowedRoles.join(', ')}`);
       }
       data.role = normalizedRole;
     }

@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="robots" content="noindex, nofollow">
   <title>SIMATA — Pemindai QR Presensi</title>
   <link rel="stylesheet" href="/css/notifications.css">
   <script src="/js/notifications.js"></script>
@@ -412,9 +413,21 @@
       if (errorContainerEl) errorContainerEl.style.display = "none";
     }
 
+    function resolveTargetOrigin() {
+      return trustedSimataOrigin || window.location.origin;
+    }
+
     function closeScannerWindow() {
       stopCameraStream();
-      window.close();
+      const targetOrigin = resolveTargetOrigin();
+      const cancelPayload = { type: "SIMATA_QR_CANCEL" };
+      if (window.parent && window.parent !== window) {
+        try { window.parent.postMessage(cancelPayload, targetOrigin); } catch (e) {}
+      }
+      if (window.opener && !window.opener.closed) {
+        try { window.opener.postMessage(cancelPayload, targetOrigin); } catch (e) {}
+      }
+      try { window.close(); } catch (e) {}
     }
 
     function stopCameraStream() {
@@ -566,26 +579,54 @@
       setStatus("QR Berhasil: " + qrString, "success");
       if (laserLineEl) laserLineEl.style.display = "none";
 
-      // Dispatch result strictly to trusted opener
+      const targetOrigin = resolveTargetOrigin();
+      if (!targetOrigin) {
+        console.error("[SIMATA SCANNER] trustedSimataOrigin tidak valid. Pembacaan dibatalkan demi keamanan.");
+        alert("Origin SIMATA tidak valid. Hubungi administrator.");
+        return;
+      }
+
+      const payload = {
+        type: "SIMATA_QR_RESULT",
+        qrCodeId: qrString,
+        transferId: Date.now() + "_" + Math.random().toString(36).slice(2)
+      };
+
+      let delivered = false;
+
+      if (window.parent && window.parent !== window) {
+        try {
+          window.parent.postMessage(payload, targetOrigin);
+          delivered = true;
+        } catch (e) {}
+      }
+
       if (window.opener && !window.opener.closed) {
-        if (!trustedSimataOrigin) {
-          console.error("[SIMATA SCANNER] trustedSimataOrigin tidak valid. Pembacaan dibatalkan demi keamanan.");
-          alert("Origin SIMATA tidak valid. Hubungi administrator.");
-          return;
-        }
+        try {
+          window.opener.postMessage(payload, targetOrigin);
+          delivered = true;
+        } catch (e) {}
+      }
 
-        const payload = {
-          type: "SIMATA_QR_RESULT",
-          qrCodeId: qrString
-        };
+      if (window.location.origin === targetOrigin) {
+        try {
+          if (typeof BroadcastChannel !== "undefined") {
+            const ch = new BroadcastChannel("simata_responder_channel");
+            ch.postMessage(payload);
+            ch.close();
+            delivered = true;
+          }
+        } catch (e) {}
+        try {
+          localStorage.setItem("SIMATA_QR_RESULT_TRANSFER", JSON.stringify(payload));
+          delivered = true;
+        } catch (e) {}
+      }
 
-        // Post message strictly to the verified parent origin (NEVER "*")
-        window.opener.postMessage(payload, trustedSimataOrigin);
-
-        // Close scanner window after 350ms to allow visual confirmation
+      if (delivered) {
         setTimeout(function() {
-          window.close();
-        }, 350);
+          try { window.close(); } catch (e) {}
+        }, 300);
       } else {
         alert("QR Terdeteksi: " + qrString + "\n(Jendela induk SIMATA tidak ditemukan)");
       }

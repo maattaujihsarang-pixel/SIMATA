@@ -11,6 +11,7 @@ const responderRoutes = require('./responder.routes');
 const evidenceRoutes = require('./evidence.routes');
 const dashboardRoutes = require('./dashboard.routes');
 const chatbotRoutes = require('./chatbot.routes');
+const financeRoutes = require('./finance.routes');
 const masterService = require('../services/master.service');
 const authMiddleware = require('../middleware/auth.middleware');
 
@@ -56,6 +57,7 @@ router.use('/responder', responderRoutes);
 router.use('/evidences', evidenceRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/chatbot', chatbotRoutes);
+router.use('/finance', financeRoutes);
 
 module.exports = router;
 

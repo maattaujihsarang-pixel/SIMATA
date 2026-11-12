@@ -1326,6 +1326,195 @@
         window.URL.revokeObjectURL(objUrl);
       }, 300);
       return { success: true, filename };
+    },
+
+    // ----------------------------------------------------
+    // FEATURE 005-B: KEUANGAN (Fee Categories & Invoices)
+    // ----------------------------------------------------
+    getFeeCategories: async function (...args) {
+      const params = args.find((a) => a && typeof a === 'object') || {};
+      const qs = new URLSearchParams(params).toString();
+      const res = await apiFetch(`/finance/fee-categories${qs ? '?' + qs : ''}`);
+      return { success: true, data: res.data };
+    },
+
+    createFeeCategory: async function (...args) {
+      const data = args.find((a) => a && typeof a === 'object') || {};
+      const res = await apiFetch('/finance/fee-categories', {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
+      return { success: true, message: res.message, data: res.data };
+    },
+
+    updateFeeCategory: async function (id, data) {
+      const res = await apiFetch(`/finance/fee-categories/${encodeURIComponent(id)}`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+      });
+      return { success: true, message: res.message, data: res.data };
+    },
+
+    toggleFeeCategoryStatus: async function (id, isActive) {
+      const res = await apiFetch(`/finance/fee-categories/${encodeURIComponent(id)}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ is_active: isActive })
+      });
+      return { success: true, message: res.message, data: res.data };
+    },
+
+    previewInvoices: async function (payload) {
+      const res = await apiFetch('/finance/invoices/preview', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+      return { success: true, data: res.data };
+    },
+
+    generateInvoices: async function (payload) {
+      const res = await apiFetch('/finance/invoices/generate', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+      return { success: true, message: res.message, data: res.data };
+    },
+
+    getInvoices: async function (params = {}) {
+      const qs = new URLSearchParams(params).toString();
+      const res = await apiFetch(`/finance/invoices${qs ? '?' + qs : ''}`);
+      return { success: true, data: res.data };
+    },
+
+    getInvoiceById: async function (id) {
+      const res = await apiFetch(`/finance/invoices/${encodeURIComponent(id)}`);
+      return { success: true, data: res.data };
+    },
+
+    cancelInvoice: async function (id, reason) {
+      const res = await apiFetch(`/finance/invoices/${encodeURIComponent(id)}/cancel`, {
+        method: 'PATCH',
+        body: JSON.stringify({ cancellation_reason: reason })
+      });
+      return { success: true, message: res.message, data: res.data };
+    },
+
+    getStudentInvoicesSummary: async function (studentId) {
+      const res = await apiFetch(`/finance/invoices/students/${encodeURIComponent(studentId)}/summary`);
+      return { success: true, data: res.data };
+    },
+
+    // =========================================================================
+    // FEATURE 005-C: PAYMENTS & RECEIPTS
+    // =========================================================================
+    recordPayment: async function (payload, file = null) {
+      let body;
+      if (payload instanceof FormData) {
+        body = payload;
+      } else if (file) {
+        body = new FormData();
+        Object.entries(payload).forEach(([k, v]) => {
+          if (v !== undefined && v !== null) {
+            body.append(k, typeof v === 'object' ? JSON.stringify(v) : v);
+          }
+        });
+        body.append('file', file);
+      } else {
+        body = JSON.stringify(payload);
+      }
+
+      const res = await apiFetch('/finance/payments', {
+        method: 'POST',
+        body
+      });
+      return { success: true, message: res.message, data: res.data };
+    },
+
+    getPayments: async function (params = {}) {
+      const qs = new URLSearchParams(params).toString();
+      const res = await apiFetch(`/finance/payments${qs ? '?' + qs : ''}`);
+      return { success: true, data: res.data, pagination: res.pagination };
+    },
+
+    getPaymentById: async function (id) {
+      const res = await apiFetch(`/finance/payments/${encodeURIComponent(id)}`);
+      return { success: true, data: res.data };
+    },
+
+    allocatePayment: async function (id, allocations) {
+      const res = await apiFetch(`/finance/payments/${encodeURIComponent(id)}/allocate`, {
+        method: 'POST',
+        body: JSON.stringify({ allocations })
+      });
+      return { success: true, message: res.message, data: res.data };
+    },
+
+    updatePayment: async function (id, payload) {
+      const res = await apiFetch(`/finance/payments/${encodeURIComponent(id)}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload)
+      });
+      return { success: true, message: res.message, data: res.data };
+    },
+
+    voidPayment: async function (id, reason) {
+      const res = await apiFetch(`/finance/payments/${encodeURIComponent(id)}/void`, {
+        method: 'PATCH',
+        body: JSON.stringify({ reason })
+      });
+      return { success: true, message: res.message, data: res.data };
+    },
+
+    getPaymentReceipt: async function (id) {
+      const res = await apiFetch(`/finance/payments/${encodeURIComponent(id)}/receipt`);
+      return { success: true, data: res.data };
+    },
+
+    // =========================================================================
+    // FEATURE 005-C.1: FINANCE DASHBOARD, SETTINGS, AUDIT, & PARENT MAPPING
+    // =========================================================================
+    getFinanceOverview: async function () {
+      const res = await apiFetch('/finance/dashboard/overview');
+      return { success: true, data: res.data };
+    },
+
+    getFinanceAuditLogs: async function (params = {}) {
+      const qs = new URLSearchParams(params).toString();
+      const res = await apiFetch(`/finance/dashboard/audit-logs${qs ? '?' + qs : ''}`);
+      return { success: true, data: res.data, pagination: res.pagination };
+    },
+
+    getFinanceSettings: async function () {
+      const res = await apiFetch('/finance/settings');
+      return { success: true, data: res.data };
+    },
+
+    updateFinanceSettings: async function (payload) {
+      const res = await apiFetch('/finance/settings', {
+        method: 'PUT',
+        body: JSON.stringify(payload)
+      });
+      return { success: true, message: res.message, data: res.data };
+    },
+
+    getParentsList: async function (params = {}) {
+      const qs = new URLSearchParams(params).toString();
+      const res = await apiFetch(`/finance/parents${qs ? '?' + qs : ''}`);
+      return { success: true, data: res.data };
+    },
+
+    linkParentStudent: async function (payload) {
+      const res = await apiFetch('/finance/parents/link-student', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+      return { success: true, message: res.message, data: res.data };
+    },
+
+    unlinkParentStudent: async function (userId, studentId) {
+      const res = await apiFetch(`/finance/parents/${encodeURIComponent(userId)}/unlink-student/${encodeURIComponent(studentId)}`, {
+        method: 'DELETE'
+      });
+      return { success: true, message: res.message, data: res.data };
     }
   };
 

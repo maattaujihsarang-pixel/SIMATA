@@ -20,6 +20,9 @@ function requireRole(...allowedRoles) {
 module.exports = {
   requireRole,
   requireAdmin: requireRole('ADMIN'),
-  requireGuruOrAdmin: requireRole('ADMIN', 'GURU')
+  requireGuruOrAdmin: requireRole('ADMIN', 'GURU'),
+  requireFinanceStaff: requireRole('ADMIN', 'BENDAHARA'),
+  requireFinanceAdmin: requireRole('ADMIN'),
+  requireParent: requireRole('ORANG_TUA')
 };
 

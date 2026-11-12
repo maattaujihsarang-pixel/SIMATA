@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="robots" content="noindex, nofollow">
   <title>SIMATA — Kamera Presensi Guru</title>
   <link rel="stylesheet" href="/css/notifications.css">
   <script src="/js/notifications.js"></script>
@@ -564,10 +565,22 @@
       }
     }
 
+    function resolveTargetOrigin() {
+      return trustedSimataOrigin || window.location.origin;
+    }
+
     function cancelAndClose() {
       stopCameraStream();
       capturedPhotoDataUrl = null;
-      window.close();
+      const targetOrigin = resolveTargetOrigin();
+      const cancelPayload = { type: "SIMATA_CAMERA_CANCEL" };
+      if (window.parent && window.parent !== window) {
+        try { window.parent.postMessage(cancelPayload, targetOrigin); } catch (e) {}
+      }
+      if (window.opener && !window.opener.closed) {
+        try { window.opener.postMessage(cancelPayload, targetOrigin); } catch (e) {}
+      }
+      try { window.close(); } catch (e) {}
     }
 
     function toggleCameraFacingMode() {
@@ -721,28 +734,64 @@
         return;
       }
 
-      if (window.opener && !window.opener.closed) {
-        if (!trustedSimataOrigin) {
-          console.error("[SIMATA CAMERA] trustedSimataOrigin tidak valid.");
-          alert("Origin SIMATA tidak valid. Hubungi administrator.");
-          return;
+      const targetOrigin = resolveTargetOrigin();
+      if (!targetOrigin) {
+        console.error("[SIMATA CAMERA] trustedSimataOrigin tidak valid.");
+        alert("Origin SIMATA tidak valid. Hubungi administrator.");
+        return;
+      }
+
+      const payload = {
+        type: "SIMATA_TEACHER_PHOTO",
+        photoDataUrl: capturedPhotoDataUrl,
+        transferId: Date.now() + "_" + Math.random().toString(36).slice(2)
+      };
+
+      let delivered = false;
+
+      // Channel 1: In-page same-origin iframe modal (immune to mobile tab/popup drops)
+      if (window.parent && window.parent !== window) {
+        try {
+          window.parent.postMessage(payload, targetOrigin);
+          delivered = true;
+        } catch (e) {
+          console.warn("[SIMATA CAMERA] postMessage to parent failed:", e);
         }
+      }
 
-        const payload = {
-          type: "SIMATA_TEACHER_PHOTO",
-          photoDataUrl: capturedPhotoDataUrl
-        };
+      // Channel 2: Popup window.opener
+      if (window.opener && !window.opener.closed) {
+        try {
+          window.opener.postMessage(payload, targetOrigin);
+          delivered = true;
+        } catch (e) {
+          console.warn("[SIMATA CAMERA] postMessage to opener failed:", e);
+        }
+      }
 
-        // Post message strictly to the verified parent origin (NEVER "*")
-        window.opener.postMessage(payload, trustedSimataOrigin);
+      // Channel 3: Same-origin cross-tab fallback (BroadcastChannel + localStorage)
+      if (window.location.origin === targetOrigin) {
+        try {
+          if (typeof BroadcastChannel !== "undefined") {
+            const ch = new BroadcastChannel("simata_responder_channel");
+            ch.postMessage(payload);
+            ch.close();
+            delivered = true;
+          }
+        } catch (e) {}
+        try {
+          localStorage.setItem("SIMATA_TEACHER_PHOTO_TRANSFER", JSON.stringify(payload));
+          delivered = true;
+        } catch (e) {}
+      }
 
-        // Visual confirmation before auto-close
+      if (delivered) {
         setStatus("Foto Terkirim ke SIMATA", "success");
         setTimeout(function() {
           stopCameraStream();
           capturedPhotoDataUrl = null;
-          window.close();
-        }, 300);
+          try { window.close(); } catch (e) {}
+        }, 250);
       } else {
         alert("Foto siap diambil!\n(Jendela induk SIMATA tidak ditemukan atau telah ditutup)");
       }

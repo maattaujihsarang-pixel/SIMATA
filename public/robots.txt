@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /scanner.html
+Disallow: /teacher-camera.html
+Disallow: /api/
+
+Sitemap: https://simata-attaujih.my.id/sitemap.xml
