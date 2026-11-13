@@ -4627,3 +4627,219 @@ select.attendance-filter-control {
   box-sizing: border-box;
   overflow: auto;
 }
+
+/* ==========================================================================
+   BUG 45: MOBILE COLLAPSIBLE FILTER & ERGONOMIC 2-COLUMN LAYOUT
+   Applies to Presensi Siswa, Presensi Guru, Daftar Siswa, Daftar Guru
+   ========================================================================== */
+
+.mobile-filter-toggle-btn {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .attendance-filter-card {
+    padding: 0 !important;
+    margin-top: 8px;
+    margin-bottom: 12px;
+    border-radius: 14px;
+    border: 1px solid #dce6df;
+    background: #ffffff;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+    overflow: hidden;
+  }
+
+  .attendance-filter-card.has-active-filters {
+    border-color: rgba(22, 101, 52, 0.4);
+  }
+
+  .mobile-filter-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 11px 14px;
+    background: #ffffff;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    gap: 10px;
+    font-family: inherit;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-filter-toggle-btn:active {
+    background: #f8fafc;
+  }
+
+  .mobile-filter-toggle-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .mobile-filter-icon-wrap {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: #f0fdf4;
+    color: #166534;
+    border: 1px solid #dcfce7;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 34px;
+  }
+
+  .attendance-filter-card.has-active-filters .mobile-filter-icon-wrap {
+    background: #166534;
+    color: #ffffff;
+    border-color: #166534;
+  }
+
+  .mobile-filter-title-group {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 2px;
+  }
+
+  .mobile-filter-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mobile-filter-subtitle {
+    font-size: 11.5px;
+    font-weight: 500;
+    color: #64748b;
+    line-height: 1.25;
+  }
+
+  .attendance-filter-card.has-active-filters .mobile-filter-subtitle {
+    color: #166534;
+    font-weight: 600;
+  }
+
+  .mobile-filter-toggle-right {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    flex: 0 0 auto;
+  }
+
+  .mobile-filter-count-badge {
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: #166534;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .mobile-filter-action-pill {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #166534;
+    background: #f0fdf4;
+    padding: 4px 9px;
+    border-radius: 999px;
+    border: 1px solid #bbf7d0;
+    line-height: 1.2;
+  }
+
+  .mobile-filter-chevron {
+    color: #64748b;
+    flex-shrink: 0;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .mobile-filter-chevron {
+      transition: transform 0.22s ease;
+    }
+  }
+
+  .mobile-filter-toggle-btn[aria-expanded="true"] .mobile-filter-chevron {
+    transform: rotate(180deg);
+    color: #166534;
+  }
+
+  /* Collapsed by default on mobile to put table data front & center */
+  .attendance-filter-card.is-mobile-collapsed .attendance-filter-grid {
+    display: none !important;
+  }
+
+  /* Expanded mobile filter: compact, clean 2-column grid */
+  .attendance-filter-card:not(.is-mobile-collapsed) .attendance-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 10px;
+    padding: 12px 14px 14px;
+    border-top: 1px solid #eef2f6;
+    background: #fcfefd;
+  }
+
+  /* Odd 7th field in Teacher Attendance & odd 3rd field in Master Teacher span full row cleanly */
+  .attendance-filter-card:not(.is-mobile-collapsed) .attendance-filter-grid.teacher-grid .attendance-filter-field:nth-of-type(7),
+  .attendance-filter-card:not(.is-mobile-collapsed) .attendance-filter-grid.master-teacher-grid .attendance-filter-field:nth-of-type(3) {
+    grid-column: 1 / -1;
+  }
+
+  .attendance-filter-card:not(.is-mobile-collapsed) .attendance-filter-actions {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1.35fr 1fr;
+    gap: 8px;
+    margin-top: 2px;
+    padding-top: 8px;
+    border-top: 1px dashed #e2e8f0;
+  }
+
+  .attendance-filter-card .attendance-filter-label {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: #475569;
+    margin-bottom: 4px;
+  }
+
+  .attendance-filter-card .attendance-filter-control {
+    height: 40px !important;
+    min-height: 40px !important;
+    padding: 0 10px !important;
+    font-size: 13px !important;
+    border-radius: 8px !important;
+  }
+
+  .attendance-filter-card select.attendance-filter-control {
+    padding-right: 24px !important;
+    text-overflow: ellipsis;
+  }
+
+  .attendance-filter-card .btn-filter-apply,
+  .attendance-filter-card .btn-filter-reset {
+    height: 40px;
+    min-height: 40px;
+    width: 100%;
+    font-size: 13px;
+    border-radius: 8px;
+  }
+}
+
+@media (max-width: 340px) {
+  .attendance-filter-card:not(.is-mobile-collapsed) .attendance-filter-grid {
+    grid-template-columns: 1fr;
+  }
+}

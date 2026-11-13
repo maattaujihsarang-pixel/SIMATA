@@ -16,7 +16,7 @@
 
   <title>SIMATA | Dashboard</title>
 
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/style.css?v=bug45">
   <link rel="stylesheet" href="/css/notifications.css">
   <link rel="stylesheet" href="/css/finance.css">
   <style>
@@ -2174,9 +2174,25 @@ html, body {
             </div>
           </div>
 
-          <!-- ATTENDANCE FILTER CARD (BUG 33 & FEATURE 002) -->
-          <div class="attendance-filter-card">
-            <div class="attendance-filter-grid student-grid">
+          <!-- ATTENDANCE FILTER CARD (BUG 33 & FEATURE 002 & BUG 45) -->
+          <div id="studentAttendanceFilterCard" class="attendance-filter-card is-mobile-collapsed" data-filter-group="studentAttendance">
+            <button type="button" class="mobile-filter-toggle-btn" id="studentAttendanceFilterToggleBtn" aria-expanded="false" aria-controls="studentAttendanceFilterGrid" onclick="toggleMobileFilterCard('studentAttendanceFilterCard')">
+              <div class="mobile-filter-toggle-left">
+                <span class="mobile-filter-icon-wrap" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                </span>
+                <div class="mobile-filter-title-group">
+                  <span class="mobile-filter-title">Filter Presensi Siswa</span>
+                  <span class="mobile-filter-subtitle" id="studentAttendanceFilterSummaryText">Ketuk untuk menyaring data</span>
+                </div>
+              </div>
+              <div class="mobile-filter-toggle-right">
+                <span class="mobile-filter-count-badge" id="studentAttendanceFilterCountBadge" style="display:none;">0</span>
+                <span class="mobile-filter-action-pill" id="studentAttendanceFilterActionLabel">Filter</span>
+                <svg class="mobile-filter-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+            </button>
+            <div class="attendance-filter-grid student-grid" id="studentAttendanceFilterGrid">
               <div class="attendance-filter-field">
                 <label for="attendanceDateFilter" class="attendance-filter-label">Tanggal</label>
                 <input id="attendanceDateFilter" type="date" class="input-box attendance-filter-control" />
@@ -2461,9 +2477,25 @@ html, body {
             </div>
           </div>
 
-          <!-- TEACHER ATTENDANCE FILTER CARD (FEATURE 002) -->
-          <div class="attendance-filter-card">
-            <div class="attendance-filter-grid teacher-grid">
+          <!-- TEACHER ATTENDANCE FILTER CARD (FEATURE 002 & BUG 45) -->
+          <div id="teacherAttendanceFilterCard" class="attendance-filter-card is-mobile-collapsed" data-filter-group="teacherAttendance">
+            <button type="button" class="mobile-filter-toggle-btn" id="teacherAttendanceFilterToggleBtn" aria-expanded="false" aria-controls="teacherAttendanceFilterGrid" onclick="toggleMobileFilterCard('teacherAttendanceFilterCard')">
+              <div class="mobile-filter-toggle-left">
+                <span class="mobile-filter-icon-wrap" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                </span>
+                <div class="mobile-filter-title-group">
+                  <span class="mobile-filter-title">Filter Presensi Guru</span>
+                  <span class="mobile-filter-subtitle" id="teacherAttendanceFilterSummaryText">Ketuk untuk menyaring data</span>
+                </div>
+              </div>
+              <div class="mobile-filter-toggle-right">
+                <span class="mobile-filter-count-badge" id="teacherAttendanceFilterCountBadge" style="display:none;">0</span>
+                <span class="mobile-filter-action-pill" id="teacherAttendanceFilterActionLabel">Filter</span>
+                <svg class="mobile-filter-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+            </button>
+            <div class="attendance-filter-grid teacher-grid" id="teacherAttendanceFilterGrid">
               <div class="attendance-filter-field">
                 <label for="teacherAttendanceDateFilter" class="attendance-filter-label">Tanggal</label>
                 <input id="teacherAttendanceDateFilter" type="date" class="input-box attendance-filter-control" />
@@ -2906,9 +2938,25 @@ html, body {
             </div>
           </div>
 
-          <!-- MASTER STUDENT FILTER CARD -->
-          <div class="attendance-filter-card">
-            <div class="attendance-filter-grid master-student-grid">
+          <!-- MASTER STUDENT FILTER CARD (BUG 45) -->
+          <div id="masterStudentFilterCard" class="attendance-filter-card is-mobile-collapsed" data-filter-group="masterStudent">
+            <button type="button" class="mobile-filter-toggle-btn" id="masterStudentFilterToggleBtn" aria-expanded="false" aria-controls="masterStudentFilterGrid" onclick="toggleMobileFilterCard('masterStudentFilterCard')">
+              <div class="mobile-filter-toggle-left">
+                <span class="mobile-filter-icon-wrap" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                </span>
+                <div class="mobile-filter-title-group">
+                  <span class="mobile-filter-title">Filter Data Siswa</span>
+                  <span class="mobile-filter-subtitle" id="masterStudentFilterSummaryText">Ketuk untuk menyaring data</span>
+                </div>
+              </div>
+              <div class="mobile-filter-toggle-right">
+                <span class="mobile-filter-count-badge" id="masterStudentFilterCountBadge" style="display:none;">0</span>
+                <span class="mobile-filter-action-pill" id="masterStudentFilterActionLabel">Filter</span>
+                <svg class="mobile-filter-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+            </button>
+            <div class="attendance-filter-grid master-student-grid" id="masterStudentFilterGrid">
               <div class="attendance-filter-field">
                 <label for="masterStudentClassFilter" class="attendance-filter-label">Kelas</label>
                 <select id="masterStudentClassFilter" class="input-box attendance-filter-control">
@@ -3367,9 +3415,25 @@ html, body {
             </div>
           </div>
 
-          <!-- MASTER TEACHER FILTER CARD -->
-          <div class="attendance-filter-card">
-            <div class="attendance-filter-grid master-teacher-grid">
+          <!-- MASTER TEACHER FILTER CARD (BUG 45) -->
+          <div id="masterTeacherFilterCard" class="attendance-filter-card is-mobile-collapsed" data-filter-group="masterTeacher">
+            <button type="button" class="mobile-filter-toggle-btn" id="masterTeacherFilterToggleBtn" aria-expanded="false" aria-controls="masterTeacherFilterGrid" onclick="toggleMobileFilterCard('masterTeacherFilterCard')">
+              <div class="mobile-filter-toggle-left">
+                <span class="mobile-filter-icon-wrap" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                </span>
+                <div class="mobile-filter-title-group">
+                  <span class="mobile-filter-title">Filter Data Guru</span>
+                  <span class="mobile-filter-subtitle" id="masterTeacherFilterSummaryText">Ketuk untuk menyaring data</span>
+                </div>
+              </div>
+              <div class="mobile-filter-toggle-right">
+                <span class="mobile-filter-count-badge" id="masterTeacherFilterCountBadge" style="display:none;">0</span>
+                <span class="mobile-filter-action-pill" id="masterTeacherFilterActionLabel">Filter</span>
+                <svg class="mobile-filter-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+            </button>
+            <div class="attendance-filter-grid master-teacher-grid" id="masterTeacherFilterGrid">
               <div class="attendance-filter-field">
                 <label for="masterTeacherPositionFilter" class="attendance-filter-label">Jabatan</label>
                 <select id="masterTeacherPositionFilter" class="input-box attendance-filter-control">
@@ -5778,6 +5842,51 @@ function setStudentClassFilter(classId) {
     }
 }
 
+function toggleMobileFilterCard(cardId, forceExpanded) {
+    const card = document.getElementById(cardId);
+    if (!card) return;
+    const isCurrentlyCollapsed = card.classList.contains('is-mobile-collapsed');
+    const shouldExpand = typeof forceExpanded === 'boolean' ? forceExpanded : isCurrentlyCollapsed;
+    card.classList.toggle('is-mobile-collapsed', !shouldExpand);
+
+    const btn = card.querySelector('.mobile-filter-toggle-btn');
+    if (btn) {
+        btn.setAttribute('aria-expanded', shouldExpand ? 'true' : 'false');
+    }
+    const actionLabel = card.querySelector('.mobile-filter-action-pill');
+    if (actionLabel) {
+        actionLabel.textContent = shouldExpand ? 'Tutup' : 'Filter';
+    }
+}
+
+function collapseMobileFilterOnApply(cardId) {
+    if (window.innerWidth <= 768) {
+        toggleMobileFilterCard(cardId, false);
+    }
+}
+
+function updateMobileFilterCardBadge(prefix, activeCount) {
+    const countBadge = document.getElementById(prefix + 'FilterCountBadge');
+    const summaryText = document.getElementById(prefix + 'FilterSummaryText');
+    const card = document.getElementById(prefix + 'FilterCard');
+    const count = parseInt(activeCount, 10) || 0;
+
+    if (card) {
+        card.classList.toggle('has-active-filters', count > 0);
+    }
+    if (countBadge) {
+        if (count > 0) {
+            countBadge.textContent = String(count);
+            countBadge.style.display = 'inline-flex';
+        } else {
+            countBadge.style.display = 'none';
+        }
+    }
+    if (summaryText) {
+        summaryText.textContent = count > 0 ? (count + ' filter sedang aktif') : 'Ketuk untuk menyaring data';
+    }
+}
+
 function renderMasterStudentActiveFilterChips() {
     const bar = document.getElementById('masterStudentActiveFiltersBar');
     const chipsContainer = document.getElementById('masterStudentActiveFilterChips');
@@ -5829,6 +5938,8 @@ function renderMasterStudentActiveFilterChips() {
             }
         });
     }
+
+    updateMobileFilterCardBadge('masterStudent', chips.filter(function(c){ return c.id !== 'search'; }).length);
 
     if (chips.length === 0) {
         bar.style.display = 'none';
@@ -6048,6 +6159,7 @@ function initStudentsModule() {
         filterBtn.addEventListener('click', function() {
             masterStudentTableState.currentPage = 1;
             renderMasterStudentTbody();
+            collapseMobileFilterOnApply('masterStudentFilterCard');
         });
     }
 
@@ -7941,6 +8053,8 @@ function renderMasterTeacherActiveFilterChips() {
         });
     }
 
+    updateMobileFilterCardBadge('masterTeacher', chips.filter(function(c){ return c.id !== 'search'; }).length);
+
     if (chips.length === 0) {
         bar.style.display = 'none';
         chipsContainer.innerHTML = '';
@@ -8168,6 +8282,7 @@ function initTeachersModule() {
         filterBtn.addEventListener('click', function() {
             masterTeacherTableState.currentPage = 1;
             renderMasterTeacherTbody();
+            collapseMobileFilterOnApply('masterTeacherFilterCard');
         });
     }
 
@@ -10295,6 +10410,8 @@ function renderStudentActiveFilterChips() {
         });
     }
 
+    updateMobileFilterCardBadge('studentAttendance', chips.filter(function(c){ return c.id !== 'search'; }).length);
+
     if (chips.length === 0) {
         bar.style.display = 'none';
         chipsContainer.innerHTML = '';
@@ -10372,7 +10489,7 @@ function exportStudentAttendanceData(format) {
 function initAttendanceModule() {
     const menu = document.getElementById('menu-attendance'); if (menu) menu.addEventListener('click', function(){ showAttendanceView(); });
     const addBtn = document.getElementById('addAttendanceButton'); if (addBtn) addBtn.addEventListener('click', function(){ openAttendanceModal('create'); });
-    const filterBtn = document.getElementById('filterAttendanceButton'); if (filterBtn) filterBtn.addEventListener('click', function(){ loadStudentAttendance(); });
+    const filterBtn = document.getElementById('filterAttendanceButton'); if (filterBtn) filterBtn.addEventListener('click', function(){ loadStudentAttendance(); collapseMobileFilterOnApply('studentAttendanceFilterCard'); });
     const resetBtn = document.getElementById('resetAttendanceButton');
     if (resetBtn) resetBtn.addEventListener('click', resetAllStudentAttendanceFilters);
 
@@ -11724,6 +11841,8 @@ function renderTeacherActiveFilterChips() {
         });
     }
 
+    updateMobileFilterCardBadge('teacherAttendance', chips.filter(function(c){ return c.id !== 'search'; }).length);
+
     if (chips.length === 0) {
         bar.style.display = 'none';
         chipsContainer.innerHTML = '';
@@ -11815,7 +11934,7 @@ function exportTeacherAttendanceData(format) {
 
 function initTeacherAttendanceModule() {
     const menu = document.getElementById('menu-teacher-attendance'); if (menu) menu.addEventListener('click', function(){ showTeacherAttendanceView(); });
-    const filterBtn = document.getElementById('filterTeacherAttendanceButton'); if (filterBtn) filterBtn.addEventListener('click', function(){ loadTeacherAttendance(); });
+    const filterBtn = document.getElementById('filterTeacherAttendanceButton'); if (filterBtn) filterBtn.addEventListener('click', function(){ loadTeacherAttendance(); collapseMobileFilterOnApply('teacherAttendanceFilterCard'); });
     const resetBtn = document.getElementById('resetTeacherAttendanceButton');
     if (resetBtn) resetBtn.addEventListener('click', resetAllTeacherAttendanceFilters);
 
