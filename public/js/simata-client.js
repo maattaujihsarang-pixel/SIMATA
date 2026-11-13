@@ -65,8 +65,21 @@
     if (!val) return '';
     if (typeof val === 'string') {
       const trimmed = val.trim();
+      if (/^\d{4}-\d{2}-\d{2}T/.test(trimmed)) {
+        const d = new Date(trimmed);
+        if (!isNaN(d.getTime())) {
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          return `${y}-${m}-${day}`;
+        }
+      }
       if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) {
         return trimmed.substring(0, 10);
+      }
+      const dmy = trimmed.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      if (dmy) {
+        return `${dmy[3]}-${dmy[2]}-${dmy[1]}`;
       }
       return trimmed;
     }
@@ -665,29 +678,38 @@
     },
 
     // 25. StudentAttendance: getStudentAttendance
-    getStudentAttendance: async function (filters = {}) {
+    getStudentAttendance: async function (...args) {
+      const filters = args.find((a) => a && typeof a === 'object') || {};
       const params = new URLSearchParams();
       if (filters.student_id || filters.studentId) params.append('student_id', filters.student_id || filters.studentId);
       if (filters.class_id || filters.classId) params.append('class_id', filters.class_id || filters.classId);
-      if (filters.date || filters.attendance_date) params.append('date', filters.date || filters.attendance_date);
+      if (filters.date || filters.attendance_date) params.append('date', normalizeCalendarDate(filters.date || filters.attendance_date));
       if (filters.period) params.append('period', filters.period);
       if (filters.status) params.append('status', filters.status);
+      if (filters.academic_year_id || filters.academicYear) params.append('academic_year_id', filters.academic_year_id || filters.academicYear);
       const qs = params.toString();
       const res = await apiFetch(`/attendance/students${qs ? '?' + qs : ''}`);
-      const list = (res.data || []).map((a) => ({
-        attendanceId: a.attendance_id,
-        studentId: a.student_id,
-        studentName: a.student_name || a.name || a.student_id,
-        classId: a.class_id,
-        className: a.class_name || a.class_id,
-        date: normalizeCalendarDate(a.attendance_date || a.date),
-        period: a.period,
-        status: a.status,
-        method: a.method,
-        note: a.note || '',
-        timestamp: a.recorded_at,
-        ...a
-      }));
+      const list = (res.data || []).map((a) => {
+        const ay = a.academic_year || a.academic_year_id || '';
+        const normDate = normalizeCalendarDate(a.attendance_date || a.date);
+        return {
+          ...a,
+          attendanceId: a.attendance_id || a.attendanceId,
+          studentId: a.student_id || a.studentId,
+          studentName: a.student_name || a.name || a.student_id,
+          classId: a.class_id || a.classId,
+          className: a.class_name || a.class_id,
+          academicYear: ay,
+          academic_year_id: a.academic_year_id || ay,
+          date: normDate,
+          attendance_date: normDate,
+          period: a.period,
+          status: a.status,
+          method: a.method,
+          note: a.note || '',
+          timestamp: a.recorded_at || a.timestamp
+        };
+      });
       return { success: true, attendances: list, data: list };
     },
 
@@ -695,18 +717,24 @@
     getStudentAttendanceById: async function (id) {
       const res = await apiFetch(`/attendance/students/${encodeURIComponent(id)}`);
       const a = res.data;
+      const ay = a.academic_year || a.academic_year_id || '';
+      const normDate = normalizeCalendarDate(a.attendance_date || a.date);
       const obj = {
-        attendanceId: a.attendance_id,
-        studentId: a.student_id,
+        ...a,
+        attendanceId: a.attendance_id || a.attendanceId,
+        studentId: a.student_id || a.studentId,
         studentName: a.student_name || a.name,
-        classId: a.class_id,
+        classId: a.class_id || a.classId,
         className: a.class_name,
-        date: normalizeCalendarDate(a.attendance_date || a.date),
+        academicYear: ay,
+        academic_year_id: a.academic_year_id || ay,
+        date: normDate,
+        attendance_date: normDate,
         period: a.period,
         status: a.status,
         method: a.method,
         note: a.note || '',
-        ...a
+        timestamp: a.recorded_at || a.timestamp
       };
       return { success: true, attendance: obj };
     },
@@ -840,30 +868,42 @@
     },
 
     // 32. TeacherAttendance: getTeacherAttendance
-    getTeacherAttendance: async function (filters = {}) {
+    getTeacherAttendance: async function (...args) {
+      const filters = args.find((a) => a && typeof a === 'object') || {};
       const params = new URLSearchParams();
       if (filters.teacher_id || filters.teacherId) params.append('teacher_id', filters.teacher_id || filters.teacherId);
       if (filters.class_id || filters.classId) params.append('class_id', filters.class_id || filters.classId);
-      if (filters.date || filters.attendance_date) params.append('date', filters.date || filters.attendance_date);
+      if (filters.date || filters.attendance_date) params.append('date', normalizeCalendarDate(filters.date || filters.attendance_date));
       if (filters.period) params.append('period', filters.period);
       if (filters.status) params.append('status', filters.status);
+      if (filters.subject) params.append('subject', filters.subject);
+      if (filters.academic_year_id || filters.academicYear) params.append('academic_year_id', filters.academic_year_id || filters.academicYear);
       const qs = params.toString();
       const res = await apiFetch(`/attendance/teachers${qs ? '?' + qs : ''}`);
-      const list = (res.data || []).map((a) => ({
-        attendanceId: a.attendance_id,
-        teacherId: a.teacher_id,
-        teacherName: a.teacher_name || a.name || a.teacher_id,
-        classId: a.class_id,
-        className: a.class_name || a.class_id,
-        date: normalizeCalendarDate(a.attendance_date || a.date),
-        period: a.period,
-        subject: a.subject,
-        materi: a.materi,
-        status: a.status,
-        note: a.note || '',
-        timestamp: a.recorded_at,
-        ...a
-      }));
+      const list = (res.data || []).map((a) => {
+        const ay = a.academic_year || a.academic_year_id || '';
+        const normDate = normalizeCalendarDate(a.attendance_date || a.date);
+        return {
+          ...a,
+          attendanceId: a.attendance_id || a.attendanceId,
+          teacherId: a.teacher_id || a.teacherId,
+          teacherName: a.teacher_name || a.name || a.teacher_id,
+          classId: a.class_id || a.classId,
+          className: a.class_name || a.class_id,
+          academicYear: ay,
+          academic_year_id: a.academic_year_id || ay,
+          date: normDate,
+          attendance_date: normDate,
+          period: a.period,
+          subject: a.subject,
+          materi: a.materi,
+          status: a.status,
+          note: a.note || '',
+          timestamp: a.recorded_at || a.timestamp,
+          recordedAt: a.recorded_at || a.recordedAt,
+          evidenceUrl: a.evidence_url || a.file_url || ''
+        };
+      });
       return { success: true, attendances: list, data: list };
     },
 
@@ -871,19 +911,27 @@
     getTeacherAttendanceById: async function (id) {
       const res = await apiFetch(`/attendance/teachers/${encodeURIComponent(id)}`);
       const a = res.data;
+      const ay = a.academic_year || a.academic_year_id || '';
+      const normDate = normalizeCalendarDate(a.attendance_date || a.date);
       const obj = {
-        attendanceId: a.attendance_id,
-        teacherId: a.teacher_id,
+        ...a,
+        attendanceId: a.attendance_id || a.attendanceId,
+        teacherId: a.teacher_id || a.teacherId,
         teacherName: a.teacher_name || a.name,
-        classId: a.class_id,
+        classId: a.class_id || a.classId,
         className: a.class_name,
-        date: normalizeCalendarDate(a.attendance_date || a.date),
+        academicYear: ay,
+        academic_year_id: a.academic_year_id || ay,
+        date: normDate,
+        attendance_date: normDate,
         period: a.period,
         subject: a.subject,
         materi: a.materi,
         status: a.status,
         note: a.note || '',
-        ...a
+        timestamp: a.recorded_at || a.timestamp,
+        recordedAt: a.recorded_at || a.recordedAt,
+        evidenceUrl: a.evidence_url || a.file_url || ''
       };
       return { success: true, attendance: obj };
     },

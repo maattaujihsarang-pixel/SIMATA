@@ -44,7 +44,7 @@ class StudentAttendanceRepository {
     return res.rows[0];
   }
 
-  async findByFilters({ date = null, classId = null, studentId = null, period = null } = {}) {
+  async findByFilters({ date = null, classId = null, studentId = null, period = null, status = null, academicYearId = null } = {}) {
     let sql = `SELECT sa.attendance_id, sa.student_id, sa.class_id, sa.academic_year_id,
                       sa.attendance_date, sa.period, sa.status, sa.method, sa.note,
                       sa.recorded_at, sa.recorded_by_user_id,
@@ -71,6 +71,14 @@ class StudentAttendanceRepository {
     if (period) {
       sql += ` AND sa.period = $${idx++}`;
       params.push(period);
+    }
+    if (academicYearId) {
+      sql += ` AND sa.academic_year_id = $${idx++}`;
+      params.push(academicYearId);
+    }
+    if (status) {
+      sql += ` AND LOWER(sa.status) = LOWER($${idx++})`;
+      params.push(status);
     }
 
     sql += ` ORDER BY sa.attendance_date DESC, sa.period ASC, s.name ASC`;

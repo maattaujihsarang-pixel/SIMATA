@@ -123,6 +123,26 @@ async function runTeacherMultiHourTests() {
   assert.ok(duplicateConflict, 'Should reject duplicate period with 409 Conflict');
   console.log('   PASS: Test 6 validated (409 Conflict returned, duplicate prevented).');
 
+  // TEST 7: Filtering teacher attendance by date, academicYearId, subject, status (BUG 44)
+  console.log('Test 7: Teacher attendance filters (date, academicYearId, teacherId, subject, status)...');
+  const filteredTeacher = await teacherAttendanceService.getAttendanceList({
+    date: today,
+    academicYearId: '2026/2027',
+    teacherId: 'TCH-0001',
+    classId: 'CLS-2627-10',
+    subject: 'Fiqih',
+    status: 'Hadir',
+    period: 2
+  });
+  assert.strictEqual(filteredTeacher.length, 1, 'Expected 1 Fiqih Hadir record for TCH-0001 on period 2 in 2026/2027');
+  assert.strictEqual(filteredTeacher[0].academic_year_id, '2026/2027');
+  const wrongYearTeacher = await teacherAttendanceService.getAttendanceList({
+    date: today,
+    academicYearId: '2025/2026'
+  });
+  assert.strictEqual(wrongYearTeacher.length, 0, 'Wrong academic year filter must return empty array');
+  console.log('   PASS: Test 7 validated (Teacher attendance filters work cleanly).');
+
   // Clean up test files from uploads/evidences
   await storageProvider.deleteFile(res1.file.fileId);
   await storageProvider.deleteFile(res2.file.fileId);

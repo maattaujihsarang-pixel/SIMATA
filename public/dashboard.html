@@ -9580,7 +9580,29 @@ function saveGradeFromModal() {
 let attendanceStudentLookup = {}; // studentId -> { name, nis, gender, classId }
 let attendanceStudentsMasterList = []; // all student master records for print roster
 let attendanceClassLookup = {};   // classId -> className
+let attendanceClassYearLookup = {}; // classId -> academicYear
 let attendanceTeacherLookup = {}; // teacherId -> name
+let teacherAttendanceKnownSubjects = new Set();
+
+function normalizeAttendanceDateStr(val) {
+    if (!val) return '';
+    const comp = typeof parseAttendanceDateComponents === 'function' ? parseAttendanceDateComponents(val) : null;
+    if (comp) {
+        return comp.year + '-' + String(comp.month).padStart(2, '0') + '-' + String(comp.day).padStart(2, '0');
+    }
+    return String(val).trim().substring(0, 10);
+}
+
+function getRecordAcademicYear(record) {
+    if (!record) return '';
+    return String(
+        record.academicYear ||
+        record.academic_year_id ||
+        record.academic_year ||
+        attendanceClassYearLookup[record.classId || record.class_id] ||
+        ''
+    ).trim();
+}
 
 function parseAttendanceDateComponents(input) {
     if (input === null || input === undefined) return null;
@@ -9932,18 +9954,28 @@ function toggleStudentColVisibility(colKey, isVisible) {
     renderStudentAttendanceTbody();
 }
 
+function hasActiveStudentAttendanceFilters() {
+    const ids = ['attendanceDateFilter', 'attendanceAcademicYearFilter', 'attendanceClassFilter', 'attendanceStudentFilter', 'attendancePeriodFilter', 'attendanceStatusFilter'];
+    for (let i = 0; i < ids.length; i++) {
+        const el = document.getElementById(ids[i]);
+        if (el && String(el.value || '').trim() !== '') return true;
+    }
+    return Boolean(studentAttendanceTableState && String(studentAttendanceTableState.searchQuery || '').trim() !== '');
+}
+
 function getFilteredStudentAttendanceList() {
     const status = document.getElementById('attendanceStatusFilter') ? document.getElementById('attendanceStatusFilter').value.trim() : '';
     const academicYear = document.getElementById('attendanceAcademicYearFilter') ? document.getElementById('attendanceAcademicYearFilter').value.trim() : '';
     const classId = document.getElementById('attendanceClassFilter') ? document.getElementById('attendanceClassFilter').value.trim() : '';
     const studentId = document.getElementById('attendanceStudentFilter') ? document.getElementById('attendanceStudentFilter').value.trim() : '';
     const period = document.getElementById('attendancePeriodFilter') ? document.getElementById('attendancePeriodFilter').value.trim() : '';
-    const date = document.getElementById('attendanceDateFilter') ? document.getElementById('attendanceDateFilter').value.trim() : '';
+    const dateRaw = document.getElementById('attendanceDateFilter') ? document.getElementById('attendanceDateFilter').value.trim() : '';
+    const date = dateRaw ? normalizeAttendanceDateStr(dateRaw) : '';
     const query = (studentAttendanceTableState.searchQuery || '').toLowerCase();
 
     return studentAttendanceMasterList.filter(function(a) {
-        if (date && a.date !== date) return false;
-        if (academicYear && String(a.academicYear || '').toLowerCase() !== academicYear.toLowerCase()) return false;
+        if (date && normalizeAttendanceDateStr(a.date || a.attendance_date) !== date) return false;
+        if (academicYear && getRecordAcademicYear(a).toLowerCase() !== academicYear.toLowerCase()) return false;
         if (classId && String(a.classId || '').toLowerCase() !== classId.toLowerCase()) return false;
         if (studentId && String(a.studentId || '').toLowerCase() !== studentId.toLowerCase()) return false;
         if (period && String(a.period || '') !== period) return false;
@@ -10074,7 +10106,7 @@ function renderStudentAttendanceTbody() {
     renderPaginationControl('studentAttendancePagination', curPage, totalPages, pageSize, 'goToStudentAttendancePage');
 
     if (total === 0) {
-        if (studentAttendanceMasterList.length === 0) {
+        if (studentAttendanceMasterList.length === 0 && !hasActiveStudentAttendanceFilters()) {
             tbody.innerHTML = '<tr><td colspan="' + totalVisibleColCount + '" class="attendance-empty-cell">' +
                 '<div class="empty-state-content">' +
                     '<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#94a3b8" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' +
@@ -10416,6 +10448,9 @@ function initAttendanceModule() {
         if (cRes && cRes.success && Array.isArray(cRes.classes)) {
             cRes.classes.forEach(function(c){
                 attendanceClassLookup[c.classId] = c.className || c.classId;
+                if (c.academicYear || c.academic_year_id) {
+                    attendanceClassYearLookup[c.classId] = c.academicYear || c.academic_year_id;
+                }
             });
             const sel = document.getElementById('a_classId'); const filterSel = document.getElementById('attendanceClassFilter'); const yearSel = document.getElementById('attendanceAcademicYearFilter');
             const teacherYearSel = document.getElementById('teacherAttendanceAcademicYearFilter');
@@ -10469,7 +10504,7 @@ function loadStudentAttendance() {
             attendances = attendances.filter(function(a){ return String(a.status || '').toLowerCase() === String(status).toLowerCase(); });
         }
         if (academicYear) {
-            attendances = attendances.filter(function(a){ return String(a.academicYear || '').toLowerCase() === String(academicYear).toLowerCase(); });
+            attendances = attendances.filter(function(a){ return getRecordAcademicYear(a).toLowerCase() === String(academicYear).toLowerCase(); });
         }
         studentAttendanceMasterList = attendances;
         studentAttendanceTableState.currentPage = 1;
@@ -11322,6 +11357,15 @@ function toggleTeacherColVisibility(colKey, isVisible) {
     renderTeacherAttendanceTbody();
 }
 
+function hasActiveTeacherAttendanceFilters() {
+    const ids = ['teacherAttendanceDateFilter', 'teacherAttendanceAcademicYearFilter', 'teacherAttendanceTeacherFilter', 'teacherAttendanceClassFilter', 'teacherAttendancePeriodFilter', 'teacherAttendanceSubjectFilter', 'teacherAttendanceStatusFilter'];
+    for (let i = 0; i < ids.length; i++) {
+        const el = document.getElementById(ids[i]);
+        if (el && String(el.value || '').trim() !== '') return true;
+    }
+    return Boolean(teacherAttendanceTableState && String(teacherAttendanceTableState.searchQuery || '').trim() !== '');
+}
+
 function getFilteredTeacherAttendanceList() {
     const status = document.getElementById('teacherAttendanceStatusFilter') ? document.getElementById('teacherAttendanceStatusFilter').value.trim() : '';
     const academicYear = document.getElementById('teacherAttendanceAcademicYearFilter') ? document.getElementById('teacherAttendanceAcademicYearFilter').value.trim() : '';
@@ -11329,12 +11373,13 @@ function getFilteredTeacherAttendanceList() {
     const classId = document.getElementById('teacherAttendanceClassFilter') ? document.getElementById('teacherAttendanceClassFilter').value.trim() : '';
     const subject = document.getElementById('teacherAttendanceSubjectFilter') ? document.getElementById('teacherAttendanceSubjectFilter').value.trim() : '';
     const period = document.getElementById('teacherAttendancePeriodFilter') ? document.getElementById('teacherAttendancePeriodFilter').value.trim() : '';
-    const date = document.getElementById('teacherAttendanceDateFilter') ? document.getElementById('teacherAttendanceDateFilter').value.trim() : '';
+    const dateRaw = document.getElementById('teacherAttendanceDateFilter') ? document.getElementById('teacherAttendanceDateFilter').value.trim() : '';
+    const date = dateRaw ? normalizeAttendanceDateStr(dateRaw) : '';
     const query = (teacherAttendanceTableState.searchQuery || '').toLowerCase();
 
     return teacherAttendanceMasterList.filter(function(a) {
-        if (date && a.date !== date) return false;
-        if (academicYear && String(a.academicYear || '').toLowerCase() !== academicYear.toLowerCase()) return false;
+        if (date && normalizeAttendanceDateStr(a.date || a.attendance_date) !== date) return false;
+        if (academicYear && getRecordAcademicYear(a).toLowerCase() !== academicYear.toLowerCase()) return false;
         if (teacherId && String(a.teacherId || '').toLowerCase() !== teacherId.toLowerCase()) return false;
         if (classId && String(a.classId || '').toLowerCase() !== classId.toLowerCase()) return false;
         if (subject && String(a.subject || '').toLowerCase() !== subject.toLowerCase()) return false;
@@ -11478,7 +11523,7 @@ function renderTeacherAttendanceTbody() {
     renderPaginationControl('teacherAttendancePagination', curPage, totalPages, pageSize, 'goToTeacherAttendancePage');
 
     if (total === 0) {
-        if (teacherAttendanceMasterList.length === 0) {
+        if (teacherAttendanceMasterList.length === 0 && !hasActiveTeacherAttendanceFilters()) {
             tbody.innerHTML = '<tr><td colspan="' + totalVisibleColCount + '" class="attendance-empty-cell">' +
                 '<div class="empty-state-content">' +
                     '<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#94a3b8" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' +
@@ -11726,7 +11771,11 @@ function populateTeacherSubjectFilter(records) {
     const sel = document.getElementById('teacherAttendanceSubjectFilter');
     if (!sel) return;
     const currentVal = sel.value;
-    const subjects = Array.from(new Set(records.map(r => r.subject).filter(Boolean))).sort();
+    (records || []).forEach(function(r) {
+        if (r && r.subject) teacherAttendanceKnownSubjects.add(r.subject);
+    });
+    if (currentVal) teacherAttendanceKnownSubjects.add(currentVal);
+    const subjects = Array.from(teacherAttendanceKnownSubjects).sort();
     let html = '<option value="">(Semua Mapel)</option>';
     subjects.forEach(s => {
         html += '<option value="' + escapeAttr(s) + '" ' + (s === currentVal ? 'selected' : '') + '>' + escapeHtml(s) + '</option>';
@@ -11834,6 +11883,9 @@ function initTeacherAttendanceModule() {
             if (cRes && cRes.success && Array.isArray(cRes.classes)) {
                 cRes.classes.forEach(function(c){
                     attendanceClassLookup[c.classId] = c.className || c.classId;
+                    if (c.academicYear || c.academic_year_id) {
+                        attendanceClassYearLookup[c.classId] = c.academicYear || c.academic_year_id;
+                    }
                 });
                 const years = Array.from(new Set(cRes.classes.map(function(c){ return c.academicYear || ''; }).filter(Boolean))).sort();
                 if (tYearSel) tYearSel.innerHTML = '<option value="">(Semua Tahun)</option>' + years.map(function(y){ return '<option value="'+y+'">'+y+'</option>'; }).join('');
@@ -11871,6 +11923,7 @@ function loadTeacherAttendance() {
     const academicYear = document.getElementById('teacherAttendanceAcademicYearFilter') ? document.getElementById('teacherAttendanceAcademicYearFilter').value : '';
     const teacherId = document.getElementById('teacherAttendanceTeacherFilter') ? document.getElementById('teacherAttendanceTeacherFilter').value : '';
     const classId = document.getElementById('teacherAttendanceClassFilter') ? document.getElementById('teacherAttendanceClassFilter').value : '';
+    const subject = document.getElementById('teacherAttendanceSubjectFilter') ? document.getElementById('teacherAttendanceSubjectFilter').value : '';
     const status = document.getElementById('teacherAttendanceStatusFilter') ? document.getElementById('teacherAttendanceStatusFilter').value : '';
     const period = document.getElementById('teacherAttendancePeriodFilter') ? document.getElementById('teacherAttendancePeriodFilter').value : '';
 
@@ -11879,16 +11932,21 @@ function loadTeacherAttendance() {
     if (academicYear) filters.academicYear = academicYear;
     if (teacherId) filters.teacherId = teacherId;
     if (classId) filters.classId = classId;
+    if (subject) filters.subject = subject;
     if (status) filters.status = status;
     if (period) filters.period = period;
 
     simataClient.withSuccessHandler(function(result){
         let attendances = result.attendances || [];
         if (status) {
-            attendances = attendances.filter(function(a){ return String(a.status || '').toLowerCase() === String(status).toLowerCase(); });
+            attendances = attendances.filter(function(a){
+                let sA = String(a.status || '').toLowerCase().replace(/\s+/g, '');
+                let sF = String(status).toLowerCase().replace(/\s+/g, '');
+                return sA === sF;
+            });
         }
         if (academicYear) {
-            attendances = attendances.filter(function(a){ return String(a.academicYear || '').toLowerCase() === String(academicYear).toLowerCase(); });
+            attendances = attendances.filter(function(a){ return getRecordAcademicYear(a).toLowerCase() === String(academicYear).toLowerCase(); });
         }
         teacherAttendanceMasterList = attendances;
         populateTeacherSubjectFilter(teacherAttendanceMasterList);

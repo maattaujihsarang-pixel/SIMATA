@@ -20,12 +20,15 @@ class TeacherAttendanceController {
 
   async list(req, res, next) {
     try {
-      const { date, teacher_id, class_id, period } = req.query;
+      const { date, teacher_id, class_id, period, status, subject, academic_year_id, academicYear } = req.query;
       const attendances = await teacherAttendanceService.getAttendanceList({
         date,
         teacherId: teacher_id,
         classId: class_id,
-        period: period ? parseInt(period, 10) : null
+        period: period ? parseInt(period, 10) : null,
+        status: status || null,
+        subject: subject || null,
+        academicYearId: academic_year_id || academicYear || null
       });
       return res.status(200).json({
         status: 'success',

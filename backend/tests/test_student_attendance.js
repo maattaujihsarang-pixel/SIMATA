@@ -127,6 +127,26 @@ async function runStudentAttendanceTests() {
   assert.strictEqual(batchLater.total_inserted, 4, 'Should insert 2 unique students x 2 unique periods cleanly');
   console.log('   PASS: Roster uniqueness & multi-period subsequent batch submit verified.');
 
+  // 7. Filtering by date, academicYearId, classId, studentId, period, status (BUG 44)
+  console.log('7. Testing student attendance filters (date, academicYearId, status, period)...');
+  const filteredByDateAndYear = await studentAttendanceService.getAttendanceList({
+    date: today,
+    academicYearId: '2026/2027',
+    classId: 'CLS-2627-10',
+    status: 'Izin',
+    period: 9
+  });
+  assert.strictEqual(filteredByDateAndYear.length, 1, 'Expected 1 Izin record on period 9 for 2026/2027');
+  assert.strictEqual(filteredByDateAndYear[0].student_id, 'STD-K10002');
+  assert.strictEqual(filteredByDateAndYear[0].academic_year_id, '2026/2027');
+
+  const filteredWrongYear = await studentAttendanceService.getAttendanceList({
+    date: today,
+    academicYearId: '2025/2026'
+  });
+  assert.strictEqual(filteredWrongYear.length, 0, 'Wrong academic year filter must return empty array');
+  console.log('   PASS: Student attendance filter parameters verified.');
+
   console.log('Student Attendance Tests: ALL PASS');
   return true;
 }

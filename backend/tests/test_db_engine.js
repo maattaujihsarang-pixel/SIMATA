@@ -415,6 +415,49 @@ class TestDbEngine {
         rowCount: 1
       };
     }
+    if (q.includes('FROM student_attendance sa') && q.includes('JOIN students s')) {
+      let results = this.student_attendance.map(sa => {
+        const s = this.students.find(st => st.student_id === sa.student_id) || {};
+        const c = this.classes.find(cl => cl.class_id === sa.class_id) || {};
+        return {
+          ...sa,
+          student_name: s.name || sa.student_id,
+          class_name: c.class_name || sa.class_id,
+          academic_year_id: sa.academic_year_id || c.academic_year_id || null
+        };
+      });
+      const dateMatch = q.match(/sa\.attendance_date\s*=\s*\$(\d+)/);
+      if (dateMatch) {
+        const val = params[parseInt(dateMatch[1], 10) - 1];
+        results = results.filter(r => r.attendance_date === val);
+      }
+      const classMatch = q.match(/sa\.class_id\s*=\s*\$(\d+)/);
+      if (classMatch) {
+        const val = params[parseInt(classMatch[1], 10) - 1];
+        results = results.filter(r => r.class_id === val);
+      }
+      const studentMatch = q.match(/sa\.student_id\s*=\s*\$(\d+)/);
+      if (studentMatch) {
+        const val = params[parseInt(studentMatch[1], 10) - 1];
+        results = results.filter(r => r.student_id === val);
+      }
+      const periodMatch = q.match(/sa\.period\s*=\s*\$(\d+)/);
+      if (periodMatch) {
+        const val = parseInt(params[parseInt(periodMatch[1], 10) - 1], 10);
+        results = results.filter(r => r.period === val);
+      }
+      const ayMatch = q.match(/sa\.academic_year_id\s*=\s*\$(\d+)/);
+      if (ayMatch) {
+        const val = params[parseInt(ayMatch[1], 10) - 1];
+        results = results.filter(r => r.academic_year_id === val);
+      }
+      const statusMatch = q.match(/LOWER\(sa\.status\)\s*=\s*LOWER\(\$(\d+)\)/);
+      if (statusMatch) {
+        const val = String(params[parseInt(statusMatch[1], 10) - 1] || '').toLowerCase();
+        results = results.filter(r => String(r.status || '').toLowerCase() === val);
+      }
+      return { rows: results, rowCount: results.length };
+    }
     if (q.includes('FROM student_attendance')) {
       return { rows: [...this.student_attendance], rowCount: this.student_attendance.length };
     }
@@ -476,26 +519,52 @@ class TestDbEngine {
           nip: t.nip || '-',
           nuptk: t.nuptk || '-',
           class_name: c.class_name || ta.class_id,
+          academic_year_id: ta.academic_year_id || c.academic_year_id || null,
           evidence_id: ae.evidence_id || null,
           file_id: ae.file_id || null,
           file_url: ae.file_url || null
         };
       });
 
-      if (q.includes('ta.attendance_id = $1')) {
-        results = results.filter(r => r.attendance_id === params[0]);
+      const idMatch = q.match(/ta\.attendance_id\s*=\s*\$(\d+)/);
+      if (idMatch) {
+        const val = params[parseInt(idMatch[1], 10) - 1];
+        results = results.filter(r => r.attendance_id === val);
       }
-      if (q.includes('ta.attendance_date =')) {
-        const dateParam = params.find(p => typeof p === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(p));
-        if (dateParam) {
-          results = results.filter(r => r.attendance_date === dateParam);
-        }
+      const dateMatch = q.match(/ta\.attendance_date\s*=\s*\$(\d+)/);
+      if (dateMatch) {
+        const val = params[parseInt(dateMatch[1], 10) - 1];
+        results = results.filter(r => r.attendance_date === val);
       }
-      if (q.includes('ta.teacher_id =')) {
-        const tIdParam = params.find(p => typeof p === 'string' && p.startsWith('TCH-'));
-        if (tIdParam) {
-          results = results.filter(r => r.teacher_id === tIdParam);
-        }
+      const teacherMatch = q.match(/ta\.teacher_id\s*=\s*\$(\d+)/);
+      if (teacherMatch) {
+        const val = params[parseInt(teacherMatch[1], 10) - 1];
+        results = results.filter(r => r.teacher_id === val);
+      }
+      const classMatch = q.match(/ta\.class_id\s*=\s*\$(\d+)/);
+      if (classMatch) {
+        const val = params[parseInt(classMatch[1], 10) - 1];
+        results = results.filter(r => r.class_id === val);
+      }
+      const periodMatch = q.match(/ta\.period\s*=\s*\$(\d+)/);
+      if (periodMatch) {
+        const val = parseInt(params[parseInt(periodMatch[1], 10) - 1], 10);
+        results = results.filter(r => r.period === val);
+      }
+      const ayMatch = q.match(/ta\.academic_year_id\s*=\s*\$(\d+)/);
+      if (ayMatch) {
+        const val = params[parseInt(ayMatch[1], 10) - 1];
+        results = results.filter(r => r.academic_year_id === val);
+      }
+      const subjectMatch = q.match(/LOWER\(ta\.subject\)\s*=\s*LOWER\(\$(\d+)\)/);
+      if (subjectMatch) {
+        const val = String(params[parseInt(subjectMatch[1], 10) - 1] || '').toLowerCase();
+        results = results.filter(r => String(r.subject || '').toLowerCase() === val);
+      }
+      const statusMatch = q.match(/REPLACE\(LOWER\(ta\.status\),\s*' ',\s*''\)\s*=\s*REPLACE\(LOWER\(\$(\d+)\),\s*' ',\s*''\)/);
+      if (statusMatch) {
+        const val = String(params[parseInt(statusMatch[1], 10) - 1] || '').toLowerCase().replace(/\s+/g, '');
+        results = results.filter(r => String(r.status || '').toLowerCase().replace(/\s+/g, '') === val);
       }
       return { rows: results, rowCount: results.length };
     }
