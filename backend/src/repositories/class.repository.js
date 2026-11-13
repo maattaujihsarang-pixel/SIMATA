@@ -38,14 +38,15 @@ class ClassRepository {
    */
   async getRosterWithTodayAttendance(classId, attendanceDate) {
     const res = await db.query(
-      `SELECT s.student_id, s.name, s.gender, s.nis, s.nisn, s.qr_code_id, s.status AS student_status,
+      `SELECT DISTINCT ON (s.name, s.student_id)
+              s.student_id, s.name, s.gender, s.nis, s.nisn, s.qr_code_id, s.status AS student_status,
               sa.attendance_id, sa.period, sa.status AS attendance_status, sa.method, sa.note, sa.recorded_at
        FROM students s
        LEFT JOIN student_attendance sa 
          ON s.student_id = sa.student_id 
         AND sa.attendance_date = $2
        WHERE s.class_id = $1 AND s.status = 'Active'
-       ORDER BY s.name ASC`,
+       ORDER BY s.name ASC, s.student_id ASC, sa.period DESC NULLS LAST, sa.recorded_at DESC NULLS LAST`,
       [classId, attendanceDate]
     );
     return res.rows;

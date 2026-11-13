@@ -501,7 +501,13 @@
         apiFetch(`/classes/${encodeURIComponent(classId)}/roster`)
       ]);
       const cls = clsRes.data || {};
-      const roster = rosterRes.data || [];
+      const rosterRaw = rosterRes.data || [];
+      const seenStudentIds = new Set();
+      const roster = rosterRaw.filter((r) => {
+        if (!r || !r.student_id || seenStudentIds.has(r.student_id)) return false;
+        seenStudentIds.add(r.student_id);
+        return true;
+      });
       const today = new Date().toISOString().split('T')[0];
       const students = roster.map((r) => ({
         studentId: r.student_id,
@@ -799,15 +805,26 @@
     // 30. StudentAttendance: recordBatchClassAttendance
     recordBatchClassAttendance: async function (...args) {
       const payload = args.find((a) => a && typeof a === 'object' && (a.classId || a.class_id || a.attendances)) || args[args.length - 1];
+      const uniquePeriods = Array.from(new Set(
+        (payload.periods || [])
+          .map((p) => parseInt(p, 10))
+          .filter((n) => !isNaN(n))
+      ));
+      const uniqueAttendancesMap = new Map();
+      (payload.attendances || []).forEach((a) => {
+        const sid = a && (a.student_id || a.studentId);
+        if (!sid) return;
+        uniqueAttendancesMap.set(String(sid).trim(), {
+          student_id: String(sid).trim(),
+          status: a.status || 'Hadir',
+          note: a.note || ''
+        });
+      });
       const targetPayload = {
         class_id: payload.class_id || payload.classId,
         attendance_date: payload.attendance_date || payload.date || new Date().toISOString().split('T')[0],
-        periods: (payload.periods || []).map((p) => parseInt(p, 10)),
-        attendances: (payload.attendances || []).map((a) => ({
-          student_id: a.student_id || a.studentId,
-          status: a.status || 'Hadir',
-          note: a.note || ''
-        })),
+        periods: uniquePeriods,
+        attendances: Array.from(uniqueAttendancesMap.values()),
         method: payload.method || 'QR_BATCH'
       };
       const res = await apiFetch('/attendance/students/batch', {

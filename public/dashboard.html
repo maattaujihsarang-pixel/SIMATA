@@ -9215,14 +9215,18 @@ function submitBatchClassAttendance() {
         ? currentResponderSession.sessionId
         : "";
 
-    const attendances = currentBatchRosterData.students.map(function(s) {
+    const seenBatchStudentIds = new Set();
+    const attendances = [];
+    currentBatchRosterData.students.forEach(function(s) {
+        if (!s || !s.studentId || seenBatchStudentIds.has(s.studentId)) return;
+        seenBatchStudentIds.add(s.studentId);
         const sel = document.querySelector('#batchAttTbody .batch-status-select[data-student-id="' + s.studentId + '"]');
         const noteInput = document.querySelector('#batchAttTbody .batch-note-input[data-student-id="' + s.studentId + '"]');
-        return {
+        attendances.push({
             studentId: s.studentId,
             status: sel ? sel.value : (s.status || 'Hadir'),
             note: noteInput ? noteInput.value.trim() : ''
-        };
+        });
     });
 
     const payload = {

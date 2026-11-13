@@ -86,15 +86,23 @@ class StudentAttendanceService {
       throw new BadRequestError('Tahun ajaran aktif belum dikonfigurasi');
     }
 
-    const parsedPeriods = periods.map(p => {
+    const parsedPeriods = [...new Set(periods.map(p => {
       const num = parseInt(p, 10);
       if (isNaN(num) || num < 1 || num > 10) {
         throw new BadRequestError(`Period '${p}' tidak valid. Harus angka 1-10.`);
       }
       return num;
-    });
+    }))];
 
-    const studentIds = attendances.map(a => a.student_id);
+    const uniqueAttendancesMap = new Map();
+    for (const item of attendances) {
+      if (!item || !item.student_id) continue;
+      const sid = String(item.student_id).trim();
+      if (!sid) continue;
+      uniqueAttendancesMap.set(sid, { ...item, student_id: sid });
+    }
+    const uniqueAttendances = Array.from(uniqueAttendancesMap.values());
+    const studentIds = uniqueAttendances.map(a => a.student_id);
 
     // Atomic All-or-Nothing Transaction
     return withTransaction(async (client) => {
@@ -117,7 +125,7 @@ class StudentAttendanceService {
 
       // 2. Insert records atomically
       const inserted = [];
-      for (const item of attendances) {
+      for (const item of uniqueAttendances) {
         if (!VALID_STATUSES.includes(item.status)) {
           throw new BadRequestError(`Status '${item.status}' untuk siswa ${item.student_id} tidak valid.`);
         }

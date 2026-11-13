@@ -298,27 +298,34 @@ class TestDbEngine {
       return { rows: [...this.classes], rowCount: this.classes.length };
     }
     if (q.includes('FROM students s') && q.includes('LEFT JOIN student_attendance sa') && q.includes('s.class_id = $1')) {
-      // Dynamic roster query (BUG 29)
+      // Dynamic roster query (BUG 29) + DISTINCT ON simulation for multi-period same-day attendance
       const classId = params[0];
       const date = params[1];
-      const roster = this.students.filter(s => s.class_id === classId).map(s => {
-        const att = this.student_attendance.find(a => a.student_id === s.student_id && a.attendance_date === date);
-        return {
-          student_id: s.student_id,
-          name: s.name,
-          gender: s.gender,
-          nis: s.nis,
-          nisn: s.nisn,
-          qr_code_id: s.qr_code_id,
-          student_status: s.status,
-          attendance_id: att ? att.attendance_id : null,
-          period: att ? att.period : null,
-          attendance_status: att ? att.status : null,
-          method: att ? att.method : null,
-          note: att ? att.note : null,
-          recorded_at: att ? att.recorded_at : null
-        };
-      });
+      const usesDistinctOn = q.includes('DISTINCT ON');
+      const roster = [];
+      for (const s of this.students.filter(st => st.class_id === classId && (!q.includes("s.status = 'Active'") || st.status === 'Active'))) {
+        const atts = this.student_attendance
+          .filter(a => a.student_id === s.student_id && a.attendance_date === date)
+          .sort((a, b) => (b.period || 0) - (a.period || 0));
+        const matched = atts.length > 0 ? (usesDistinctOn ? [atts[0]] : atts) : [null];
+        for (const att of matched) {
+          roster.push({
+            student_id: s.student_id,
+            name: s.name,
+            gender: s.gender,
+            nis: s.nis,
+            nisn: s.nisn,
+            qr_code_id: s.qr_code_id,
+            student_status: s.status,
+            attendance_id: att ? att.attendance_id : null,
+            period: att ? att.period : null,
+            attendance_status: att ? att.status : null,
+            method: att ? att.method : null,
+            note: att ? att.note : null,
+            recorded_at: att ? att.recorded_at : null
+          });
+        }
+      }
       return { rows: roster, rowCount: roster.length };
     }
 

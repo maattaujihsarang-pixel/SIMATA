@@ -2,6 +2,7 @@ const assert = require('assert');
 const testDbEngine = require('./test_db_engine');
 const { setMockQueryHandler, setMockTransactionHandler } = require('../src/config/database');
 const studentAttendanceService = require('../src/services/student-attendance.service');
+const masterService = require('../src/services/master.service');
 
 async function runStudentAttendanceTests() {
   console.log('\n--- Running Student Attendance Tests ---');
@@ -98,6 +99,33 @@ async function runStudentAttendanceTests() {
   assert.strictEqual(qrAtt.period, 3);
   assert.strictEqual(qrAtt.method, 'QR');
   console.log('   PASS: QR code attendance recorded.');
+
+  // 6. Multi-period same-day roster deduplication + subsequent batch submit
+  console.log('6. Testing class roster after multi-period same-day attendance & subsequent batch submit...');
+  const roster = await masterService.getClassRoster('CLS-2627-10', today);
+  const rosterIds = roster.map(r => r.student_id);
+  const uniqueRosterIds = new Set(rosterIds);
+  assert.strictEqual(
+    rosterIds.length,
+    uniqueRosterIds.size,
+    'Roster must return strictly 1 row per active student even after multiple periods on the same day'
+  );
+  assert.ok(uniqueRosterIds.has('STD-K10001') && uniqueRosterIds.has('STD-K10002'));
+
+  // Subsequent batch submission for periods 9, 10 (even with defensive duplicate entries in payload)
+  const batchLater = await studentAttendanceService.recordBatchAttendance({
+    class_id: 'CLS-2627-10',
+    attendance_date: today,
+    periods: [9, 10, 9],
+    attendances: [
+      { student_id: 'STD-K10001', status: 'Hadir' },
+      { student_id: 'STD-K10001', status: 'Hadir' },
+      { student_id: 'STD-K10002', status: 'Izin', note: 'Lomba' },
+      { student_id: 'STD-K10002', status: 'Izin', note: 'Lomba' }
+    ]
+  }, 1);
+  assert.strictEqual(batchLater.total_inserted, 4, 'Should insert 2 unique students x 2 unique periods cleanly');
+  console.log('   PASS: Roster uniqueness & multi-period subsequent batch submit verified.');
 
   console.log('Student Attendance Tests: ALL PASS');
   return true;

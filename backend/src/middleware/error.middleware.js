@@ -44,15 +44,18 @@ function errorMiddleware(err, req, res, next) {
   if (err.code === '23505') {
     let code = 'DUPLICATE_RESOURCE';
     const constraintName = err.constraint || '';
-    if (constraintName.includes('student_attendance')) {
+    let message = `Conflict: record violates unique constraint '${constraintName}'`;
+    if (constraintName.includes('student_attendance') || constraintName.includes('uq_student_daily_period')) {
       code = 'DUPLICATE_STUDENT_ATTENDANCE';
-    } else if (constraintName.includes('teacher_attendance')) {
+      message = 'Presensi siswa untuk tanggal dan jam pelajaran tersebut sudah tercatat.';
+    } else if (constraintName.includes('teacher_attendance') || constraintName.includes('uq_teacher_daily_period')) {
       code = 'DUPLICATE_TEACHER_ATTENDANCE';
+      message = 'Presensi guru untuk tanggal dan jam pelajaran tersebut sudah tercatat.';
     }
     return res.status(409).json({
       status: 'fail',
       code,
-      message: `Conflict: record violates unique constraint '${constraintName}'`,
+      message,
       details: { constraint: constraintName, detail: err.detail }
     });
   }

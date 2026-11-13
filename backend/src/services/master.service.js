@@ -105,7 +105,13 @@ class MasterService {
   async getClassRoster(classId, date = null) {
     await this.getClassById(classId);
     const attendanceDate = date || getTodayISODate();
-    return classRepository.getRosterWithTodayAttendance(classId, attendanceDate);
+    const rows = await classRepository.getRosterWithTodayAttendance(classId, attendanceDate);
+    const seenStudentIds = new Set();
+    return rows.filter(row => {
+      if (!row || !row.student_id || seenStudentIds.has(row.student_id)) return false;
+      seenStudentIds.add(row.student_id);
+      return true;
+    });
   }
 
   async createClass(data) {
