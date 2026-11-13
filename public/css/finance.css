@@ -237,28 +237,6 @@
   gap: 16px;
 }
 
-.finance-return-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: 8px;
-  background-color: #f1f5f9;
-  color: #334155;
-  font-size: 12.5px;
-  font-weight: 600;
-  border: 1px solid #cbd5e1;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  text-decoration: none;
-}
-
-.finance-return-pill:hover {
-  background-color: #e2e8f0;
-  color: #0f172a;
-  border-color: #94a3b8;
-}
-
 .finance-breadcrumb {
   display: flex;
   align-items: center;
@@ -540,6 +518,10 @@
   }
 
   .finance-breadcrumb {
-    display: none;
+    display: flex;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
