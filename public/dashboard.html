@@ -16,7 +16,7 @@
 
   <title>SIMATA | Dashboard</title>
 
-  <link rel="stylesheet" href="/css/style.css?v=bug45b">
+  <link rel="stylesheet" href="/css/style.css?v=bug45c">
   <link rel="stylesheet" href="/css/notifications.css">
   <link rel="stylesheet" href="/css/finance.css">
   <style>
@@ -2329,9 +2329,9 @@ html, body {
                   <th class="att-desktop-th" style="padding:12px 10px;text-align:center;width:95px;font-size:12.5px;font-weight:700;color:#475569;">Status</th>
                   <th class="att-desktop-th" style="padding:12px 10px;text-align:center;width:80px;font-size:12.5px;font-weight:700;color:#475569;">Waktu</th>
                   <th class="att-desktop-th" style="padding:12px 12px;text-align:center;width:140px;font-size:12.5px;font-weight:700;color:#475569;">Aksi</th>
-                  <th class="att-mobile-th" style="width:38%;text-align:left;">Nama</th>
-                  <th class="att-mobile-th" style="width:31%;text-align:left;">Tanggal / Kelas</th>
-                  <th class="att-mobile-th" style="width:31%;text-align:right;">Status</th>
+                  <th class="att-mobile-th" style="width:40%;text-align:left;">Nama</th>
+                  <th class="att-mobile-th" style="width:33%;text-align:left;">Tanggal / Kelas</th>
+                  <th class="att-mobile-th" style="width:27%;text-align:right;">Status</th>
                 </tr>
               </thead>
               <tbody id="attendanceTbody"></tbody>
@@ -2636,9 +2636,9 @@ html, body {
                   <th class="att-desktop-th" style="padding:12px 10px;text-align:center;width:95px;font-size:12.5px;font-weight:700;color:#475569;">Status</th>
                   <th class="att-desktop-th" style="padding:12px 10px;text-align:center;width:80px;font-size:12.5px;font-weight:700;color:#475569;">Waktu</th>
                   <th class="att-desktop-th" style="padding:12px 12px;text-align:center;width:140px;font-size:12.5px;font-weight:700;color:#475569;">Aksi</th>
-                  <th class="att-mobile-th" style="width:38%;text-align:left;">Nama</th>
-                  <th class="att-mobile-th" style="width:31%;text-align:left;">Tanggal / Mapel</th>
-                  <th class="att-mobile-th" style="width:31%;text-align:right;">Status</th>
+                  <th class="att-mobile-th" style="width:40%;text-align:left;">Nama</th>
+                  <th class="att-mobile-th" style="width:33%;text-align:left;">Tanggal / Mapel</th>
+                  <th class="att-mobile-th" style="width:27%;text-align:right;">Status</th>
                 </tr>
               </thead>
               <tbody id="teacherAttendanceTbody"></tbody>
@@ -5891,6 +5891,29 @@ function updateMobileFilterCardBadge(prefix, activeCount) {
     if (summaryText) {
         summaryText.textContent = count > 0 ? (count + ' filter sedang aktif') : 'Ketuk untuk menyaring data';
     }
+}
+
+function formatMobileShortDate(formattedDateStr) {
+    return String(formattedDateStr || '-').replace(/\s+\d{4}$/, '');
+}
+
+function renderMobileAttendanceSummaryCells(prefix, idx, primaryNameHtml, infoTextHtml, statusBadgeHtml, ariaLabel) {
+    const expandBtnId = (prefix === 'teacher' ? 'teacherAttExpandBtn_' : 'studentAttExpandBtn_') + idx;
+    const detailRowId = (prefix === 'teacher' ? 'teacherAttDetailRow_' : 'studentAttDetailRow_') + idx;
+    return '<td class="att-mobile-cell att-mobile-col-name" onclick="toggleMobileAttendanceRow(\'' + prefix + '\', ' + idx + ')">' +
+            '<div class="att-mobile-primary-name">' + primaryNameHtml + '</div>' +
+        '</td>' +
+        '<td class="att-mobile-cell att-mobile-col-info" onclick="toggleMobileAttendanceRow(\'' + prefix + '\', ' + idx + ')">' +
+            '<div class="att-mobile-info-text">' + infoTextHtml + '</div>' +
+        '</td>' +
+        '<td class="att-mobile-cell att-mobile-col-status" onclick="toggleMobileAttendanceRow(\'' + prefix + '\', ' + idx + ')">' +
+            '<div class="att-mobile-status-wrap">' +
+                statusBadgeHtml +
+                '<span class="att-mobile-expand-icon" id="' + expandBtnId + '" role="button" tabindex="0" aria-expanded="false" aria-controls="' + detailRowId + '" aria-label="' + escapeAttr(ariaLabel) + '" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();event.stopPropagation();toggleMobileAttendanceRow(\'' + prefix + '\', ' + idx + ');}">' +
+                    '<svg class="att-mobile-chevron" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>' +
+                '</span>' +
+            '</div>' +
+        '</td>';
 }
 
 function toggleMobileAttendanceRow(prefix, idx) {
@@ -10227,9 +10250,9 @@ function renderStudentAttendanceThead() {
         '</th>';
     }).join('');
     const mobileThs = renderMobileAttendanceTheadCols([
-        { sortKey: 'name', label: 'Nama', width: '38%', align: 'left' },
-        { sortKey: 'date', label: 'Tanggal / Kelas', width: '31%', align: 'left' },
-        { sortKey: 'status', label: 'Status', width: '31%', align: 'right' }
+        { sortKey: 'name', label: 'Nama', width: '40%', align: 'left' },
+        { sortKey: 'date', label: 'Tanggal / Kelas', width: '33%', align: 'left' },
+        { sortKey: 'status', label: 'Status', width: '27%', align: 'right' }
     ], studentAttendanceTableState, 'handleStudentSort');
     thead.innerHTML = '<tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">' + desktopThs + mobileThs + '</tr>';
 }
@@ -10361,31 +10384,12 @@ function renderStudentAttendanceTbody() {
             cells.push('<td class="att-desktop-cell" style="padding:10px 12px;text-align:center;">' + actionButtons + '</td>');
         }
 
-        // Mobile Opsi 2: 3 compact columns + expandable detail row
-        cells.push(
-            '<td class="att-mobile-cell att-mobile-col-name" onclick="toggleMobileAttendanceRow(\'student\', ' + idx + ')">' +
-                '<div class="att-mobile-primary-name">' + studentName + '</div>' +
-                '<div class="att-mobile-sub-meta">NIS: ' + studentNis + '</div>' +
-            '</td>'
-        );
-        cells.push(
-            '<td class="att-mobile-cell att-mobile-col-info" onclick="toggleMobileAttendanceRow(\'student\', ' + idx + ')">' +
-                '<div class="att-mobile-info-date">' + formattedDate + '</div>' +
-                '<div class="att-mobile-info-sub">' + className + ' &bull; ' + periodText + '</div>' +
-            '</td>'
-        );
-        cells.push(
-            '<td class="att-mobile-cell att-mobile-col-status" onclick="toggleMobileAttendanceRow(\'student\', ' + idx + ')">' +
-                '<div class="att-mobile-status-wrap">' +
-                    statusBadge +
-                    '<button type="button" class="att-mobile-expand-btn" id="studentAttExpandBtn_' + idx + '" aria-expanded="false" aria-controls="studentAttDetailRow_' + idx + '" aria-label="Buka detail presensi siswa" onclick="event.stopPropagation(); toggleMobileAttendanceRow(\'student\', ' + idx + ');">' +
-                        '<svg class="att-mobile-chevron" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>' +
-                    '</button>' +
-                '</div>' +
-            '</td>'
-        );
+        // Mobile Opsi 2: 3 compact columns matching mockup + expandable detail row
+        const studentInfoSummary = escapeHtml(formatMobileShortDate(formattedDate)) + ' &bull; ' + className;
+        cells.push(renderMobileAttendanceSummaryCells('student', idx, studentName, studentInfoSummary, statusBadge, 'Buka detail presensi siswa'));
 
         const detailRowHtml = renderMobileAttendanceDetailRow('student', idx, [
+            { label: 'Tanggal', value: formattedDate },
             { label: 'Jam', value: periodText },
             { label: 'Waktu', value: timeText },
             { label: 'Kelas', value: attendanceClassLookup[a.classId] || (typeof studentClassMap !== 'undefined' && studentClassMap[a.classId]) || a.classId || '-' },
@@ -11682,9 +11686,9 @@ function renderTeacherAttendanceThead() {
         '</th>';
     }).join('');
     const mobileThs = renderMobileAttendanceTheadCols([
-        { sortKey: 'teacher', label: 'Nama', width: '38%', align: 'left' },
-        { sortKey: 'date', label: 'Tanggal / Mapel', width: '31%', align: 'left' },
-        { sortKey: 'status', label: 'Status', width: '31%', align: 'right' }
+        { sortKey: 'teacher', label: 'Nama', width: '40%', align: 'left' },
+        { sortKey: 'date', label: 'Tanggal / Mapel', width: '33%', align: 'left' },
+        { sortKey: 'status', label: 'Status', width: '27%', align: 'right' }
     ], teacherAttendanceTableState, 'handleTeacherSort');
     thead.innerHTML = '<tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">' + desktopThs + mobileThs + '</tr>';
 }
@@ -11817,32 +11821,12 @@ function renderTeacherAttendanceTbody() {
             cells.push('<td class="att-desktop-cell" style="padding:10px 12px;text-align:center;">' + actionButtons + '</td>');
         }
 
-        // Mobile Opsi 2: 3 compact columns + expandable detail row
-        const teacherSubMeta = periodText + (className && className !== '-' ? ' &bull; ' + className : '');
-        cells.push(
-            '<td class="att-mobile-cell att-mobile-col-name" onclick="toggleMobileAttendanceRow(\'teacher\', ' + idx + ')">' +
-                '<div class="att-mobile-primary-name">' + teacherName + '</div>' +
-                '<div class="att-mobile-sub-meta">' + teacherSubMeta + '</div>' +
-            '</td>'
-        );
-        cells.push(
-            '<td class="att-mobile-cell att-mobile-col-info" onclick="toggleMobileAttendanceRow(\'teacher\', ' + idx + ')">' +
-                '<div class="att-mobile-info-date">' + formattedDate + '</div>' +
-                '<div class="att-mobile-info-sub">' + escapeHtml(a.subject || '-') + '</div>' +
-            '</td>'
-        );
-        cells.push(
-            '<td class="att-mobile-cell att-mobile-col-status" onclick="toggleMobileAttendanceRow(\'teacher\', ' + idx + ')">' +
-                '<div class="att-mobile-status-wrap">' +
-                    statusBadge +
-                    '<button type="button" class="att-mobile-expand-btn" id="teacherAttExpandBtn_' + idx + '" aria-expanded="false" aria-controls="teacherAttDetailRow_' + idx + '" aria-label="Buka detail presensi guru" onclick="event.stopPropagation(); toggleMobileAttendanceRow(\'teacher\', ' + idx + ');">' +
-                        '<svg class="att-mobile-chevron" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>' +
-                    '</button>' +
-                '</div>' +
-            '</td>'
-        );
+        // Mobile Opsi 2: 3 compact columns matching mockup + expandable detail row
+        const teacherInfoSummary = escapeHtml(formatMobileShortDate(formattedDate)) + ' &bull; ' + escapeHtml(a.subject || '-');
+        cells.push(renderMobileAttendanceSummaryCells('teacher', idx, teacherName, teacherInfoSummary, statusBadge, 'Buka detail presensi guru'));
 
         const teacherDetailItems = [
+            { label: 'Tanggal', value: formattedDate },
             { label: 'Jam', value: periodText },
             { label: 'Waktu', value: timeText },
             { label: 'Kelas', value: attendanceClassLookup[a.classId] || a.classId || '-' },

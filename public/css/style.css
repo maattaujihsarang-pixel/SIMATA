@@ -4854,22 +4854,31 @@ select.attendance-filter-control {
 }
 
 @media (max-width: 768px) {
-  .att-desktop-th,
-  .att-desktop-cell {
+  .dashboard-layout .content #attendanceTable th.att-desktop-th,
+  .dashboard-layout .content #attendanceTable td.att-desktop-cell,
+  .dashboard-layout .content #teacherAttendanceTable th.att-desktop-th,
+  .dashboard-layout .content #teacherAttendanceTable td.att-desktop-cell {
     display: none !important;
   }
 
-  .att-mobile-th,
-  .att-mobile-cell {
+  .dashboard-layout .content #attendanceTable th.att-mobile-th,
+  .dashboard-layout .content #attendanceTable td.att-mobile-cell,
+  .dashboard-layout .content #teacherAttendanceTable th.att-mobile-th,
+  .dashboard-layout .content #teacherAttendanceTable td.att-mobile-cell {
     display: table-cell !important;
-    vertical-align: middle;
+    vertical-align: middle !important;
+    white-space: normal !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
   }
 
-  .att-mobile-detail-row {
+  .dashboard-layout .content #attendanceTable tr.att-mobile-detail-row,
+  .dashboard-layout .content #teacherAttendanceTable tr.att-mobile-detail-row {
     display: none !important;
   }
 
-  .att-mobile-detail-row.is-expanded {
+  .dashboard-layout .content #attendanceTable tr.att-mobile-detail-row.is-expanded,
+  .dashboard-layout .content #teacherAttendanceTable tr.att-mobile-detail-row.is-expanded {
     display: table-row !important;
   }
 
@@ -4879,12 +4888,13 @@ select.attendance-filter-control {
     max-height: none;
   }
 
-  .dashboard-layout #attendanceContent #attendanceTable,
-  .dashboard-layout #teacherAttendanceContent #teacherAttendanceTable {
+  .dashboard-layout .content #attendanceTable,
+  .dashboard-layout .content #teacherAttendanceTable {
     min-width: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
     table-layout: fixed !important;
+    border-collapse: collapse !important;
   }
 
   #studentColVisDropdownWrapper,
@@ -4892,117 +4902,112 @@ select.attendance-filter-control {
     display: none !important;
   }
 
-  #attendanceTable thead th.att-mobile-th,
-  #teacherAttendanceTable thead th.att-mobile-th {
+  .dashboard-layout .content #attendanceTable thead th.att-mobile-th,
+  .dashboard-layout .content #teacherAttendanceTable thead th.att-mobile-th {
     padding: 10px 6px !important;
     font-size: 11px !important;
     font-weight: 700 !important;
     color: #475569 !important;
-    white-space: normal;
-    line-height: 1.25;
+    line-height: 1.25 !important;
   }
 
-  #attendanceTable thead th.att-mobile-th:first-of-type,
-  #teacherAttendanceTable thead th.att-mobile-th:first-of-type {
+  .dashboard-layout .content #attendanceTable thead th.att-mobile-th:first-of-type,
+  .dashboard-layout .content #teacherAttendanceTable thead th.att-mobile-th:first-of-type {
     padding-left: 10px !important;
   }
 
-  #attendanceTable thead th.att-mobile-th:last-of-type,
-  #teacherAttendanceTable thead th.att-mobile-th:last-of-type {
-    padding-right: 8px !important;
+  .dashboard-layout .content #attendanceTable thead th.att-mobile-th:last-of-type,
+  .dashboard-layout .content #teacherAttendanceTable thead th.att-mobile-th:last-of-type {
+    padding-right: 10px !important;
   }
 
-  #attendanceTable thead th.att-mobile-th .th-content,
-  #teacherAttendanceTable thead th.att-mobile-th .th-content {
-    flex-wrap: wrap;
-    white-space: normal;
-    gap: 3px;
+  .dashboard-layout .content #attendanceTable thead th.att-mobile-th .th-content,
+  .dashboard-layout .content #teacherAttendanceTable thead th.att-mobile-th .th-content {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 3px !important;
+    white-space: nowrap !important;
+    width: 100% !important;
   }
 
-  #attendanceTable tbody td.att-mobile-cell,
-  #teacherAttendanceTable tbody td.att-mobile-cell {
-    padding: 11px 8px !important;
+  .dashboard-layout .content #attendanceTable tbody td.att-mobile-cell,
+  .dashboard-layout .content #teacherAttendanceTable tbody td.att-mobile-cell {
+    padding: 11px 6px !important;
     cursor: pointer;
-    overflow-wrap: anywhere;
-    word-break: normal;
-    vertical-align: middle;
+    overflow-wrap: break-word !important;
+    word-break: break-word !important;
   }
 
-  #attendanceTable tbody td.att-mobile-col-name,
-  #teacherAttendanceTable tbody td.att-mobile-col-name {
+  .dashboard-layout .content #attendanceTable tbody td.att-mobile-col-name,
+  .dashboard-layout .content #teacherAttendanceTable tbody td.att-mobile-col-name {
     padding-left: 10px !important;
-    text-align: left;
+    text-align: left !important;
   }
 
-  #attendanceTable tbody td.att-mobile-col-status,
-  #teacherAttendanceTable tbody td.att-mobile-col-status {
-    padding-right: 8px !important;
+  .dashboard-layout .content #attendanceTable tbody td.att-mobile-col-info,
+  .dashboard-layout .content #teacherAttendanceTable tbody td.att-mobile-col-info {
+    text-align: left !important;
+  }
+
+  .dashboard-layout .content #attendanceTable tbody td.att-mobile-col-status,
+  .dashboard-layout .content #teacherAttendanceTable tbody td.att-mobile-col-status {
+    padding-right: 10px !important;
     padding-left: 4px !important;
-    text-align: right;
+    text-align: right !important;
   }
 
   .att-mobile-primary-name {
-    font-size: 12.5px;
+    font-size: 12px;
     font-weight: 700;
     color: #0f172a;
-    line-height: 1.3;
+    line-height: 1.35;
+    white-space: normal !important;
+    overflow-wrap: break-word;
+    word-break: break-word;
   }
 
-  .att-mobile-sub-meta {
-    font-size: 11px;
-    font-weight: 500;
-    color: #64748b;
-    margin-top: 2px;
-    line-height: 1.25;
-  }
-
-  .att-mobile-info-date {
+  .att-mobile-info-text {
     font-size: 11.5px;
-    font-weight: 600;
+    font-weight: 500;
     color: #334155;
-    line-height: 1.3;
-  }
-
-  .att-mobile-info-sub {
-    font-size: 11px;
-    color: #64748b;
-    margin-top: 2px;
-    line-height: 1.25;
+    line-height: 1.35;
+    white-space: normal !important;
+    overflow-wrap: break-word;
+    word-break: break-word;
   }
 
   .att-mobile-status-wrap {
-    display: inline-flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 3px;
-    width: 100%;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 4px !important;
+    width: 100% !important;
     min-width: 0;
   }
 
   .att-mobile-status-wrap .status-badge {
-    font-size: 10px;
-    padding: 3px 6px;
-    max-width: calc(100% - 23px);
+    font-size: 10px !important;
+    padding: 3px 7px !important;
+    max-width: calc(100% - 22px);
     overflow: hidden;
     text-overflow: ellipsis;
+    flex-shrink: 1;
   }
 
-  .att-mobile-expand-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 24px;
-    padding: 0;
-    border: none;
-    background: transparent;
-    color: #64748b;
-    border-radius: 6px;
-    cursor: pointer;
-    flex-shrink: 0;
+  .att-mobile-expand-icon {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 18px !important;
+    height: 18px !important;
+    flex: 0 0 18px !important;
+    color: #475569;
+    border-radius: 4px;
+    pointer-events: none;
   }
 
-  .att-mobile-expand-btn[aria-expanded="true"] {
+  .att-mobile-expand-icon[aria-expanded="true"] {
     color: #166534;
     background-color: #dcfce7;
   }
@@ -5013,21 +5018,22 @@ select.attendance-filter-control {
     }
   }
 
-  .att-mobile-expand-btn[aria-expanded="true"] .att-mobile-chevron {
+  .att-mobile-expand-icon[aria-expanded="true"] .att-mobile-chevron {
     transform: rotate(180deg);
   }
 
-  #attendanceTable .simata-table-row.is-mobile-row-expanded td.att-mobile-cell,
-  #teacherAttendanceTable .simata-table-row.is-mobile-row-expanded td.att-mobile-cell {
+  .dashboard-layout .content #attendanceTable .simata-table-row.is-mobile-row-expanded td.att-mobile-cell,
+  .dashboard-layout .content #teacherAttendanceTable .simata-table-row.is-mobile-row-expanded td.att-mobile-cell {
     background-color: #ecfdf5 !important;
     border-bottom-color: transparent !important;
   }
 
-  #attendanceTable td.att-mobile-detail-cell,
-  #teacherAttendanceTable td.att-mobile-detail-cell {
+  .dashboard-layout .content #attendanceTable td.att-mobile-detail-cell,
+  .dashboard-layout .content #teacherAttendanceTable td.att-mobile-detail-cell {
     background-color: #ecfdf5 !important;
     padding: 2px 10px 12px 10px !important;
     border-bottom: 1px solid #d1fae5 !important;
+    white-space: normal !important;
   }
 
   .att-mobile-detail-card {
@@ -5046,7 +5052,7 @@ select.attendance-filter-control {
 
   .att-mobile-detail-kv {
     display: grid;
-    grid-template-columns: 68px minmax(0, 1fr);
+    grid-template-columns: 64px minmax(0, 1fr);
     gap: 8px;
     align-items: baseline;
     font-size: 12px;
@@ -5061,6 +5067,7 @@ select.attendance-filter-control {
   .att-mobile-detail-val {
     color: #0f172a;
     font-weight: 500;
+    white-space: normal !important;
     overflow-wrap: break-word;
     word-break: break-word;
   }
@@ -5073,13 +5080,15 @@ select.attendance-filter-control {
 
   .att-mobile-detail-actions .student-action-group {
     justify-content: flex-end !important;
-    gap: 8px;
+    gap: 8px !important;
   }
 
-  .att-mobile-detail-actions .btn-action {
+  .dashboard-layout .content table td.att-mobile-detail-cell .btn-action {
+    margin: 0 !important;
     border-radius: 9999px !important;
-    padding: 5px 12px !important;
+    padding: 5px 14px !important;
     font-size: 12px !important;
-    min-height: 30px;
+    min-height: 30px !important;
+    line-height: 1.2 !important;
   }
 }
