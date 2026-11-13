@@ -16,7 +16,7 @@
 
   <title>SIMATA | Dashboard</title>
 
-  <link rel="stylesheet" href="/css/style.css?v=bug45d">
+  <link rel="stylesheet" href="/css/style.css?v=bug46a">
   <link rel="stylesheet" href="/css/notifications.css">
   <link rel="stylesheet" href="/css/finance.css">
   <style>
@@ -2944,6 +2944,26 @@ html, body {
             </div>
           </div>
 
+          <!-- BUG 46: UNIFIED STUDENT SUMMARY BANNER (OPSI 2 - PURE DISPLAY, NON-FILTER) -->
+          <div id="masterStudentUnifiedSummaryBanner" class="student-unified-summary-banner" role="region" aria-label="Ringkasan Jumlah Siswa">
+            <div class="student-summary-banner-main">
+              <div class="student-summary-total-block">
+                <div class="student-summary-total-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                </div>
+                <div class="student-summary-total-text">
+                  <span class="student-summary-total-label">TOTAL SISWA:</span>
+                  <div class="student-summary-total-value-row">
+                    <span class="student-summary-total-number" id="studentSummaryTotalNumber">0</span>
+                    <span class="student-summary-total-unit">Siswa</span>
+                  </div>
+                </div>
+              </div>
+              <div class="student-summary-classes-list" id="studentSummaryClassesList"></div>
+            </div>
+            <div class="student-summary-proportion-bar" id="studentSummaryProportionBar" aria-hidden="true"></div>
+          </div>
+
           <!-- MASTER STUDENT FILTER CARD (BUG 45) -->
           <div id="masterStudentFilterCard" class="attendance-filter-card is-mobile-collapsed" data-filter-group="masterStudent">
             <button type="button" class="mobile-filter-toggle-btn" id="masterStudentFilterToggleBtn" aria-expanded="false" aria-controls="masterStudentFilterGrid" onclick="toggleMobileFilterCard('masterStudentFilterCard')">
@@ -2982,13 +3002,6 @@ html, body {
                 <button id="resetMasterStudentButton" type="button" class="btn-filter-reset">Reset</button>
               </div>
             </div>
-          </div>
-
-          <!-- DYNAMIC CLASS SUMMARY CHIPS (PRESERVED) -->
-          <div id="masterStudentClassSummaryChipsBar" class="student-filter-bar" style="margin-top:-6px;margin-bottom:14px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;background:#f8fafc;padding:10px 14px;border-radius:10px;border:1px solid #e2e8f0;">
-            <span style="font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.03em;">Ringkasan Kelas:</span>
-            <div id="studentClassSummaryChips" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:1 1 auto;"></div>
-            <span id="studentFilterCountText" style="font-size:12px;font-weight:600;color:#166534;background:#f0fdf4;padding:4px 10px;border-radius:16px;border:1px solid #bbf7d0;">Total: 0 siswa</span>
           </div>
 
           <!-- ACTIVE FILTER INDICATOR -->
@@ -5829,39 +5842,74 @@ function goToMasterStudentPage(page) {
 }
 
 function updateStudentSummaryChips() {
-    const classSelect = document.getElementById('masterStudentClassFilter');
-    const selectedClassId = classSelect ? classSelect.value : '';
-    const countText = document.getElementById('studentFilterCountText');
-    const summaryChips = document.getElementById('studentClassSummaryChips');
+    const totalNumberEl = document.getElementById('studentSummaryTotalNumber');
+    const classesListEl = document.getElementById('studentSummaryClassesList');
+    const proportionBarEl = document.getElementById('studentSummaryProportionBar');
+    if (!totalNumberEl && !classesListEl && !proportionBarEl) return;
 
-    if (summaryChips && Array.isArray(loadedClassesList)) {
-        summaryChips.innerHTML = loadedClassesList.map(function(c) {
-            const count = allLoadedStudents.filter(function(s) { return s.classId === c.classId; }).length;
-            const isSelected = selectedClassId === c.classId;
-            const activeClass = isSelected ? ' active' : '';
-            return '<button type="button" class="class-summary-chip' + activeClass + '" onclick="setStudentClassFilter(\'' + escapeAttr(c.classId) + '\')" title="Klik untuk memfilter ' + escapeHtml(c.className || c.classId) + '">' +
-                '<span class="chip-label">' + escapeHtml(c.className || c.classId) + '</span>' +
-                '<span class="chip-badge">' + count + '</span>' +
-                '</button>';
-        }).join('');
+    const students = Array.isArray(allLoadedStudents) ? allLoadedStudents : [];
+    const totalStudents = students.length;
+    if (totalNumberEl) {
+        totalNumberEl.textContent = String(totalStudents);
     }
 
-    if (countText) {
-        const filtered = getFilteredMasterStudentList();
-        if (selectedClassId || masterStudentTableState.searchQuery || (document.getElementById('masterStudentStatusFilter') && document.getElementById('masterStudentStatusFilter').value)) {
-            countText.textContent = 'Menampilkan: ' + filtered.length + ' siswa';
+    let classEntries = [];
+    if (Array.isArray(loadedClassesList) && loadedClassesList.length > 0) {
+        classEntries = loadedClassesList.map(function(c) {
+            return {
+                classId: c.classId,
+                className: c.className || c.classId || '-'
+            };
+        });
+    } else {
+        const seen = {};
+        students.forEach(function(s) {
+            const cid = s.classId || '';
+            if (cid && !seen[cid]) {
+                seen[cid] = true;
+                classEntries.push({
+                    classId: cid,
+                    className: (studentClassMap && studentClassMap[cid]) || cid
+                });
+            }
+        });
+    }
+
+    const palette = ['#065f46', '#059669', '#10b981', '#14b8a6', '#34d399'];
+
+    const counts = classEntries.map(function(c, idx) {
+        const count = students.filter(function(s) { return s.classId === c.classId; }).length;
+        return {
+            classId: c.classId,
+            className: c.className,
+            count: count,
+            color: palette[idx % palette.length]
+        };
+    });
+
+    if (classesListEl) {
+        if (counts.length === 0) {
+            classesListEl.innerHTML = '<div class="student-summary-empty">Belum ada data kelas</div>';
         } else {
-            countText.textContent = 'Total: ' + allLoadedStudents.length + ' siswa';
+            classesListEl.innerHTML = counts.map(function(item) {
+                return '<div class="student-summary-class-item">' +
+                    '<span class="student-summary-class-label"><span class="student-summary-class-dot" style="background:' + item.color + ';"></span>' + escapeHtml(item.className) + '</span>' +
+                    '<div class="student-summary-class-value"><span>' + item.count + '</span><span class="student-summary-class-unit">Siswa</span></div>' +
+                '</div>';
+            }).join('');
         }
     }
-}
 
-function setStudentClassFilter(classId) {
-    const select = document.getElementById('masterStudentClassFilter');
-    if (select) {
-        select.value = classId || '';
-        masterStudentTableState.currentPage = 1;
-        renderMasterStudentTbody();
+    if (proportionBarEl) {
+        if (totalStudents === 0 || counts.length === 0) {
+            proportionBarEl.innerHTML = '';
+        } else {
+            proportionBarEl.innerHTML = counts.map(function(item) {
+                if (item.count <= 0) return '';
+                const pct = ((item.count / totalStudents) * 100).toFixed(2);
+                return '<span class="student-summary-proportion-seg" style="width:' + pct + '%;background:' + item.color + ';" title="' + escapeAttr(item.className + ': ' + item.count + ' siswa') + '"></span>';
+            }).join('');
+        }
     }
 }
 
@@ -6392,6 +6440,7 @@ function loadStudents(filter) {
                 }).join('');
                 filterSelect.value = currentVal || '';
             }
+            updateStudentSummaryChips();
         }
     }).withFailureHandler(function() { /* ignore */ }).getClasses();
 
