@@ -16,7 +16,7 @@
 
   <title>SIMATA | Dashboard</title>
 
-  <link rel="stylesheet" href="/css/style.css?v=bug45c">
+  <link rel="stylesheet" href="/css/style.css?v=bug45d">
   <link rel="stylesheet" href="/css/notifications.css">
   <link rel="stylesheet" href="/css/finance.css">
   <style>
@@ -5648,22 +5648,26 @@ function renderMasterStudentThead() {
     const thead = document.getElementById('studentsThead');
     if (!thead) return;
     const cols = masterStudentColumnDefs.filter(function(c) { return masterStudentTableState.visibleColumns[c.key]; });
-    thead.innerHTML = '<tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">' +
-        cols.map(function(c) {
-            if (!c.sortable) {
-                return '<th style="padding:12px 8px;text-align:' + c.align + ';width:' + c.width + ';font-size:12.5px;font-weight:700;color:#475569;">' + escapeHtml(c.label) + '</th>';
-            }
-            const isSorted = masterStudentTableState.sortField === c.key;
-            const sortClass = isSorted ? (masterStudentTableState.sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc') : '';
-            const indicator = isSorted ? (masterStudentTableState.sortDirection === 'asc' ? '↑' : '↓') : '↕';
-            return '<th class="sortable-th ' + sortClass + '" data-col="' + c.key + '" data-align="' + c.align + '" onclick="handleMasterStudentSort(\'' + c.key + '\')" style="padding:12px 10px;text-align:' + c.align + ';width:' + c.width + ';font-size:12.5px;font-weight:700;color:#475569;">' +
-                '<div class="th-content">' +
-                    '<span>' + escapeHtml(c.label) + '</span>' +
-                    '<span class="sort-indicator">' + indicator + '</span>' +
-                '</div>' +
-            '</th>';
-        }).join('') +
-    '</tr>';
+    const desktopThs = cols.map(function(c) {
+        if (!c.sortable) {
+            return '<th class="att-desktop-th" style="padding:12px 8px;text-align:' + c.align + ';width:' + c.width + ';font-size:12.5px;font-weight:700;color:#475569;">' + escapeHtml(c.label) + '</th>';
+        }
+        const isSorted = masterStudentTableState.sortField === c.key;
+        const sortClass = isSorted ? (masterStudentTableState.sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc') : '';
+        const indicator = isSorted ? (masterStudentTableState.sortDirection === 'asc' ? '↑' : '↓') : '↕';
+        return '<th class="att-desktop-th sortable-th ' + sortClass + '" data-col="' + c.key + '" data-align="' + c.align + '" onclick="handleMasterStudentSort(\'' + c.key + '\')" style="padding:12px 10px;text-align:' + c.align + ';width:' + c.width + ';font-size:12.5px;font-weight:700;color:#475569;">' +
+            '<div class="th-content">' +
+                '<span>' + escapeHtml(c.label) + '</span>' +
+                '<span class="sort-indicator">' + indicator + '</span>' +
+            '</div>' +
+        '</th>';
+    }).join('');
+    const mobileThs = renderMobileAttendanceTheadCols([
+        { sortKey: 'name', label: 'Nama', width: '38%', align: 'left' },
+        { sortKey: 'class', label: 'Kelas / L-P', width: '32%', align: 'left' },
+        { sortKey: 'status', label: 'Status', width: '30%', align: 'right' }
+    ], masterStudentTableState, 'handleMasterStudentSort');
+    thead.innerHTML = '<tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">' + desktopThs + mobileThs + '</tr>';
 }
 
 function handleMasterStudentSort(colKey) {
@@ -5770,37 +5774,50 @@ function renderMasterStudentTbody() {
 
         const cells = [];
         if (masterStudentTableState.visibleColumns.no) {
-            cells.push('<td style="padding:10px 8px;text-align:center;color:#64748b;font-size:12.5px;">' + no + '</td>');
+            cells.push('<td class="att-desktop-cell" style="padding:10px 8px;text-align:center;color:#64748b;font-size:12.5px;">' + no + '</td>');
         }
         if (masterStudentTableState.visibleColumns.studentId) {
-            cells.push('<td style="padding:10px 10px;text-align:center;font-size:12px;font-family:monospace;color:#64748b;">' + escapeHtml(s.studentId || '-') + '</td>');
+            cells.push('<td class="att-desktop-cell" style="padding:10px 10px;text-align:center;font-size:12px;font-family:monospace;color:#64748b;">' + escapeHtml(s.studentId || '-') + '</td>');
         }
         if (masterStudentTableState.visibleColumns.nis) {
-            cells.push('<td style="padding:10px 10px;text-align:center;font-size:12.5px;font-family:monospace;color:#334155;">' + nis + '</td>');
+            cells.push('<td class="att-desktop-cell" style="padding:10px 10px;text-align:center;font-size:12.5px;font-family:monospace;color:#334155;">' + nis + '</td>');
         }
         if (masterStudentTableState.visibleColumns.nisn) {
-            cells.push('<td style="padding:10px 10px;text-align:center;font-size:12.5px;font-family:monospace;color:#334155;">' + nisn + '</td>');
+            cells.push('<td class="att-desktop-cell" style="padding:10px 10px;text-align:center;font-size:12.5px;font-family:monospace;color:#334155;">' + nisn + '</td>');
         }
         if (masterStudentTableState.visibleColumns.name) {
-            cells.push('<td style="padding:10px 14px;text-align:left;font-size:13px;font-weight:600;color:#0f172a;">' + name + '</td>');
+            cells.push('<td class="att-desktop-cell" style="padding:10px 14px;text-align:left;font-size:13px;font-weight:600;color:#0f172a;">' + name + '</td>');
         }
         if (masterStudentTableState.visibleColumns.gender) {
-            cells.push('<td style="padding:10px 8px;text-align:center;font-size:12.5px;color:#334155;">' + gender + '</td>');
+            cells.push('<td class="att-desktop-cell" style="padding:10px 8px;text-align:center;font-size:12.5px;color:#334155;">' + gender + '</td>');
         }
         if (masterStudentTableState.visibleColumns.class) {
-            cells.push('<td style="padding:10px 8px;text-align:center;font-size:12.5px;color:#334155;">' + className + '</td>');
+            cells.push('<td class="att-desktop-cell" style="padding:10px 8px;text-align:center;font-size:12.5px;color:#334155;">' + className + '</td>');
         }
         if (masterStudentTableState.visibleColumns.birthDate) {
-            cells.push('<td style="padding:10px 8px;text-align:center;font-size:12.5px;color:#334155;">' + birthDate + '</td>');
+            cells.push('<td class="att-desktop-cell" style="padding:10px 8px;text-align:center;font-size:12.5px;color:#334155;">' + birthDate + '</td>');
         }
         if (masterStudentTableState.visibleColumns.status) {
-            cells.push('<td style="padding:10px 8px;text-align:center;">' + statusBadge + '</td>');
+            cells.push('<td class="att-desktop-cell" style="padding:10px 8px;text-align:center;">' + statusBadge + '</td>');
         }
         if (masterStudentTableState.visibleColumns.action) {
-            cells.push('<td style="padding:10px 12px;text-align:center;">' + actionButtons + '</td>');
+            cells.push('<td class="att-desktop-cell" style="padding:10px 12px;text-align:center;">' + actionButtons + '</td>');
         }
 
-        return '<tr class="simata-table-row">' + cells.join('') + '</tr>';
+        // Mobile Opsi 2: 3 compact columns + expandable detail row
+        const masterStudentInfoSummary = className + (gender && gender !== '-' ? ' &bull; ' + gender : '');
+        cells.push(renderMobileAttendanceSummaryCells('masterStudent', idx, name, masterStudentInfoSummary, statusBadge, 'Buka detail siswa'));
+
+        const detailRowHtml = renderMobileAttendanceDetailRow('masterStudent', idx, [
+            { label: 'NIS', value: s.nis || '-' },
+            { label: 'NISN', value: s.nisn || '-' },
+            { label: 'Kelas', value: (studentClassMap && studentClassMap[s.classId]) || s.classId || '-' },
+            { label: 'Gender', value: s.gender || '-' },
+            { label: 'Tgl Lahir', value: s.birthDate || '-' },
+            { label: 'ID Siswa', value: s.studentId || '-' }
+        ], actionButtons);
+
+        return '<tr class="simata-table-row att-expandable-row" id="masterStudentRow_' + idx + '">' + cells.join('') + '</tr>' + detailRowHtml;
     }).join('');
 }
 
@@ -5897,9 +5914,20 @@ function formatMobileShortDate(formattedDateStr) {
     return String(formattedDateStr || '-').replace(/\s+\d{4}$/, '');
 }
 
+function getMobileExpandIds(prefix, idx) {
+    const base = prefix === 'teacher' ? 'teacherAtt'
+               : prefix === 'masterStudent' ? 'masterStudent'
+               : prefix === 'masterTeacher' ? 'masterTeacher'
+               : 'studentAtt';
+    return {
+        rowId: base + 'Row_' + idx,
+        detailId: base + 'DetailRow_' + idx,
+        btnId: base + 'ExpandBtn_' + idx
+    };
+}
+
 function renderMobileAttendanceSummaryCells(prefix, idx, primaryNameHtml, infoTextHtml, statusBadgeHtml, ariaLabel) {
-    const expandBtnId = (prefix === 'teacher' ? 'teacherAttExpandBtn_' : 'studentAttExpandBtn_') + idx;
-    const detailRowId = (prefix === 'teacher' ? 'teacherAttDetailRow_' : 'studentAttDetailRow_') + idx;
+    const ids = getMobileExpandIds(prefix, idx);
     return '<td class="att-mobile-cell att-mobile-col-name" onclick="toggleMobileAttendanceRow(\'' + prefix + '\', ' + idx + ')">' +
             '<div class="att-mobile-primary-name">' + primaryNameHtml + '</div>' +
         '</td>' +
@@ -5909,7 +5937,7 @@ function renderMobileAttendanceSummaryCells(prefix, idx, primaryNameHtml, infoTe
         '<td class="att-mobile-cell att-mobile-col-status" onclick="toggleMobileAttendanceRow(\'' + prefix + '\', ' + idx + ')">' +
             '<div class="att-mobile-status-wrap">' +
                 statusBadgeHtml +
-                '<span class="att-mobile-expand-icon" id="' + expandBtnId + '" role="button" tabindex="0" aria-expanded="false" aria-controls="' + detailRowId + '" aria-label="' + escapeAttr(ariaLabel) + '" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();event.stopPropagation();toggleMobileAttendanceRow(\'' + prefix + '\', ' + idx + ');}">' +
+                '<span class="att-mobile-expand-icon" id="' + ids.btnId + '" role="button" tabindex="0" aria-expanded="false" aria-controls="' + ids.detailId + '" aria-label="' + escapeAttr(ariaLabel) + '" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();event.stopPropagation();toggleMobileAttendanceRow(\'' + prefix + '\', ' + idx + ');}">' +
                     '<svg class="att-mobile-chevron" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>' +
                 '</span>' +
             '</div>' +
@@ -5918,12 +5946,10 @@ function renderMobileAttendanceSummaryCells(prefix, idx, primaryNameHtml, infoTe
 
 function toggleMobileAttendanceRow(prefix, idx) {
     if (window.innerWidth > 768) return;
-    const rowId = (prefix === 'teacher' ? 'teacherAttRow_' : 'studentAttRow_') + idx;
-    const detailId = (prefix === 'teacher' ? 'teacherAttDetailRow_' : 'studentAttDetailRow_') + idx;
-    const btnId = (prefix === 'teacher' ? 'teacherAttExpandBtn_' : 'studentAttExpandBtn_') + idx;
-    const rowEl = document.getElementById(rowId);
-    const detailEl = document.getElementById(detailId);
-    const btnEl = document.getElementById(btnId);
+    const ids = getMobileExpandIds(prefix, idx);
+    const rowEl = document.getElementById(ids.rowId);
+    const detailEl = document.getElementById(ids.detailId);
+    const btnEl = document.getElementById(ids.btnId);
     if (!rowEl || !detailEl) return;
 
     const nextExpanded = !detailEl.classList.contains('is-expanded');
@@ -5950,14 +5976,14 @@ function renderMobileAttendanceTheadCols(colSpecs, tableState, sortHandlerName) 
 }
 
 function renderMobileAttendanceDetailRow(prefix, idx, kvItems, actionButtonsHtml) {
-    const rowId = (prefix === 'teacher' ? 'teacherAttDetailRow_' : 'studentAttDetailRow_') + idx;
+    const ids = getMobileExpandIds(prefix, idx);
     const kvHtml = kvItems.map(function(item) {
         return '<div class="att-mobile-detail-kv">' +
             '<span class="att-mobile-detail-label">' + escapeHtml(item.label) + '</span>' +
             '<span class="att-mobile-detail-val">' + escapeHtml(item.value || '-') + '</span>' +
         '</div>';
     }).join('');
-    return '<tr class="att-mobile-detail-row" id="' + rowId + '" aria-hidden="true">' +
+    return '<tr class="att-mobile-detail-row" id="' + ids.detailId + '" aria-hidden="true">' +
         '<td colspan="3" class="att-mobile-detail-cell">' +
             '<div class="att-mobile-detail-card">' +
                 '<div class="att-mobile-detail-rows">' + kvHtml + '</div>' +
@@ -7901,22 +7927,26 @@ function renderMasterTeacherThead() {
     const thead = document.getElementById('teachersThead');
     if (!thead) return;
     const cols = masterTeacherColumnDefs.filter(function(c) { return masterTeacherTableState.visibleColumns[c.key]; });
-    thead.innerHTML = '<tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">' +
-        cols.map(function(c) {
-            if (!c.sortable) {
-                return '<th style="padding:12px 8px;text-align:' + c.align + ';width:' + c.width + ';font-size:12.5px;font-weight:700;color:#475569;">' + escapeHtml(c.label) + '</th>';
-            }
-            const isSorted = masterTeacherTableState.sortField === c.key;
-            const sortClass = isSorted ? (masterTeacherTableState.sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc') : '';
-            const indicator = isSorted ? (masterTeacherTableState.sortDirection === 'asc' ? '↑' : '↓') : '↕';
-            return '<th class="sortable-th ' + sortClass + '" data-col="' + c.key + '" data-align="' + c.align + '" onclick="handleMasterTeacherSort(\'' + c.key + '\')" style="padding:12px 10px;text-align:' + c.align + ';width:' + c.width + ';font-size:12.5px;font-weight:700;color:#475569;">' +
-                '<div class="th-content">' +
-                    '<span>' + escapeHtml(c.label) + '</span>' +
-                    '<span class="sort-indicator">' + indicator + '</span>' +
-                '</div>' +
-            '</th>';
-        }).join('') +
-    '</tr>';
+    const desktopThs = cols.map(function(c) {
+        if (!c.sortable) {
+            return '<th class="att-desktop-th" style="padding:12px 8px;text-align:' + c.align + ';width:' + c.width + ';font-size:12.5px;font-weight:700;color:#475569;">' + escapeHtml(c.label) + '</th>';
+        }
+        const isSorted = masterTeacherTableState.sortField === c.key;
+        const sortClass = isSorted ? (masterTeacherTableState.sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc') : '';
+        const indicator = isSorted ? (masterTeacherTableState.sortDirection === 'asc' ? '↑' : '↓') : '↕';
+        return '<th class="att-desktop-th sortable-th ' + sortClass + '" data-col="' + c.key + '" data-align="' + c.align + '" onclick="handleMasterTeacherSort(\'' + c.key + '\')" style="padding:12px 10px;text-align:' + c.align + ';width:' + c.width + ';font-size:12.5px;font-weight:700;color:#475569;">' +
+            '<div class="th-content">' +
+                '<span>' + escapeHtml(c.label) + '</span>' +
+                '<span class="sort-indicator">' + indicator + '</span>' +
+            '</div>' +
+        '</th>';
+    }).join('');
+    const mobileThs = renderMobileAttendanceTheadCols([
+        { sortKey: 'name', label: 'Nama', width: '38%', align: 'left' },
+        { sortKey: 'subject', label: 'Mapel / Jabatan', width: '32%', align: 'left' },
+        { sortKey: 'status', label: 'Status', width: '30%', align: 'right' }
+    ], masterTeacherTableState, 'handleMasterTeacherSort');
+    thead.innerHTML = '<tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">' + desktopThs + mobileThs + '</tr>';
 }
 
 function handleMasterTeacherSort(colKey) {
@@ -8025,40 +8055,61 @@ function renderMasterTeacherTbody() {
 
         const cells = [];
         if (masterTeacherTableState.visibleColumns.no) {
-            cells.push('<td style="padding:10px 8px;text-align:center;color:#64748b;font-size:12.5px;">' + no + '</td>');
+            cells.push('<td class="att-desktop-cell" style="padding:10px 8px;text-align:center;color:#64748b;font-size:12.5px;">' + no + '</td>');
         }
         if (masterTeacherTableState.visibleColumns.teacherId) {
-            cells.push('<td style="padding:10px 10px;text-align:center;font-size:12px;font-family:monospace;color:#64748b;">' + escapeHtml(t.teacherId || '-') + '</td>');
+            cells.push('<td class="att-desktop-cell" style="padding:10px 10px;text-align:center;font-size:12px;font-family:monospace;color:#64748b;">' + escapeHtml(t.teacherId || '-') + '</td>');
         }
         if (masterTeacherTableState.visibleColumns.nik) {
-            cells.push('<td style="padding:10px 10px;text-align:center;font-size:12.5px;color:#334155;font-family:monospace;">' + nik + '</td>');
+            cells.push('<td class="att-desktop-cell" style="padding:10px 10px;text-align:center;font-size:12.5px;color:#334155;font-family:monospace;">' + nik + '</td>');
         }
         if (masterTeacherTableState.visibleColumns.nip) {
-            cells.push('<td style="padding:10px 10px;text-align:center;font-size:12.5px;color:#334155;font-family:monospace;">' + nip + '</td>');
+            cells.push('<td class="att-desktop-cell" style="padding:10px 10px;text-align:center;font-size:12.5px;color:#334155;font-family:monospace;">' + nip + '</td>');
         }
         if (masterTeacherTableState.visibleColumns.nuptk) {
-            cells.push('<td style="padding:10px 10px;text-align:center;font-size:12.5px;color:#334155;font-family:monospace;">' + nuptk + '</td>');
+            cells.push('<td class="att-desktop-cell" style="padding:10px 10px;text-align:center;font-size:12.5px;color:#334155;font-family:monospace;">' + nuptk + '</td>');
         }
         if (masterTeacherTableState.visibleColumns.name) {
-            cells.push('<td style="padding:10px 14px;text-align:left;font-size:13px;font-weight:600;color:#0f172a;">' + name + '</td>');
+            cells.push('<td class="att-desktop-cell" style="padding:10px 14px;text-align:left;font-size:13px;font-weight:600;color:#0f172a;">' + name + '</td>');
         }
         if (masterTeacherTableState.visibleColumns.gender) {
-            cells.push('<td style="padding:10px 8px;text-align:center;font-size:12.5px;color:#334155;">' + genderText + '</td>');
+            cells.push('<td class="att-desktop-cell" style="padding:10px 8px;text-align:center;font-size:12.5px;color:#334155;">' + genderText + '</td>');
         }
         if (masterTeacherTableState.visibleColumns.position) {
-            cells.push('<td style="padding:10px 8px;text-align:center;font-size:12.5px;color:#334155;">' + position + '</td>');
+            cells.push('<td class="att-desktop-cell" style="padding:10px 8px;text-align:center;font-size:12.5px;color:#334155;">' + position + '</td>');
         }
         if (masterTeacherTableState.visibleColumns.subject) {
-            cells.push('<td style="padding:10px 8px;text-align:center;font-size:12.5px;color:#334155;">' + subject + '</td>');
+            cells.push('<td class="att-desktop-cell" style="padding:10px 8px;text-align:center;font-size:12.5px;color:#334155;">' + subject + '</td>');
         }
         if (masterTeacherTableState.visibleColumns.status) {
-            cells.push('<td style="padding:10px 8px;text-align:center;">' + statusBadge + '</td>');
+            cells.push('<td class="att-desktop-cell" style="padding:10px 8px;text-align:center;">' + statusBadge + '</td>');
         }
         if (masterTeacherTableState.visibleColumns.action) {
-            cells.push('<td style="padding:10px 12px;text-align:center;">' + actionButtons + '</td>');
+            cells.push('<td class="att-desktop-cell" style="padding:10px 12px;text-align:center;">' + actionButtons + '</td>');
         }
 
-        return '<tr class="simata-table-row">' + cells.join('') + '</tr>';
+        // Mobile Opsi 2: 3 compact columns + expandable detail row
+        let masterTeacherInfoSummary = '-';
+        if (subject !== '-' && position !== '-') {
+            masterTeacherInfoSummary = subject + ' &bull; ' + position;
+        } else if (subject !== '-') {
+            masterTeacherInfoSummary = subject;
+        } else if (position !== '-') {
+            masterTeacherInfoSummary = position;
+        }
+        cells.push(renderMobileAttendanceSummaryCells('masterTeacher', idx, name, masterTeacherInfoSummary, statusBadge, 'Buka detail guru'));
+
+        const detailRowHtml = renderMobileAttendanceDetailRow('masterTeacher', idx, [
+            { label: 'Jabatan', value: t.position || '-' },
+            { label: 'Mapel', value: t.subject || '-' },
+            { label: 'Gender', value: genderText || '-' },
+            { label: 'NIP', value: t.nip || '-' },
+            { label: 'NUPTK', value: t.nuptk || '-' },
+            { label: 'NIK', value: t.nik || '-' },
+            { label: 'ID Guru', value: t.teacherId || '-' }
+        ], actionButtons);
+
+        return '<tr class="simata-table-row att-expandable-row" id="masterTeacherRow_' + idx + '">' + cells.join('') + '</tr>' + detailRowHtml;
     }).join('');
 }
 
