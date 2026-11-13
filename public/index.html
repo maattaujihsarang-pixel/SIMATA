@@ -200,10 +200,6 @@ html, body {
   margin: 0;
 }
 
-.login-layout .mobile-feature-pills {
-  display: none;
-}
-
 /* --- Right Login Panel --- */
 .login-layout .login-panel {
   flex: 1;
@@ -737,181 +733,139 @@ html, body {
 
 @media (max-width: 768px) {
   .login-layout {
+    position: relative;
     flex-direction: column;
-    justify-content: flex-start;
+    justify-content: center;
     width: 100%;
     min-height: 100vh;
     min-height: 100dvh;
-    background:
-      radial-gradient(circle at 12% 8%, rgba(74, 222, 128, 0.22) 0%, transparent 46%),
-      radial-gradient(circle at 88% 18%, rgba(16, 185, 129, 0.16) 0%, transparent 40%),
-      radial-gradient(circle at 50% 96%, rgba(4, 31, 17, 0.88) 0%, transparent 55%),
-      linear-gradient(155deg, #041F11 0%, #0B3B20 26%, #115930 60%, #14532D 100%);
+    background: linear-gradient(180deg, #E8F0EC 0%, #F1F5F9 55%, #E2E8F0 100%);
     padding-top: env(safe-area-inset-top, 0px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
+    overflow-x: hidden;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
 
-  /* Compact Executive Hero Header on Mobile */
-  .login-layout .branding-panel {
-    flex: 0 0 auto;
-    min-height: auto;
-    width: 100%;
-    padding: 24px 20px 18px;
-    background: transparent;
-    text-align: center;
-    overflow: visible;
-  }
-
-  .login-layout .branding-overlay {
-    display: none;
-  }
-
-  .login-layout .branding-pattern {
-    opacity: 0.4;
-    background-size: 20px 20px;
-    mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0) 100%);
-    -webkit-mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0) 100%);
-  }
-
-  .login-layout .branding-content {
-    max-width: 420px;
-    margin: 0 auto;
-  }
-
-  .login-layout .branding-badge {
-    padding: 5px 13px;
-    font-size: 10.5px;
-    letter-spacing: 0.95px;
-    margin-bottom: 10px;
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(134, 239, 172, 0.32);
-    color: #BBF7D0;
-  }
-
-  .login-layout .branding-content h1 {
-    font-size: clamp(1.85rem, 1.35rem + 2.2vw, 2.3rem);
-    letter-spacing: -0.03em;
-    line-height: 1.05;
-    margin-bottom: 4px;
-    text-wrap: balance;
-  }
-
-  .login-layout .branding-content h2 {
-    font-size: 13.5px;
-    font-weight: 500;
-    line-height: 1.4;
-    color: rgba(255, 255, 255, 0.88);
-    margin-bottom: 12px;
-    text-wrap: balance;
-  }
-
-  .login-layout .branding-desc {
-    display: none;
-  }
-
-  .login-layout .mobile-feature-pills {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-
-  .login-layout .mobile-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 4px 10px;
-    border-radius: 9999px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    color: #DCFCE7;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.15px;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-  }
-
-  .login-layout .mobile-pill svg {
-    color: #86EFAC;
-    flex-shrink: 0;
-  }
-
-  /* Elevated Login Card Container */
-  .login-layout .login-panel {
-    flex: 1 0 auto;
-    width: 100%;
-    max-width: 100%;
-    min-height: auto;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    padding: 4px 16px 26px;
-    background: transparent;
-    box-sizing: border-box;
-  }
-
-  /* Architectural Elevated Card */
-  .login-layout .card {
-    position: relative;
-    width: 100%;
-    max-width: 420px;
-    background: rgba(255, 255, 255, 0.98);
-    border-radius: 24px;
-    padding: 26px 22px 20px;
-    box-shadow:
-      0 24px 48px -12px rgba(2, 18, 10, 0.52),
-      0 6px 18px -4px rgba(0, 0, 0, 0.18),
-      inset 0 1px 0 #FFFFFF;
-    border: 1px solid rgba(255, 255, 255, 0.92);
-    margin: 0 auto;
-    overflow: hidden;
-  }
-
-  .login-layout .card::before {
+  /* Curved Deep-Emerald Architectural Backdrop */
+  .login-layout::before {
     content: "";
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #15803D 0%, #22C55E 50%, #0B3B20 100%);
+    height: 44%;
+    min-height: 270px;
+    max-height: 330px;
+    border-radius: 0 0 44px 44px;
+    background:
+      radial-gradient(circle at 20% 15%, rgba(74, 222, 128, 0.24) 0%, transparent 50%),
+      radial-gradient(circle at 85% 25%, rgba(16, 185, 129, 0.18) 0%, transparent 45%),
+      linear-gradient(145deg, #041F11 0%, #0B3B20 38%, #115930 75%, #15803D 100%);
+    box-shadow: 0 12px 32px rgba(5, 35, 19, 0.18);
+    pointer-events: none;
+    z-index: 0;
   }
 
-  /* Framed School Logo Emblem */
+  /* Subtle Architectural Dot-Grid Overlay inside Emerald Curve */
+  .login-layout::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 44%;
+    min-height: 270px;
+    max-height: 330px;
+    border-radius: 0 0 44px 44px;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+    background-size: 22px 22px;
+    opacity: 0.7;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Keep desktop branding panel hidden on mobile for a single unified focal point */
+  .login-layout .branding-panel {
+    display: none;
+  }
+
+  /* Full-width centered login panel bridging curved backdrop & light surface */
+  .login-layout .login-panel {
+    position: relative;
+    z-index: 1;
+    flex: 1 0 auto;
+    width: 100%;
+    max-width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 24px 18px;
+    background: transparent;
+    box-sizing: border-box;
+  }
+
+  /* Single Unified Executive Card */
+  .login-layout .card {
+    width: 100%;
+    max-width: 390px;
+    background-color: #FFFFFF;
+    background-image: radial-gradient(100% 140px at 50% 0%, rgba(22, 101, 52, 0.07) 0%, rgba(22, 101, 52, 0) 100%);
+    border-radius: 26px;
+    padding: 30px 24px 24px;
+    box-shadow:
+      0 24px 48px -12px rgba(15, 23, 42, 0.18),
+      0 8px 20px -6px rgba(15, 23, 42, 0.08);
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    margin: 0 auto;
+  }
+
+  /* Elevated Squircle School Logo Pedestal */
   .login-layout .school-logo {
-    width: 68px;
-    height: 68px;
-    max-height: 68px;
-    padding: 7px;
-    border-radius: 18px;
-    background: linear-gradient(180deg, #F0FDF4 0%, #FFFFFF 100%);
+    width: 72px;
+    height: 72px;
+    max-height: 72px;
+    padding: 8px;
+    border-radius: 20px;
+    background: #FFFFFF;
     border: 1px solid #DCFCE7;
-    box-shadow: 0 6px 16px -4px rgba(22, 101, 52, 0.16);
+    box-shadow:
+      0 10px 24px -6px rgba(22, 101, 52, 0.18),
+      0 0 0 4px #F0FDF4;
     object-fit: contain;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
   }
 
-  /* Typography */
+  /* Integrated Brand Eyebrow & Typography */
   .login-layout .title {
-    font-size: 21px;
+    font-size: 22px;
     font-weight: 800;
-    margin-bottom: 4px;
+    margin-bottom: 5px;
     text-wrap: balance;
+  }
+
+  .login-layout .title::before {
+    content: "SIMATA \2022  MA AT-TAUJIH SARANG";
+    display: block;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 1.3px;
+    color: #15803D;
+    margin-bottom: 5px;
   }
 
   .login-layout .subtitle {
     font-size: 13px;
-    margin-bottom: 18px;
+    color: #64748B;
+    margin-bottom: 20px;
     text-wrap: pretty;
   }
 
   /* Form & Inputs */
   .login-layout .form-group {
-    margin-bottom: 15px;
+    margin-bottom: 16px;
   }
 
   .login-layout .input-label {
@@ -921,12 +875,12 @@ html, body {
 
   /* 16px font-size prevents iOS Safari auto-zoom on focus */
   .login-layout .input-box {
-    height: 48px;
+    height: 50px;
     min-height: 48px;
     font-size: 16px;
     padding: 12px 14px 12px 42px;
     background: #F8FAFC;
-    border-color: #CBD5E1;
+    border: 1.5px solid #E2E8F0;
     border-radius: 13px;
   }
 
@@ -946,7 +900,7 @@ html, body {
 
   .login-layout .login-options-row {
     margin-top: 0;
-    margin-bottom: 14px;
+    margin-bottom: 16px;
     gap: 8px;
     flex-wrap: wrap;
   }
@@ -961,31 +915,42 @@ html, body {
     min-block-size: 44px;
     display: inline-flex;
     align-items: center;
-    padding: 6px 11px;
+    padding: 6px 4px;
     font-size: 12.5px;
-    background: #F0FDF4;
-    border: 1px solid #DCFCE7;
-    border-radius: 9999px;
+    font-weight: 600;
+    color: #15803D;
+    background: transparent;
+    border: none;
   }
 
-  /* Submit Button */
+  /* Primary Gradient CTA */
   .login-layout .login-button {
     height: 50px;
     min-height: 48px;
     font-size: 15px;
     font-weight: 700;
     border-radius: 13px;
-    background: linear-gradient(180deg, #15803D 0%, #14532D 100%);
-    box-shadow: 0 8px 20px -4px rgba(20, 83, 45, 0.42);
+    background: linear-gradient(135deg, #15803D 0%, #166534 55%, #115930 100%);
+    box-shadow: 0 10px 22px -6px rgba(22, 101, 52, 0.4);
     margin-top: 2px;
   }
 
+  /* Refined Card Footer */
   .login-layout .login-footer {
-    margin-top: 18px;
+    margin-top: 22px;
     padding-top: 14px;
     border-top: 1px solid #F1F5F9;
     font-size: 11px;
-    color: #64748B;
+    color: #94A3B8;
+  }
+
+  .login-layout .login-footer::before {
+    content: "Presensi Digital  \2022  Akademik  \2022  Keuangan";
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 4px;
   }
 
   /* Toast Notification */
@@ -1012,76 +977,68 @@ html, body {
    ========================================================================== */
 
 @media (max-width: 360px) {
-  .login-layout .branding-panel {
-    padding: 18px 14px 14px;
-  }
-
-  .login-layout .branding-badge {
-    font-size: 10px;
-    padding: 4px 10px;
-    margin-bottom: 8px;
-  }
-
-  .login-layout .branding-content h1 {
-    font-size: 28px;
-  }
-
-  .login-layout .branding-content h2 {
-    font-size: 12.5px;
-    margin-bottom: 10px;
-  }
-
-  .login-layout .mobile-pill {
-    font-size: 10.5px;
-    padding: 3.5px 8px;
+  .login-layout::before,
+  .login-layout::after {
+    min-height: 240px;
+    border-radius: 0 0 34px 34px;
   }
 
   .login-layout .login-panel {
-    padding: 2px 12px 20px;
+    padding: 18px 14px;
   }
 
   .login-layout .card {
-    padding: 22px 16px 18px;
-    border-radius: 20px;
+    padding: 24px 18px 20px;
+    border-radius: 22px;
   }
 
   .login-layout .school-logo {
-    width: 60px;
-    height: 60px;
-    max-height: 60px;
-    padding: 6px;
-    border-radius: 15px;
-    margin-bottom: 10px;
+    width: 64px;
+    height: 64px;
+    max-height: 64px;
+    padding: 7px;
+    border-radius: 17px;
+    margin-bottom: 12px;
   }
 
   .login-layout .title {
-    font-size: 19.5px;
+    font-size: 20px;
+  }
+
+  .login-layout .title::before {
+    font-size: 10px;
+    letter-spacing: 1.1px;
   }
 
   .login-layout .subtitle {
-    font-size: 12px;
-    margin-bottom: 15px;
+    font-size: 12.5px;
+    margin-bottom: 16px;
   }
 
   .login-layout .form-group {
-    margin-bottom: 13px;
+    margin-bottom: 14px;
   }
 
   .login-layout .input-box {
-    height: 46px;
-    min-height: 44px;
+    height: 48px;
+    min-height: 46px;
     font-size: 16px;
-    padding: 10px 12px 10px 38px;
+    padding: 11px 12px 11px 40px;
   }
 
   .login-layout .input-icon {
-    left: 12px;
+    left: 13px;
   }
 
   .login-layout .login-button {
     height: 48px;
     min-height: 46px;
     font-size: 14.5px;
+  }
+
+  .login-layout .login-footer {
+    margin-top: 18px;
+    padding-top: 12px;
   }
 }
 </style>
@@ -1113,21 +1070,6 @@ html, body {
             <p class="branding-desc">
                 Layanan terpadu presensi dan administrasi akademik serta pusat keuangan madrasah yang modern, cepat, dan terpercaya bagi guru, siswa, dan wali murid MA At-Taujih Sarang, Rembang.
             </p>
-
-            <div class="mobile-feature-pills" aria-hidden="true">
-                <span class="mobile-pill">
-                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM20 14v3h-3M14 20h6"/></svg>
-                    <span>Presensi QR</span>
-                </span>
-                <span class="mobile-pill">
-                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-                    <span>Data Akademik</span>
-                </span>
-                <span class="mobile-pill">
-                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-                    <span>Pusat Keuangan</span>
-                </span>
-            </div>
 
         </div>
 
