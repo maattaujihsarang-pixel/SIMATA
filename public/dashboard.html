@@ -16,7 +16,7 @@
 
   <title>SIMATA | Dashboard</title>
 
-  <link rel="stylesheet" href="/css/style.css?v=bug49b">
+  <link rel="stylesheet" href="/css/style.css?v=bug50">
   <link rel="stylesheet" href="/css/notifications.css">
   <link rel="stylesheet" href="/css/finance.css">
   <style>
@@ -874,223 +874,168 @@ html, body {
     </div>
 
 
-    <nav class="sidebar-menu">
-
-      <ul>
-
-        <li id="menu-dashboard" class="active">
-
-          <span class="menu-icon">
-
-            <svg viewBox="0 0 24 24">
-              <path d="M3 12L12 4l9 8"/>
-              <path d="M5 10v10h14V10"/>
-              <path d="M9 20v-6h6v6"/>
-            </svg>
-
-          </span>
-
-          <span class="menu-text">
-            Dashboard
-          </span>
-
-        </li>
-
-
-        <li id="menu-responder" style="display:none;">
-
-          <span class="menu-icon">
-
-            <svg viewBox="0 0 24 24">
-              <path d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
-            </svg>
-
-          </span>
-
-          <span class="menu-text">
-            Responder
-          </span>
-
-        </li>
-
-
-        <li id="menu-attendance">
-
-          <span class="menu-icon">
-
-            <svg viewBox="0 0 24 24">
-              <path d="M3 12h18"/>
-              <path d="M12 3v18"/>
-            </svg>
-
-          </span>
-
-          <span class="menu-text">
-            Presensi Siswa
-          </span>
-
-        </li>
-
-        <li id="menu-teacher-attendance">
-
-          <span class="menu-icon">
-
-            <svg viewBox="0 0 24 24">
-              <path d="M3 12h18"/>
-              <path d="M12 3v18"/>
-            </svg>
-
-          </span>
-
-          <span class="menu-text">
-            Presensi Guru
-          </span>
-
-        </li>
-
-        <li id="menu-journal">
-
-          <span class="menu-icon">
-
-            <svg viewBox="0 0 24 24">
-              <path d="M3 6h18v12H3z"/>
-              <path d="M3 10h18"/>
-            </svg>
-
-          </span>
-
-          <span class="menu-text">
-            Rekap & Cetak 
-          </span>
-
-        </li>
-
-
-        <li id="menu-teachers">
-
-          <span class="menu-icon">
-
-            <svg viewBox="0 0 24 24">
-              <circle cx="12" cy="8" r="4"/>
-              <path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/>
-            </svg>
-
-          </span>
-
-          <span class="menu-text">
-            Guru
-          </span>
-
-        </li>
-
-
-        <li id="menu-students">
-
-          <span class="menu-icon">
-
-            <svg viewBox="0 0 24 24">
-              <circle cx="12" cy="7" r="4"/>
-              <path d="M5 21c0-4 3-7 7-7s7 3 7 7"/>
-            </svg>
-
-          </span>
-
-          <span class="menu-text">
-            Siswa
-          </span>
-
-        </li>
-
-
-        <li id="menu-grades">
-
-          <span class="menu-icon">
-
-            <svg viewBox="0 0 24 24">
-              <path d="M6 3h12v18H6z"/>
-              <path d="M9 7h6"/>
-              <path d="M9 11h6"/>
-              <path d="M9 15h4"/>
-            </svg>
-
-          </span>
-
-          <span class="menu-text">
-            Nilai
-          </span>
-
-        </li>
-
-        <li id="menu-classes">
-
-          <span class="menu-icon">
-
-            <svg viewBox="0 0 24 24">
-              <path d="M3 21V5l9-3 9 3v16"/>
-              <path d="M7 21v-6h10v6"/>
-            </svg>
-
-          </span>
-
-          <span class="menu-text">
-            Kelas
-          </span>
-
-        </li>
-
-
-        <li id="menu-reports">
-
-          <span class="menu-icon">
-
-            <svg viewBox="0 0 24 24">
-              <path d="M4 19V5"/>
-              <path d="M4 19h17"/>
-              <path d="M7 16l4-5 3 2 5-7"/>
-            </svg>
-
-          </span>
-
-          <span class="menu-text">
-            Laporan
-          </span>
-
-        </li>
-
-
-
-
-
-
-        <!-- PUSAT KEUANGAN (FEATURE 005 - SUB-APPLICATION SINGLE ENTRY) -->
-        <li id="menu-finance" style="display:none;">
-          <span class="menu-icon">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="2" y="4" width="20" height="16" rx="2"/>
-              <line x1="2" y1="10" x2="22" y2="10"/>
-              <line x1="7" y1="15" x2="11" y2="15"/>
-              <path d="M6 20h12"/>
-            </svg>
-          </span>
-          <span class="menu-text">
-            Pusat Keuangan
-          </span>
-        </li>
-
-        <!-- PENGATURAN -->
-        <li id="menu-settings">
-          <span class="menu-icon">
-            <svg viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="3"/>
-              <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-1.7 1.7-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5v.2h-2.4v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1-1.7-1.7.1-.1A1.7 1.7 0 0 0 8.4 15a1.7 1.7 0 0 0-1.5-1H6.7v-2.4h.2a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9L8 8.6l1.7-1.7.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.5v-.2h2.4v.2a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1 1.7 1.7-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.5 1h.2V14h-.2a1.7 1.7 0 0 0-1.5 1z"/>
-            </svg>
-          </span>
-          <span class="menu-text">
-            Pengaturan
-          </span>
-        </li>
-
-      </ul>
+    <nav class="sidebar-menu" aria-label="Menu Utama">
+
+      <!-- GROUP 1: MENU UTAMA -->
+      <div class="sidebar-nav-group">
+        <div class="sidebar-group-label">MENU UTAMA</div>
+        <ul>
+
+          <li id="menu-dashboard" class="active">
+            <span class="menu-icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M3 12L12 4l9 8"/>
+                <path d="M5 10v10h14V10"/>
+                <path d="M9 20v-6h6v6"/>
+              </svg>
+            </span>
+            <span class="menu-text">Dashboard</span>
+          </li>
+
+          <!-- PUSAT KEUANGAN (FEATURE 005 - SUB-APPLICATION SINGLE ENTRY) -->
+          <li id="menu-finance" style="display:none;">
+            <span class="menu-icon">
+              <svg viewBox="0 0 24 24">
+                <rect x="2" y="4" width="20" height="16" rx="2"/>
+                <line x1="2" y1="10" x2="22" y2="10"/>
+                <line x1="7" y1="15" x2="11" y2="15"/>
+                <path d="M6 20h12"/>
+              </svg>
+            </span>
+            <span class="menu-text">Pusat Keuangan</span>
+          </li>
+
+          <li id="menu-responder" style="display:none;">
+            <span class="menu-icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+              </svg>
+            </span>
+            <span class="menu-text">Responder</span>
+          </li>
+
+        </ul>
+      </div>
+
+      <!-- GROUP 2: PRESENSI & JURNAL -->
+      <div class="sidebar-nav-group">
+        <div class="sidebar-group-label">PRESENSI &amp; JURNAL</div>
+        <ul>
+
+          <li id="menu-attendance">
+            <span class="menu-icon">
+              <svg viewBox="0 0 24 24">
+                <rect x="3" y="5" width="18" height="16" rx="2"/>
+                <path d="M16 3v4M8 3v4M3 10h18"/>
+                <path d="M9 15l2 2 4-4"/>
+              </svg>
+            </span>
+            <span class="menu-text">Presensi Siswa</span>
+          </li>
+
+          <li id="menu-teacher-attendance">
+            <span class="menu-icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+                <rect x="9" y="3" width="6" height="4" rx="1"/>
+                <path d="M9 14l2 2 4-4"/>
+              </svg>
+            </span>
+            <span class="menu-text">Presensi Guru</span>
+          </li>
+
+          <li id="menu-journal">
+            <span class="menu-icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M3 6h18v12H3z"/>
+                <path d="M3 10h18"/>
+              </svg>
+            </span>
+            <span class="menu-text">Rekap &amp; Cetak</span>
+          </li>
+
+        </ul>
+      </div>
+
+      <!-- GROUP 3: DATA & AKADEMIK -->
+      <div class="sidebar-nav-group">
+        <div class="sidebar-group-label">DATA &amp; AKADEMIK</div>
+        <ul>
+
+          <li id="menu-teachers">
+            <span class="menu-icon">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="8" r="4"/>
+                <path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/>
+              </svg>
+            </span>
+            <span class="menu-text">Guru</span>
+          </li>
+
+          <li id="menu-students">
+            <span class="menu-icon">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="7" r="4"/>
+                <path d="M5 21c0-4 3-7 7-7s7 3 7 7"/>
+              </svg>
+            </span>
+            <span class="menu-text">Siswa</span>
+          </li>
+
+          <li id="menu-classes">
+            <span class="menu-icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M3 21V5l9-3 9 3v16"/>
+                <path d="M7 21v-6h10v6"/>
+              </svg>
+            </span>
+            <span class="menu-text">Kelas</span>
+          </li>
+
+          <li id="menu-grades">
+            <span class="menu-icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M6 3h12v18H6z"/>
+                <path d="M9 7h6"/>
+                <path d="M9 11h6"/>
+                <path d="M9 15h4"/>
+              </svg>
+            </span>
+            <span class="menu-text">Nilai</span>
+          </li>
+
+        </ul>
+      </div>
+
+      <!-- GROUP 4: LAPORAN & SISTEM -->
+      <div class="sidebar-nav-group">
+        <div class="sidebar-group-label">LAPORAN &amp; SISTEM</div>
+        <ul>
+
+          <li id="menu-reports">
+            <span class="menu-icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M4 19V5"/>
+                <path d="M4 19h17"/>
+                <path d="M7 16l4-5 3 2 5-7"/>
+              </svg>
+            </span>
+            <span class="menu-text">Laporan</span>
+          </li>
+
+          <!-- PENGATURAN -->
+          <li id="menu-settings">
+            <span class="menu-icon">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-1.7 1.7-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5v.2h-2.4v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1-1.7-1.7.1-.1A1.7 1.7 0 0 0 8.4 15a1.7 1.7 0 0 0-1.5-1H6.7v-2.4h.2a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9L8 8.6l1.7-1.7.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.5v-.2h2.4v.2a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1 1.7 1.7-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.5 1h.2V14h-.2a1.7 1.7 0 0 0-1.5 1z"/>
+              </svg>
+            </span>
+            <span class="menu-text">Pengaturan</span>
+          </li>
+
+        </ul>
+      </div>
 
     </nav>
 
@@ -17483,8 +17428,23 @@ function onDashboardLoaded(data) {
         console.error('Error syncing mobile RBAC', e);
     }
 
+    if (typeof syncSidebarNavGroups === 'function') {
+        syncSidebarNavGroups();
+    }
+
     hideGlobalLoading();
 
+}
+
+function syncSidebarNavGroups() {
+    document.querySelectorAll('#mainSidebar .sidebar-nav-group').forEach(function(group) {
+        const items = Array.from(group.querySelectorAll('li'));
+        const hasVisibleItem = items.some(function(item) {
+            if (item.style.display === 'none' || item.hidden) return false;
+            return window.getComputedStyle(item).display !== 'none';
+        });
+        group.style.display = hasVisibleItem ? '' : 'none';
+    });
 }
 
 /* =========================
