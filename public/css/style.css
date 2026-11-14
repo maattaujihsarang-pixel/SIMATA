@@ -4916,7 +4916,16 @@ select.attendance-filter-control {
   #studentColVisDropdownWrapper,
   #teacherColVisDropdownWrapper,
   #masterStudentColVisDropdownWrapper,
-  #masterTeacherColVisDropdownWrapper {
+  #masterTeacherColVisDropdownWrapper,
+  #studentExportDropdownWrapper,
+  #teacherExportDropdownWrapper,
+  #masterStudentExportDropdownWrapper,
+  #masterTeacherExportDropdownWrapper,
+  #printAttendanceButton,
+  #printMasterStudentButton,
+  #printMasterTeacherButton,
+  .attendance-table-toolbar .table-toolbar-right > .table-dropdown-wrapper,
+  .attendance-table-toolbar .table-toolbar-right > .btn-table-tool {
     display: none !important;
   }
 
