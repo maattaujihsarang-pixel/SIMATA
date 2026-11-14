@@ -4861,7 +4861,9 @@ select.attendance-filter-control {
   .dashboard-layout .content #studentsTable th.att-desktop-th,
   .dashboard-layout .content #studentsTable td.att-desktop-cell,
   .dashboard-layout .content #teachersTable th.att-desktop-th,
-  .dashboard-layout .content #teachersTable td.att-desktop-cell {
+  .dashboard-layout .content #teachersTable td.att-desktop-cell,
+  .dashboard-layout .content #classesTable th.att-desktop-th,
+  .dashboard-layout .content #classesTable td.att-desktop-cell {
     display: none !important;
   }
 
@@ -4872,7 +4874,9 @@ select.attendance-filter-control {
   .dashboard-layout .content #studentsTable th.att-mobile-th,
   .dashboard-layout .content #studentsTable td.att-mobile-cell,
   .dashboard-layout .content #teachersTable th.att-mobile-th,
-  .dashboard-layout .content #teachersTable td.att-mobile-cell {
+  .dashboard-layout .content #teachersTable td.att-mobile-cell,
+  .dashboard-layout .content #classesTable th.att-mobile-th,
+  .dashboard-layout .content #classesTable td.att-mobile-cell {
     display: table-cell !important;
     vertical-align: middle !important;
     white-space: normal !important;
@@ -4883,21 +4887,24 @@ select.attendance-filter-control {
   .dashboard-layout .content #attendanceTable tr.att-mobile-detail-row,
   .dashboard-layout .content #teacherAttendanceTable tr.att-mobile-detail-row,
   .dashboard-layout .content #studentsTable tr.att-mobile-detail-row,
-  .dashboard-layout .content #teachersTable tr.att-mobile-detail-row {
+  .dashboard-layout .content #teachersTable tr.att-mobile-detail-row,
+  .dashboard-layout .content #classesTable tr.att-mobile-detail-row {
     display: none !important;
   }
 
   .dashboard-layout .content #attendanceTable tr.att-mobile-detail-row.is-expanded,
   .dashboard-layout .content #teacherAttendanceTable tr.att-mobile-detail-row.is-expanded,
   .dashboard-layout .content #studentsTable tr.att-mobile-detail-row.is-expanded,
-  .dashboard-layout .content #teachersTable tr.att-mobile-detail-row.is-expanded {
+  .dashboard-layout .content #teachersTable tr.att-mobile-detail-row.is-expanded,
+  .dashboard-layout .content #classesTable tr.att-mobile-detail-row.is-expanded {
     display: table-row !important;
   }
 
   .dashboard-layout #attendanceContent .attendance-table-wrapper,
   .dashboard-layout #teacherAttendanceContent .attendance-table-wrapper,
   .dashboard-layout #studentsContent .attendance-table-wrapper,
-  .dashboard-layout #teachersContent .attendance-table-wrapper {
+  .dashboard-layout #teachersContent .attendance-table-wrapper,
+  .dashboard-layout #classesContent .attendance-table-wrapper {
     overflow-x: hidden !important;
     max-height: none;
   }
@@ -4905,7 +4912,8 @@ select.attendance-filter-control {
   .dashboard-layout .content #attendanceTable,
   .dashboard-layout .content #teacherAttendanceTable,
   .dashboard-layout .content #studentsTable,
-  .dashboard-layout .content #teachersTable {
+  .dashboard-layout .content #teachersTable,
+  .dashboard-layout .content #classesTable {
     min-width: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
@@ -4932,7 +4940,8 @@ select.attendance-filter-control {
   .dashboard-layout .content #attendanceTable thead th.att-mobile-th,
   .dashboard-layout .content #teacherAttendanceTable thead th.att-mobile-th,
   .dashboard-layout .content #studentsTable thead th.att-mobile-th,
-  .dashboard-layout .content #teachersTable thead th.att-mobile-th {
+  .dashboard-layout .content #teachersTable thead th.att-mobile-th,
+  .dashboard-layout .content #classesTable thead th.att-mobile-th {
     padding: 10px 6px !important;
     font-size: 11px !important;
     font-weight: 700 !important;
@@ -4943,21 +4952,24 @@ select.attendance-filter-control {
   .dashboard-layout .content #attendanceTable thead th.att-mobile-th:first-of-type,
   .dashboard-layout .content #teacherAttendanceTable thead th.att-mobile-th:first-of-type,
   .dashboard-layout .content #studentsTable thead th.att-mobile-th:first-of-type,
-  .dashboard-layout .content #teachersTable thead th.att-mobile-th:first-of-type {
+  .dashboard-layout .content #teachersTable thead th.att-mobile-th:first-of-type,
+  .dashboard-layout .content #classesTable thead th.att-mobile-th:first-of-type {
     padding-left: 10px !important;
   }
 
   .dashboard-layout .content #attendanceTable thead th.att-mobile-th:last-of-type,
   .dashboard-layout .content #teacherAttendanceTable thead th.att-mobile-th:last-of-type,
   .dashboard-layout .content #studentsTable thead th.att-mobile-th:last-of-type,
-  .dashboard-layout .content #teachersTable thead th.att-mobile-th:last-of-type {
+  .dashboard-layout .content #teachersTable thead th.att-mobile-th:last-of-type,
+  .dashboard-layout .content #classesTable thead th.att-mobile-th:last-of-type {
     padding-right: 10px !important;
   }
 
   .dashboard-layout .content #attendanceTable thead th.att-mobile-th .th-content,
   .dashboard-layout .content #teacherAttendanceTable thead th.att-mobile-th .th-content,
   .dashboard-layout .content #studentsTable thead th.att-mobile-th .th-content,
-  .dashboard-layout .content #teachersTable thead th.att-mobile-th .th-content {
+  .dashboard-layout .content #teachersTable thead th.att-mobile-th .th-content,
+  .dashboard-layout .content #classesTable thead th.att-mobile-th .th-content {
     display: flex !important;
     flex-wrap: nowrap !important;
     align-items: center !important;
@@ -4969,7 +4981,8 @@ select.attendance-filter-control {
   .dashboard-layout .content #attendanceTable tbody td.att-mobile-cell,
   .dashboard-layout .content #teacherAttendanceTable tbody td.att-mobile-cell,
   .dashboard-layout .content #studentsTable tbody td.att-mobile-cell,
-  .dashboard-layout .content #teachersTable tbody td.att-mobile-cell {
+  .dashboard-layout .content #teachersTable tbody td.att-mobile-cell,
+  .dashboard-layout .content #classesTable tbody td.att-mobile-cell {
     padding: 11px 6px !important;
     cursor: pointer;
     overflow-wrap: break-word !important;
@@ -4979,7 +4992,8 @@ select.attendance-filter-control {
   .dashboard-layout .content #attendanceTable tbody td.att-mobile-col-name,
   .dashboard-layout .content #teacherAttendanceTable tbody td.att-mobile-col-name,
   .dashboard-layout .content #studentsTable tbody td.att-mobile-col-name,
-  .dashboard-layout .content #teachersTable tbody td.att-mobile-col-name {
+  .dashboard-layout .content #teachersTable tbody td.att-mobile-col-name,
+  .dashboard-layout .content #classesTable tbody td.att-mobile-col-name {
     padding-left: 10px !important;
     text-align: left !important;
   }
@@ -4987,14 +5001,16 @@ select.attendance-filter-control {
   .dashboard-layout .content #attendanceTable tbody td.att-mobile-col-info,
   .dashboard-layout .content #teacherAttendanceTable tbody td.att-mobile-col-info,
   .dashboard-layout .content #studentsTable tbody td.att-mobile-col-info,
-  .dashboard-layout .content #teachersTable tbody td.att-mobile-col-info {
+  .dashboard-layout .content #teachersTable tbody td.att-mobile-col-info,
+  .dashboard-layout .content #classesTable tbody td.att-mobile-col-info {
     text-align: left !important;
   }
 
   .dashboard-layout .content #attendanceTable tbody td.att-mobile-col-status,
   .dashboard-layout .content #teacherAttendanceTable tbody td.att-mobile-col-status,
   .dashboard-layout .content #studentsTable tbody td.att-mobile-col-status,
-  .dashboard-layout .content #teachersTable tbody td.att-mobile-col-status {
+  .dashboard-layout .content #teachersTable tbody td.att-mobile-col-status,
+  .dashboard-layout .content #classesTable tbody td.att-mobile-col-status {
     padding-right: 8px !important;
     padding-left: 2px !important;
     text-align: right !important;
@@ -5068,7 +5084,8 @@ select.attendance-filter-control {
   .dashboard-layout .content #attendanceTable .simata-table-row.is-mobile-row-expanded td.att-mobile-cell,
   .dashboard-layout .content #teacherAttendanceTable .simata-table-row.is-mobile-row-expanded td.att-mobile-cell,
   .dashboard-layout .content #studentsTable .simata-table-row.is-mobile-row-expanded td.att-mobile-cell,
-  .dashboard-layout .content #teachersTable .simata-table-row.is-mobile-row-expanded td.att-mobile-cell {
+  .dashboard-layout .content #teachersTable .simata-table-row.is-mobile-row-expanded td.att-mobile-cell,
+  .dashboard-layout .content #classesTable .simata-table-row.is-mobile-row-expanded td.att-mobile-cell {
     background-color: #ecfdf5 !important;
     border-bottom-color: transparent !important;
   }
@@ -5076,7 +5093,8 @@ select.attendance-filter-control {
   .dashboard-layout .content #attendanceTable td.att-mobile-detail-cell,
   .dashboard-layout .content #teacherAttendanceTable td.att-mobile-detail-cell,
   .dashboard-layout .content #studentsTable td.att-mobile-detail-cell,
-  .dashboard-layout .content #teachersTable td.att-mobile-detail-cell {
+  .dashboard-layout .content #teachersTable td.att-mobile-detail-cell,
+  .dashboard-layout .content #classesTable td.att-mobile-detail-cell {
     background-color: #ecfdf5 !important;
     padding: 2px 10px 12px 10px !important;
     border-bottom: 1px solid #d1fae5 !important;
@@ -5377,6 +5395,7 @@ select.attendance-filter-control {
 
   .dashboard-layout #studentsContent .section-heading,
   .dashboard-layout #teachersContent .section-heading,
+  .dashboard-layout #classesContent .section-heading,
   .dashboard-layout #attendanceContent .section-heading,
   .dashboard-layout #teacherAttendanceContent .section-heading {
     display: flex !important;
@@ -5389,6 +5408,7 @@ select.attendance-filter-control {
 
   .dashboard-layout #studentsContent .section-heading > div:first-child,
   .dashboard-layout #teachersContent .section-heading > div:first-child,
+  .dashboard-layout #classesContent .section-heading > div:first-child,
   .dashboard-layout #attendanceContent .section-heading > div:first-child,
   .dashboard-layout #teacherAttendanceContent .section-heading > div:first-child {
     width: auto !important;
@@ -5399,6 +5419,7 @@ select.attendance-filter-control {
 
   .dashboard-layout #studentsContent .section-heading h2,
   .dashboard-layout #teachersContent .section-heading h2,
+  .dashboard-layout #classesContent .section-heading h2,
   .dashboard-layout #attendanceContent .section-heading h2,
   .dashboard-layout #teacherAttendanceContent .section-heading h2 {
     font-size: 17px !important;
@@ -5408,6 +5429,7 @@ select.attendance-filter-control {
 
   .dashboard-layout #studentsContent .section-heading .section-actions,
   .dashboard-layout #teachersContent .section-heading .section-actions,
+  .dashboard-layout #classesContent .section-heading .section-actions,
   .dashboard-layout #attendanceContent .section-heading .section-actions,
   .dashboard-layout #teacherAttendanceContent .section-heading .section-actions {
     width: auto !important;
@@ -5419,6 +5441,7 @@ select.attendance-filter-control {
 
   .dashboard-layout .section-heading button#addStudentButton,
   .dashboard-layout .section-heading button#addTeacherButton,
+  .dashboard-layout .section-heading button#addClassButton,
   .dashboard-layout .section-heading button#addAttendanceButton,
   .dashboard-layout .section-heading button#addTeacherAttendanceButton {
     width: auto !important;
@@ -5441,6 +5464,7 @@ select.attendance-filter-control {
 
   .dashboard-layout .section-heading button#addStudentButton::before,
   .dashboard-layout .section-heading button#addTeacherButton::before,
+  .dashboard-layout .section-heading button#addClassButton::before,
   .dashboard-layout .section-heading button#addAttendanceButton::before,
   .dashboard-layout .section-heading button#addTeacherAttendanceButton::before {
     content: "+ ";

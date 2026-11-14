@@ -16,7 +16,7 @@
 
   <title>SIMATA | Dashboard</title>
 
-  <link rel="stylesheet" href="/css/style.css?v=bug48a">
+  <link rel="stylesheet" href="/css/style.css?v=bug49b">
   <link rel="stylesheet" href="/css/notifications.css">
   <link rel="stylesheet" href="/css/finance.css">
   <style>
@@ -3765,24 +3765,47 @@ html, body {
               <h2>Daftar Kelas</h2>
             </div>
             <div class="section-actions">
-              <input id="classSearch" class="input-box" placeholder="Cari nama kelas atau tingkat..." />
-              <button id="addClassButton" class="login-button">Tambah Kelas</button>
+              <button id="addClassButton" class="login-button" style="margin-top:0;">Tambah Kelas</button>
             </div>
           </div>
-          <div class="table-responsive" style="margin-top:16px;overflow-x:auto;background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.05);border:1px solid #e2e8f0;">
+
+          <!-- TABLE CONTROLS TOOLBAR -->
+          <div class="attendance-table-toolbar">
+            <div class="table-toolbar-left">
+              <div class="entries-select-group">
+                <label for="masterClassEntriesSelect">Tampilkan:</label>
+                <select id="masterClassEntriesSelect" class="table-entries-select">
+                  <option value="10" selected>10</option>
+                  <option value="20">20</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                  <option value="all">Semua</option>
+                </select>
+              </div>
+            </div>
+            <div class="table-toolbar-right">
+              <div class="table-search-group">
+                <svg class="table-search-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="classSearch" class="table-search-input" placeholder="Cari kelas (nama, tingkat, wali kelas)..." autocomplete="off" />
+                <button type="button" id="classSearchClearBtn" class="table-search-clear" style="display:none;" title="Hapus pencarian">&times;</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- TABLE WRAPPER WITH STICKY HEADER -->
+          <div class="table-responsive attendance-table-wrapper">
             <table id="classesTable" class="simata-table" style="width:100%;border-collapse:collapse;min-width:700px;">
-              <thead>
-                <tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">
-                  <th style="padding:12px 14px;text-align:left;font-size:12.5px;font-weight:700;color:#475569;">Nama Kelas</th>
-                  <th style="padding:12px 10px;text-align:center;width:100px;font-size:12.5px;font-weight:700;color:#475569;">Tingkat</th>
-                  <th style="padding:12px 10px;text-align:center;width:140px;font-size:12.5px;font-weight:700;color:#475569;">Tahun Ajaran</th>
-                  <th style="padding:12px 14px;text-align:left;font-size:12.5px;font-weight:700;color:#475569;">Wali Kelas</th>
-                  <th style="padding:12px 10px;text-align:center;width:100px;font-size:12.5px;font-weight:700;color:#475569;">Status</th>
-                  <th style="padding:12px 12px;text-align:center;width:150px;font-size:12.5px;font-weight:700;color:#475569;">Aksi</th>
-                </tr>
-              </thead>
+              <thead id="classesThead"></thead>
               <tbody id="classesTbody"></tbody>
             </table>
+          </div>
+
+          <!-- TABLE FOOTER (COUNTER & PAGINATION) -->
+          <div class="attendance-table-footer">
+            <div class="table-footer-counter" id="masterClassCounter">
+              Menampilkan 0–0 dari 0 data
+            </div>
+            <div class="table-footer-pagination" id="masterClassPagination"></div>
           </div>
         </section>
 
@@ -6025,6 +6048,7 @@ function getMobileExpandIds(prefix, idx) {
     const base = prefix === 'teacher' ? 'teacherAtt'
                : prefix === 'masterStudent' ? 'masterStudent'
                : prefix === 'masterTeacher' ? 'masterTeacher'
+               : prefix === 'masterClass' ? 'masterClass'
                : 'studentAtt';
     return {
         rowId: base + 'Row_' + idx,
@@ -8996,12 +9020,277 @@ function saveTeacherFromModal() {
 }
 
 // Classes module
+let allLoadedClasses = [];
+let masterClassSearchDebounceTimer = null;
+const masterClassTableState = {
+    pageSize: 10,
+    currentPage: 1,
+    searchQuery: '',
+    sortField: 'level',
+    sortDirection: 'asc'
+};
+
+const masterClassColumnDefs = [
+    { key: 'no', label: 'No', sortable: false, width: '44px', align: 'center' },
+    { key: 'className', label: 'Nama Kelas', sortable: true, width: 'auto', align: 'left' },
+    { key: 'level', label: 'Tingkat', sortable: true, width: '100px', align: 'center' },
+    { key: 'academicYear', label: 'Tahun Ajaran', sortable: true, width: '140px', align: 'center' },
+    { key: 'homeroom', label: 'Wali Kelas', sortable: true, width: 'auto', align: 'left' },
+    { key: 'status', label: 'Status', sortable: true, width: '100px', align: 'center' },
+    { key: 'action', label: 'Aksi', sortable: false, width: '165px', align: 'center' }
+];
+
+function getFilteredMasterClassList() {
+    const q = (masterClassTableState.searchQuery || '').toLowerCase();
+    if (!q) return allLoadedClasses.slice();
+    return allLoadedClasses.filter(function(c) {
+        return (c.className || '').toLowerCase().includes(q) ||
+               String(c.level || '').toLowerCase().includes(q) ||
+               (c.academicYear || '').toLowerCase().includes(q) ||
+               (c.homeroom_teacher_name || c.homeroomTeacherName || '').toLowerCase().includes(q) ||
+               (c.homeroomTeacherId || '').toLowerCase().includes(q) ||
+               (c.classId || '').toLowerCase().includes(q);
+    });
+}
+
+function sortMasterClassRecords(records, sortField, sortDirection) {
+    const dir = sortDirection === 'asc' ? 1 : -1;
+    return records.slice().sort(function(a, b) {
+        let valA = '', valB = '';
+        switch (sortField) {
+            case 'className':
+                valA = a.className || '';
+                valB = b.className || '';
+                break;
+            case 'level':
+                valA = a.level !== undefined && a.level !== null ? String(a.level) : '';
+                valB = b.level !== undefined && b.level !== null ? String(b.level) : '';
+                break;
+            case 'academicYear':
+                valA = a.academicYear || '';
+                valB = b.academicYear || '';
+                break;
+            case 'homeroom':
+                valA = a.homeroom_teacher_name || a.homeroomTeacherName || a.homeroomTeacherId || '';
+                valB = b.homeroom_teacher_name || b.homeroomTeacherName || b.homeroomTeacherId || '';
+                break;
+            case 'status':
+                valA = (a.status || 'Active').toLowerCase() === 'active' ? 'Aktif' : 'Tidak Aktif';
+                valB = (b.status || 'Active').toLowerCase() === 'active' ? 'Aktif' : 'Tidak Aktif';
+                break;
+            default:
+                valA = a.level !== undefined && a.level !== null ? String(a.level) : '';
+                valB = b.level !== undefined && b.level !== null ? String(b.level) : '';
+        }
+        const primaryCmp = String(valA).localeCompare(String(valB), undefined, { numeric: true, sensitivity: 'base' }) * dir;
+        if (primaryCmp !== 0) return primaryCmp;
+        return String(a.className || '').localeCompare(String(b.className || ''), undefined, { numeric: true, sensitivity: 'base' });
+    });
+}
+
+function renderMasterClassThead() {
+    const thead = document.getElementById('classesThead');
+    if (!thead) return;
+    const desktopThs = masterClassColumnDefs.map(function(c) {
+        if (!c.sortable) {
+            return '<th class="att-desktop-th" style="padding:12px 8px;text-align:' + c.align + ';width:' + c.width + ';font-size:12.5px;font-weight:700;color:#475569;">' + escapeHtml(c.label) + '</th>';
+        }
+        const isSorted = masterClassTableState.sortField === c.key;
+        const sortClass = isSorted ? (masterClassTableState.sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc') : '';
+        const indicator = isSorted ? (masterClassTableState.sortDirection === 'asc' ? '↑' : '↓') : '↕';
+        return '<th class="att-desktop-th sortable-th ' + sortClass + '" data-col="' + c.key + '" data-align="' + c.align + '" onclick="handleMasterClassSort(\'' + c.key + '\')" style="padding:12px 10px;text-align:' + c.align + ';width:' + c.width + ';font-size:12.5px;font-weight:700;color:#475569;">' +
+            '<div class="th-content">' +
+                '<span>' + escapeHtml(c.label) + '</span>' +
+                '<span class="sort-indicator">' + indicator + '</span>' +
+            '</div>' +
+        '</th>';
+    }).join('');
+    const mobileThs = renderMobileAttendanceTheadCols([
+        { sortKey: 'className', label: 'Kelas', width: '32%', align: 'left' },
+        { sortKey: 'homeroom', label: 'Tingkat / Wali', width: '40%', align: 'left' },
+        { sortKey: 'status', label: 'Status', width: '28%', align: 'right' }
+    ], masterClassTableState, 'handleMasterClassSort');
+    thead.innerHTML = '<tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">' + desktopThs + mobileThs + '</tr>';
+}
+
+function handleMasterClassSort(colKey) {
+    if (masterClassTableState.sortField === colKey) {
+        masterClassTableState.sortDirection = masterClassTableState.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        masterClassTableState.sortField = colKey;
+        masterClassTableState.sortDirection = 'asc';
+    }
+    masterClassTableState.currentPage = 1;
+    renderMasterClassThead();
+    renderMasterClassTbody();
+}
+
+function resetMasterClassSearch() {
+    const searchInput = document.getElementById('classSearch');
+    const clearBtn = document.getElementById('classSearchClearBtn');
+    if (searchInput) searchInput.value = '';
+    if (clearBtn) clearBtn.style.display = 'none';
+    masterClassTableState.searchQuery = '';
+    masterClassTableState.currentPage = 1;
+    renderMasterClassTbody();
+}
+
+function renderMasterClassTbody() {
+    const tbody = document.getElementById('classesTbody');
+    if (!tbody) return;
+
+    const filtered = getFilteredMasterClassList();
+    const sorted = sortMasterClassRecords(filtered, masterClassTableState.sortField, masterClassTableState.sortDirection);
+    const totalVisibleColCount = masterClassColumnDefs.length || 7;
+
+    const total = sorted.length;
+    const pageSize = masterClassTableState.pageSize;
+    const totalPages = pageSize === 'all' ? 1 : Math.ceil(total / pageSize) || 1;
+    if (masterClassTableState.currentPage > totalPages) {
+        masterClassTableState.currentPage = totalPages;
+    }
+    const curPage = masterClassTableState.currentPage;
+
+    const counterEl = document.getElementById('masterClassCounter');
+    if (counterEl) {
+        if (total === 0) {
+            counterEl.textContent = '0 dari 0 data';
+        } else if (pageSize === 'all') {
+            counterEl.textContent = 'Menampilkan 1–' + total + ' dari ' + total + ' data';
+        } else {
+            const start = (curPage - 1) * pageSize + 1;
+            const end = Math.min(curPage * pageSize, total);
+            counterEl.textContent = 'Menampilkan ' + start + '–' + end + ' dari ' + total + ' data';
+        }
+    }
+
+    renderPaginationControl('masterClassPagination', curPage, totalPages, pageSize, 'goToMasterClassPage');
+
+    if (total === 0) {
+        if (allLoadedClasses.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="' + totalVisibleColCount + '" class="attendance-empty-cell">' +
+                '<div class="empty-state-content">' +
+                    '<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#94a3b8" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>' +
+                    '<p class="empty-state-title">Belum ada data kelas</p>' +
+                '</div>' +
+            '</td></tr>';
+        } else {
+            tbody.innerHTML = '<tr><td colspan="' + totalVisibleColCount + '" class="attendance-empty-cell">' +
+                '<div class="empty-state-content">' +
+                    '<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#94a3b8" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>' +
+                    '<p class="empty-state-title">Tidak ada data kelas yang sesuai kriteria</p>' +
+                    '<p class="empty-state-sub">Coba sesuaikan kata kunci pencarian Anda.</p>' +
+                    '<button type="button" class="btn-empty-reset" onclick="resetMasterClassSearch()">Reset Pencarian</button>' +
+                '</div>' +
+            '</td></tr>';
+        }
+        return;
+    }
+
+    const pageRows = pageSize === 'all' ? sorted : sorted.slice((curPage - 1) * pageSize, curPage * pageSize);
+    const startIdx = pageSize === 'all' ? 0 : (curPage - 1) * pageSize;
+
+    tbody.innerHTML = pageRows.map(function(c, idx) {
+        const no = startIdx + idx + 1;
+        const className = escapeHtml(c.className || '-');
+        const levelStr = c.level !== undefined && c.level !== null ? String(c.level) : '-';
+        const level = escapeHtml(levelStr);
+        const academicYear = escapeHtml(c.academicYear || '-');
+        const homeroomRaw = c.homeroom_teacher_name || c.homeroomTeacherName || c.homeroomTeacherId || '-';
+        const homeroom = escapeHtml(homeroomRaw);
+        const status = (c.status || 'Active');
+        const statusBadge = (status.toLowerCase() === 'active' || status.toLowerCase() === 'aktif')
+            ? '<span class="status-badge status-badge-active">Aktif</span>'
+            : '<span class="status-badge status-badge-inactive">Tidak Aktif</span>';
+
+        const actionButtons = '<div class="student-action-group" style="justify-content:center;">' +
+            (isCurrentUserAdmin ? '<button type="button" class="btn-action btn-action-edit" onclick="openClassModal(\'edit\', \'' + escapeAttr(c.classId) + '\')" title="Edit Kelas">' +
+              '<svg viewBox="0 0 24 24" class="btn-action-icon"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' +
+              '<span>Edit</span>' +
+            '</button>' : '') +
+            '<button type="button" class="btn-action btn-action-detail" onclick="openClassModal(\'view\', \'' + escapeAttr(c.classId) + '\')" title="Detail Kelas">' +
+              '<svg viewBox="0 0 24 24" class="btn-action-icon"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>' +
+              '<span>Detail</span>' +
+            '</button>' +
+            '<button type="button" class="btn-action btn-action-qr" onclick="showClassQrModal(\'' + escapeAttr(c.classId) + '\')" title="Lihat QR Kelas">' +
+              '<svg viewBox="0 0 24 24" class="btn-action-icon"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>' +
+              '<span>QR</span>' +
+            '</button>' +
+          '</div>';
+
+        const desktopCells =
+            '<td class="att-desktop-cell" style="padding:10px 8px;text-align:center;color:#64748b;font-size:12.5px;">' + no + '</td>' +
+            '<td class="att-desktop-cell" style="padding:10px 14px;text-align:left;font-size:13px;font-weight:600;color:#0f172a;">' + className + '</td>' +
+            '<td class="att-desktop-cell" style="padding:10px 10px;text-align:center;font-size:12.5px;color:#334155;">' + level + '</td>' +
+            '<td class="att-desktop-cell" style="padding:10px 10px;text-align:center;font-size:12.5px;color:#334155;">' + academicYear + '</td>' +
+            '<td class="att-desktop-cell" style="padding:10px 14px;text-align:left;font-size:12.5px;color:#334155;">' + homeroom + '</td>' +
+            '<td class="att-desktop-cell" style="padding:10px 10px;text-align:center;">' + statusBadge + '</td>' +
+            '<td class="att-desktop-cell" style="padding:10px 12px;text-align:center;">' + actionButtons + '</td>';
+
+        const mobileInfoSummary = (levelStr !== '-' ? 'Tingkat ' + level : '-') + ' &bull; ' + homeroom;
+        const mobileCells = renderMobileAttendanceSummaryCells('masterClass', idx, className, mobileInfoSummary, statusBadge, 'Buka detail kelas');
+
+        const detailRowHtml = renderMobileAttendanceDetailRow('masterClass', idx, [
+            { label: 'ID Kelas', value: c.classId || '-' },
+            { label: 'Kelas', value: c.className || '-' },
+            { label: 'Tingkat', value: levelStr },
+            { label: 'Th. Ajaran', value: c.academicYear || '-' },
+            { label: 'Wali Kelas', value: homeroomRaw }
+        ], actionButtons);
+
+        return '<tr class="simata-table-row att-expandable-row" id="masterClassRow_' + idx + '" data-class-id="' + escapeAttr(c.classId || '') + '">' +
+            desktopCells + mobileCells +
+        '</tr>' + detailRowHtml;
+    }).join('');
+}
+
+function goToMasterClassPage(page) {
+    masterClassTableState.currentPage = page;
+    renderMasterClassTbody();
+    const tableWrapper = document.querySelector('#classesContent .attendance-table-wrapper');
+    if (tableWrapper) tableWrapper.scrollTop = 0;
+}
+
 function initClassesModule() {
     const menu = document.getElementById('menu-classes'); if (menu) menu.addEventListener('click', function(){ showClassesView(); });
     const addBtn = document.getElementById('addClassButton'); if (addBtn) addBtn.addEventListener('click', function(){ openClassModal('create'); });
-    const searchInput = document.getElementById('classSearch'); if (searchInput) { let timer = null; searchInput.addEventListener('input', function(){ clearTimeout(timer); timer = setTimeout(function(){ loadClasses(searchInput.value.trim()); }, 300); }); }
+
+    const entriesSelect = document.getElementById('masterClassEntriesSelect');
+    if (entriesSelect) {
+        entriesSelect.addEventListener('change', function() {
+            const val = this.value;
+            masterClassTableState.pageSize = (val === 'all') ? 'all' : parseInt(val, 10);
+            masterClassTableState.currentPage = 1;
+            renderMasterClassTbody();
+        });
+    }
+
+    const searchInput = document.getElementById('classSearch');
+    const searchClearBtn = document.getElementById('classSearchClearBtn');
+    if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            const query = e.target.value;
+            if (searchClearBtn) searchClearBtn.style.display = query ? 'inline-flex' : 'none';
+            clearTimeout(masterClassSearchDebounceTimer);
+            masterClassSearchDebounceTimer = setTimeout(function() {
+                masterClassTableState.searchQuery = query.trim();
+                masterClassTableState.currentPage = 1;
+                renderMasterClassTbody();
+            }, 250);
+        });
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                resetMasterClassSearch();
+            }
+        });
+    }
+    if (searchClearBtn) {
+        searchClearBtn.addEventListener('click', resetMasterClassSearch);
+    }
+
     const cancelBtn = document.getElementById('classCancelBtn'); if (cancelBtn) cancelBtn.addEventListener('click', closeClassModal);
     const saveBtn = document.getElementById('classSaveBtn'); if (saveBtn) saveBtn.addEventListener('click', saveClassFromModal);
+    renderMasterClassThead();
 }
 
 function showClassesView() {
@@ -9014,58 +9303,23 @@ function showClassesView() {
 }
 
 function loadClasses(filter) {
+    if (typeof filter === 'string') {
+        masterClassTableState.searchQuery = filter.trim();
+        masterClassTableState.currentPage = 1;
+    }
+    renderMasterClassThead();
     const tbody = document.getElementById('classesTbody'); if (!tbody) return;
-    renderTableLoading(tbody, 6, 'Memuat data kelas...');
+    renderTableLoading(tbody, masterClassColumnDefs.length || 7, 'Memuat data kelas...');
     simataClient.withSuccessHandler(function(result){
-        if (!result || !result.success) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:#ef4444;">Gagal memuat kelas.</td></tr>'; return; }
-        let classes = result.classes || [];
-        if (filter) {
-            const q = filter.toLowerCase();
-            classes = classes.filter(function(c) {
-                return (c.className || '').toLowerCase().includes(q) ||
-                       String(c.level || '').toLowerCase().includes(q) ||
-                       (c.academicYear || '').toLowerCase().includes(q) ||
-                       (c.homeroom_teacher_name || c.homeroomTeacherName || '').toLowerCase().includes(q) ||
-                       (c.homeroomTeacherId || '').toLowerCase().includes(q) ||
-                       (c.classId || '').toLowerCase().includes(q);
-            });
+        if (!result || !result.success) {
+            tbody.innerHTML = '<tr><td colspan="' + (masterClassColumnDefs.length || 7) + '" style="text-align:center;padding:24px;color:#ef4444;">Gagal memuat kelas.</td></tr>';
+            return;
         }
-        if (classes.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:#64748b;">Tidak ada data kelas.</td></tr>'; return; }
-        tbody.innerHTML = classes.map(function(c){
-            const className = escapeHtml(c.className || '-');
-            const level = escapeHtml(c.level !== undefined && c.level !== null ? String(c.level) : '-');
-            const academicYear = escapeHtml(c.academicYear || '-');
-            const homeroom = escapeHtml(c.homeroom_teacher_name || c.homeroomTeacherName || c.homeroomTeacherId || '-');
-            const status = (c.status || 'Active');
-            const statusBadge = (status.toLowerCase() === 'active' || status.toLowerCase() === 'aktif')
-                ? '<span class="status-badge status-badge-active">Aktif</span>'
-                : '<span class="status-badge status-badge-inactive">Tidak Aktif</span>';
-
-            return '<tr class="simata-table-row" data-class-id="' + escapeAttr(c.classId || '') + '">' +
-                '<td style="padding:10px 14px;text-align:left;font-size:13px;font-weight:600;color:#0f172a;">' + className + '</td>' +
-                '<td style="padding:10px 10px;text-align:center;font-size:12.5px;color:#334155;">' + level + '</td>' +
-                '<td style="padding:10px 10px;text-align:center;font-size:12.5px;color:#334155;">' + academicYear + '</td>' +
-                '<td style="padding:10px 14px;text-align:left;font-size:12.5px;color:#334155;">' + homeroom + '</td>' +
-                '<td style="padding:10px 10px;text-align:center;">' + statusBadge + '</td>' +
-                '<td style="padding:10px 12px;text-align:center;">' +
-                  '<div class="student-action-group" style="justify-content:center;">' +
-                    (isCurrentUserAdmin ? '<button type="button" class="btn-action btn-action-edit" onclick="openClassModal(\'edit\', \'' + escapeAttr(c.classId) + '\')" title="Edit Kelas">' +
-                      '<svg viewBox="0 0 24 24" class="btn-action-icon"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' +
-                      '<span>Edit</span>' +
-                    '</button>' : '') +
-                    '<button type="button" class="btn-action btn-action-detail" onclick="openClassModal(\'view\', \'' + escapeAttr(c.classId) + '\')" title="Detail Kelas">' +
-                      '<svg viewBox="0 0 24 24" class="btn-action-icon"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>' +
-                      '<span>Detail</span>' +
-                    '</button>' +
-                    '<button type="button" class="btn-action btn-action-qr" onclick="showClassQrModal(\'' + escapeAttr(c.classId) + '\')" title="Lihat QR Kelas">' +
-                      '<svg viewBox="0 0 24 24" class="btn-action-icon"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>' +
-                      '<span>QR</span>' +
-                    '</button>' +
-                  '</div>' +
-                '</td>' +
-              '</tr>';
-        }).join('');
-    }).withFailureHandler(function(){ tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:#ef4444;">Gagal memuat kelas.</td></tr>'; }).getClasses(filter ? { search: filter } : {});
+        allLoadedClasses = Array.isArray(result.classes) ? result.classes : [];
+        renderMasterClassTbody();
+    }).withFailureHandler(function(){
+        tbody.innerHTML = '<tr><td colspan="' + (masterClassColumnDefs.length || 7) + '" style="text-align:center;padding:24px;color:#ef4444;">Gagal memuat kelas.</td></tr>';
+    }).getClasses();
 }
 
 function populateClassHomeroomTeachers(selectedTeacherId) {
