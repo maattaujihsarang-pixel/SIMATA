@@ -16,6 +16,46 @@
   'use strict';
 
   const API_BASE = '/api/v1';
+  const studentPhotoBlobCache = new Map();
+  const teacherPhotoBlobCache = new Map();
+
+  function clearEntityPhotoCache(cacheMap, id) {
+    if (!id) return;
+    const prefix = `${id}:`;
+    for (const k of cacheMap.keys()) {
+      if (k === id || k.startsWith(prefix)) {
+        cacheMap.delete(k);
+      }
+    }
+  }
+
+  async function fetchProfilePhotoBlob(resource, label, cacheMap, id, options = {}) {
+    const opts = (options && typeof options === 'object') ? options : {};
+    const cacheKey = (opts.cacheKey !== undefined && opts.cacheKey !== null && opts.cacheKey !== '') ? String(opts.cacheKey) : '';
+    const memKey = `${id}:${cacheKey}`;
+
+    if (cacheKey && cacheMap.has(memKey)) {
+      return cacheMap.get(memKey);
+    }
+
+    const token = getStoredToken();
+    const headers = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const url = `${API_BASE}/${resource}/${encodeURIComponent(id)}/photo${cacheKey ? `?v=${encodeURIComponent(cacheKey)}` : ''}`;
+    const res = await window.fetch(url, {
+      method: 'GET',
+      headers,
+      signal: opts.signal
+    });
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error(`Gagal memuat pasfoto ${label} (HTTP ${res.status})`);
+    const blob = await res.blob();
+    if (cacheKey) {
+      clearEntityPhotoCache(cacheMap, id);
+      cacheMap.set(memKey, blob);
+    }
+    return blob;
+  }
 
   function getStoredToken() {
     try {
@@ -1169,30 +1209,12 @@
     },
 
     // 42. Profile Photos: FEATURE 01
-    getStudentPhotoBlob: async function (studentId) {
-      const token = getStoredToken();
-      const headers = {};
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-      const res = await window.fetch(`${API_BASE}/students/${encodeURIComponent(studentId)}/photo`, {
-        method: 'GET',
-        headers
-      });
-      if (res.status === 404) return null;
-      if (!res.ok) throw new Error(`Gagal memuat pasfoto siswa (HTTP ${res.status})`);
-      return await res.blob();
+    getStudentPhotoBlob: async function (studentId, options = {}) {
+      return fetchProfilePhotoBlob('students', 'siswa', studentPhotoBlobCache, studentId, options);
     },
 
-    getTeacherPhotoBlob: async function (teacherId) {
-      const token = getStoredToken();
-      const headers = {};
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-      const res = await window.fetch(`${API_BASE}/teachers/${encodeURIComponent(teacherId)}/photo`, {
-        method: 'GET',
-        headers
-      });
-      if (res.status === 404) return null;
-      if (!res.ok) throw new Error(`Gagal memuat pasfoto guru (HTTP ${res.status})`);
-      return await res.blob();
+    getTeacherPhotoBlob: async function (teacherId, options = {}) {
+      return fetchProfilePhotoBlob('teachers', 'guru', teacherPhotoBlobCache, teacherId, options);
     },
 
     getStudentPhotoMeta: async function (studentId) {
@@ -1239,7 +1261,7 @@
 
     uploadStudentPhoto: async function (studentId, fileOrBlob, cropData = null) {
       const formData = new FormData();
-      formData.append('photo', fileOrBlob);
+      formData.append('photo', fileOrBlob, (fileOrBlob && fileOrBlob.name) || 'photo.jpg');
       if (cropData) {
         if (cropData.crop_scale !== undefined) formData.append('crop_scale', cropData.crop_scale);
         if (cropData.crop_position_x !== undefined) formData.append('crop_position_x', cropData.crop_position_x);
@@ -1249,12 +1271,13 @@
         method: 'POST',
         body: formData
       });
+      clearEntityPhotoCache(studentPhotoBlobCache, studentId);
       return { success: true, message: res.message, data: res.data };
     },
 
     uploadTeacherPhoto: async function (teacherId, fileOrBlob, cropData = null) {
       const formData = new FormData();
-      formData.append('photo', fileOrBlob);
+      formData.append('photo', fileOrBlob, (fileOrBlob && fileOrBlob.name) || 'photo.jpg');
       if (cropData) {
         if (cropData.crop_scale !== undefined) formData.append('crop_scale', cropData.crop_scale);
         if (cropData.crop_position_x !== undefined) formData.append('crop_position_x', cropData.crop_position_x);
@@ -1264,6 +1287,7 @@
         method: 'POST',
         body: formData
       });
+      clearEntityPhotoCache(teacherPhotoBlobCache, teacherId);
       return { success: true, message: res.message, data: res.data };
     },
 
@@ -1325,6 +1349,7 @@
       const res = await apiFetch(`/students/${encodeURIComponent(studentId)}/photo`, {
         method: 'DELETE'
       });
+      clearEntityPhotoCache(studentPhotoBlobCache, studentId);
       return { success: true, message: res.message };
     },
 
@@ -1332,6 +1357,7 @@
       const res = await apiFetch(`/teachers/${encodeURIComponent(teacherId)}/photo`, {
         method: 'DELETE'
       });
+      clearEntityPhotoCache(teacherPhotoBlobCache, teacherId);
       return { success: true, message: res.message };
     },
 

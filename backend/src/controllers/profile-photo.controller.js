@@ -14,11 +14,12 @@ class ProfilePhotoController {
       const filename = `pasfoto_${student.student_id}_${safeName}.${ext}`;
 
       res.setHeader('Content-Type', photo.mime_type);
-      res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
 
       if (isDownload) {
+        res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
         res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
       } else {
+        res.setHeader('Cache-Control', 'private, max-age=86400');
         res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
       }
 
@@ -40,11 +41,12 @@ class ProfilePhotoController {
       const filename = `pasfoto_${teacher.teacher_id}_${safeName}.${ext}`;
 
       res.setHeader('Content-Type', photo.mime_type);
-      res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
 
       if (isDownload) {
+        res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
         res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
       } else {
+        res.setHeader('Cache-Control', 'private, max-age=86400');
         res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
       }
 

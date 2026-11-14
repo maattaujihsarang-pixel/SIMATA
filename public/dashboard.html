@@ -823,7 +823,7 @@ html, body {
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
   <!-- QRCode.js: QR Code generator library for Student QR Preview & Print -->
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-  <script src="/js/simata-client.js"></script>
+  <script src="/js/simata-client.js?v=bug52"></script>
   <script src="/js/notifications.js"></script>
 </head>
 
@@ -6739,18 +6739,172 @@ function initPhotoFrameEditorEvents() {
     viewport.addEventListener('pointercancel', stopDrag);
 }
 
+// Shared Profile Photo Helpers (BUG 52)
+function compressProfilePhotoBeforeUpload(file, maxDim = 900, quality = 0.85) {
+    return new Promise(function(resolve) {
+        if (!file || !file.type || !file.type.startsWith('image/') || file.size <= 150 * 1024) {
+            resolve(file);
+            return;
+        }
+        const img = new Image();
+        const srcUrl = URL.createObjectURL(file);
+        const cleanup = function() {
+            try { URL.revokeObjectURL(srcUrl); } catch (e) {}
+        };
+        img.onload = function() {
+            try {
+                const w = img.naturalWidth || 0;
+                const h = img.naturalHeight || 0;
+                if (!w || !h || (w <= maxDim && h <= maxDim && file.size <= 300 * 1024)) {
+                    cleanup();
+                    resolve(file);
+                    return;
+                }
+                const scale = Math.min(1, maxDim / Math.max(w, h));
+                const targetW = Math.max(1, Math.round(w * scale));
+                const targetH = Math.max(1, Math.round(h * scale));
+                const canvas = document.createElement('canvas');
+                canvas.width = targetW;
+                canvas.height = targetH;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    cleanup();
+                    resolve(file);
+                    return;
+                }
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, targetW, targetH);
+                ctx.drawImage(img, 0, 0, targetW, targetH);
+                canvas.toBlob(function(blob) {
+                    cleanup();
+                    if (!blob || (blob.size >= file.size && w <= maxDim && h <= maxDim)) {
+                        resolve(file);
+                        return;
+                    }
+                    const baseName = (file.name || 'photo').replace(/\.[^.]+$/, '');
+                    try {
+                        resolve(new File([blob], baseName + '.jpg', { type: 'image/jpeg' }));
+                    } catch (e) {
+                        resolve(blob);
+                    }
+                }, 'image/jpeg', quality);
+            } catch (err) {
+                cleanup();
+                resolve(file);
+            }
+        };
+        img.onerror = function() {
+            cleanup();
+            resolve(file);
+        };
+        img.src = srcUrl;
+    });
+}
+
+async function loadEntityProfilePhotoInModal(cfg) {
+    const reqSeq = cfg.nextReqSeq();
+    cfg.abortPrevious();
+    const ctrl = (typeof AbortController === 'function') ? new AbortController() : null;
+    cfg.setAbortCtrl(ctrl);
+    const signal = ctrl ? ctrl.signal : undefined;
+
+    const photoImg = document.getElementById(cfg.prefix + '_photo_img');
+    const placeholder = document.getElementById(cfg.prefix + '_photo_placeholder');
+    const downloadBtn = document.getElementById(cfg.prefix + '_photo_download_btn');
+    const cropBtn = document.getElementById(cfg.prefix + '_photo_crop_btn');
+    const uploadText = document.getElementById(cfg.prefix + '_photo_upload_text');
+    const hint = document.getElementById(cfg.prefix + '_photo_hint');
+
+    const applyEmptyState = function() {
+        cfg.setCrop({ crop_scale: 1, crop_position_x: 0, crop_position_y: 0 });
+        if (photoImg) {
+            photoImg.onload = null;
+            photoImg.src = '';
+            photoImg.style.display = 'none';
+            photoImg.style.width = '';
+            photoImg.style.height = '';
+            photoImg.style.transform = '';
+        }
+        if (placeholder) placeholder.style.display = 'flex';
+        if (downloadBtn) downloadBtn.style.display = 'none';
+        if (cropBtn) cropBtn.style.display = 'none';
+        if (uploadText) uploadText.textContent = 'Pilih Foto';
+        if (hint) { hint.textContent = ''; hint.style.display = 'none'; }
+    };
+
+    const isStale = function() {
+        return reqSeq !== cfg.getReqSeq() || cfg.getModalId() !== cfg.entityId;
+    };
+
+    try {
+        const metaRes = await cfg.fetchMeta(cfg.entityId);
+        if (isStale()) return;
+
+        const meta = (metaRes && metaRes.success && metaRes.data) ? metaRes.data : null;
+        if (!meta) {
+            applyEmptyState();
+            return;
+        }
+
+        const cacheKey = meta.updated_at || meta.photo_id || '';
+        const blob = await cfg.fetchBlob(cfg.entityId, { signal: signal, cacheKey: cacheKey });
+        if (isStale()) return;
+
+        if (blob) {
+            const objectUrl = URL.createObjectURL(blob);
+            const prevUrl = cfg.getActiveUrl();
+            if (prevUrl) URL.revokeObjectURL(prevUrl);
+            cfg.setActiveUrl(objectUrl);
+
+            const crop = {
+                crop_scale: (meta.crop_scale !== undefined && meta.crop_scale !== null) ? Number(meta.crop_scale) : 1,
+                crop_position_x: (meta.crop_position_x !== undefined && meta.crop_position_x !== null) ? Number(meta.crop_position_x) : 0,
+                crop_position_y: (meta.crop_position_y !== undefined && meta.crop_position_y !== null) ? Number(meta.crop_position_y) : 0
+            };
+            cfg.setCrop(crop);
+
+            if (photoImg) {
+                const onAvatarReady = function() {
+                    if (isStale()) return;
+                    fitPhotoElement(photoImg, 108);
+                    applyPhotoFraming(photoImg, crop, true);
+                };
+                photoImg.onload = onAvatarReady;
+                photoImg.src = objectUrl;
+                photoImg.style.display = 'block';
+                if (photoImg.complete && photoImg.naturalWidth) {
+                    onAvatarReady();
+                }
+            }
+            if (placeholder) placeholder.style.display = 'none';
+            if (downloadBtn) downloadBtn.style.display = 'inline-flex';
+            if (cropBtn) cropBtn.style.display = cfg.isView ? 'none' : 'inline-flex';
+            if (uploadText) uploadText.textContent = 'Ganti Foto';
+            if (hint) { hint.textContent = ''; hint.style.display = 'none'; }
+        } else {
+            applyEmptyState();
+        }
+    } catch (e) {
+        if (e && e.name === 'AbortError') return;
+        console.warn('Gagal memuat foto ' + cfg.label + ':', e);
+    }
+}
+
 // Student Photo State
 let studentActiveObjectUrl = null;
 let currentStudentModalId = null;
 let currentStudentModalName = '';
 let currentStudentCrop = { crop_scale: 1, crop_position_x: 0, crop_position_y: 0 };
+let studentPhotoReqSeq = 0;
+let studentPhotoAbortCtrl = null;
+let studentModalReqSeq = 0;
 
 function resetStudentPhotoUI() {
-    if (studentActiveObjectUrl) {
-        URL.revokeObjectURL(studentActiveObjectUrl);
-        studentActiveObjectUrl = null;
+    studentPhotoReqSeq++;
+    if (studentPhotoAbortCtrl) {
+        try { studentPhotoAbortCtrl.abort(); } catch (e) {}
+        studentPhotoAbortCtrl = null;
     }
-    currentStudentCrop = { crop_scale: 1, crop_position_x: 0, crop_position_y: 0 };
 
     const photoImg = document.getElementById('student_photo_img');
     const placeholder = document.getElementById('student_photo_placeholder');
@@ -6769,6 +6923,12 @@ function resetStudentPhotoUI() {
         photoImg.style.height = '';
         photoImg.style.transform = '';
     }
+    if (studentActiveObjectUrl) {
+        URL.revokeObjectURL(studentActiveObjectUrl);
+        studentActiveObjectUrl = null;
+    }
+    currentStudentCrop = { crop_scale: 1, crop_position_x: 0, crop_position_y: 0 };
+
     if (placeholder) { placeholder.style.display = 'flex'; }
     if (downloadBtn) { downloadBtn.style.display = 'none'; }
     if (cropBtn) { cropBtn.style.display = 'none'; }
@@ -6778,67 +6938,27 @@ function resetStudentPhotoUI() {
     if (hint) { hint.textContent = ''; hint.style.display = 'none'; }
 }
 
-async function loadStudentPhotoInModal(studentId, isView) {
-    try {
-        const photoImg = document.getElementById('student_photo_img');
-        const placeholder = document.getElementById('student_photo_placeholder');
-        const downloadBtn = document.getElementById('student_photo_download_btn');
-        const cropBtn = document.getElementById('student_photo_crop_btn');
-        const uploadText = document.getElementById('student_photo_upload_text');
-        const hint = document.getElementById('student_photo_hint');
-
-        const [blob, metaRes] = await Promise.all([
-            simataClient.getStudentPhotoBlob(studentId),
-            simataClient.getStudentPhotoMeta(studentId)
-        ]);
-
-        if (blob) {
-            if (studentActiveObjectUrl) URL.revokeObjectURL(studentActiveObjectUrl);
-            studentActiveObjectUrl = URL.createObjectURL(blob);
-
-            const meta = (metaRes && metaRes.success && metaRes.data) ? metaRes.data : {};
-            currentStudentCrop = {
-                crop_scale: (meta.crop_scale !== undefined && meta.crop_scale !== null) ? Number(meta.crop_scale) : 1,
-                crop_position_x: (meta.crop_position_x !== undefined && meta.crop_position_x !== null) ? Number(meta.crop_position_x) : 0,
-                crop_position_y: (meta.crop_position_y !== undefined && meta.crop_position_y !== null) ? Number(meta.crop_position_y) : 0
-            };
-
-            if (photoImg) {
-                const onAvatarReady = function() {
-                    fitPhotoElement(photoImg, 108);
-                    applyPhotoFraming(photoImg, currentStudentCrop, true);
-                };
-                photoImg.onload = onAvatarReady;
-                photoImg.src = studentActiveObjectUrl;
-                photoImg.style.display = 'block';
-                if (photoImg.complete && photoImg.naturalWidth) {
-                    onAvatarReady();
-                }
+function loadStudentPhotoInModal(studentId, isView) {
+    return loadEntityProfilePhotoInModal({
+        prefix: 'student',
+        label: 'siswa',
+        entityId: studentId,
+        isView: isView,
+        getModalId: function() { return currentStudentModalId; },
+        nextReqSeq: function() { return ++studentPhotoReqSeq; },
+        getReqSeq: function() { return studentPhotoReqSeq; },
+        abortPrevious: function() {
+            if (studentPhotoAbortCtrl) {
+                try { studentPhotoAbortCtrl.abort(); } catch (e) {}
             }
-            if (placeholder) placeholder.style.display = 'none';
-            if (downloadBtn) downloadBtn.style.display = 'inline-flex';
-            if (cropBtn) cropBtn.style.display = isView ? 'none' : 'inline-flex';
-            if (uploadText) uploadText.textContent = 'Ganti Foto';
-            if (hint) { hint.textContent = ''; hint.style.display = 'none'; }
-        } else {
-            currentStudentCrop = { crop_scale: 1, crop_position_x: 0, crop_position_y: 0 };
-            if (photoImg) {
-                photoImg.onload = null;
-                photoImg.src = '';
-                photoImg.style.display = 'none';
-                photoImg.style.width = '';
-                photoImg.style.height = '';
-                photoImg.style.transform = '';
-            }
-            if (placeholder) placeholder.style.display = 'flex';
-            if (downloadBtn) downloadBtn.style.display = 'none';
-            if (cropBtn) cropBtn.style.display = 'none';
-            if (uploadText) uploadText.textContent = 'Pilih Foto';
-            if (hint) { hint.textContent = ''; hint.style.display = 'none'; }
-        }
-    } catch (e) {
-        console.warn('Gagal memuat foto siswa:', e);
-    }
+        },
+        setAbortCtrl: function(ctrl) { studentPhotoAbortCtrl = ctrl; },
+        getActiveUrl: function() { return studentActiveObjectUrl; },
+        setActiveUrl: function(url) { studentActiveObjectUrl = url; },
+        setCrop: function(crop) { currentStudentCrop = crop; },
+        fetchMeta: simataClient.getStudentPhotoMeta,
+        fetchBlob: simataClient.getStudentPhotoBlob
+    });
 }
 
 function handleStudentPhotoSelected(e) {
@@ -7218,6 +7338,7 @@ function openStudentModal(mode, studentId) {
         mode = 'view';
     }
 
+    const modalSeq = ++studentModalReqSeq;
     const title = document.getElementById('studentModalTitle');
     const idField = document.getElementById('f_studentId');
     const qrField = document.getElementById('f_qrCodeId');
@@ -7284,11 +7405,13 @@ function openStudentModal(mode, studentId) {
     }
 
     simataClient.withSuccessHandler(function(res) {
+        if (modalSeq !== studentModalReqSeq) return;
         if (!res || !res.success) {
             alert('Data siswa tidak ditemukan.');
             return;
         }
         const s = res.student;
+        currentStudentModalId = s.studentId || studentId;
         currentStudentModalName = s.name || '';
         idField.value = s.studentId || '';
         document.getElementById('f_nis').value = s.nis || '';
@@ -7314,12 +7437,18 @@ function openStudentModal(mode, studentId) {
 
         // Load Kartu Pelajar (FEATURE 004)
         loadStudentKartuPelajarInModal(s.studentId, isView);
-    }).withFailureHandler(function(){ alert('Gagal memuat data siswa.'); }).getStudentById(studentId);
+    }).withFailureHandler(function(){
+        if (modalSeq !== studentModalReqSeq) return;
+        alert('Gagal memuat data siswa.');
+    }).getStudentById(studentId);
 }
 
 function closeStudentModal() {
     const m = document.getElementById('studentModal');
     if (m && m.querySelector('.modal-processing-overlay.active')) return;
+    studentModalReqSeq++;
+    currentStudentModalId = null;
+    currentStudentModalName = '';
     resetStudentPhotoUI();
     resetStudentCardUI();
     if (m) m.style.display = 'none';
@@ -7356,7 +7485,8 @@ function saveStudentFromModal() {
             if (uRes && uRes.success) {
                 if (pendingPhotoFile) {
                     try {
-                        await simataClient.uploadStudentPhoto(id, pendingPhotoFile, currentStudentCrop);
+                        const fileToUpload = await compressProfilePhotoBeforeUpload(pendingPhotoFile);
+                        await simataClient.uploadStudentPhoto(id, fileToUpload, currentStudentCrop);
                     } catch (photoErr) {
                         console.error('Gagal mengunggah foto siswa:', photoErr);
                         alert('Data siswa tersimpan, namun foto gagal diunggah: ' + (photoErr.message || photoErr));
@@ -8643,13 +8773,17 @@ let teacherActiveObjectUrl = null;
 let currentTeacherModalId = null;
 let currentTeacherModalName = '';
 let currentTeacherCrop = { crop_scale: 1, crop_position_x: 0, crop_position_y: 0 };
+let teacherPhotoReqSeq = 0;
+let teacherPhotoAbortCtrl = null;
+let teacherModalReqSeq = 0;
 
 function resetTeacherPhotoUI() {
-    if (teacherActiveObjectUrl) {
-        URL.revokeObjectURL(teacherActiveObjectUrl);
-        teacherActiveObjectUrl = null;
+    teacherPhotoReqSeq++;
+    if (teacherPhotoAbortCtrl) {
+        try { teacherPhotoAbortCtrl.abort(); } catch (e) {}
+        teacherPhotoAbortCtrl = null;
     }
-    currentTeacherCrop = { crop_scale: 1, crop_position_x: 0, crop_position_y: 0 };
+
     const photoImg = document.getElementById('teacher_photo_img');
     const placeholder = document.getElementById('teacher_photo_placeholder');
     const downloadBtn = document.getElementById('teacher_photo_download_btn');
@@ -8667,6 +8801,12 @@ function resetTeacherPhotoUI() {
         photoImg.style.height = '';
         photoImg.style.transform = '';
     }
+    if (teacherActiveObjectUrl) {
+        URL.revokeObjectURL(teacherActiveObjectUrl);
+        teacherActiveObjectUrl = null;
+    }
+    currentTeacherCrop = { crop_scale: 1, crop_position_x: 0, crop_position_y: 0 };
+
     if (placeholder) { placeholder.style.display = 'flex'; }
     if (downloadBtn) { downloadBtn.style.display = 'none'; }
     if (cropBtn) { cropBtn.style.display = 'none'; }
@@ -8676,67 +8816,27 @@ function resetTeacherPhotoUI() {
     if (hint) { hint.textContent = ''; hint.style.display = 'none'; }
 }
 
-async function loadTeacherPhotoInModal(teacherId, isView) {
-    try {
-        const photoImg = document.getElementById('teacher_photo_img');
-        const placeholder = document.getElementById('teacher_photo_placeholder');
-        const downloadBtn = document.getElementById('teacher_photo_download_btn');
-        const cropBtn = document.getElementById('teacher_photo_crop_btn');
-        const uploadText = document.getElementById('teacher_photo_upload_text');
-        const hint = document.getElementById('teacher_photo_hint');
-
-        const [blob, metaRes] = await Promise.all([
-            simataClient.getTeacherPhotoBlob(teacherId),
-            simataClient.getTeacherPhotoMeta(teacherId)
-        ]);
-
-        if (blob) {
-            if (teacherActiveObjectUrl) URL.revokeObjectURL(teacherActiveObjectUrl);
-            teacherActiveObjectUrl = URL.createObjectURL(blob);
-
-            const meta = (metaRes && metaRes.success && metaRes.data) ? metaRes.data : {};
-            currentTeacherCrop = {
-                crop_scale: (meta.crop_scale !== undefined && meta.crop_scale !== null) ? Number(meta.crop_scale) : 1,
-                crop_position_x: (meta.crop_position_x !== undefined && meta.crop_position_x !== null) ? Number(meta.crop_position_x) : 0,
-                crop_position_y: (meta.crop_position_y !== undefined && meta.crop_position_y !== null) ? Number(meta.crop_position_y) : 0
-            };
-
-            if (photoImg) {
-                const onAvatarReady = function() {
-                    fitPhotoElement(photoImg, 108);
-                    applyPhotoFraming(photoImg, currentTeacherCrop, true);
-                };
-                photoImg.onload = onAvatarReady;
-                photoImg.src = teacherActiveObjectUrl;
-                photoImg.style.display = 'block';
-                if (photoImg.complete && photoImg.naturalWidth) {
-                    onAvatarReady();
-                }
+function loadTeacherPhotoInModal(teacherId, isView) {
+    return loadEntityProfilePhotoInModal({
+        prefix: 'teacher',
+        label: 'guru',
+        entityId: teacherId,
+        isView: isView,
+        getModalId: function() { return currentTeacherModalId; },
+        nextReqSeq: function() { return ++teacherPhotoReqSeq; },
+        getReqSeq: function() { return teacherPhotoReqSeq; },
+        abortPrevious: function() {
+            if (teacherPhotoAbortCtrl) {
+                try { teacherPhotoAbortCtrl.abort(); } catch (e) {}
             }
-            if (placeholder) placeholder.style.display = 'none';
-            if (downloadBtn) downloadBtn.style.display = 'inline-flex';
-            if (cropBtn) cropBtn.style.display = isView ? 'none' : 'inline-flex';
-            if (uploadText) uploadText.textContent = 'Ganti Foto';
-            if (hint) { hint.textContent = ''; hint.style.display = 'none'; }
-        } else {
-            currentTeacherCrop = { crop_scale: 1, crop_position_x: 0, crop_position_y: 0 };
-            if (photoImg) {
-                photoImg.onload = null;
-                photoImg.src = '';
-                photoImg.style.display = 'none';
-                photoImg.style.width = '';
-                photoImg.style.height = '';
-                photoImg.style.transform = '';
-            }
-            if (placeholder) placeholder.style.display = 'flex';
-            if (downloadBtn) downloadBtn.style.display = 'none';
-            if (cropBtn) cropBtn.style.display = 'none';
-            if (uploadText) uploadText.textContent = 'Pilih Foto';
-            if (hint) { hint.textContent = ''; hint.style.display = 'none'; }
-        }
-    } catch (e) {
-        console.warn('Gagal memuat foto guru:', e);
-    }
+        },
+        setAbortCtrl: function(ctrl) { teacherPhotoAbortCtrl = ctrl; },
+        getActiveUrl: function() { return teacherActiveObjectUrl; },
+        setActiveUrl: function(url) { teacherActiveObjectUrl = url; },
+        setCrop: function(crop) { currentTeacherCrop = crop; },
+        fetchMeta: simataClient.getTeacherPhotoMeta,
+        fetchBlob: simataClient.getTeacherPhotoBlob
+    });
 }
 
 function handleTeacherPhotoSelected(e) {
@@ -8806,6 +8906,7 @@ function handleTeacherPhotoDownload() {
 
 function openTeacherModal(mode, teacherId) {
     const modal = document.getElementById('teacherModal'); if (!modal) return;
+    const modalSeq = ++teacherModalReqSeq;
     const title = document.getElementById('teacherModalTitle');
     const saveBtn = document.getElementById('teacherSaveBtn');
     const cancelBtn = document.getElementById('teacherCancelBtn');
@@ -8853,8 +8954,10 @@ function openTeacherModal(mode, teacherId) {
     }
 
     simataClient.withSuccessHandler(function(res){
+        if (modalSeq !== teacherModalReqSeq) return;
         if (!res || !res.success || !res.teacher) { alert('Data guru tidak ditemukan.'); return; }
         const t = res.teacher;
+        currentTeacherModalId = t.teacherId || teacherId;
         currentTeacherModalName = t.name || '';
 
         teacherInputIds.forEach(function(id) {
@@ -8887,6 +8990,7 @@ function openTeacherModal(mode, teacherId) {
         // Load photo asynchronously using authenticated blob request
         loadTeacherPhotoInModal(t.teacherId, isView);
     }).withFailureHandler(function(){
+        if (modalSeq !== teacherModalReqSeq) return;
         alert('Gagal memuat data guru.');
     }).getTeacherById(teacherId);
 }
@@ -8894,6 +8998,9 @@ function openTeacherModal(mode, teacherId) {
 function closeTeacherModal() {
     const m = document.getElementById('teacherModal');
     if (m && m.querySelector('.modal-processing-overlay.active')) return;
+    teacherModalReqSeq++;
+    currentTeacherModalId = null;
+    currentTeacherModalName = '';
     resetTeacherPhotoUI();
     if (m) m.style.display = 'none';
 }
@@ -8949,7 +9056,8 @@ function saveTeacherFromModal() {
             if (uRes && uRes.success) {
                 if (pendingPhotoFile) {
                     try {
-                        await simataClient.uploadTeacherPhoto(payload.teacherId, pendingPhotoFile, currentTeacherCrop);
+                        const fileToUpload = await compressProfilePhotoBeforeUpload(pendingPhotoFile);
+                        await simataClient.uploadTeacherPhoto(payload.teacherId, fileToUpload, currentTeacherCrop);
                     } catch (photoErr) {
                         console.error('Gagal mengunggah foto guru:', photoErr);
                         alert('Data guru tersimpan, namun foto gagal diunggah: ' + (photoErr.message || photoErr));
