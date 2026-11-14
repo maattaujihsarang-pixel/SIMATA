@@ -795,29 +795,32 @@
       if (!Array.isArray(periods)) {
         periods = [periods];
       }
+      const cleanPeriods = Array.from(new Set(
+        periods.map((p) => parseInt(p, 10)).filter((p) => !isNaN(p) && p >= 1 && p <= 10)
+      )).sort((a, b) => a - b);
 
       const studentRes = await apiFetch(`/students/qr/${encodeURIComponent(qrCodeId)}`);
       const student = studentRes.data;
 
-      const results = [];
-      for (const p of periods) {
-        const res = await apiFetch('/attendance/students/qr', {
-          method: 'POST',
-          body: JSON.stringify({
-            qr_code_id: qrCodeId,
-            period: parseInt(p, 10),
-            status,
-            note
-          })
-        });
-        results.push(res.data);
-      }
+      const res = await apiFetch('/attendance/students/qr', {
+        method: 'POST',
+        body: JSON.stringify({
+          qr_code_id: qrCodeId,
+          period: cleanPeriods[0],
+          periods: cleanPeriods,
+          status,
+          note
+        })
+      });
+
+      const payloadData = res.data || {};
+      const results = Array.isArray(payloadData.records) ? payloadData.records : [payloadData];
 
       return {
         success: true,
-        message: `Presensi siswa berhasil dicatat untuk ${periods.length} jam pelajaran.`,
+        message: `Presensi siswa berhasil dicatat untuk ${results.length} jam pelajaran.`,
         count: results.length,
-        periods: periods.map((p) => parseInt(p, 10)),
+        periods: cleanPeriods,
         attendance: results[0],
         attendances: results,
         student: {

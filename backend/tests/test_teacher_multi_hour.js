@@ -143,6 +143,67 @@ async function runTeacherMultiHourTests() {
   assert.strictEqual(wrongYearTeacher.length, 0, 'Wrong academic year filter must return empty array');
   console.log('   PASS: Test 7 validated (Teacher attendance filters work cleanly).');
 
+  // TEST 8: Cross-teacher same class & same period rejection (BUG 48)
+  console.log('Test 8: Cross-teacher duplicate rejection on same class & period (create)...');
+  let crossTeacherConflict = false;
+  try {
+    await teacherAttendanceService.recordTeacherAttendanceWithEvidence({
+      teacher_id: 'TCH-0002', // Different teacher!
+      class_id: 'CLS-2627-10', // Same class as TCH-0001 in Test 1!
+      subject: 'Bahasa Arab',
+      materi: 'Salah Input Jam',
+      periods: [1, 5], // Jam 1 is already occupied by TCH-0001 on CLS-2627-10!
+      attendance_date: today,
+      session_id: sessionId
+    }, dummyFile, operatorUserId);
+  } catch (err) {
+    crossTeacherConflict = true;
+    assert.strictEqual(err.statusCode, 409);
+    assert.strictEqual(err.errorCode, 'DUPLICATE_TEACHER_ATTENDANCE');
+    assert.ok(err.message.includes('sudah terisi'), 'Conflict message must clarify slot already occupied');
+  }
+  assert.ok(crossTeacherConflict, 'Cross-teacher same-class same-period must be rejected with 409 Conflict');
+  const period5PartialCheck = testDbEngine.teacher_attendance.find(
+    a => a.teacher_id === 'TCH-0002' && a.class_id === 'CLS-2627-10' && a.period === 5
+  );
+  assert.strictEqual(period5PartialCheck, undefined, 'Non-conflicting period in the same request must NOT be partially saved');
+  console.log('   PASS: Test 8 validated (Cross-teacher class+period duplicate blocked atomically).');
+
+  // TEST 9: Duplicate rejection on update (both teacher-slot & class-slot conflicts)
+  console.log('Test 9: Duplicate rejection on teacher attendance update...');
+  let updateClassConflict = false;
+  try {
+    await teacherAttendanceService.updateAttendance(res4.attendances[0].attendance_id, {
+      class_id: 'CLS-2627-10',
+      period: 1 // Already filled by TCH-0001 in CLS-2627-10!
+    }, operatorUserId);
+  } catch (err) {
+    updateClassConflict = true;
+    assert.strictEqual(err.statusCode, 409);
+    assert.strictEqual(err.errorCode, 'DUPLICATE_TEACHER_ATTENDANCE');
+    assert.ok(err.message.includes('sudah terisi'));
+  }
+  assert.ok(updateClassConflict, 'Updating into a class+period slot owned by another teacher must throw 409 Conflict');
+
+  let updateSelfPeriodConflict = false;
+  try {
+    await teacherAttendanceService.updateAttendance(res4.attendances[0].attendance_id, {
+      period: 6 // Same teacher TCH-0002 already recorded period 6 in res4.attendances[1]!
+    }, operatorUserId);
+  } catch (err) {
+    updateSelfPeriodConflict = true;
+    assert.strictEqual(err.statusCode, 409);
+    assert.strictEqual(err.errorCode, 'DUPLICATE_TEACHER_ATTENDANCE');
+  }
+  assert.ok(updateSelfPeriodConflict, 'Updating into own already-recorded period must throw 409 Conflict');
+
+  // Non-conflicting update on metadata must still succeed
+  const updatedOk = await teacherAttendanceService.updateAttendance(res4.attendances[0].attendance_id, {
+    materi: 'Qawaid Nahwu Lanjutan'
+  }, operatorUserId);
+  assert.strictEqual(updatedOk.materi, 'Qawaid Nahwu Lanjutan');
+  console.log('   PASS: Test 9 validated (Update conflict blocking and valid update both work).');
+
   // Clean up test files from uploads/evidences
   await storageProvider.deleteFile(res1.file.fileId);
   await storageProvider.deleteFile(res2.file.fileId);

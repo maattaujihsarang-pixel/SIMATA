@@ -159,27 +159,87 @@ class StudentAttendanceService {
   }
 
   async recordQrAttendance(payload, recordedByUserId) {
-    const { qr_code_id, period, status = 'Hadir', note } = payload;
+    const { qr_code_id, period, periods, status = 'Hadir', note } = payload;
 
-    if (!qr_code_id || period === undefined) {
+    const hasPeriodsArray = Array.isArray(periods) && periods.length > 0;
+    if (!qr_code_id || (!hasPeriodsArray && period === undefined)) {
       throw new BadRequestError('qr_code_id dan period wajib diisi');
     }
+
+    if (!VALID_STATUSES.includes(status)) {
+      throw new BadRequestError(`Status tidak valid. Nilai yang diperbolehkan: ${VALID_STATUSES.join(', ')}`);
+    }
+
+    const rawPeriods = hasPeriodsArray ? periods : [period];
+    const cleanPeriods = [...new Set(rawPeriods.map(p => parseInt(p, 10)))];
+    if (cleanPeriods.length === 0 || cleanPeriods.some(p => isNaN(p) || p < 1 || p > 10)) {
+      throw new BadRequestError('Period (jam pelajaran) harus berupa angka 1 sampai 10');
+    }
+    cleanPeriods.sort((a, b) => a - b);
 
     const student = await studentRepository.findByQrCodeId(qr_code_id);
     if (!student) {
       throw new NotFoundError(`Siswa dengan QR Code '${qr_code_id}' tidak ditemukan`);
     }
 
+    const activeYear = await academicYearRepository.getActiveYear();
+    if (!activeYear) {
+      throw new BadRequestError('Tahun ajaran aktif belum dikonfigurasi');
+    }
+
     const today = getTodayISODate();
 
-    return this.recordSingleAttendance({
-      student_id: student.student_id,
-      attendance_date: today,
-      period,
-      status,
-      method: 'QR',
-      note
-    }, recordedByUserId);
+    const inserted = await withTransaction(async (client) => {
+      const duplicates = await studentAttendanceRepository.findExistingDuplicates(
+        [student.student_id],
+        today,
+        cleanPeriods,
+        client
+      );
+
+      if (duplicates.length > 0) {
+        const dupPeriods = duplicates.map(d => `Jam ke-${d.period}`).join(', ');
+        throw new ConflictError(
+          `Presensi siswa '${student.name}' pada tanggal ${today} untuk ${dupPeriods} sudah tercatat. Tidak ada perubahan yang disimpan.`,
+          'DUPLICATE_STUDENT_ATTENDANCE',
+          {
+            duplicate_periods: duplicates.map(d => d.period),
+            student_id: student.student_id,
+            student_name: student.name
+          }
+        );
+      }
+
+      const records = [];
+      for (const pNum of cleanPeriods) {
+        const attendanceId = generateStudentAttendanceId(today, pNum);
+        const rec = await studentAttendanceRepository.insertSingle({
+          attendance_id: attendanceId,
+          student_id: student.student_id,
+          class_id: student.class_id,
+          academic_year_id: activeYear.academic_year_id,
+          attendance_date: today,
+          period: pNum,
+          status,
+          method: 'QR',
+          note: note || null,
+          recorded_by_user_id: recordedByUserId
+        }, client);
+        records.push(rec);
+      }
+      return records;
+    });
+
+    if (hasPeriodsArray) {
+      return {
+        total_inserted: inserted.length,
+        periods: cleanPeriods,
+        records: inserted,
+        attendance: inserted[0]
+      };
+    }
+
+    return inserted[0];
   }
 
   async getAttendanceList(filters) {

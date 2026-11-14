@@ -463,11 +463,25 @@ class TestDbEngine {
     }
 
     // 7. Teacher Attendance queries
-    if (q.includes('FROM teacher_attendance') && q.includes('teacher_id = $1 AND attendance_date = $2 AND period = $3')) {
+    if (q.includes('FROM teacher_attendance') && q.includes('WHERE teacher_id = $1 AND attendance_date = $2 AND period = $3')) {
       const att = this.teacher_attendance.find(a =>
         a.teacher_id === params[0] && a.attendance_date === params[1] && a.period === parseInt(params[2], 10)
       );
       return { rows: att ? [{ ...att }] : [], rowCount: att ? 1 : 0 };
+    }
+    if (q.includes('FROM teacher_attendance ta') && q.includes('ta.class_id = $1 AND ta.attendance_date = $2 AND ta.period = $3')) {
+      const rows = this.teacher_attendance.filter(a =>
+        a.class_id === params[0] && a.attendance_date === params[1] && a.period === parseInt(params[2], 10)
+      ).map(a => {
+        const t = this.teachers.find(th => th.teacher_id === a.teacher_id);
+        const c = this.classes.find(cl => cl.class_id === a.class_id);
+        return {
+          ...a,
+          teacher_name: t ? t.name : a.teacher_id,
+          class_name: c ? c.class_name : a.class_id
+        };
+      });
+      return { rows, rowCount: rows.length };
     }
     if (q.includes('FROM teacher_attendance ta') && q.includes('ta.teacher_id = $1') && q.includes('ta.period = ANY')) {
       const teacherId = params[0];
@@ -477,13 +491,42 @@ class TestDbEngine {
         a.teacher_id === teacherId && a.attendance_date === date && periods.includes(a.period)
       ).map(a => {
         const t = this.teachers.find(th => th.teacher_id === a.teacher_id);
+        const c = this.classes.find(cl => cl.class_id === a.class_id);
         return {
           attendance_id: a.attendance_id,
           teacher_id: a.teacher_id,
+          class_id: a.class_id,
           attendance_date: a.attendance_date,
           period: a.period,
           subject: a.subject,
-          teacher_name: t ? t.name : a.teacher_id
+          teacher_name: t ? t.name : a.teacher_id,
+          class_name: c ? c.class_name : a.class_id
+        };
+      });
+      return { rows: dups, rowCount: dups.length };
+    }
+    if (q.includes('FROM teacher_attendance ta') && q.includes('ta.class_id = $1') && q.includes('ta.period = ANY')) {
+      const classId = params[0];
+      const date = params[1];
+      const periods = params[2];
+      const excludeId = params[3] || null;
+      const dups = this.teacher_attendance.filter(a =>
+        a.class_id === classId &&
+        a.attendance_date === date &&
+        periods.includes(a.period) &&
+        (!excludeId || a.attendance_id !== excludeId)
+      ).map(a => {
+        const t = this.teachers.find(th => th.teacher_id === a.teacher_id);
+        const c = this.classes.find(cl => cl.class_id === a.class_id);
+        return {
+          attendance_id: a.attendance_id,
+          teacher_id: a.teacher_id,
+          class_id: a.class_id,
+          attendance_date: a.attendance_date,
+          period: a.period,
+          subject: a.subject,
+          teacher_name: t ? t.name : a.teacher_id,
+          class_name: c ? c.class_name : a.class_id
         };
       });
       return { rows: dups, rowCount: dups.length };

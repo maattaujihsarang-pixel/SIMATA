@@ -88,11 +88,37 @@ class TeacherAttendanceService {
     );
 
     if (existingDuplicates.length > 0) {
-      const dupPeriods = existingDuplicates.map(d => `Jam ke-${d.period}`).join(', ');
+      const dupPeriods = existingDuplicates.map(d => `Jam ke-${d.period}${d.class_name ? ` (${d.class_name})` : ''}`).join(', ');
       throw new ConflictError(
         `Presensi guru ${teacher.name} untuk tanggal ${targetDate} pada ${dupPeriods} sudah tercatat. Tidak ada perubahan yang disimpan.`,
         'DUPLICATE_TEACHER_ATTENDANCE',
         { duplicate_periods: existingDuplicates.map(d => d.period) }
+      );
+    }
+
+    // Check if target class + date + period slot is already occupied by another teacher
+    const classDuplicates = await teacherAttendanceRepository.findClassPeriodDuplicates(
+      class_id,
+      targetDate,
+      parsedPeriods
+    );
+
+    if (classDuplicates.length > 0) {
+      const conflictDetails = classDuplicates
+        .map(d => `Jam ke-${d.period} (${d.teacher_name}${d.subject ? ` - ${d.subject}` : ''})`)
+        .join(', ');
+      throw new ConflictError(
+        `Presensi pada kelas ${cls.class_name} tanggal ${targetDate} untuk [${conflictDetails}] sudah terisi. Tidak dapat menyimpan data presensi ganda pada jam pelajaran yang sama.`,
+        'DUPLICATE_TEACHER_ATTENDANCE',
+        {
+          duplicate_periods: classDuplicates.map(d => d.period),
+          conflicts: classDuplicates.map(d => ({
+            period: d.period,
+            teacher_id: d.teacher_id,
+            teacher_name: d.teacher_name,
+            subject: d.subject
+          }))
+        }
       );
     }
 
@@ -106,7 +132,7 @@ class TeacherAttendanceService {
     // 3. Database Transaction with Compensating Cleanup Guard
     try {
       const result = await withTransaction(async (client) => {
-        // Double-check duplicates inside transaction lock
+        // Double-check teacher & class-period duplicates inside transaction lock
         const txDuplicates = await teacherAttendanceRepository.findExistingDuplicates(
           teacher_id,
           targetDate,
@@ -115,11 +141,30 @@ class TeacherAttendanceService {
         );
 
         if (txDuplicates.length > 0) {
-          const dupPeriods = txDuplicates.map(d => `Jam ke-${d.period}`).join(', ');
+          const dupPeriods = txDuplicates.map(d => `Jam ke-${d.period}${d.class_name ? ` (${d.class_name})` : ''}`).join(', ');
           throw new ConflictError(
             `Presensi guru ${teacher.name} untuk tanggal ${targetDate} pada ${dupPeriods} sudah tercatat.`,
             'DUPLICATE_TEACHER_ATTENDANCE',
             { duplicate_periods: txDuplicates.map(d => d.period) }
+          );
+        }
+
+        const txClassDuplicates = await teacherAttendanceRepository.findClassPeriodDuplicates(
+          class_id,
+          targetDate,
+          parsedPeriods,
+          null,
+          client
+        );
+
+        if (txClassDuplicates.length > 0) {
+          const conflictDetails = txClassDuplicates
+            .map(d => `Jam ke-${d.period} (${d.teacher_name}${d.subject ? ` - ${d.subject}` : ''})`)
+            .join(', ');
+          throw new ConflictError(
+            `Presensi pada kelas ${cls.class_name} tanggal ${targetDate} untuk [${conflictDetails}] sudah terisi. Tidak dapat menyimpan data presensi ganda pada jam pelajaran yang sama.`,
+            'DUPLICATE_TEACHER_ATTENDANCE',
+            { duplicate_periods: txClassDuplicates.map(d => d.period) }
           );
         }
 
@@ -225,26 +270,40 @@ class TeacherAttendanceService {
     const targetDate = attendance_date || existing.attendance_date;
     const targetClassId = class_id || existing.class_id;
 
+    let targetClass = null;
     if (targetClassId !== existing.class_id) {
-      const cls = await classRepository.findById(targetClassId);
-      if (!cls) {
+      targetClass = await classRepository.findById(targetClassId);
+      if (!targetClass) {
         throw new NotFoundError(`Kelas dengan ID '${targetClassId}' tidak ditemukan`);
       }
     }
 
-    // Check conflict if period, date, or class changed
-    if (parsedPeriod !== existing.period || targetDate !== existing.attendance_date) {
-      const duplicate = await teacherAttendanceRepository.findByBusinessKey(
-        existing.teacher_id,
-        targetDate,
-        parsedPeriod
+    // Check teacher-slot conflict (same teacher + date + period, excluding current record)
+    const duplicate = await teacherAttendanceRepository.findByBusinessKey(
+      existing.teacher_id,
+      targetDate,
+      parsedPeriod
+    );
+    if (duplicate && duplicate.attendance_id !== attendanceId) {
+      throw new ConflictError(
+        `Presensi guru ${existing.teacher_name} untuk tanggal ${targetDate} pada Jam ke-${parsedPeriod} sudah tercatat.`,
+        'DUPLICATE_TEACHER_ATTENDANCE'
       );
-      if (duplicate && duplicate.attendance_id !== attendanceId) {
-        throw new ConflictError(
-          `Presensi guru ${existing.teacher_name} untuk tanggal ${targetDate} pada Jam ke-${parsedPeriod} sudah tercatat.`,
-          'DUPLICATE_TEACHER_ATTENDANCE'
-        );
-      }
+    }
+
+    // Check class-slot conflict (same class + date + period occupied by another record)
+    const classSlotRows = await teacherAttendanceRepository.findByClassDatePeriod(
+      targetClassId,
+      targetDate,
+      parsedPeriod
+    );
+    const classConflict = classSlotRows.find(r => r.attendance_id !== attendanceId);
+    if (classConflict) {
+      const className = (targetClass && targetClass.class_name) || classConflict.class_name || existing.class_name || targetClassId;
+      throw new ConflictError(
+        `Presensi pada kelas ${className} tanggal ${targetDate} untuk Jam ke-${parsedPeriod} sudah terisi oleh ${classConflict.teacher_name}${classConflict.subject ? ` (${classConflict.subject})` : ''}. Tidak dapat menyimpan data presensi ganda pada jam pelajaran yang sama.`,
+        'DUPLICATE_TEACHER_ATTENDANCE'
+      );
     }
 
     return teacherAttendanceRepository.update(attendanceId, {

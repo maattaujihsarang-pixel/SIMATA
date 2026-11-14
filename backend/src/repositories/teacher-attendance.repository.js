@@ -17,13 +17,50 @@ class TeacherAttendanceRepository {
   async findExistingDuplicates(teacherId, attendanceDate, periods, client = null) {
     const queryFn = client ? (q, p) => client.query(q, p) : (q, p) => db.query(q, p);
     const res = await queryFn(
-      `SELECT ta.attendance_id, ta.teacher_id, ta.attendance_date, ta.period, ta.subject, t.name as teacher_name
+      `SELECT ta.attendance_id, ta.teacher_id, ta.class_id, ta.attendance_date, ta.period, ta.subject,
+              t.name as teacher_name, c.class_name
        FROM teacher_attendance ta
        JOIN teachers t ON ta.teacher_id = t.teacher_id
+       JOIN classes c ON ta.class_id = c.class_id
        WHERE ta.teacher_id = $1 
          AND ta.attendance_date = $2 
          AND ta.period = ANY($3::smallint[])`,
       [teacherId, attendanceDate, periods]
+    );
+    return res.rows;
+  }
+
+  async findClassPeriodDuplicates(classId, attendanceDate, periods, excludeAttendanceId = null, client = null) {
+    const queryFn = client ? (q, p) => client.query(q, p) : (q, p) => db.query(q, p);
+    let sql = `SELECT ta.attendance_id, ta.teacher_id, ta.class_id, ta.attendance_date, ta.period, ta.subject,
+                      t.name as teacher_name, c.class_name
+               FROM teacher_attendance ta
+               JOIN teachers t ON ta.teacher_id = t.teacher_id
+               JOIN classes c ON ta.class_id = c.class_id
+               WHERE ta.class_id = $1
+                 AND ta.attendance_date = $2
+                 AND ta.period = ANY($3::smallint[])`;
+    const params = [classId, attendanceDate, periods];
+    if (excludeAttendanceId) {
+      sql += ` AND ta.attendance_id != $4`;
+      params.push(excludeAttendanceId);
+    }
+    const res = await queryFn(sql, params);
+    return res.rows;
+  }
+
+  async findByClassDatePeriod(classId, attendanceDate, period, client = null) {
+    const queryFn = client ? (q, p) => client.query(q, p) : (q, p) => db.query(q, p);
+    const res = await queryFn(
+      `SELECT ta.attendance_id, ta.teacher_id, ta.class_id, ta.academic_year_id,
+              ta.attendance_date, ta.period, ta.subject, ta.materi, ta.status, ta.method,
+              ta.recorded_at, ta.note, ta.recorded_by_user_id,
+              t.name as teacher_name, c.class_name
+       FROM teacher_attendance ta
+       JOIN teachers t ON ta.teacher_id = t.teacher_id
+       JOIN classes c ON ta.class_id = c.class_id
+       WHERE ta.class_id = $1 AND ta.attendance_date = $2 AND ta.period = $3`,
+      [classId, attendanceDate, period]
     );
     return res.rows;
   }

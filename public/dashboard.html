@@ -9558,7 +9558,11 @@ function submitBatchClassAttendance() {
                 btn.innerHTML = originalHtml;
             }
             hideModalProcessing('batchClassAttendanceModal');
-            alert('Gagal menyimpan presensi: ' + ((err && err.message) ? err.message : err));
+            const errMsg = (err && err.message) ? err.message : 'Terjadi kesalahan jaringan saat menyimpan presensi kelas.';
+            if (typeof showToast === 'function') {
+                showToast((err && err.status === 409) ? "warning" : "error", (err && err.status === 409) ? "Data Ganda Diblokir" : "Gagal Menyimpan Presensi", errMsg);
+            }
+            alert(errMsg);
         })
         .recordBatchClassAttendance(token, sessionId, payload);
 }
@@ -10938,6 +10942,39 @@ function saveAttendanceFromModal() {
         return;
     }
 
+    const targetDateNorm = (typeof normalizeDateValue === 'function' ? normalizeDateValue(date) : '') || date;
+    const selectedPeriods = Array.from(new Set(
+        checkedPeriods.map(function(p) { return parseInt(p, 10); }).filter(function(p) { return !isNaN(p); })
+    )).sort(function(a, b) { return a - b; });
+
+    if (isEdit) {
+        const targetPeriod = selectedPeriods[0];
+        const cachedConflict = (Array.isArray(studentAttendanceMasterList) ? studentAttendanceMasterList : []).find(function(a) {
+            const aDate = (typeof normalizeDateValue === 'function' ? normalizeDateValue(a.date) : '') || a.date;
+            return a.attendanceId !== id &&
+                a.studentId === studentId &&
+                aDate === targetDateNorm &&
+                Number(a.period) === targetPeriod;
+        });
+        if (cachedConflict) {
+            alert('Data ganda diblokir: Presensi siswa ' + (cachedConflict.studentName || studentId) + ' pada tanggal ' + targetDateNorm + ' untuk Jam ke-' + targetPeriod + ' sudah tercatat.');
+            return;
+        }
+    } else {
+        const cachedConflicts = (Array.isArray(studentAttendanceMasterList) ? studentAttendanceMasterList : []).filter(function(a) {
+            const aDate = (typeof normalizeDateValue === 'function' ? normalizeDateValue(a.date) : '') || a.date;
+            return a.studentId === studentId &&
+                aDate === targetDateNorm &&
+                selectedPeriods.includes(Number(a.period));
+        });
+        if (cachedConflicts.length > 0) {
+            const dupPeriods = Array.from(new Set(cachedConflicts.map(function(d) { return 'Jam ke-' + d.period; }))).join(', ');
+            const studentName = cachedConflicts[0].studentName || studentId;
+            alert('Data ganda diblokir: Presensi siswa ' + studentName + ' pada tanggal ' + targetDateNorm + ' untuk ' + dupPeriods + ' sudah tercatat. Tidak ada data yang disimpan.');
+            return;
+        }
+    }
+
     setButtonLoading(saveBtn, true, 'Menyimpan...', 'Simpan');
     showModalProcessing('attendanceModal', isEdit ? 'Memperbarui Presensi Siswa...' : 'Menyimpan Presensi Siswa...', 'Mohon tunggu sebentar...');
 
@@ -10946,8 +10983,8 @@ function saveAttendanceFromModal() {
             attendanceId: id,
             status: status,
             note: note,
-            period: parseInt(checkedPeriods[0], 10),
-            date: date
+            period: selectedPeriods[0],
+            date: targetDateNorm
         };
         simataClient.withSuccessHandler(function(uRes){
             hideModalProcessing('attendanceModal');
@@ -10962,16 +10999,19 @@ function saveAttendanceFromModal() {
         }).withFailureHandler(function(err){
             hideModalProcessing('attendanceModal');
             setButtonLoading(saveBtn, false, '', 'Simpan');
-            alert((err && err.message) || 'Gagal memperbarui presensi siswa.');
+            const errMsg = (err && err.message) ? err.message : 'Gagal memperbarui presensi siswa.';
+            if (typeof showToast === 'function' && err && err.status === 409) {
+                showToast('warning', 'Data Ganda Diblokir', errMsg);
+            }
+            alert(errMsg);
         }).updateStudentAttendance(updatePayload);
     } else {
-        // Create single or multi-hour sequentially
+        // Pre-verify live DB records for all requested periods to guarantee atomic blocking before any write
         let idx = 0;
         let successCount = 0;
-        let lastError = null;
 
         function recordNext() {
-            if (idx >= checkedPeriods.length) {
+            if (idx >= selectedPeriods.length) {
                 hideModalProcessing('attendanceModal');
                 setButtonLoading(saveBtn, false, '', 'Simpan');
                 closeAttendanceModal();
@@ -10982,11 +11022,11 @@ function saveAttendanceFromModal() {
                 return;
             }
 
-            const pNum = parseInt(checkedPeriods[idx], 10);
+            const pNum = selectedPeriods[idx];
             const createPayload = {
                 studentId: studentId,
                 classId: classId,
-                date: date,
+                date: targetDateNorm,
                 period: pNum,
                 status: status,
                 method: 'Manual',
@@ -11000,16 +11040,44 @@ function saveAttendanceFromModal() {
                 idx++;
                 recordNext();
             }).withFailureHandler(function(err){
-                lastError = err;
                 hideModalProcessing('attendanceModal');
                 setButtonLoading(saveBtn, false, '', 'Simpan');
                 loadStudentAttendance();
                 const errMsg = (err && err.message) ? err.message : 'Gagal menyimpan presensi pada jam ke-' + pNum;
+                if (typeof showToast === 'function' && err && err.status === 409) {
+                    showToast('warning', 'Data Ganda Diblokir', errMsg);
+                }
                 alert(errMsg + (successCount > 0 ? '\n(' + successCount + ' jam sebelumnya telah tersimpan).' : ''));
             }).createStudentAttendance(createPayload);
         }
 
-        recordNext();
+        simataClient.withSuccessHandler(function(res){
+            const existingRows = (res && Array.isArray(res.attendances)) ? res.attendances : [];
+            const liveConflicts = existingRows.filter(function(a) {
+                const aDate = (typeof normalizeDateValue === 'function' ? normalizeDateValue(a.date) : '') || a.date;
+                return a.studentId === studentId &&
+                    aDate === targetDateNorm &&
+                    selectedPeriods.includes(Number(a.period));
+            });
+            if (liveConflicts.length > 0) {
+                hideModalProcessing('attendanceModal');
+                setButtonLoading(saveBtn, false, '', 'Simpan');
+                const dupPeriods = Array.from(new Set(liveConflicts.map(function(d) { return 'Jam ke-' + d.period; }))).join(', ');
+                const studentName = liveConflicts[0].studentName || studentId;
+                const msg = 'Data ganda diblokir: Presensi siswa ' + studentName + ' pada tanggal ' + targetDateNorm + ' untuk ' + dupPeriods + ' sudah tercatat. Tidak ada data yang disimpan.';
+                if (typeof showToast === 'function') {
+                    showToast('warning', 'Data Ganda Diblokir', msg);
+                }
+                alert(msg);
+                return;
+            }
+            recordNext();
+        }).withFailureHandler(function(err){
+            hideModalProcessing('attendanceModal');
+            setButtonLoading(saveBtn, false, '', 'Simpan');
+            const errMsg = (err && err.message) ? err.message : 'Gagal memverifikasi presensi yang sudah tercatat.';
+            alert(errMsg);
+        }).getStudentAttendance({ studentId: studentId, date: targetDateNorm });
     }
 }
 
@@ -12422,9 +12490,33 @@ function saveTeacherAttendanceFromModal() {
     if (!subject) { alert('Mata Pelajaran wajib diisi.'); return; }
     if (!materi) { alert('Materi Pembelajaran wajib diisi.'); return; }
 
+    const targetDateNorm = (typeof normalizeDateValue === 'function' ? normalizeDateValue(date) : '') || date;
+    const targetPeriod = parseInt(period, 10);
+
+    const cachedConflict = (Array.isArray(teacherAttendanceMasterList) ? teacherAttendanceMasterList : []).find(function(a) {
+        const aDate = (typeof normalizeDateValue === 'function' ? normalizeDateValue(a.date) : '') || a.date;
+        return a.attendanceId !== id &&
+            aDate === targetDateNorm &&
+            Number(a.period) === targetPeriod &&
+            (a.teacherId === teacherId || a.classId === classId);
+    });
+
+    if (cachedConflict) {
+        const classLabel = (attendanceClassLookup && attendanceClassLookup[classId]) || cachedConflict.className || classId;
+        const teacherLabel = (attendanceTeacherLookup && attendanceTeacherLookup[cachedConflict.teacherId]) || cachedConflict.teacherName || cachedConflict.teacherId;
+        const conflictMsg = (cachedConflict.teacherId === teacherId)
+            ? ('Data ganda diblokir: Presensi guru ' + teacherLabel + ' pada tanggal ' + targetDateNorm + ' untuk Jam ke-' + targetPeriod + ' sudah tercatat.')
+            : ('Data ganda diblokir: Presensi pada kelas ' + classLabel + ' tanggal ' + targetDateNorm + ' untuk Jam ke-' + targetPeriod + ' sudah terisi oleh ' + teacherLabel + (cachedConflict.subject ? ' (' + cachedConflict.subject + ')' : '') + '.');
+        if (typeof showToast === 'function') {
+            showToast('warning', 'Data Ganda Diblokir', conflictMsg);
+        }
+        alert(conflictMsg);
+        return;
+    }
+
     const payload = {
         attendanceId: id,
-        date: date,
+        date: targetDateNorm,
         teacherId: teacherId,
         classId: classId,
         period: period,
@@ -12451,7 +12543,11 @@ function saveTeacherAttendanceFromModal() {
     }).withFailureHandler(function(err){
         hideModalProcessing('teacherAttendanceModal');
         setButtonLoading(saveBtn, false, '', 'Simpan');
-        alert((err && err.message) || 'Gagal memperbarui presensi guru.');
+        const errMsg = (err && err.message) ? err.message : 'Gagal memperbarui presensi guru.';
+        if (typeof showToast === 'function' && err && err.status === 409) {
+            showToast('warning', 'Data Ganda Diblokir', errMsg);
+        }
+        alert(errMsg);
     }).updateTeacherAttendance(payload);
 }
 
@@ -15883,7 +15979,12 @@ function submitTeacherAttendance() {
             }
             hideModalProcessing('responderTeacherPanel');
             console.error("[SIMATA TEACHER ATTENDANCE] Server error:", err);
-            alert("Terjadi kesalahan jaringan atau server saat menyimpan presensi guru.");
+            const errMsg = (err && err.message) ? err.message : "Terjadi kesalahan jaringan atau server saat menyimpan presensi guru.";
+            const isDuplicate = (err && err.status === 409) || errMsg.toLowerCase().includes("sudah tercatat") || errMsg.toLowerCase().includes("sudah terisi") || errMsg.toLowerCase().includes("data ganda");
+            if (typeof showToast === 'function') {
+                showToast(isDuplicate ? "warning" : "error", isDuplicate ? "Data Ganda Diblokir" : "Gagal Menyimpan Presensi", errMsg);
+            }
+            alert(errMsg);
         })
         .recordTeacherAttendanceFromResponder(token, currentResponderSession.sessionId, payload);
 }
@@ -16421,9 +16522,10 @@ function submitQrAttendance() {
 
             // Failure handling
             const errMsg = (res && res.message) || "Gagal mencatat presensi siswa.";
+            const errLower = errMsg.toLowerCase();
 
             // Check if duplicate rejection
-            if (errMsg.toLowerCase().includes("sudah ada") || errMsg.toLowerCase().includes("sudah absen") || errMsg.toLowerCase().includes("sudah presensi") || errMsg.toLowerCase().includes("duplikat")) {
+            if (errLower.includes("sudah tercatat") || errLower.includes("sudah ada") || errLower.includes("sudah absen") || errLower.includes("sudah presensi") || errLower.includes("duplikat")) {
                 const dupDetailEl = document.getElementById('duplicateStudentDetail');
                 if (dupDetailEl) dupDetailEl.textContent = errMsg;
 
@@ -16431,7 +16533,7 @@ function submitQrAttendance() {
                 setQrScannerBadge("Sudah Presensi", "warning");
 
                 if (typeof showToast === 'function') {
-                    showToast("warning", "Sudah Presensi Hari Ini", errMsg);
+                    showToast("warning", "Data Ganda Diblokir", errMsg);
                 }
             } else {
                 if (typeof showToast === 'function') {
@@ -16448,10 +16550,26 @@ function submitQrAttendance() {
             hideModalProcessing('qrResultView');
 
             console.error("[SIMATA QR] Gagal mencatat presensi:", error);
-            if (typeof showToast === 'function') {
-                showToast("error", "Koneksi Gagal", "Gagal menghubungi server untuk mencatat presensi.");
+            const errMsg = (error && error.message) ? error.message : "Gagal menghubungi server untuk mencatat presensi.";
+            const errLower = errMsg.toLowerCase();
+            const isDuplicate = (error && error.status === 409) || errLower.includes("sudah tercatat") || errLower.includes("sudah ada") || errLower.includes("sudah absen") || errLower.includes("sudah presensi") || errLower.includes("duplikat");
+
+            if (isDuplicate) {
+                const dupDetailEl = document.getElementById('duplicateStudentDetail');
+                if (dupDetailEl) dupDetailEl.textContent = errMsg;
+
+                setQrScannerViewMode("duplicate");
+                setQrScannerBadge("Sudah Presensi", "warning");
+
+                if (typeof showToast === 'function') {
+                    showToast("warning", "Data Ganda Diblokir", errMsg);
+                } else {
+                    alert(errMsg);
+                }
+            } else if (typeof showToast === 'function') {
+                showToast("error", "Gagal Mencatat Presensi", errMsg);
             } else {
-                alert("Gagal menghubungi server untuk mencatat presensi.");
+                alert(errMsg);
             }
         })
         .recordStudentAttendanceFromQr(token, sessionId, qrCodeId, chosenStatus, "", periodsToRecord);

@@ -147,6 +147,38 @@ async function runStudentAttendanceTests() {
   assert.strictEqual(filteredWrongYear.length, 0, 'Wrong academic year filter must return empty array');
   console.log('   PASS: Student attendance filter parameters verified.');
 
+  // 8. Multi-period QR attendance atomic duplicate blocking (BUG 48)
+  console.log('8. Testing multi-period QR atomic duplicate rejection (zero partial writes)...');
+  const { getTodayISODate } = require('../src/utils/date.util');
+  const realToday = getTodayISODate();
+  let qrMultiConflict = false;
+  try {
+    await studentAttendanceService.recordQrAttendance({
+      qr_code_id: 'SQR-10002',
+      periods: [3, 4], // Period 3 already recorded in Test 5 for realToday!
+      status: 'Hadir'
+    }, 1);
+  } catch (err) {
+    qrMultiConflict = true;
+    assert.strictEqual(err.statusCode, 409);
+    assert.strictEqual(err.errorCode, 'DUPLICATE_STUDENT_ATTENDANCE');
+    assert.ok(err.message.includes('sudah tercatat'));
+  }
+  assert.ok(qrMultiConflict, 'Multi-period QR containing an existing period must reject atomically');
+  const period4Check = testDbEngine.student_attendance.find(
+    a => a.student_id === 'STD-K10002' && a.attendance_date === realToday && a.period === 4
+  );
+  assert.strictEqual(period4Check, undefined, 'Period 4 must NOT be partially inserted when period 3 conflicts');
+
+  const cleanQrMulti = await studentAttendanceService.recordQrAttendance({
+    qr_code_id: 'SQR-10002',
+    periods: [4, 5, 4],
+    status: 'Hadir'
+  }, 1);
+  assert.strictEqual(cleanQrMulti.total_inserted, 2);
+  assert.deepStrictEqual(cleanQrMulti.periods, [4, 5]);
+  console.log('   PASS: Multi-period QR atomic duplicate rejection & clean insert verified.');
+
   console.log('Student Attendance Tests: ALL PASS');
   return true;
 }
