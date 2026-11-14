@@ -5367,4 +5367,86 @@ select.attendance-filter-control {
     margin-top: 10px;
     height: 5px;
   }
+
+  /* ==========================================================================
+     BUG 48: MOBILE INLINE PILL HEADER ACTIONS (OPSI 1)
+     ========================================================================== */
+  #batchQrButton {
+    display: none !important;
+  }
+
+  .dashboard-layout #studentsContent .section-heading,
+  .dashboard-layout #teachersContent .section-heading,
+  .dashboard-layout #attendanceContent .section-heading,
+  .dashboard-layout #teacherAttendanceContent .section-heading {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .dashboard-layout #studentsContent .section-heading > div:first-child,
+  .dashboard-layout #teachersContent .section-heading > div:first-child,
+  .dashboard-layout #attendanceContent .section-heading > div:first-child,
+  .dashboard-layout #teacherAttendanceContent .section-heading > div:first-child {
+    width: auto !important;
+    flex: 1 1 0% !important;
+    min-inline-size: 0 !important;
+    display: block !important;
+  }
+
+  .dashboard-layout #studentsContent .section-heading h2,
+  .dashboard-layout #teachersContent .section-heading h2,
+  .dashboard-layout #attendanceContent .section-heading h2,
+  .dashboard-layout #teacherAttendanceContent .section-heading h2 {
+    font-size: 17px !important;
+    line-height: 1.25 !important;
+    margin: 0 !important;
+  }
+
+  .dashboard-layout #studentsContent .section-heading .section-actions,
+  .dashboard-layout #teachersContent .section-heading .section-actions,
+  .dashboard-layout #attendanceContent .section-heading .section-actions,
+  .dashboard-layout #teacherAttendanceContent .section-heading .section-actions {
+    width: auto !important;
+    flex: 0 0 auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+  }
+
+  .dashboard-layout .section-heading button#addStudentButton,
+  .dashboard-layout .section-heading button#addTeacherButton,
+  .dashboard-layout .section-heading button#addAttendanceButton,
+  .dashboard-layout .section-heading button#addTeacherAttendanceButton {
+    width: auto !important;
+    min-height: 34px !important;
+    height: 34px !important;
+    padding: 0 13px !important;
+    margin: 0 !important;
+    border-radius: 9999px !important;
+    background: #059669 !important;
+    color: #ffffff !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 2px 6px rgba(5, 150, 105, 0.2) !important;
+  }
+
+  .dashboard-layout .section-heading button#addStudentButton::before,
+  .dashboard-layout .section-heading button#addTeacherButton::before,
+  .dashboard-layout .section-heading button#addAttendanceButton::before,
+  .dashboard-layout .section-heading button#addTeacherAttendanceButton::before {
+    content: "+ ";
+    font-weight: 700;
+    font-size: 13.5px;
+    margin-right: 3px;
+    line-height: 1;
+  }
 }
