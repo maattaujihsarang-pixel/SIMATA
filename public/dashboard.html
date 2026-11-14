@@ -3787,23 +3787,82 @@ html, body {
         </section>
 
         <!-- CLASS MODAL -->
-        <div id="classModal" class="modal-backdrop" style="display:none;">
-          <div class="modal-card">
-            <h3 id="classModalTitle">Tambah Kelas</h3>
-            <div style="margin-top:12px;display:flex;flex-direction:column;gap:10px;">
-              <input id="c_classId" class="input-box" placeholder="classId (Otomatis)" />
-              <input id="c_className" class="input-box" placeholder="Nama Kelas" />
-              <input id="c_level" class="input-box" placeholder="Tingkat" />
-              <input id="c_academicYear" class="input-box" placeholder="Tahun Ajaran" />
-              <select id="c_homeroomTeacherId" class="input-box"></select>
-              <select id="c_status" class="input-box">
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-              </select>
+        <div id="classModal" class="student-modal-backdrop" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.45);align-items:center;justify-content:center;z-index:10000;">
+          <div class="student-modal-card" style="max-width:600px;">
+            <!-- Modal Header -->
+            <div class="student-modal-header">
+              <h3 id="classModalTitle">Tambah Kelas</h3>
+              <button type="button" onclick="closeClassModal()" class="student-modal-close-btn" aria-label="Tutup">&times;</button>
             </div>
-            <div class="modal-footer" style="display:flex;gap:8px;justify-content:flex-end;">
-              <button id="classCancelBtn" class="login-button btn-secondary">Batal</button>
-              <button id="classSaveBtn" class="login-button">Simpan</button>
+
+            <!-- Modal Body -->
+            <div class="student-modal-body">
+              <!-- Section 1: Identitas Sistem -->
+              <div class="student-form-section">
+                <div class="student-section-title">
+                  <span>1. Identitas Sistem</span>
+                </div>
+                <div class="student-form-grid">
+                  <div class="student-form-group student-col-span-2">
+                    <label for="c_classId" class="student-form-label">ID Kelas <span class="field-hint">(Otomatis)</span></label>
+                    <input id="c_classId" class="input-box" placeholder="ID Kelas (Otomatis)" disabled />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Section 2: Informasi Kelas & Akademik -->
+              <div class="student-form-section">
+                <div class="student-section-title">
+                  <span>2. Informasi Kelas &amp; Akademik</span>
+                </div>
+                <div class="student-form-grid">
+                  <div class="student-form-group student-col-span-2">
+                    <label for="c_className" class="student-form-label">Nama Kelas <span class="field-required">*</span></label>
+                    <input id="c_className" class="input-box" placeholder="Contoh: Kelas 10" />
+                  </div>
+                  <div class="student-form-group">
+                    <label for="c_level" class="student-form-label">Tingkat Kelas <span class="field-required">*</span></label>
+                    <select id="c_level" class="input-box">
+                      <option value="">(Pilih Tingkat)</option>
+                      <option value="10">Tingkat 10 (Kelas X)</option>
+                      <option value="11">Tingkat 11 (Kelas XI)</option>
+                      <option value="12">Tingkat 12 (Kelas XII)</option>
+                    </select>
+                  </div>
+                  <div class="student-form-group">
+                    <label for="c_academicYear" class="student-form-label">Tahun Ajaran <span class="field-required">*</span></label>
+                    <input id="c_academicYear" class="input-box" placeholder="Contoh: 2026/2027" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Section 3: Kepengurusan & Status Kelas -->
+              <div class="student-form-section">
+                <div class="student-section-title">
+                  <span>3. Kepengurusan &amp; Status Kelas</span>
+                </div>
+                <div class="student-form-grid">
+                  <div class="student-form-group">
+                    <label for="c_homeroomTeacherId" class="student-form-label">Wali Kelas</label>
+                    <select id="c_homeroomTeacherId" class="input-box">
+                      <option value="">(Pilih Wali Kelas - Opsional)</option>
+                    </select>
+                  </div>
+                  <div class="student-form-group">
+                    <label for="c_status" class="student-form-label">Status Kelas</label>
+                    <select id="c_status" class="input-box">
+                      <option value="Active">Active (Aktif)</option>
+                      <option value="Inactive">Inactive (Tidak Aktif)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="student-modal-footer">
+              <button type="button" id="classCancelBtn" class="login-button student-btn-cancel">Batal</button>
+              <button type="button" id="classSaveBtn" class="login-button student-btn-save">Simpan</button>
             </div>
           </div>
         </div>
@@ -8964,8 +9023,9 @@ function loadClasses(filter) {
             const q = filter.toLowerCase();
             classes = classes.filter(function(c) {
                 return (c.className || '').toLowerCase().includes(q) ||
-                       (c.level || '').toLowerCase().includes(q) ||
+                       String(c.level || '').toLowerCase().includes(q) ||
                        (c.academicYear || '').toLowerCase().includes(q) ||
+                       (c.homeroom_teacher_name || c.homeroomTeacherName || '').toLowerCase().includes(q) ||
                        (c.homeroomTeacherId || '').toLowerCase().includes(q) ||
                        (c.classId || '').toLowerCase().includes(q);
             });
@@ -8973,9 +9033,9 @@ function loadClasses(filter) {
         if (classes.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:#64748b;">Tidak ada data kelas.</td></tr>'; return; }
         tbody.innerHTML = classes.map(function(c){
             const className = escapeHtml(c.className || '-');
-            const level = escapeHtml(c.level || '-');
+            const level = escapeHtml(c.level !== undefined && c.level !== null ? String(c.level) : '-');
             const academicYear = escapeHtml(c.academicYear || '-');
-            const homeroom = escapeHtml(c.homeroomTeacherId || '-');
+            const homeroom = escapeHtml(c.homeroom_teacher_name || c.homeroomTeacherName || c.homeroomTeacherId || '-');
             const status = (c.status || 'Active');
             const statusBadge = (status.toLowerCase() === 'active' || status.toLowerCase() === 'aktif')
                 ? '<span class="status-badge status-badge-active">Aktif</span>'
@@ -9008,17 +9068,130 @@ function loadClasses(filter) {
     }).withFailureHandler(function(){ tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:#ef4444;">Gagal memuat kelas.</td></tr>'; }).getClasses(filter ? { search: filter } : {});
 }
 
+function populateClassHomeroomTeachers(selectedTeacherId) {
+    const selectEl = document.getElementById('c_homeroomTeacherId');
+    if (!selectEl) return;
+    const targetVal = selectedTeacherId ? String(selectedTeacherId) : '';
+    selectEl.dataset.pendingTeacherId = targetVal;
+    selectEl.innerHTML = '<option value="">Memuat daftar guru...</option>';
+
+    simataClient.withSuccessHandler(function(res) {
+        const expectedVal = selectEl.dataset.pendingTeacherId || '';
+        const teachers = (res && res.success && Array.isArray(res.teachers)) ? res.teachers : [];
+        let html = '<option value="">(Pilih Wali Kelas - Opsional)</option>';
+        let foundSelected = false;
+        teachers.forEach(function(t) {
+            const tId = t.teacherId || t.teacher_id || '';
+            if (!tId) return;
+            if (tId === expectedVal) foundSelected = true;
+            const isInactive = t.status && String(t.status).toLowerCase() !== 'active';
+            const label = (t.name || tId) + (isInactive ? ' (Tidak Aktif)' : '');
+            html += '<option value="' + escapeAttr(tId) + '">' + escapeHtml(label) + '</option>';
+        });
+        if (expectedVal && !foundSelected) {
+            html += '<option value="' + escapeAttr(expectedVal) + '">' + escapeHtml(expectedVal) + '</option>';
+        }
+        selectEl.innerHTML = html;
+        selectEl.value = expectedVal;
+    }).withFailureHandler(function() {
+        const expectedVal = selectEl.dataset.pendingTeacherId || '';
+        let html = '<option value="">(Pilih Wali Kelas - Opsional)</option>';
+        if (expectedVal) {
+            html += '<option value="' + escapeAttr(expectedVal) + '">' + escapeHtml(expectedVal) + '</option>';
+        }
+        selectEl.innerHTML = html;
+        selectEl.value = expectedVal;
+    }).getTeachers();
+}
+
 function openClassModal(mode, classId) {
-    const modal = document.getElementById('classModal'); if (!modal) return; const title = document.getElementById('classModalTitle');
-    const idField = document.getElementById('c_classId');
-    if (mode === 'create') {
-        title.textContent = 'Tambah Kelas'; idField.disabled = true; idField.value = '';
-        ['c_className','c_level','c_academicYear','c_homeroomTeacherId','c_status'].forEach(function(k){ const el = document.getElementById(k); if (el) el.value = ''; });
-        modal.style.display = 'flex'; return;
+    const modal = document.getElementById('classModal'); if (!modal) return;
+    if (!isCurrentUserAdmin) {
+        if (mode === 'create') return;
+        mode = 'view';
     }
+
+    const title = document.getElementById('classModalTitle');
+    const idField = document.getElementById('c_classId');
+    const saveBtn = document.getElementById('classSaveBtn');
+    const cancelBtn = document.getElementById('classCancelBtn');
+    const editableIds = ['c_className', 'c_level', 'c_academicYear', 'c_homeroomTeacherId', 'c_status'];
+
+    if (mode === 'create') {
+        title.textContent = 'Tambah Kelas';
+        idField.disabled = true;
+        idField.value = '';
+        editableIds.forEach(function(k) {
+            const el = document.getElementById(k);
+            if (!el) return;
+            el.disabled = false;
+            if (k === 'c_academicYear') {
+                el.value = '2026/2027';
+            } else if (k === 'c_status') {
+                el.value = 'Active';
+            } else {
+                el.value = '';
+            }
+        });
+        if (saveBtn) {
+            saveBtn.style.removeProperty('display');
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Simpan';
+        }
+        if (cancelBtn) {
+            cancelBtn.disabled = false;
+            cancelBtn.textContent = 'Batal';
+        }
+        populateClassHomeroomTeachers('');
+        modal.style.display = 'flex';
+        return;
+    }
+
     if (!classId) return;
-    title.textContent = mode === 'edit' ? 'Edit Kelas' : 'Detail Kelas';
-    simataClient.withSuccessHandler(function(res){ if (!res || !res.success) { alert('Data kelas tidak ditemukan.'); return; } const c = res.classObj || res.class; idField.value = c.classId || ''; idField.disabled = true; document.getElementById('c_className').value = c.className || ''; document.getElementById('c_level').value = c.level || ''; document.getElementById('c_academicYear').value = c.academicYear || ''; document.getElementById('c_homeroomTeacherId').value = c.homeroomTeacherId || ''; document.getElementById('c_status').value = c.status || 'Active'; if (mode === 'view') { Array.from(modal.querySelectorAll('input,select,button')).forEach(function(el){ if (el.id !== 'classCancelBtn') el.disabled = true; }); } else { Array.from(modal.querySelectorAll('input,select,button')).forEach(function(el){ el.disabled = false; }); document.getElementById('classCancelBtn').disabled = false; } modal.style.display = 'flex'; }).withFailureHandler(function(){ alert('Gagal memuat data kelas.'); }).getClassById(classId);
+    const isView = (mode === 'view');
+    title.textContent = isView ? 'Detail Kelas' : 'Edit Kelas';
+
+    simataClient.withSuccessHandler(function(res){
+        if (!res || !res.success) { alert('Data kelas tidak ditemukan.'); return; }
+        const c = res.classObj || res.class;
+        idField.value = c.classId || '';
+        idField.disabled = true;
+
+        const nameEl = document.getElementById('c_className');
+        const levelEl = document.getElementById('c_level');
+        const academicYearEl = document.getElementById('c_academicYear');
+        const statusEl = document.getElementById('c_status');
+
+        if (nameEl) nameEl.value = c.className || '';
+        if (levelEl) levelEl.value = (c.level !== undefined && c.level !== null) ? String(c.level) : '';
+        if (academicYearEl) academicYearEl.value = c.academicYear || '';
+        if (statusEl) statusEl.value = c.status || 'Active';
+
+        editableIds.forEach(function(k) {
+            const el = document.getElementById(k);
+            if (el) el.disabled = isView;
+        });
+
+        populateClassHomeroomTeachers(c.homeroomTeacherId || '');
+
+        if (saveBtn) {
+            if (isView) {
+                saveBtn.style.setProperty('display', 'none', 'important');
+            } else {
+                saveBtn.style.removeProperty('display');
+            }
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Simpan';
+        }
+        if (cancelBtn) {
+            cancelBtn.disabled = false;
+            cancelBtn.textContent = isView ? 'Tutup' : 'Batal';
+        }
+
+        modal.style.display = 'flex';
+    }).withFailureHandler(function(){
+        alert('Gagal memuat data kelas.');
+    }).getClassById(classId);
 }
 
 function closeClassModal() {
@@ -9030,15 +9203,19 @@ function closeClassModal() {
 function saveClassFromModal() {
     const saveBtn = document.getElementById('classSaveBtn');
     const id = document.getElementById('c_classId').value.trim();
-    const name = document.getElementById('c_className').value.trim();
-    const level = document.getElementById('c_level').value.trim();
-    const academicYear = document.getElementById('c_academicYear').value.trim();
+    const nameEl = document.getElementById('c_className');
+    const levelEl = document.getElementById('c_level');
+    const academicYearEl = document.getElementById('c_academicYear');
+    const name = nameEl ? nameEl.value.trim() : '';
+    const level = levelEl ? levelEl.value.trim() : '';
+    const academicYear = academicYearEl ? academicYearEl.value.trim() : '';
     const homeroom = document.getElementById('c_homeroomTeacherId').value;
-    const status = document.getElementById('c_status').value;
+    const status = document.getElementById('c_status').value || 'Active';
 
-    if (!name) { alert('Nama Kelas wajib diisi.'); return; }
-    if (!academicYear) { alert('Tahun Ajaran wajib diisi.'); return; }
-    if (!level) { alert('Tingkat wajib diisi.'); return; }
+    if (!name) { alert('Nama Kelas wajib diisi.'); if (nameEl) nameEl.focus(); return; }
+    if (!level) { alert('Tingkat Kelas wajib dipilih.'); if (levelEl) levelEl.focus(); return; }
+    if (!academicYear) { alert('Tahun Ajaran wajib diisi.'); if (academicYearEl) academicYearEl.focus(); return; }
+    if (!/^\d{4}\/\d{4}$/.test(academicYear)) { alert('Format Tahun Ajaran harus YYYY/YYYY (contoh: 2026/2027).'); if (academicYearEl) academicYearEl.focus(); return; }
 
     const payload = { classId: id, className: name, level: level, academicYear: academicYear, homeroomTeacherId: homeroom, status: status };
 
@@ -9059,10 +9236,10 @@ function saveClassFromModal() {
             } else {
                 alert((uRes && uRes.message) || 'Gagal memperbarui kelas.');
             }
-        }).withFailureHandler(function(){
+        }).withFailureHandler(function(err){
             hideModalProcessing('classModal');
             setButtonLoading(saveBtn, false, '', 'Simpan');
-            alert('Gagal memperbarui kelas.');
+            alert('Gagal memperbarui kelas' + (err && err.message ? ': ' + err.message : '.'));
         }).updateClass(token, payload);
     } else {
         // create -> server generates classId
@@ -9075,10 +9252,10 @@ function saveClassFromModal() {
             } else {
                 alert((cRes && cRes.message) || 'Gagal menambahkan kelas.');
             }
-        }).withFailureHandler(function(){
+        }).withFailureHandler(function(err){
             hideModalProcessing('classModal');
             setButtonLoading(saveBtn, false, '', 'Simpan');
-            alert('Gagal menambahkan kelas.');
+            alert('Gagal menambahkan kelas' + (err && err.message ? ': ' + err.message : '.'));
         }).createClass(token, payload);
     }
 }
@@ -9109,7 +9286,7 @@ function showClassQrModal(classId) {
             const ayEl = document.getElementById('cqr_academicYear');
             if (ayEl) ayEl.textContent = c.academicYear || '-';
             const htEl = document.getElementById('cqr_homeroomTeacher');
-            if (htEl) htEl.textContent = c.homeroomTeacherId || '-';
+            if (htEl) htEl.textContent = c.homeroom_teacher_name || c.homeroomTeacherName || c.homeroomTeacherId || '-';
 
             const qrContainer = document.getElementById('classQrContainer');
             if (qrContainer) {
@@ -9193,7 +9370,7 @@ function printClassQr() {
         '<div class="class-meta">' +
         '<div><strong>Tingkat:</strong> ' + escapeHtml(c.level || '-') + '</div>' +
         '<div><strong>Tahun Ajaran:</strong> ' + escapeHtml(c.academicYear || '-') + '</div>' +
-        '<div><strong>Wali Kelas:</strong> ' + escapeHtml(c.homeroomTeacherId || '-') + '</div>' +
+        '<div><strong>Wali Kelas:</strong> ' + escapeHtml(c.homeroom_teacher_name || c.homeroomTeacherName || c.homeroomTeacherId || '-') + '</div>' +
         '</div></div>' +
         '<script>' +
         'window.onload = function() { window.print(); setTimeout(function() { window.close(); }, 500); };' +

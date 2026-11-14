@@ -434,6 +434,7 @@
         level: c.level,
         academicYear: c.academic_year_id,
         homeroomTeacherId: c.homeroom_teacher_id,
+        homeroomTeacherName: c.homeroom_teacher_name || null,
         status: c.status,
         ...c
       }));
@@ -450,6 +451,7 @@
         level: c.level,
         academicYear: c.academic_year_id,
         homeroomTeacherId: c.homeroom_teacher_id,
+        homeroomTeacherName: c.homeroom_teacher_name || null,
         status: c.status,
         ...c
       };

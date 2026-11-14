@@ -285,6 +285,17 @@ class TestDbEngine {
       this.classes.push(cls);
       return { rows: [cls], rowCount: 1 };
     }
+    if (q.startsWith('UPDATE classes') && q.includes('class_name = COALESCE')) {
+      const c = this.classes.find(c => c.class_id === params[0]);
+      if (c) {
+        if (params[1] !== null && params[1] !== undefined) c.class_name = params[1];
+        if (params[2] !== null && params[2] !== undefined) c.level = params[2];
+        if (params[3] !== null && params[3] !== undefined) c.academic_year_id = params[3];
+        if (params[4] !== undefined) c.homeroom_teacher_id = params[4];
+        if (params[5] !== null && params[5] !== undefined) c.status = params[5];
+      }
+      return { rows: c ? [{ ...c }] : [], rowCount: c ? 1 : 0 };
+    }
     if (q.startsWith('UPDATE classes') && q.includes('status = $2')) {
       const c = this.classes.find(c => c.class_id === params[0]);
       if (c) c.status = params[1];
@@ -292,10 +303,16 @@ class TestDbEngine {
     }
     if (q.includes('FROM classes') && q.includes('class_id = $1')) {
       const c = this.classes.find(c => c.class_id === params[0]);
-      return { rows: c ? [{ ...c }] : [], rowCount: c ? 1 : 0 };
+      if (!c) return { rows: [], rowCount: 0 };
+      const ht = this.teachers.find(t => t.teacher_id === c.homeroom_teacher_id);
+      return { rows: [{ ...c, homeroom_teacher_name: ht ? ht.name : null }], rowCount: 1 };
     }
     if (q.includes('FROM classes')) {
-      return { rows: [...this.classes], rowCount: this.classes.length };
+      const list = this.classes.map(c => {
+        const ht = this.teachers.find(t => t.teacher_id === c.homeroom_teacher_id);
+        return { ...c, homeroom_teacher_name: ht ? ht.name : null };
+      });
+      return { rows: list, rowCount: list.length };
     }
     if (q.includes('FROM students s') && q.includes('LEFT JOIN student_attendance sa') && q.includes('s.class_id = $1')) {
       // Dynamic roster query (BUG 29) + DISTINCT ON simulation for multi-period same-day attendance
@@ -686,6 +703,24 @@ class TestDbEngine {
     // 10. Academic Years
     if (q.includes('FROM academic_years') && q.includes('is_active = TRUE')) {
       return { rows: [this.academic_years[0]], rowCount: 1 };
+    }
+    if (q.includes('FROM academic_years') && q.includes('academic_year_id = $1')) {
+      const ay = this.academic_years.find(a => a.academic_year_id === params[0]);
+      return { rows: ay ? [{ ...ay }] : [], rowCount: ay ? 1 : 0 };
+    }
+    if (q.includes('FROM academic_years')) {
+      return { rows: [...this.academic_years], rowCount: this.academic_years.length };
+    }
+    if (q.startsWith('INSERT INTO academic_years')) {
+      const ay = {
+        academic_year_id: params[0],
+        name: params[1],
+        is_active: Boolean(params[2]),
+        start_date: params[3] || null,
+        end_date: params[4] || null
+      };
+      this.academic_years.push(ay);
+      return { rows: [ay], rowCount: 1 };
     }
 
     // 11. Student Documents (FEATURE 004 - Kartu Pelajar)

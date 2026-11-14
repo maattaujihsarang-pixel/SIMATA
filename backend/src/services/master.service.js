@@ -114,22 +114,104 @@ class MasterService {
     });
   }
 
+  async ensureAcademicYear(academicYearId) {
+    if (!academicYearId || !/^\d{4}\/\d{4}$/.test(String(academicYearId).trim())) {
+      throw new BadRequestError('Format Tahun Ajaran harus YYYY/YYYY (contoh: 2026/2027)');
+    }
+    const cleanId = String(academicYearId).trim();
+    const existing = await academicYearRepository.findById(cleanId);
+    if (!existing) {
+      await academicYearRepository.create({
+        academic_year_id: cleanId,
+        name: `Tahun Ajaran ${cleanId}`,
+        is_active: false
+      });
+    }
+    return cleanId;
+  }
+
+  async generateUniqueClassId(academicYearId, className, level) {
+    const [y1, y2] = academicYearId.split('/');
+    const yearCode = y1.slice(-2) + y2.slice(-2);
+    const cleanedName = String(className || '')
+      .replace(/^\s*kelas\s+/i, '')
+      .replace(/[^a-zA-Z0-9]+/g, '')
+      .toUpperCase();
+    const rawSlug = cleanedName || String(level);
+    const prefix = `CLS-${yearCode}-`; // 9 chars, total max 20 chars
+    const maxSlugLen = 20 - prefix.length;
+
+    const baseCandidate = `${prefix}${rawSlug.slice(0, maxSlugLen)}`;
+    if (!(await classRepository.findById(baseCandidate))) {
+      return baseCandidate;
+    }
+
+    for (let i = 2; i <= 99; i++) {
+      const suffix = `-${i}`;
+      const candidate = `${prefix}${rawSlug.slice(0, maxSlugLen - suffix.length)}${suffix}`;
+      if (!(await classRepository.findById(candidate))) {
+        return candidate;
+      }
+    }
+
+    const randomTail = Date.now().toString(36).toUpperCase().slice(-4);
+    return `${prefix}${rawSlug.slice(0, maxSlugLen - 5)}-${randomTail}`;
+  }
+
   async createClass(data) {
-    if (!data.class_id || !data.class_name || !data.level || !data.academic_year_id) {
-      throw new BadRequestError('ID Kelas, Nama Kelas, Tingkat (10/11/12), dan Tahun Ajaran wajib diisi');
+    const className = String(data.class_name || data.className || '').trim();
+    const rawLevel = data.level !== undefined && data.level !== null ? String(data.level).trim() : '';
+    const rawYear = String(data.academic_year_id || data.academicYear || '').trim();
+    const parsedLevel = parseInt(rawLevel, 10);
+
+    if (!className || !rawLevel || !rawYear) {
+      throw new BadRequestError('Nama Kelas, Tingkat (10/11/12), dan Tahun Ajaran wajib diisi');
+    }
+    if (![10, 11, 12].includes(parsedLevel)) {
+      throw new BadRequestError('Tingkat kelas harus bernilai 10, 11, atau 12');
     }
 
-    const existing = await classRepository.findById(data.class_id);
-    if (existing) {
-      throw new ConflictError(`Kelas dengan ID '${data.class_id}' sudah ada`);
+    const academicYearId = await this.ensureAcademicYear(rawYear);
+    let classId = String(data.class_id || data.classId || '').trim();
+
+    if (classId) {
+      const existing = await classRepository.findById(classId);
+      if (existing) {
+        throw new ConflictError(`Kelas dengan ID '${classId}' sudah ada`);
+      }
+    } else {
+      classId = await this.generateUniqueClassId(academicYearId, className, parsedLevel);
     }
 
-    return classRepository.create(data);
+    return classRepository.create({
+      class_id: classId,
+      class_name: className,
+      level: parsedLevel,
+      academic_year_id: academicYearId,
+      homeroom_teacher_id: data.homeroom_teacher_id || data.homeroomTeacherId || null,
+      status: data.status || 'Active'
+    });
   }
 
   async updateClass(classId, data) {
     await this.getClassById(classId);
-    return classRepository.update(classId, data);
+
+    const payload = { ...data };
+    if (payload.level !== undefined && payload.level !== null && payload.level !== '') {
+      const parsedLevel = parseInt(String(payload.level).trim(), 10);
+      if (![10, 11, 12].includes(parsedLevel)) {
+        throw new BadRequestError('Tingkat kelas harus bernilai 10, 11, atau 12');
+      }
+      payload.level = parsedLevel;
+    }
+    if (payload.academic_year_id || payload.academicYear) {
+      payload.academic_year_id = await this.ensureAcademicYear(payload.academic_year_id || payload.academicYear);
+    }
+    if ('homeroom_teacher_id' in payload || 'homeroomTeacherId' in payload) {
+      payload.homeroom_teacher_id = payload.homeroom_teacher_id || payload.homeroomTeacherId || null;
+    }
+
+    return classRepository.update(classId, payload);
   }
 
   async setClassStatus(classId, status) {
