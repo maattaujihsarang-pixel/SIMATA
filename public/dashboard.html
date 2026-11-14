@@ -11675,7 +11675,7 @@ const teacherAttendanceTableState = {
         id: false,
         date: true,
         teacher: true,
-        class: false,
+        class: true,
         period: true,
         subject: true,
         materi: true,
@@ -11691,7 +11691,7 @@ const teacherAttendanceColumnDefs = [
     { key: 'id', label: 'ID Presensi', defaultVisible: false, sortable: true, width: '135px', align: 'center' },
     { key: 'date', label: 'Tanggal', defaultVisible: true, sortable: true, width: '115px', align: 'center' },
     { key: 'teacher', label: 'Guru', defaultVisible: true, sortable: true, width: 'auto', align: 'left' },
-    { key: 'class', label: 'Kelas', defaultVisible: false, sortable: true, width: '100px', align: 'center' },
+    { key: 'class', label: 'Kelas', defaultVisible: true, sortable: true, width: '100px', align: 'center' },
     { key: 'period', label: 'Jam ke-', defaultVisible: true, sortable: true, width: '95px', align: 'center' },
     { key: 'subject', label: 'Mata Pelajaran', defaultVisible: true, sortable: true, width: '140px', align: 'left' },
     { key: 'materi', label: 'Materi', defaultVisible: true, sortable: true, width: 'auto', align: 'left' },
@@ -11703,7 +11703,7 @@ const teacherAttendanceColumnDefs = [
 
 function initTeacherColumnVisibility() {
     try {
-        const stored = localStorage.getItem('simata_teacher_attendance_cols');
+        const stored = localStorage.getItem('simata_teacher_attendance_cols_v2');
         if (stored) {
             const parsed = JSON.parse(stored);
             Object.keys(parsed).forEach(k => {
@@ -11733,7 +11733,7 @@ function renderTeacherColVisMenu() {
 function toggleTeacherColVisibility(colKey, isVisible) {
     teacherAttendanceTableState.visibleColumns[colKey] = isVisible;
     try {
-        localStorage.setItem('simata_teacher_attendance_cols', JSON.stringify(teacherAttendanceTableState.visibleColumns));
+        localStorage.setItem('simata_teacher_attendance_cols_v2', JSON.stringify(teacherAttendanceTableState.visibleColumns));
     } catch (_) {}
     renderTeacherAttendanceThead();
     renderTeacherAttendanceTbody();
@@ -11990,7 +11990,7 @@ function renderTeacherAttendanceTbody() {
         }
 
         // Mobile Opsi 2: 3 compact columns matching mockup + expandable detail row
-        const teacherInfoSummary = escapeHtml(formatMobileShortDate(formattedDate)) + ' &bull; ' + escapeHtml(a.subject || '-');
+        const teacherInfoSummary = escapeHtml(formatMobileShortDate(formattedDate)) + ' &bull; ' + className + ' &bull; ' + escapeHtml(a.subject || '-');
         cells.push(renderMobileAttendanceSummaryCells('teacher', idx, teacherName, teacherInfoSummary, statusBadge, 'Buka detail presensi guru'));
 
         const teacherDetailItems = [
