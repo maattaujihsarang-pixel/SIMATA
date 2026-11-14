@@ -5548,3 +5548,172 @@ select.attendance-filter-control {
     padding: 8px 12px;
   }
 }
+
+/* BUG 51: Desktop & Unified Section Header Action Pills (Opsi 1 - Soft Emerald & Outlined Pill) */
+.dashboard-layout .section-heading .section-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  width: auto;
+  flex: 0 0 auto;
+}
+
+.dashboard-layout .section-heading .section-actions button#batchQrButton {
+  width: auto;
+  min-height: 36px;
+  height: 36px;
+  padding: 0 15px;
+  margin: 0;
+  border-radius: 9999px;
+  border: 1px solid #d5e0da;
+  background: #ffffff;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.dashboard-layout .section-heading .section-actions button#batchQrButton svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.dashboard-layout .section-heading .section-actions button#batchQrButton:hover,
+.dashboard-layout .section-heading .section-actions button#batchQrButton:focus-visible {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #0f172a;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.dashboard-layout .section-heading .section-actions button#batchQrButton:active {
+  transform: scale(0.98);
+}
+
+.dashboard-layout .section-heading .section-actions button#addStudentButton,
+.dashboard-layout .section-heading .section-actions button#addTeacherButton,
+.dashboard-layout .section-heading .section-actions button#addClassButton,
+.dashboard-layout .section-heading .section-actions button#addAttendanceButton,
+.dashboard-layout .section-heading .section-actions button#addTeacherAttendanceButton {
+  width: auto;
+  min-height: 36px;
+  height: 36px;
+  padding: 0 15px;
+  margin: 0;
+  border-radius: 9999px;
+  border: 1px solid #6ee7b7;
+  background: #ecfdf5;
+  color: #047857;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  box-shadow: 0 1px 2px rgba(4, 120, 87, 0.06);
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.dashboard-layout .section-heading .section-actions button#addStudentButton::before,
+.dashboard-layout .section-heading .section-actions button#addTeacherButton::before,
+.dashboard-layout .section-heading .section-actions button#addClassButton::before,
+.dashboard-layout .section-heading .section-actions button#addAttendanceButton::before,
+.dashboard-layout .section-heading .section-actions button#addTeacherAttendanceButton::before {
+  content: "+";
+  font-weight: 700;
+  font-size: 14px;
+  margin-right: 0;
+  line-height: 1;
+}
+
+.dashboard-layout .section-heading .section-actions button#addStudentButton:hover,
+.dashboard-layout .section-heading .section-actions button#addStudentButton:focus-visible,
+.dashboard-layout .section-heading .section-actions button#addTeacherButton:hover,
+.dashboard-layout .section-heading .section-actions button#addTeacherButton:focus-visible,
+.dashboard-layout .section-heading .section-actions button#addClassButton:hover,
+.dashboard-layout .section-heading .section-actions button#addClassButton:focus-visible,
+.dashboard-layout .section-heading .section-actions button#addAttendanceButton:hover,
+.dashboard-layout .section-heading .section-actions button#addAttendanceButton:focus-visible,
+.dashboard-layout .section-heading .section-actions button#addTeacherAttendanceButton:hover,
+.dashboard-layout .section-heading .section-actions button#addTeacherAttendanceButton:focus-visible {
+  background: #059669;
+  border-color: #059669;
+  color: #ffffff;
+  box-shadow: 0 3px 10px rgba(5, 150, 105, 0.22);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.dashboard-layout .section-heading .section-actions button#addStudentButton:active,
+.dashboard-layout .section-heading .section-actions button#addTeacherButton:active,
+.dashboard-layout .section-heading .section-actions button#addClassButton:active,
+.dashboard-layout .section-heading .section-actions button#addAttendanceButton:active,
+.dashboard-layout .section-heading .section-actions button#addTeacherAttendanceButton:active {
+  transform: scale(0.98);
+}
+
+@media (max-width: 768px) {
+  .dashboard-layout .section-heading .section-actions button#addStudentButton,
+  .dashboard-layout .section-heading .section-actions button#addTeacherButton,
+  .dashboard-layout .section-heading .section-actions button#addClassButton,
+  .dashboard-layout .section-heading .section-actions button#addAttendanceButton,
+  .dashboard-layout .section-heading .section-actions button#addTeacherAttendanceButton {
+    min-height: 34px !important;
+    height: 34px !important;
+    padding: 0 13px !important;
+    font-size: 12px !important;
+    border: 1px solid #6ee7b7 !important;
+    background: #ecfdf5 !important;
+    color: #047857 !important;
+    box-shadow: 0 1px 2px rgba(4, 120, 87, 0.06) !important;
+  }
+
+  .dashboard-layout .section-heading .section-actions button#addStudentButton::before,
+  .dashboard-layout .section-heading .section-actions button#addTeacherButton::before,
+  .dashboard-layout .section-heading .section-actions button#addClassButton::before,
+  .dashboard-layout .section-heading .section-actions button#addAttendanceButton::before,
+  .dashboard-layout .section-heading .section-actions button#addTeacherAttendanceButton::before {
+    content: "+";
+    font-size: 13.5px;
+    margin-right: 0 !important;
+  }
+
+  .dashboard-layout .section-heading .section-actions button#addStudentButton:hover,
+  .dashboard-layout .section-heading .section-actions button#addStudentButton:active,
+  .dashboard-layout .section-heading .section-actions button#addTeacherButton:hover,
+  .dashboard-layout .section-heading .section-actions button#addTeacherButton:active,
+  .dashboard-layout .section-heading .section-actions button#addClassButton:hover,
+  .dashboard-layout .section-heading .section-actions button#addClassButton:active,
+  .dashboard-layout .section-heading .section-actions button#addAttendanceButton:hover,
+  .dashboard-layout .section-heading .section-actions button#addAttendanceButton:active,
+  .dashboard-layout .section-heading .section-actions button#addTeacherAttendanceButton:hover,
+  .dashboard-layout .section-heading .section-actions button#addTeacherAttendanceButton:active {
+    background: #059669 !important;
+    border-color: #059669 !important;
+    color: #ffffff !important;
+  }
+
+  .dashboard-layout .section-heading .section-actions button[style*="display: none"],
+  .dashboard-layout .section-heading .section-actions button[style*="display:none"] {
+    display: none !important;
+  }
+}
