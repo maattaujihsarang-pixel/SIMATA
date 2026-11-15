@@ -2914,11 +2914,11 @@ body.dashboard-page {
 
   #dashboardContent .welcome-hello {
     display: block;
-    font-size: 13px;
+    font-size: clamp(0.9375rem, 0.85rem + 0.5vw, 1.0625rem);
     font-weight: 600;
     color: #166534;
-    letter-spacing: 0;
-    margin-bottom: 2px;
+    letter-spacing: -0.005em;
+    margin-bottom: 3px;
   }
 
   #dashboardContent .welcome-comma {
@@ -2927,11 +2927,11 @@ body.dashboard-page {
 
   #dashboardContent #welcomeGreetingName {
     display: block;
-    font-size: clamp(1.375rem, 1.05rem + 1.8vw, 1.625rem);
+    font-size: clamp(1.625rem, 1.25rem + 2.2vw, 2rem);
     font-weight: 800;
     color: #052e16;
-    letter-spacing: -0.025em;
-    line-height: 1.18;
+    letter-spacing: -0.028em;
+    line-height: 1.15;
   }
 
   #dashboardContent .welcome-card p,
