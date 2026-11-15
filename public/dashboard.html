@@ -812,7 +812,7 @@ html, body {
   }
 }
 </style>
-  <link rel="stylesheet" href="/css/dashboard.css?v=bug56c">
+  <link rel="stylesheet" href="/css/dashboard.css?v=bug56d">
   <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
   <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
@@ -823,7 +823,7 @@ html, body {
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
   <!-- QRCode.js: QR Code generator library for Student QR Preview & Print -->
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-  <script src="/js/simata-client.js?v=bug56c"></script>
+  <script src="/js/simata-client.js?v=bug56d"></script>
   <script src="/js/notifications.js"></script>
 </head>
 
@@ -10652,7 +10652,7 @@ function showReportsView() {
                 const sign = d > 0 ? '+' : '';
                 const cls = d >= 0 ? 'up' : 'down';
                 const arrow = d >= 0 ? '&#9650;' : '&#9660;';
-                deltaHtml = '<span class="rpt-kpi-badge ' + cls + '">' + arrow + ' ' + sign + d.toFixed(1).replace(/\.0$/, '') + '% vs sblmnya</span>';
+                deltaHtml = '<span class="rpt-kpi-badge ' + cls + '" title="Dibanding periode sebelumnya">' + arrow + ' ' + sign + d.toFixed(1).replace(/\.0$/, '') + '%</span>';
             }
 
             const studentRateDisplay = ov.student_attendance_rate !== null && ov.student_attendance_rate !== undefined
@@ -10674,7 +10674,7 @@ function showReportsView() {
                     '<div class="rpt-kpi-sub">H: ' + fmtNum(bd.hadir) + ' &bull; I/S: ' + fmtNum((bd.izin || 0) + (bd.sakit || 0)) + ' &bull; A: ' + fmtNum(bd.alpa) + '</div>' +
                 '</article>' +
                 '<article class="rpt-acad-kpi-card">' +
-                    '<div class="rpt-kpi-top"><span class="rpt-kpi-label">Keterlaksanaan Mengajar</span><span class="rpt-kpi-badge emerald">' + fmtNum(ov.teacher_active_count) + '/' + fmtNum(ov.teacher_total_count) + ' guru</span></div>' +
+                    '<div class="rpt-kpi-top"><span class="rpt-kpi-label">Realisasi Mengajar</span><span class="rpt-kpi-badge emerald">' + fmtNum(ov.teacher_active_count) + '/' + fmtNum(ov.teacher_total_count) + ' guru</span></div>' +
                     '<div class="rpt-kpi-val">' + esc(teacherRateDisplay) + '</div>' +
                     '<div class="rpt-kpi-sub">' + fmtNum(ov.teacher_total_logs) + ' JP sesi &bull; ' + fmtNum(ov.teacher_evidence_verified) + ' bukti foto</div>' +
                 '</article>' +
@@ -10684,9 +10684,9 @@ function showReportsView() {
                     '<div class="rpt-kpi-sub">Dari ' + fmtNum(ov.total_active_students) + ' siswa aktif &bull; Lihat daftar &rarr;</div>' +
                 '</article>' +
                 '<article class="rpt-acad-kpi-card rpt-kpi-clickable js-rpt-switch-tab" data-target-tab="audit" role="button" tabindex="0">' +
-                    '<div class="rpt-kpi-top"><span class="rpt-kpi-label">Kelengkapan Berkas</span><span class="rpt-kpi-badge emerald">Induk &amp; Arsip</span></div>' +
+                    '<div class="rpt-kpi-top"><span class="rpt-kpi-label">Kelengkapan Berkas</span><span class="rpt-kpi-badge emerald">Data Induk</span></div>' +
                     '<div class="rpt-kpi-val">' + esc(fmtPct(ov.data_readiness_rate)) + '</div>' +
-                    '<div class="rpt-kpi-sub">Pasfoto, NIS/NISN &amp; Kartu Pelajar &bull; Audit &rarr;</div>' +
+                    '<div class="rpt-kpi-sub">Pasfoto, NIS/NISN &amp; Kartu Pelajar</div>' +
                 '</article>';
         }
 
