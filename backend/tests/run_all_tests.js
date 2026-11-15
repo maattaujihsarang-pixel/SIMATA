@@ -12,6 +12,7 @@ const runBug37TeacherDetailsTest = require('./test_bug37_teacher_details');
 const runFeature005aTests = require('./test_feature005a_foundation');
 const runFeature005bTests = require('./test_feature005b_invoicing');
 const runBug40AdminEditTest = require('./test_bug40_admin_edit');
+const runBug53EvidenceRetentionTests = require('./test_bug53_evidence_retention');
 
 async function runAllTests() {
   console.log('===============================================================');
@@ -32,7 +33,8 @@ async function runAllTests() {
     bug37_teacher_details: false,
     feature005a_foundation: false,
     feature005b_invoicing: false,
-    bug40_admin_edit: false
+    bug40_admin_edit: false,
+    bug53_evidence_retention: false
   };
 
   try {
@@ -50,6 +52,7 @@ async function runAllTests() {
     results.feature005a_foundation = await runFeature005aTests();
     results.feature005b_invoicing = await runFeature005bTests();
     results.bug40_admin_edit = await runBug40AdminEditTest();
+    results.bug53_evidence_retention = await runBug53EvidenceRetentionTests();
 
     console.log('\n===============================================================');
     console.log('VERIFICATION SUMMARY');

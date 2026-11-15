@@ -88,6 +88,7 @@ class TeacherAttendanceRepository {
     let sql = `SELECT ta.attendance_id, ta.teacher_id, ta.class_id, ta.academic_year_id,
                       ta.attendance_date, ta.period, ta.subject, ta.materi, ta.status,
                       ta.method, ta.recorded_at, ta.note, ta.recorded_by_user_id,
+                      ta.evidence_purged_at,
                       t.name as teacher_name, t.nik, t.nip, t.nuptk, c.class_name,
                       ae.evidence_id, ae.file_id, ae.file_url
                FROM teacher_attendance ta
@@ -137,6 +138,7 @@ class TeacherAttendanceRepository {
       `SELECT ta.attendance_id, ta.teacher_id, ta.class_id, ta.academic_year_id,
               ta.attendance_date, ta.period, ta.subject, ta.materi, ta.status,
               ta.method, ta.recorded_at, ta.note, ta.recorded_by_user_id,
+              ta.evidence_purged_at,
               t.name as teacher_name, t.nik, t.nip, t.nuptk, c.class_name,
               ae.evidence_id, ae.file_id, ae.file_url
        FROM teacher_attendance ta

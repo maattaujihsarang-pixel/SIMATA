@@ -823,7 +823,7 @@ html, body {
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
   <!-- QRCode.js: QR Code generator library for Student QR Preview & Print -->
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-  <script src="/js/simata-client.js?v=bug52"></script>
+  <script src="/js/simata-client.js?v=bug53"></script>
   <script src="/js/notifications.js"></script>
 </head>
 
@@ -4362,13 +4362,33 @@ html, body {
                 </div>
               </div>
 
-              <!-- PANEL D: BUKTI FOTO RESPONDER GURU (Admin Only - Bug 25) -->
+              <!-- PANEL D: BUKTI FOTO RESPONDER GURU (Admin Only - Bug 25 + Retention Bug 53) -->
               <div id="settingsPanel_bukti_foto" class="settings-panel" style="display:none;">
                 <div class="settings-panel-card">
-                  <div class="settings-panel-header" style="margin-bottom: 20px;">
-                    <h3 style="font-size:16px;font-weight:700;color:#0f172a;margin:0 0 4px 0;">Bukti Foto Responder Guru</h3>
-                    <p style="font-size:13px;color:#64748b;margin:0;">Lihat bukti foto presensi guru berdasarkan tanggal untuk keperluan verifikasi.</p>
+                  <div class="settings-panel-header bfr-panel-header" style="margin-bottom: 18px; display:flex; align-items:flex-start; justify-content:space-between; gap:14px; flex-wrap:wrap;">
+                    <div>
+                      <h3 style="font-size:16px;font-weight:700;color:#0f172a;margin:0 0 4px 0;">Bukti Foto Responder Guru</h3>
+                      <p style="font-size:13px;color:#64748b;margin:0;">Lihat bukti foto presensi guru berdasarkan tanggal serta kelola masa simpan penyimpanan server.</p>
+                    </div>
+                    <div class="bfr-storage-toolbar" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                      <span id="bfr_storageBadge" title="Total ukuran berkas bukti foto di server" style="display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:8px;background:#f8fafc;border:1px solid #e2e8f0;color:#334155;font-size:12px;font-weight:600;min-height:34px;box-sizing:border-box;">
+                        <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:#64748b;fill:none;stroke-width:2;flex-shrink:0;"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+                        <span id="bfr_storageStatsText">Memuat...</span>
+                      </span>
+                      <select id="bfr_retentionSelect" title="Jadwal pembersihan otomatis bukti foto" class="simata-input" style="min-height:34px;height:34px;padding:0 10px;font-size:12px;font-weight:600;color:#334155;border-radius:8px;border:1px solid #cbd5e1;background:#ffffff;cursor:pointer;width:auto;">
+                        <option value="30">Auto-hapus: 30 Hari</option>
+                        <option value="90">Auto-hapus: 90 Hari</option>
+                        <option value="14">Auto-hapus: 14 Hari</option>
+                        <option value="7">Auto-hapus: 7 Hari</option>
+                        <option value="0">Auto-hapus: Nonaktif</option>
+                      </select>
+                      <button type="button" id="bfr_openCleanupBtn" class="login-button btn-secondary" style="min-height:34px;height:34px;padding:0 12px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:6px;background:#ffffff;color:#334155;border:1px solid #cbd5e1;border-radius:8px;">
+                        <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                        <span>Bersihkan Foto</span>
+                      </button>
+                    </div>
                   </div>
+                  <div id="bfr_lastCleanupHint" style="display:none;font-size:11.5px;color:#64748b;margin:-10px 0 14px 0;"></div>
 
                   <!-- Date Filter Bar -->
                   <div class="bfr-filter-bar" style="background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;padding:16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:20px;">
@@ -4966,6 +4986,13 @@ html, body {
                 min-height: 42px !important;
                 justify-content: center;
               }
+              #settingsContent .bfr-storage-toolbar {
+                width: 100%;
+              }
+              #settingsContent .bfr-storage-toolbar > * {
+                flex: 1 1 auto;
+                justify-content: center;
+              }
             }
           </style>
         </section>
@@ -5019,6 +5046,64 @@ html, body {
             <!-- Modal Footer -->
             <div style="display:flex;justify-content:flex-end;">
               <button type="button" class="login-button btn-secondary" style="min-height:38px;padding:0 20px;font-size:13px;" onclick="closeTeacherPhotoModal()">Tutup</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- CLEANUP BUKTI FOTO RESPONDER MODAL (BUG 53) -->
+        <div id="bfrCleanupModal" class="modal-backdrop" style="display:none;align-items:center;justify-content:center;">
+          <div class="modal-card" style="max-width:480px;width:92%;max-height:90vh;overflow-y:auto;padding:24px;border-radius:14px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;border-bottom:1px solid #f1f5f9;padding-bottom:12px;">
+              <div>
+                <h3 style="font-size:16.5px;font-weight:700;color:#0f172a;margin:0 0 2px 0;">Bersihkan Bukti Foto Responder</h3>
+                <span style="font-size:12px;color:#64748b;">Hapus berkas foto lama untuk menjaga ruang server tetap lega</span>
+              </div>
+              <button type="button" onclick="closeBfrCleanupModal()" style="background:none;border:none;cursor:pointer;color:#94a3b8;padding:4px;display:flex;" title="Tutup">
+                <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
+              <label style="font-size:12.5px;font-weight:600;color:#334155;">Pilih Foto yang Akan Dihapus:</label>
+              <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #e2e8f0;border-radius:9px;cursor:pointer;font-size:13px;color:#1e293b;">
+                <input type="radio" name="bfr_cleanupOption" value="older_than_days:30" checked onchange="onBfrCleanupOptionChange()">
+                <span>Foto lebih dari <strong>30 hari</strong> lalu</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #e2e8f0;border-radius:9px;cursor:pointer;font-size:13px;color:#1e293b;">
+                <input type="radio" name="bfr_cleanupOption" value="older_than_days:90" onchange="onBfrCleanupOptionChange()">
+                <span>Foto lebih dari <strong>90 hari</strong> lalu</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #e2e8f0;border-radius:9px;cursor:pointer;font-size:13px;color:#1e293b;">
+                <input type="radio" name="bfr_cleanupOption" value="older_than_days:7" onchange="onBfrCleanupOptionChange()">
+                <span>Foto lebih dari <strong>7 hari</strong> lalu</span>
+              </label>
+              <div style="padding:10px 12px;border:1px solid #e2e8f0;border-radius:9px;">
+                <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:#1e293b;">
+                  <input type="radio" name="bfr_cleanupOption" value="before_date" onchange="onBfrCleanupOptionChange()">
+                  <span>Foto <strong>sebelum tanggal</strong> tertentu</span>
+                </label>
+                <div id="bfr_beforeDateWrapper" style="display:none;margin-top:8px;padding-left:24px;">
+                  <input type="date" id="bfr_cleanupBeforeDate" class="simata-input" style="min-height:36px;padding:4px 10px;font-size:12.5px;border-radius:8px;border:1px solid #cbd5e1;" onchange="refreshBfrCleanupPreview()">
+                </div>
+              </div>
+              <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #e2e8f0;border-radius:9px;cursor:pointer;font-size:13px;color:#b91c1c;">
+                <input type="radio" name="bfr_cleanupOption" value="all" onchange="onBfrCleanupOptionChange()">
+                <span><strong>Semua bukti foto</strong> saat ini</span>
+              </label>
+            </div>
+
+            <!-- Live Preview Box -->
+            <div id="bfr_cleanupPreviewBox" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;font-size:12.5px;color:#334155;margin-bottom:14px;">
+              Menghitung jumlah foto yang akan dihapus...
+            </div>
+
+            <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:9px 12px;font-size:12px;color:#166534;margin-bottom:18px;">
+              <strong>Data presensi &amp; rekap jam mengajar guru tetap aman</strong> — hanya berkas foto verifikasi yang dihapus dari penyimpanan.
+            </div>
+
+            <div style="display:flex;justify-content:flex-end;gap:10px;">
+              <button type="button" class="login-button btn-secondary" style="min-height:38px;padding:0 16px;font-size:13px;" onclick="closeBfrCleanupModal()">Batal</button>
+              <button type="button" id="bfr_confirmCleanupBtn" class="login-button" style="min-height:38px;padding:0 18px;font-size:13px;background:#dc2626;color:#ffffff;" disabled onclick="executeBfrCleanup()">Hapus Foto</button>
             </div>
           </div>
         </div>
@@ -17994,7 +18079,238 @@ function initTeacherPhotoEvidence() {
         });
     }
 
+    // Wire retention policy selector (BUG 53)
+    const retentionSelect = document.getElementById('bfr_retentionSelect');
+    if (retentionSelect && !retentionSelect.dataset.wired) {
+        retentionSelect.dataset.wired = 'true';
+        retentionSelect.addEventListener('change', handleRetentionPolicyChange);
+    }
+
+    // Wire manual cleanup modal trigger (BUG 53)
+    const openCleanupBtn = document.getElementById('bfr_openCleanupBtn');
+    if (openCleanupBtn && !openCleanupBtn.dataset.wired) {
+        openCleanupBtn.dataset.wired = 'true';
+        openCleanupBtn.addEventListener('click', openBfrCleanupModal);
+    }
+
+    loadEvidenceStorageOverview();
     loadTeacherPhotoEvidenceList();
+}
+
+function formatEvidenceBytes(bytes) {
+    const num = Number(bytes) || 0;
+    if (num < 1024) return num + ' B';
+    if (num < 1024 * 1024) return (num / 1024).toFixed(num < 10 * 1024 ? 1 : 0) + ' KB';
+    if (num < 1024 * 1024 * 1024) return (num / (1024 * 1024)).toFixed(2) + ' MB';
+    return (num / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+}
+
+function renderEvidenceStorageOverview(data) {
+    if (!data) return;
+    const statsEl = document.getElementById('bfr_storageStatsText');
+    const selectEl = document.getElementById('bfr_retentionSelect');
+    const hintEl = document.getElementById('bfr_lastCleanupHint');
+
+    const storage = data.storage || {};
+    const retention = data.retention || {};
+
+    if (statsEl) {
+        const count = Number(storage.fileCount) || 0;
+        const sizeLabel = formatEvidenceBytes(storage.totalBytes || 0);
+        statsEl.textContent = count + ' Foto \u2022 ' + sizeLabel;
+    }
+
+    if (selectEl && retention.retentionDays !== undefined && retention.retentionDays !== null) {
+        const targetVal = String(retention.retentionDays);
+        if (Array.from(selectEl.options).some(function(o) { return o.value === targetVal; })) {
+            selectEl.value = targetVal;
+        }
+    }
+
+    if (hintEl) {
+        if (retention.lastCleanupAt) {
+            const dt = new Date(retention.lastCleanupAt);
+            const formatted = !isNaN(dt.getTime())
+                ? dt.toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                : retention.lastCleanupAt;
+            const deletedFiles = retention.lastCleanupSummary ? (Number(retention.lastCleanupSummary.deletedFiles) || 0) : 0;
+            hintEl.textContent = 'Pembersihan terakhir: ' + formatted + (deletedFiles > 0 ? ' (' + deletedFiles + ' foto dibersihkan)' : ' (penyimpanan sudah bersih)');
+            hintEl.style.display = 'block';
+        } else {
+            hintEl.style.display = 'none';
+        }
+    }
+}
+
+function loadEvidenceStorageOverview() {
+    if (!window.simataClient || typeof simataClient.getEvidenceStorageOverview !== 'function') return;
+    simataClient.getEvidenceStorageOverview()
+        .then(function(res) {
+            if (res && res.success && res.data) {
+                renderEvidenceStorageOverview(res.data);
+            }
+        })
+        .catch(function() {
+            const statsEl = document.getElementById('bfr_storageStatsText');
+            if (statsEl) statsEl.textContent = 'Kapasitas tidak tersedia';
+        });
+}
+
+function handleRetentionPolicyChange() {
+    const selectEl = document.getElementById('bfr_retentionSelect');
+    if (!selectEl) return;
+    const days = Number(selectEl.value);
+    selectEl.disabled = true;
+
+    simataClient.updateEvidenceRetention(days)
+        .then(function(res) {
+            selectEl.disabled = false;
+            if (res && res.success) {
+                if (res.data) renderEvidenceStorageOverview(res.data);
+                if (typeof showToast === 'function') {
+                    showToast('success', 'Pengaturan Retensi Disimpan', res.message || 'Jadwal pembersihan otomatis berhasil diperbarui.');
+                }
+            }
+        })
+        .catch(function(err) {
+            selectEl.disabled = false;
+            if (typeof showToast === 'function') {
+                showToast('error', 'Gagal Menyimpan Retensi', (err && err.message) ? err.message : 'Terjadi kesalahan saat menyimpan pengaturan.');
+            } else {
+                alert('Gagal menyimpan retensi: ' + ((err && err.message) ? err.message : err));
+            }
+            loadEvidenceStorageOverview();
+        });
+}
+
+function getSelectedBfrCleanupPayload() {
+    const checked = document.querySelector('input[name="bfr_cleanupOption"]:checked');
+    const val = checked ? checked.value : 'older_than_days:30';
+    if (val === 'all') {
+        return { mode: 'all' };
+    }
+    if (val === 'before_date') {
+        const dateEl = document.getElementById('bfr_cleanupBeforeDate');
+        return { mode: 'before_date', before_date: dateEl ? dateEl.value : '' };
+    }
+    if (val.startsWith('older_than_days:')) {
+        const days = parseInt(val.split(':')[1], 10) || 30;
+        return { mode: 'older_than_days', older_than_days: days };
+    }
+    return { mode: 'older_than_days', older_than_days: 30 };
+}
+
+function openBfrCleanupModal() {
+    const modal = document.getElementById('bfrCleanupModal');
+    if (!modal) return;
+
+    const beforeDateInput = document.getElementById('bfr_cleanupBeforeDate');
+    if (beforeDateInput && !beforeDateInput.value) {
+        const d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+        beforeDateInput.value = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+
+    const defaultRadio = document.querySelector('input[name="bfr_cleanupOption"][value="older_than_days:30"]');
+    if (defaultRadio) defaultRadio.checked = true;
+    const beforeWrapper = document.getElementById('bfr_beforeDateWrapper');
+    if (beforeWrapper) beforeWrapper.style.display = 'none';
+
+    modal.style.display = 'flex';
+    refreshBfrCleanupPreview();
+}
+
+function closeBfrCleanupModal() {
+    const modal = document.getElementById('bfrCleanupModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function onBfrCleanupOptionChange() {
+    const checked = document.querySelector('input[name="bfr_cleanupOption"]:checked');
+    const beforeWrapper = document.getElementById('bfr_beforeDateWrapper');
+    if (beforeWrapper) {
+        beforeWrapper.style.display = (checked && checked.value === 'before_date') ? 'block' : 'none';
+    }
+    refreshBfrCleanupPreview();
+}
+
+function refreshBfrCleanupPreview() {
+    const box = document.getElementById('bfr_cleanupPreviewBox');
+    const confirmBtn = document.getElementById('bfr_confirmCleanupBtn');
+    const payload = getSelectedBfrCleanupPayload();
+
+    if (payload.mode === 'before_date' && !payload.before_date) {
+        if (box) box.textContent = 'Pilih tanggal batas untuk melihat jumlah foto yang akan dihapus.';
+        if (confirmBtn) confirmBtn.disabled = true;
+        return;
+    }
+
+    if (box) box.textContent = 'Menghitung jumlah foto yang sesuai kriteria...';
+    if (confirmBtn) confirmBtn.disabled = true;
+
+    simataClient.previewEvidenceCleanup(payload)
+        .then(function(res) {
+            const p = (res && res.data) || {};
+            const fileCount = Number(p.fileCount) || 0;
+            const recordCount = Number(p.recordCount) || 0;
+            const sizeLabel = formatEvidenceBytes(p.totalBytes || 0);
+
+            if (fileCount === 0 && recordCount === 0) {
+                if (box) {
+                    box.innerHTML = '<span style="color:#64748b;">Tidak ada bukti foto lama pada kriteria <strong>' + escapeHtml(p.label || '') + '</strong>.</span>';
+                }
+                if (confirmBtn) confirmBtn.disabled = true;
+            } else {
+                if (box) {
+                    box.innerHTML = 'Kriteria: <strong>' + escapeHtml(p.label || '') + '</strong><br>' +
+                        'Akan dihapus: <strong>' + fileCount + ' berkas foto</strong> (' + sizeLabel + ') &bull; ' + recordCount + ' catatan foto.';
+                }
+                if (confirmBtn) confirmBtn.disabled = false;
+            }
+        })
+        .catch(function(err) {
+            if (box) box.innerHTML = '<span style="color:#b91c1c;">Gagal memeriksa data: ' + escapeHtml((err && err.message) ? err.message : String(err)) + '</span>';
+            if (confirmBtn) confirmBtn.disabled = true;
+        });
+}
+
+function executeBfrCleanup() {
+    const confirmBtn = document.getElementById('bfr_confirmCleanupBtn');
+    const payload = getSelectedBfrCleanupPayload();
+    if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = 'Menghapus...';
+    }
+
+    simataClient.executeEvidenceCleanup(payload)
+        .then(function(res) {
+            if (confirmBtn) {
+                confirmBtn.textContent = 'Hapus Foto';
+            }
+            closeBfrCleanupModal();
+            loadEvidenceStorageOverview();
+            loadTeacherPhotoEvidenceList();
+
+            const data = (res && res.data) || {};
+            const freed = formatEvidenceBytes(data.freedBytes || 0);
+            const msg = (res && res.message ? res.message : 'Pembersihan selesai.') + ' Ruang dibebaskan: ' + freed + '.';
+            if (typeof showToast === 'function') {
+                showToast('success', 'Pembersihan Selesai', msg);
+            } else {
+                alert(msg);
+            }
+        })
+        .catch(function(err) {
+            if (confirmBtn) {
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = 'Hapus Foto';
+            }
+            const errMsg = (err && err.message) ? err.message : 'Gagal membersihkan bukti foto.';
+            if (typeof showToast === 'function') {
+                showToast('error', 'Pembersihan Gagal', errMsg);
+            } else {
+                alert(errMsg);
+            }
+        });
 }
 
 function loadTeacherPhotoEvidenceList() {
@@ -18068,10 +18384,12 @@ function renderTeacherPhotoEvidenceTable(records, date) {
         // Status badge
         const statusBadge = renderAttendanceStatusBadge(rec.status);
 
-        // Bukti foto badge
+        // Bukti foto badge (BUG 53: show purged state distinctly when evidence was cleaned up)
         const fotoBadge = rec.hasPhoto
             ? '<span class="simata-badge simata-badge-success" style="font-size:11px;padding:3px 8px;font-weight:600;">Foto Tersedia</span>'
-            : '<span style="color:#64748b;font-size:12px;">Tidak ada bukti foto</span>';
+            : (rec.evidencePurgedAt
+                ? '<span style="display:inline-flex;align-items:center;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:600;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;" title="Foto bukti telah dibersihkan sesuai masa retensi">Dibersihkan</span>'
+                : '<span style="color:#64748b;font-size:12px;">Tidak ada bukti foto</span>');
 
         // Action button
         const actionHtml = rec.hasPhoto

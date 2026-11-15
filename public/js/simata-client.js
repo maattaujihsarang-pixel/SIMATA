@@ -1114,6 +1114,7 @@
           timestamp: a.recorded_at || a.timestamp || null,
           recordedAt: a.recorded_at || null,
           hasPhoto: hasPhoto,
+          evidencePurgedAt: a.evidence_purged_at || null,
           fileId: a.file_id || a.evidence_id || null,
           fileUrl: a.file_url || null,
           evidenceId: a.evidence_id || null
@@ -1615,6 +1616,36 @@
     unlinkParentStudent: async function (userId, studentId) {
       const res = await apiFetch(`/finance/parents/${encodeURIComponent(userId)}/unlink-student/${encodeURIComponent(studentId)}`, {
         method: 'DELETE'
+      });
+      return { success: true, message: res.message, data: res.data };
+    },
+
+    // 42. Evidence Storage & Retention Management (BUG 53)
+    getEvidenceStorageOverview: async function () {
+      const res = await apiFetch('/evidences/storage/overview');
+      return { success: true, data: res.data };
+    },
+
+    updateEvidenceRetention: async function (retentionDays) {
+      const res = await apiFetch('/evidences/storage/retention', {
+        method: 'PUT',
+        body: JSON.stringify({ retention_days: Number(retentionDays) })
+      });
+      return { success: true, message: res.message, data: res.data };
+    },
+
+    previewEvidenceCleanup: async function (payload) {
+      const res = await apiFetch('/evidences/storage/cleanup/preview', {
+        method: 'POST',
+        body: JSON.stringify(payload || {})
+      });
+      return { success: true, data: res.data };
+    },
+
+    executeEvidenceCleanup: async function (payload) {
+      const res = await apiFetch('/evidences/storage/cleanup', {
+        method: 'POST',
+        body: JSON.stringify(payload || {})
       });
       return { success: true, message: res.message, data: res.data };
     }

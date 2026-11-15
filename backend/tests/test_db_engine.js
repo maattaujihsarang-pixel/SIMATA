@@ -43,6 +43,11 @@ class TestDbEngine {
     this.teacher_attendance = [];
     this.responder_sessions = [];
     this.attendance_evidences = [];
+    this.system_settings = [
+      { setting_key: 'evidence_retention_days', setting_value: '30', description: 'Masa simpan otomatis bukti foto Responder Guru dalam hari (0 = nonaktif)', updated_by_user_id: null, updated_at: new Date().toISOString() },
+      { setting_key: 'evidence_last_cleanup_at', setting_value: '', description: 'Timestamp ISO pembersihan bukti foto terakhir', updated_by_user_id: null, updated_at: new Date().toISOString() },
+      { setting_key: 'evidence_last_cleanup_summary', setting_value: '', description: 'Ringkasan JSON hasil pembersihan bukti foto terakhir', updated_by_user_id: null, updated_at: new Date().toISOString() }
+    ];
     this.student_documents = [];
     this.parent_student_mappings = [];
     this.finance_settings = [
@@ -574,6 +579,7 @@ class TestDbEngine {
         const ae = this.attendance_evidences.find(ev => ev.attendance_id === ta.attendance_id) || {};
         return {
           ...ta,
+          evidence_purged_at: ta.evidence_purged_at || null,
           teacher_name: t.name || ta.teacher_id,
           nik: t.nik || '-',
           nip: t.nip || '-',
@@ -627,6 +633,18 @@ class TestDbEngine {
         results = results.filter(r => String(r.status || '').toLowerCase().replace(/\s+/g, '') === val);
       }
       return { rows: results, rowCount: results.length };
+    }
+    if (q.startsWith('UPDATE teacher_attendance') && q.includes('SET evidence_purged_at = CURRENT_TIMESTAMP')) {
+      const attIds = new Set(params[0] || []);
+      const nowIso = new Date().toISOString();
+      let count = 0;
+      for (const ta of this.teacher_attendance) {
+        if (attIds.has(ta.attendance_id) && !ta.evidence_purged_at) {
+          ta.evidence_purged_at = nowIso;
+          count++;
+        }
+      }
+      return { rows: [], rowCount: count };
     }
     if (q.startsWith('UPDATE teacher_attendance')) {
       const attId = params[8];
@@ -694,6 +712,71 @@ class TestDbEngine {
     if (q.includes('FROM attendance_evidences') && q.includes('session_id = $1')) {
       const evs = this.attendance_evidences.filter(e => e.session_id === params[0]);
       return { rows: evs, rowCount: evs.length };
+    }
+    if (q.includes('COUNT(*)::int AS total_records') && q.includes('FROM attendance_evidences')) {
+      const distinct = new Set(this.attendance_evidences.map(e => e.file_id).filter(Boolean));
+      const sorted = [...this.attendance_evidences].sort((a, b) => new Date(a.captured_at) - new Date(b.captured_at));
+      return {
+        rows: [{
+          total_records: this.attendance_evidences.length,
+          distinct_files: distinct.size,
+          oldest_captured_at: sorted.length > 0 ? sorted[0].captured_at : null
+        }],
+        rowCount: 1
+      };
+    }
+    if (q.includes('FROM attendance_evidences') && q.includes('file_id = ANY($1)') && q.includes('NOT (evidence_id = ANY($2))')) {
+      const targetFiles = new Set(params[0] || []);
+      const excludedIds = new Set(params[1] || []);
+      const remaining = [...new Set(
+        this.attendance_evidences
+          .filter(e => targetFiles.has(e.file_id) && !excludedIds.has(e.evidence_id))
+          .map(e => e.file_id)
+      )];
+      return { rows: remaining.map(file_id => ({ file_id })), rowCount: remaining.length };
+    }
+    if (q.includes('FROM attendance_evidences') && q.includes('captured_at < $1')) {
+      const cutoffMs = new Date(params[0]).getTime();
+      const matched = this.attendance_evidences
+        .filter(e => new Date(e.captured_at).getTime() < cutoffMs)
+        .sort((a, b) => new Date(a.captured_at) - new Date(b.captured_at));
+      return { rows: matched.map(e => ({ ...e })), rowCount: matched.length };
+    }
+    if (q.includes('SELECT evidence_id, file_id, attendance_id, captured_at') && q.includes('FROM attendance_evidences')) {
+      const sorted = [...this.attendance_evidences].sort((a, b) => new Date(a.captured_at) - new Date(b.captured_at));
+      return { rows: sorted.map(e => ({ ...e })), rowCount: sorted.length };
+    }
+    if (q.startsWith('DELETE FROM attendance_evidences WHERE evidence_id = ANY($1)')) {
+      const delIds = new Set(params[0] || []);
+      const before = this.attendance_evidences.length;
+      this.attendance_evidences = this.attendance_evidences.filter(e => !delIds.has(e.evidence_id));
+      return { rows: [], rowCount: before - this.attendance_evidences.length };
+    }
+    if (q.includes('FROM system_settings') && q.includes('setting_key = ANY($1)')) {
+      const keySet = new Set(params[0] || []);
+      const rows = this.system_settings.filter(s => keySet.has(s.setting_key)).map(s => ({ ...s }));
+      return { rows, rowCount: rows.length };
+    }
+    if (q.startsWith('INSERT INTO system_settings')) {
+      const [key, value, desc, userId] = params;
+      const nowIso = new Date().toISOString();
+      const existing = this.system_settings.find(s => s.setting_key === key);
+      if (existing) {
+        existing.setting_value = value;
+        if (desc !== null && desc !== undefined) existing.description = desc;
+        existing.updated_by_user_id = userId;
+        existing.updated_at = nowIso;
+        return { rows: [{ ...existing }], rowCount: 1 };
+      }
+      const created = {
+        setting_key: key,
+        setting_value: value,
+        description: desc,
+        updated_by_user_id: userId,
+        updated_at: nowIso
+      };
+      this.system_settings.push(created);
+      return { rows: [{ ...created }], rowCount: 1 };
     }
     if (q.includes('DISTINCT file_id FROM attendance_evidences')) {
       const ids = [...new Set(this.attendance_evidences.map(e => e.file_id))];

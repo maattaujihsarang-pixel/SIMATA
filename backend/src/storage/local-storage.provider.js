@@ -73,6 +73,50 @@ class LocalStorageProvider extends StorageProvider {
     }
     return targetPath;
   }
+
+  async getFileStats(fileId) {
+    if (!fileId) return { exists: false, sizeBytes: 0, filePath: null };
+    const safeFileId = path.basename(fileId);
+    const targetPath = path.join(this.baseDir, safeFileId);
+    try {
+      const stats = await fs.promises.stat(targetPath);
+      if (!stats.isFile()) {
+        return { exists: false, sizeBytes: 0, filePath: null };
+      }
+      return { exists: true, sizeBytes: stats.size, filePath: targetPath };
+    } catch (_) {
+      return { exists: false, sizeBytes: 0, filePath: null };
+    }
+  }
+
+  async getStorageStats() {
+    if (!fs.existsSync(this.baseDir)) {
+      return { fileCount: 0, totalBytes: 0, storageDir: this.baseDir };
+    }
+
+    const entries = await fs.promises.readdir(this.baseDir, { withFileTypes: true });
+    let fileCount = 0;
+    let totalBytes = 0;
+
+    for (const entry of entries) {
+      if (!entry.isFile() || entry.name.startsWith('.')) continue;
+      try {
+        const stats = await fs.promises.stat(path.join(this.baseDir, entry.name));
+        if (stats.isFile()) {
+          fileCount++;
+          totalBytes += stats.size;
+        }
+      } catch (_) {
+        // Ignore files vanishing concurrently during cleanup
+      }
+    }
+
+    return {
+      fileCount,
+      totalBytes,
+      storageDir: this.baseDir
+    };
+  }
 }
 
 module.exports = new LocalStorageProvider();
