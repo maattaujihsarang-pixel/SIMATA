@@ -2707,12 +2707,13 @@ body.dashboard-page {
   }
 
   .dashboard-layout .content {
-    padding: 18px 16px calc(130px + env(safe-area-inset-bottom, 0px)) !important;
+    background: #f8fafc;
+    padding: 16px 16px calc(130px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
-  /* Calm translucent sticky header across mobile views */
+  /* Calm translucent sticky header — subpages stay crisp white */
   .dashboard-layout .topbar {
-    min-height: 58px;
+    min-height: 56px;
     padding: 8px 16px;
     gap: 10px;
     background: rgba(255, 255, 255, 0.92);
@@ -2720,6 +2721,12 @@ body.dashboard-page {
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     box-shadow: none;
+  }
+
+  /* Home Topbar blends seamlessly into the Soft Mint-Sage Backdrop */
+  body.is-home-view .dashboard-layout .topbar {
+    background: rgba(201, 234, 215, 0.94);
+    border-bottom: 1px solid rgba(20, 83, 45, 0.08);
   }
 
   .dashboard-layout .hamburger-btn {
@@ -2732,9 +2739,13 @@ body.dashboard-page {
     border-radius: 10px;
   }
 
+  body.is-home-view .dashboard-layout .hamburger-btn {
+    color: #14532d;
+  }
+
   .dashboard-layout .hamburger-btn:hover,
   .dashboard-layout .hamburger-btn:active {
-    background: #f1f5f9;
+    background: rgba(20, 83, 45, 0.08);
   }
 
   /* Hide noisy live-clock capsule on mobile */
@@ -2771,16 +2782,17 @@ body.dashboard-page {
   }
 
   .dashboard-layout .mobile-home-brand-text strong {
-    color: #0f172a;
+    color: #052e16;
     font-size: 15px;
     font-weight: 800;
     letter-spacing: -0.02em;
   }
 
   .dashboard-layout .mobile-home-brand-text small {
-    color: #64748b;
-    font-size: 11px;
-    font-weight: 500;
+    color: #166534;
+    font-size: 10.5px;
+    font-weight: 600;
+    opacity: 0.85;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -2801,11 +2813,11 @@ body.dashboard-page {
     width: 34px;
     height: 34px;
     background: linear-gradient(135deg, #0b3b20 0%, #166534 100%);
-    border: 1.5px solid #e2e8f0;
+    border: 1.5px solid rgba(255, 255, 255, 0.72);
     color: #ffffff;
     font-size: 11.5px;
     font-weight: 700;
-    box-shadow: 0 2px 6px rgba(11, 59, 32, 0.16);
+    box-shadow: 0 2px 8px rgba(11, 59, 32, 0.18);
   }
 
   /* Home Content Flex Layout */
@@ -2814,25 +2826,40 @@ body.dashboard-page {
     flex-direction: column;
   }
 
-  /* 1. Airy Editorial Greeting (no nested boxes, no competing pills) */
+  /* 1. Lapisan Belakang (Header Backdrop Hijau Muda + Selamat Datang) */
   #dashboardContent > .welcome-card {
     order: 1;
+    position: relative;
+    z-index: 1;
     display: block;
-    width: 100%;
+    width: auto;
     min-height: 0;
-    margin: 0 0 18px;
-    padding: 2px 2px 0;
+    margin: -16px -16px 0;
+    padding: 14px 18px 46px;
     border: none;
     border-radius: 0;
-    background: transparent;
+    overflow: clip;
+    background: linear-gradient(155deg, #c7e8d4 0%, #d6efe0 54%, #e2f5ea 100%);
     box-shadow: none;
   }
 
+  /* Subtle organic highlights + portal dot texture on the light-green backdrop */
   #dashboardContent > .welcome-card::before {
-    display: none;
+    content: '';
+    display: block;
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      radial-gradient(circle at 92% 18%, rgba(255, 255, 255, 0.62) 0%, transparent 45%),
+      radial-gradient(circle at 12% 85%, rgba(22, 163, 74, 0.08) 0%, transparent 40%),
+      radial-gradient(rgba(20, 83, 45, 0.085) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 18px 18px;
   }
 
   #dashboardContent > .welcome-card .welcome-content {
+    position: relative;
+    z-index: 1;
     width: 100%;
     max-width: 100%;
     padding: 0;
@@ -2859,13 +2886,13 @@ body.dashboard-page {
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    padding: 0;
-    border: none;
-    border-radius: 0;
-    background: transparent;
-    color: #64748b;
-    font-size: 12px;
-    font-weight: 500;
+    padding: 4px 10px;
+    border: 1px solid rgba(21, 128, 61, 0.14);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.72);
+    color: #14532d;
+    font-size: 11px;
+    font-weight: 600;
     white-space: nowrap;
   }
 
@@ -2875,21 +2902,21 @@ body.dashboard-page {
     height: 7px;
     border-radius: 50%;
     background: #16a34a;
-    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.14);
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.16);
     flex-shrink: 0;
   }
 
   #dashboardContent .welcome-card h2 {
     margin: 0;
-    color: #0f172a;
+    color: #052e16;
     line-height: 1.2;
   }
 
   #dashboardContent .welcome-hello {
     display: block;
     font-size: 13px;
-    font-weight: 500;
-    color: #64748b;
+    font-weight: 600;
+    color: #166534;
     letter-spacing: 0;
     margin-bottom: 2px;
   }
@@ -2902,7 +2929,7 @@ body.dashboard-page {
     display: block;
     font-size: clamp(1.375rem, 1.05rem + 1.8vw, 1.625rem);
     font-weight: 800;
-    color: #0f172a;
+    color: #052e16;
     letter-spacing: -0.025em;
     line-height: 1.18;
   }
@@ -2912,11 +2939,19 @@ body.dashboard-page {
     display: none;
   }
 
-  /* 2. Section Heading: fix inline flex side-by-side bug, stack eyebrow cleanly */
+  /* 2. Lapisan Depan (Content Sheet Rounded Top Overlapping Green Backdrop) */
   #dashboardContent > .section-heading {
     order: 2;
-    margin-bottom: 10px;
-    padding: 0 2px;
+    position: relative;
+    z-index: 2;
+    width: auto;
+    margin: -28px -16px 12px;
+    padding: 20px 16px 2px;
+    border-radius: 26px 26px 0 0;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.92);
+    background: #f8fafc;
+    box-shadow: 0 -8px 22px rgba(6, 40, 22, 0.08);
+    clip-path: inset(-28px 0 0 0);
   }
 
   #dashboardContent > .section-heading > div {
@@ -3278,11 +3313,21 @@ body.dashboard-page {
 
 @media (max-width: 480px) {
   .dashboard-layout .content {
-    padding: 16px 14px calc(130px + env(safe-area-inset-bottom, 0px)) !important;
+    padding: 14px 14px calc(130px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
   .dashboard-layout .topbar {
     padding: 8px 14px;
+  }
+
+  #dashboardContent > .welcome-card {
+    margin: -14px -14px 0;
+    padding: 12px 16px 46px;
+  }
+
+  #dashboardContent > .section-heading {
+    margin: -28px -14px 12px;
+    padding: 20px 14px 2px;
   }
 
   #dashboardContent .stat-card {
