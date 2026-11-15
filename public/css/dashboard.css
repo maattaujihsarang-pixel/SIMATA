@@ -725,6 +725,99 @@ body.dashboard-page {
   color: var(--dashboard-green);
 }
 
+/* Desktop base styles for Finance Quick Access Banner (semantic classes moved from inline HTML) */
+.dashboard-layout .finance-banner {
+  width: 100%;
+  background: linear-gradient(135deg, #059669 0%, #10b981 55%, #34d399 100%);
+  color: #ffffff;
+  border-radius: 16px;
+  padding: 22px 28px;
+  margin-top: 32px;
+  margin-bottom: 28px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-sizing: border-box;
+}
+
+.dashboard-layout .finance-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  flex: 1 1 280px;
+}
+
+.dashboard-layout .finance-banner-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #ffffff;
+}
+
+.dashboard-layout .finance-banner-copy {
+  min-width: 0;
+}
+
+.dashboard-layout .finance-banner-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  opacity: 0.9;
+  margin-bottom: 4px;
+  color: #ffffff;
+}
+
+.dashboard-layout .finance-banner-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.3px;
+  line-height: 1.25;
+}
+
+.dashboard-layout .finance-banner-desc {
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.92);
+  line-height: 1.45;
+}
+
+.dashboard-layout .finance-banner-btn {
+  background: #ffffff;
+  color: #059669;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 22px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 160ms ease, box-shadow 160ms ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.dashboard-layout .finance-banner-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
+}
+
 .dashboard-layout .content button,
 .dashboard-layout .content input,
 .dashboard-layout .content select,
@@ -2602,45 +2695,54 @@ body.dashboard-page {
 }
 
 /* ==========================================================================
-   BUG 54: MOBILE DASHBOARD HOME & HEADER REDESIGN (OPSI 1)
-   Compact Integrated Emerald Header + Bento KPI + Unified Quick Access
+   BUG 54 v2: MOBILE DASHBOARD HOME & HEADER TOTAL OVERHAUL
+   Inspired by SIMATA Portal Login (index.html) & Modern Executive Web Apps:
+   Calm Translucent Header + Airy Greeting + Single Signature Emerald KPI Card
+   + Icon-Top 2x2 Quick Access (Zero Truncation) + Clean White Finance Card
    ========================================================================== */
 @media (max-width: 768px) {
-  /* Subtle calm canvas on mobile */
+  /* Light portal canvas matching login surface */
   .dashboard-layout .main {
-    background: #f4f7f5;
+    background: #f8fafc;
   }
 
   .dashboard-layout .content {
-    padding: 16px 14px calc(114px + env(safe-area-inset-bottom, 0px)) !important;
+    padding: 18px 16px calc(130px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
-  /* Integrated Deep-Emerald App Header when viewing Home Dashboard */
-  body.is-home-view .dashboard-layout .topbar {
+  /* Calm translucent sticky header across mobile views */
+  .dashboard-layout .topbar {
     min-height: 58px;
-    padding: 8px 14px 6px;
+    padding: 8px 16px;
     gap: 10px;
-    background: #13472e;
-    border-bottom: 1px solid #13472e;
-    backdrop-filter: none;
+    background: rgba(255, 255, 255, 0.92);
+    border-bottom: 1px solid #e2e8f0;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     box-shadow: none;
   }
 
-  body.is-home-view .dashboard-layout .hamburger-btn {
+  .dashboard-layout .hamburger-btn {
     width: 36px;
     height: 36px;
     min-width: 36px;
     min-height: 36px;
     margin-right: 0;
-    color: #ffffff;
+    color: #334155;
     border-radius: 10px;
   }
 
-  body.is-home-view .dashboard-layout .hamburger-btn:hover,
-  body.is-home-view .dashboard-layout .hamburger-btn:active {
-    background: rgba(255, 255, 255, 0.14);
+  .dashboard-layout .hamburger-btn:hover,
+  .dashboard-layout .hamburger-btn:active {
+    background: #f1f5f9;
   }
 
+  /* Hide noisy live-clock capsule on mobile */
+  .dashboard-layout .live-clock {
+    display: none !important;
+  }
+
+  /* Home Topbar: clean crest + brand text */
   body.is-home-view .dashboard-layout .topbar-left {
     display: none;
   }
@@ -2648,109 +2750,82 @@ body.dashboard-page {
   body.is-home-view .dashboard-layout .mobile-home-brand {
     display: flex;
     align-items: center;
-    gap: 8px;
-    min-width: 0;
+    gap: 10px;
+    min-inline-size: 0;
     flex: 1 1 auto;
   }
 
   .dashboard-layout .mobile-home-emblem {
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
+    display: block;
+    width: 28px;
+    height: 28px;
     object-fit: contain;
-    background: rgba(255, 255, 255, 0.12);
-    padding: 2px;
     flex-shrink: 0;
   }
 
   .dashboard-layout .mobile-home-brand-text {
     display: flex;
     flex-direction: column;
-    min-width: 0;
+    min-inline-size: 0;
     line-height: 1.15;
   }
 
   .dashboard-layout .mobile-home-brand-text strong {
-    color: #ffffff;
-    font-size: 14.5px;
+    color: #0f172a;
+    font-size: 15px;
     font-weight: 800;
-    letter-spacing: 0.3px;
+    letter-spacing: -0.02em;
   }
 
   .dashboard-layout .mobile-home-brand-text small {
-    color: #bbf7d0;
-    font-size: 10.5px;
+    color: #64748b;
+    font-size: 11px;
     font-weight: 500;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  body.is-home-view .dashboard-layout .topbar-right {
+  .dashboard-layout .topbar-right {
     gap: 8px;
     flex-shrink: 0;
   }
 
-  body.is-home-view .dashboard-layout .live-clock {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 5px 9px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.14);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    color: #ffffff;
-    font-size: 11px;
-    font-weight: 650;
-    font-variant-numeric: tabular-nums;
-  }
-
-  body.is-home-view .dashboard-layout .clock-dot {
-    width: 6px;
-    height: 6px;
-    background: #4ade80;
-    box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.28);
-  }
-
-  body.is-home-view .dashboard-layout .user-profile {
+  .dashboard-layout .user-profile {
     padding: 0;
     background: transparent;
     border: none;
   }
 
-  body.is-home-view .dashboard-layout .user-avatar {
+  .dashboard-layout .user-avatar {
     width: 34px;
     height: 34px;
-    background: rgba(255, 255, 255, 0.18);
-    border: 1.5px solid rgba(255, 255, 255, 0.34);
+    background: linear-gradient(135deg, #0b3b20 0%, #166534 100%);
+    border: 1.5px solid #e2e8f0;
     color: #ffffff;
     font-size: 11.5px;
+    font-weight: 700;
+    box-shadow: 0 2px 6px rgba(11, 59, 32, 0.16);
   }
 
-  /* Subpage mobile topbar refinement */
-  body:not(.is-home-view) .dashboard-layout .topbar {
-    min-height: 60px;
-    padding: 8px 14px;
-    background: rgba(255, 255, 255, 0.96);
-    border-bottom: 1px solid #e2ebe5;
-  }
-
-  /* Home Content Flex Order (Seamless Hero -> Bento Stats -> Quick Actions) */
+  /* Home Content Flex Layout */
   #dashboardContent.content {
     display: flex;
     flex-direction: column;
   }
 
+  /* 1. Airy Editorial Greeting (no nested boxes, no competing pills) */
   #dashboardContent > .welcome-card {
     order: 1;
-    width: auto;
+    display: block;
+    width: 100%;
     min-height: 0;
-    margin: -16px -14px 18px;
-    padding: 6px 14px 16px;
+    margin: 0 0 18px;
+    padding: 2px 2px 0;
     border: none;
-    border-radius: 0 0 24px 24px;
-    background: linear-gradient(170deg, #13472e 0%, #165637 65%, #1d6b44 100%);
-    box-shadow: 0 8px 20px rgba(17, 67, 40, 0.13);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
   }
 
   #dashboardContent > .welcome-card::before {
@@ -2760,178 +2835,229 @@ body.dashboard-page {
   #dashboardContent > .welcome-card .welcome-content {
     width: 100%;
     max-width: 100%;
-    box-sizing: border-box;
-    padding: 13px 14px;
-    border-radius: 16px;
-    background: rgba(9, 36, 22, 0.36);
-    border: 1px solid rgba(255, 255, 255, 0.13);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 
   #dashboardContent .welcome-label-row {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
     gap: 8px;
-    margin-bottom: 5px;
+    margin-bottom: 10px;
   }
 
   #dashboardContent .welcome-card .section-label {
-    margin-bottom: 0;
-    color: #bfe2cc;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.5px;
+    display: none;
   }
 
   #dashboardContent .hero-date-pill {
     display: inline-flex;
     align-items: center;
-    padding: 3px 9px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.13);
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    color: #ecfdf5;
-    font-size: 10.5px;
-    font-weight: 600;
+    gap: 7px;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 500;
     white-space: nowrap;
   }
 
-  #dashboardContent .welcome-card h2 {
-    margin: 0 0 8px;
-    color: #ffffff;
-    font-size: 19px;
-    font-weight: 750;
-    line-height: 1.25;
+  #dashboardContent .hero-date-pill::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #16a34a;
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.14);
+    flex-shrink: 0;
   }
 
-  #dashboardContent .welcome-card p {
+  #dashboardContent .welcome-card h2 {
+    margin: 0;
+    color: #0f172a;
+    line-height: 1.2;
+  }
+
+  #dashboardContent .welcome-hello {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: #64748b;
+    letter-spacing: 0;
+    margin-bottom: 2px;
+  }
+
+  #dashboardContent .welcome-comma {
     display: none;
   }
 
+  #dashboardContent #welcomeGreetingName {
+    display: block;
+    font-size: clamp(1.375rem, 1.05rem + 1.8vw, 1.625rem);
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.025em;
+    line-height: 1.18;
+  }
+
+  #dashboardContent .welcome-card p,
   #dashboardContent .hero-status-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 10px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.1);
-    color: #dcfce7;
-    font-size: 11px;
-    font-weight: 500;
+    display: none;
   }
 
-  #dashboardContent .hero-status-pill strong {
-    color: #86efac;
-    font-weight: 700;
-  }
-
-  #dashboardContent .hero-status-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #4ade80;
-    box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.25);
-  }
-
-  /* Section 2: Statistik Sistem (Bento 2x2 Horizontal Cards) */
+  /* 2. Section Heading: fix inline flex side-by-side bug, stack eyebrow cleanly */
   #dashboardContent > .section-heading {
     order: 2;
     margin-bottom: 10px;
     padding: 0 2px;
   }
 
+  #dashboardContent > .section-heading > div {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 2px !important;
+  }
+
   #dashboardContent > .section-heading .section-label {
-    margin-bottom: 1px;
+    margin-bottom: 0;
     font-size: 10px;
-    font-weight: 750;
-    letter-spacing: 0.5px;
-    color: #166534;
+    font-weight: 700;
+    letter-spacing: 0.65px;
+    color: #15803d;
   }
 
   #dashboardContent > .section-heading h2 {
-    font-size: 15.5px;
+    margin: 0;
+    font-size: 15px;
     font-weight: 750;
-    color: #0f2419;
+    color: #0f172a;
+    letter-spacing: -0.015em;
   }
 
+  /* 3. Single Signature Login-Gradient Bento KPI Showcase Card */
   #dashboardContent > .stats-grid {
     order: 3;
+    position: relative;
+    display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-    margin-bottom: 20px;
+    gap: 0;
+    margin-bottom: 22px;
+    border-radius: 20px;
+    overflow: clip;
+    background: linear-gradient(140deg, #052313 0%, #0b3b20 40%, #115930 78%, #166534 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow:
+      0 16px 32px -12px rgba(6, 40, 22, 0.34),
+      0 4px 12px rgba(6, 40, 22, 0.12);
+  }
+
+  #dashboardContent > .stats-grid::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      radial-gradient(circle at 90% 10%, rgba(74, 222, 128, 0.15) 0%, transparent 46%),
+      radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+    background-size: 100% 100%, 20px 20px;
   }
 
   #dashboardContent .stat-card {
+    position: relative;
+    z-index: 1;
+    display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
-    min-height: 68px !important;
-    padding: 12px 12px !important;
+    min-height: 76px !important;
+    padding: 15px 14px !important;
     gap: 11px !important;
-    border-radius: 15px !important;
-    border: 1px solid #e4ebe6 !important;
-    background: #ffffff !important;
-    box-shadow: 0 2px 8px rgba(15, 36, 25, 0.04) !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  #dashboardContent > .stats-grid > .stat-card:nth-child(odd) {
+    border-right: 1px solid rgba(255, 255, 255, 0.12) !important;
+  }
+
+  #dashboardContent > .stats-grid > .stat-card:nth-child(-n+2) {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
   }
 
   #dashboardContent .stat-icon {
-    width: 38px !important;
-    height: 38px !important;
-    flex: 0 0 38px !important;
-    border-radius: 11px !important;
+    width: 36px !important;
+    height: 36px !important;
+    flex: 0 0 36px !important;
+    border-radius: 10px !important;
+    background: rgba(255, 255, 255, 0.12) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    color: #86efac !important;
   }
 
   #dashboardContent .stat-icon svg {
-    width: 19px;
-    height: 19px;
+    display: block;
+    width: 18px;
+    height: 18px;
   }
 
   #dashboardContent .stat-data {
     display: flex !important;
     flex-direction: column-reverse !important;
     gap: 2px !important;
-    min-width: 0;
+    min-inline-size: 0;
   }
 
   #dashboardContent .stat-data strong {
     font-size: 20px !important;
     font-weight: 800 !important;
-    color: #0f2419 !important;
-    line-height: 1.08 !important;
+    color: #ffffff !important;
+    line-height: 1.1 !important;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
   }
 
   #dashboardContent .stat-data span {
     font-size: 11px !important;
-    font-weight: 600 !important;
-    color: #64748b !important;
-    line-height: 1.2 !important;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-weight: 500 !important;
+    color: rgba(220, 252, 231, 0.85) !important;
+    line-height: 1.25 !important;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
   }
 
-  /* Section 3: Akses Cepat (Unified Minimalist 2x2 Action Cards) */
+  /* 4. Akses Cepat: Clean Icon-Top 2x2 SaaS Action Grid (Zero Text Truncation) */
   #dashboardContent > .mobile-quick-actions {
     order: 4;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
   }
 
   #dashboardContent .quick-actions-header {
     margin-bottom: 10px;
+    padding: 0 2px;
   }
 
   #dashboardContent .quick-badge {
     font-size: 10px;
-    font-weight: 750;
-    letter-spacing: 0.5px;
-    color: #166534;
+    font-weight: 700;
+    letter-spacing: 0.65px;
+    color: #15803d;
   }
 
   #dashboardContent .quick-title {
-    font-size: 15.5px;
+    font-size: 15px;
     font-weight: 750;
-    color: #0f2419;
+    color: #0f172a;
+    letter-spacing: -0.015em;
   }
 
   #dashboardContent .quick-date {
@@ -2939,6 +3065,8 @@ body.dashboard-page {
   }
 
   #dashboardContent .quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
   }
 
@@ -2947,15 +3075,26 @@ body.dashboard-page {
   #dashboardContent .card-responder,
   #dashboardContent .card-attendance,
   #dashboardContent .card-journal {
-    flex-direction: row !important;
-    align-items: center !important;
-    min-height: 66px;
-    padding: 11px 10px !important;
-    gap: 9px !important;
-    border-radius: 15px !important;
+    display: grid !important;
+    grid-template-columns: 38px 1fr !important;
+    grid-template-rows: auto auto !important;
+    align-items: start !important;
+    align-content: space-between !important;
+    gap: 0 !important;
+    min-height: 102px;
+    padding: 14px 13px !important;
+    border-radius: 16px !important;
     background: #ffffff !important;
-    border: 1px solid #e4ebe6 !important;
-    box-shadow: 0 2px 8px rgba(15, 36, 25, 0.04) !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 4px 14px -6px rgba(15, 23, 42, 0.06) !important;
+    text-align: left;
+    transition: transform 140ms ease, background-color 140ms ease, border-color 140ms ease;
+  }
+
+  #dashboardContent .quick-action-card:active {
+    transform: scale(0.98);
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
   }
 
   #dashboardContent .quick-pill {
@@ -2963,64 +3102,77 @@ body.dashboard-page {
   }
 
   #dashboardContent .quick-icon-wrap {
-    width: 36px !important;
-    height: 36px !important;
-    flex: 0 0 36px !important;
-    border-radius: 10px !important;
+    grid-column: 1;
+    grid-row: 1;
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 11px !important;
     margin-bottom: 0 !important;
     box-shadow: none !important;
   }
 
   #dashboardContent .quick-icon-wrap svg {
-    width: 18px;
-    height: 18px;
+    display: block;
+    width: 19px;
+    height: 19px;
   }
 
   #dashboardContent .card-scan-qr .quick-icon-wrap {
-    background: #e8f5ee !important;
-    color: #166534 !important;
+    background: #ecfdf5 !important;
+    color: #15803d !important;
   }
 
   #dashboardContent .card-responder .quick-icon-wrap {
-    background: #e6f6f2 !important;
+    background: #f0fdfa !important;
     color: #0f766e !important;
   }
 
   #dashboardContent .card-attendance .quick-icon-wrap {
-    background: #e8f2fc !important;
+    background: #eff6ff !important;
     color: #0369a1 !important;
   }
 
   #dashboardContent .card-journal .quick-icon-wrap {
-    background: #fef5e4 !important;
+    background: #fffbeb !important;
     color: #b45309 !important;
-  }
-
-  #dashboardContent .quick-text-wrap {
-    flex: 1 1 0;
-    min-width: 0;
-  }
-
-  #dashboardContent .quick-label {
-    font-size: 12.5px !important;
-    font-weight: 700 !important;
-    color: #0f2419 !important;
-    line-height: 1.2 !important;
-  }
-
-  #dashboardContent .quick-sub {
-    font-size: 10.5px !important;
-    color: #64748b !important;
-    margin-top: 2px !important;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   #dashboardContent .quick-chevron {
     display: block !important;
-    flex: 0 0 14px;
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+    align-self: center;
+    width: 15px;
+    height: 15px;
     color: #94a3b8;
+  }
+
+  #dashboardContent .quick-text-wrap {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+    min-inline-size: 0;
+    margin-top: 12px;
+  }
+
+  #dashboardContent .quick-label {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+    line-height: 1.25 !important;
+    letter-spacing: -0.01em;
+  }
+
+  #dashboardContent .quick-sub {
+    font-size: 11.5px !important;
+    font-weight: 500 !important;
+    color: #64748b !important;
+    margin-top: 2px !important;
+    line-height: 1.3 !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
   }
 
   /* Hide duplicate desktop shortcut block on mobile */
@@ -3028,40 +3180,113 @@ body.dashboard-page {
     display: none !important;
   }
 
+  /* 5. Refined White Finance Card (eliminates neon-mint clash) */
   #dashboardContent > #financeQuickAccessBanner {
     order: 5;
-    margin-top: 10px !important;
-    margin-bottom: 10px !important;
+    width: 100%;
+    margin: 6px 0 12px !important;
     padding: 16px !important;
-    border-radius: 16px !important;
+    border-radius: 18px !important;
+    background: #ffffff !important;
+    background-image: none !important;
+    color: #0f172a !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 4px 16px -6px rgba(15, 23, 42, 0.06) !important;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
   }
 
-  /* Sleeker Chatbot FAB so it never crowds cards or bottom nav */
+  #dashboardContent > #financeQuickAccessBanner .finance-banner-left {
+    align-items: flex-start;
+    gap: 12px;
+    flex: 0 0 auto;
+  }
+
+  #dashboardContent > #financeQuickAccessBanner .finance-banner-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: #ecfdf5;
+    border: 1px solid #d1fae5;
+    color: #047857;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  #dashboardContent > #financeQuickAccessBanner .finance-banner-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  #dashboardContent > #financeQuickAccessBanner .finance-banner-eyebrow {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #15803d;
+    opacity: 1;
+    margin-bottom: 2px;
+  }
+
+  #dashboardContent > #financeQuickAccessBanner .finance-banner-title {
+    font-size: 15px;
+    font-weight: 750;
+    color: #0f172a;
+    letter-spacing: -0.015em;
+  }
+
+  #dashboardContent > #financeQuickAccessBanner .finance-banner-desc {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 3px;
+    line-height: 1.45;
+  }
+
+  #dashboardContent > #financeQuickAccessBanner .finance-banner-btn {
+    width: 100%;
+    justify-content: center;
+    background: #115930;
+    color: #ffffff;
+    border-radius: 12px;
+    padding: 11px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    box-shadow: 0 4px 12px -4px rgba(17, 89, 48, 0.35);
+  }
+
+  #dashboardContent .stat-card:hover {
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    box-shadow: none !important;
+  }
+
+  /* Sleek Chatbot FAB synced with portal forest emerald */
   #simataChatbotFab {
-    width: 44px !important;
-    height: 44px !important;
+    width: 42px !important;
+    height: 42px !important;
     bottom: calc(74px + env(safe-area-inset-bottom, 0px)) !important;
-    right: 12px !important;
-    box-shadow: 0 4px 12px rgba(20, 83, 45, 0.25) !important;
+    right: 14px !important;
+    background: #0e4427 !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.22) !important;
+    box-shadow: 0 6px 16px rgba(6, 40, 22, 0.25) !important;
   }
 
   #simataChatbotFab svg {
-    width: 20px !important;
-    height: 20px !important;
+    width: 19px !important;
+    height: 19px !important;
   }
 }
 
 @media (max-width: 480px) {
   .dashboard-layout .content {
-    padding: 14px 12px calc(114px + env(safe-area-inset-bottom, 0px)) !important;
+    padding: 16px 14px calc(130px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
-  #dashboardContent > .welcome-card {
-    margin: -14px -12px 16px;
-    padding: 4px 12px 16px;
+  .dashboard-layout .topbar {
+    padding: 8px 14px;
   }
 
-  body.is-home-view .dashboard-layout .topbar {
-    padding: 8px 12px 6px;
+  #dashboardContent .stat-card {
+    padding: 14px 12px !important;
+    gap: 10px !important;
   }
 }
