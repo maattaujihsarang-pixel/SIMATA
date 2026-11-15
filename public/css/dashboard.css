@@ -3628,20 +3628,15 @@ body.dashboard-page {
 
 .rpt-acad-tab[aria-selected="true"] {
   color: #14532d;
-  font-weight: 700;
   background: #f0fdf4;
 }
 
-/* Non-color active state indicator (underline pseudo-element) */
+/* Non-color active state indicator (border underline on pseudo-element) */
 .rpt-acad-tab[aria-selected="true"]::after {
   content: '';
   position: absolute;
-  left: 10px;
-  right: 10px;
-  bottom: 0;
-  height: 3px;
-  border-radius: 3px 3px 0 0;
-  background: #14532d;
+  inset: auto 10px 0;
+  border-block-end: 3px solid #14532d;
 }
 
 .rpt-acad-tab-badge {
