@@ -278,6 +278,7 @@ function assertCssAndHtmlIntegrity() {
   assert.strictEqual(openBraces, 0, 'CSS must have balanced curly braces');
   assert.ok(css.includes('@container (width < 640px)'), 'CSS must include container query card layout for narrow viewports');
   assert.ok(css.includes('.rpt-acad-tab[aria-selected="true"]::after'), 'CSS must include non-color active indicator pseudo-element for tabs');
+  assert.ok(css.includes('#reportsContent [hidden]'), 'CSS must enforce display:none for [hidden] elements inside #reportsContent');
 
   // 2. HTML UI Structure & Scope Boundaries
   const reportsSectionMatch = html.match(/<section id="reportsContent"[\s\S]*?<\/section>/);

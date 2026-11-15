@@ -3343,6 +3343,11 @@ body.dashboard-page {
   color: #0f172a;
 }
 
+/* Prevent display:flex/grid rules inside Laporan Akademik from overriding HTML [hidden] */
+#reportsContent [hidden] {
+  display: none !important;
+}
+
 .rpt-acad-header {
   display: flex;
   flex-wrap: wrap;
