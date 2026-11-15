@@ -812,7 +812,7 @@ html, body {
   }
 }
 </style>
-  <link rel="stylesheet" href="/css/dashboard.css?v=bug56b">
+  <link rel="stylesheet" href="/css/dashboard.css?v=bug56c">
   <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
   <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
@@ -823,7 +823,7 @@ html, body {
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
   <!-- QRCode.js: QR Code generator library for Student QR Preview & Print -->
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-  <script src="/js/simata-client.js?v=bug56b"></script>
+  <script src="/js/simata-client.js?v=bug56c"></script>
   <script src="/js/notifications.js"></script>
 </head>
 
@@ -3030,7 +3030,7 @@ html, body {
                 <div class="rpt-acad-card-head rpt-acad-card-head-wrap">
                   <div>
                     <h3 id="rptAcadDiscHeading">Monitoring Disiplin &amp; Deteksi Dini Siswa</h3>
-                    <p class="rpt-acad-card-sub">Prioritas tindak lanjut siswa berdasarkan akumulasi Alpa (&ge; 3x = Panggil Wali) dan rasio kehadiran &lt; 85%.</p>
+                    <p class="rpt-acad-card-sub">Kategori Ta&apos;zir otomatis: <strong>Ta&apos;zir Alpa Harian</strong> (&ge; 4 hari penuh/1 semester) &amp; <strong>Ta&apos;zir Alpa Jam</strong> (&ge; 3 JP/7 hari). Siswa <strong>Alpa = 0</strong> (hanya Izin/Sakit) maksimal masuk <em>Pantauan</em>.</p>
                   </div>
                   <div class="rpt-acad-toolbar-controls">
                     <input type="search" id="rptAcadDiscSearch" class="input-box rpt-acad-search" placeholder="Cari nama, NIS, atau kelas..." aria-label="Cari siswa pada laporan disiplin">
@@ -3113,6 +3113,53 @@ html, body {
               </article>
             </div>
           </div>
+
+          <dialog id="rptAcadTazirDialog" class="rpt-tazir-dialog" closedby="any" aria-labelledby="rptTazirDialogTitle">
+            <div class="rpt-tazir-dialog-head">
+              <div>
+                <h2 id="rptTazirDialogTitle">Kelola &amp; Riwayat Ta&apos;zir Siswa</h2>
+                <p id="rptTazirStudentMeta" class="rpt-tazir-dialog-sub">Memuat profil siswa...</p>
+              </div>
+              <button type="button" id="rptTazirCloseBtn" class="rpt-tazir-close" aria-label="Tutup dialog">&times;</button>
+            </div>
+            <div class="rpt-tazir-dialog-body">
+              <div id="rptTazirTriggerBox" class="rpt-tazir-trigger-box"></div>
+              <form id="rptTazirForm" class="rpt-tazir-form">
+                <h3 class="rpt-tazir-section-title">Catat Pelaksanaan Ta&apos;zir</h3>
+                <div class="rpt-tazir-form-grid">
+                  <div class="rpt-tazir-field">
+                    <label for="rptTazirTypeSelect">Jenis Ta&apos;zir</label>
+                    <select id="rptTazirTypeSelect" name="tazir_type" required autofocus>
+                      <option value="JAM">Ta&apos;zir Alpa Jam (&ge; 3 JP / 7 hr)</option>
+                      <option value="HARIAN">Ta&apos;zir Alpa Harian (&ge; 4 hr penuh / smt)</option>
+                      <option value="GABUNGAN">Ta&apos;zir Gabungan (Harian + Jam)</option>
+                    </select>
+                  </div>
+                  <div class="rpt-tazir-field">
+                    <label for="rptTazirDateInput">Tanggal Pelaksanaan</label>
+                    <input type="date" id="rptTazirDateInput" name="action_date" required>
+                  </div>
+                </div>
+                <div class="rpt-tazir-field">
+                  <label for="rptTazirNoteInput">Catatan Pembinaan / Eksekusi</label>
+                  <textarea id="rptTazirNoteInput" name="tazir_note" rows="2" maxlength="1000" placeholder="Contoh: Pemanggilan wali murid, hafalan surat pendek, atau piket kebersihan..."></textarea>
+                </div>
+                <div class="rpt-tazir-form-actions">
+                  <button type="button" id="rptTazirCancelBtn" class="rpt-acad-btn rpt-acad-btn-outline">Tutup</button>
+                  <button type="submit" id="rptTazirSubmitBtn" class="rpt-acad-btn rpt-acad-btn-primary">Simpan Catatan Ta&apos;zir</button>
+                </div>
+              </form>
+              <div class="rpt-tazir-history-section">
+                <div class="rpt-tazir-history-head">
+                  <h3 class="rpt-tazir-section-title">Riwayat Ta&apos;zir Tercatat</h3>
+                  <small class="rpt-tazir-history-hint">Mencatat Ta&apos;zir mereset hitungan Alpa sebelum tanggal pelaksanaan.</small>
+                </div>
+                <div id="rptTazirHistoryWrap" class="rpt-tazir-history-wrap">
+                  <div class="rpt-acad-empty-chart">Memuat riwayat...</div>
+                </div>
+              </div>
+            </div>
+          </dialog>
         </section>
 
         <section id="studentsContent" class="content" style="display:none;">
@@ -10459,8 +10506,18 @@ function showReportsView() {
         tchSearch: '',
         auditFilter: 'incomplete',
         auditSearch: '',
+        tazirDialogStudentId: '',
+        tazirPendingDeleteId: '',
         data: null
     };
+
+    function todayIsoLocal() {
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        const d = String(now.getDate()).padStart(2, '0');
+        return y + '-' + m + '-' + d;
+    }
 
     function esc(val) {
         if (val === null || val === undefined) return '';
@@ -10605,6 +10662,11 @@ function showReportsView() {
                 ? fmtPct(ov.teacher_execution_rate)
                 : '-';
 
+            const harianCnt = Number(ov.harian_tazir_count || 0);
+            const jamCnt = Number(ov.jam_tazir_count || 0);
+            const tazirSplitLabel = fmtNum(harianCnt) + ' Harian &bull; ' + fmtNum(jamCnt) + ' Jam';
+            const tazirBadgeCls = (harianCnt > 0 || jamCnt > 0 || Number(ov.attention_students_count || 0) > 0) ? 'danger' : 'neutral';
+
             kpiGrid.innerHTML =
                 '<article class="rpt-acad-kpi-card">' +
                     '<div class="rpt-kpi-top"><span class="rpt-kpi-label">Kehadiran Siswa</span>' + deltaHtml + '</div>' +
@@ -10617,7 +10679,7 @@ function showReportsView() {
                     '<div class="rpt-kpi-sub">' + fmtNum(ov.teacher_total_logs) + ' JP sesi &bull; ' + fmtNum(ov.teacher_evidence_verified) + ' bukti foto</div>' +
                 '</article>' +
                 '<article class="rpt-acad-kpi-card rpt-kpi-clickable js-rpt-switch-tab" data-target-tab="discipline" role="button" tabindex="0">' +
-                    '<div class="rpt-kpi-top"><span class="rpt-kpi-label">Perlu Perhatian</span><span class="rpt-kpi-badge ' + ((ov.alpa_3plus_count || 0) > 0 ? 'danger' : 'neutral') + '">' + fmtNum(ov.alpa_3plus_count) + ' Alpa &ge; 3x</span></div>' +
+                    '<div class="rpt-kpi-top"><span class="rpt-kpi-label">Perlu Ta&apos;zir</span><span class="rpt-kpi-badge ' + tazirBadgeCls + '">' + tazirSplitLabel + '</span></div>' +
                     '<div class="rpt-kpi-val">' + fmtNum(ov.attention_students_count) + ' <small>siswa</small></div>' +
                     '<div class="rpt-kpi-sub">Dari ' + fmtNum(ov.total_active_students) + ' siswa aktif &bull; Lihat daftar &rarr;</div>' +
                 '</article>' +
@@ -10840,9 +10902,9 @@ function showReportsView() {
         if (pillsEl) {
             const defs = [
                 { key: 'ALL', label: 'Semua Siswa (' + fmtNum(summary.total_students) + ')' },
-                { key: 'ATTENTION', label: 'Perlu Perhatian (' + fmtNum((summary.high || 0) + (summary.medium || 0)) + ')' },
-                { key: 'HIGH', label: 'Panggil Wali (' + fmtNum(summary.high) + ')' },
-                { key: 'MEDIUM', label: 'Peringatan (' + fmtNum(summary.medium) + ')' },
+                { key: 'ATTENTION', label: 'Perlu Ta\u0027zir (' + fmtNum((summary.high || 0) + (summary.medium || 0)) + ')' },
+                { key: 'HIGH', label: 'Ta\u0027zir Alpa Harian (' + fmtNum(summary.high) + ')' },
+                { key: 'MEDIUM', label: 'Ta\u0027zir Alpa Jam (' + fmtNum(summary.medium) + ')' },
                 { key: 'WATCH', label: 'Pantauan (' + fmtNum(summary.watch) + ')' },
                 { key: 'SAFE', label: 'Aman (' + fmtNum(summary.safe) + ')' }
             ];
@@ -10861,7 +10923,31 @@ function showReportsView() {
         }
 
         const bodyHtml = rows.map(function(s) {
-            const metaLine = (s.nis ? 'NIS ' + s.nis : 'NIS -') + ' • ' + (s.class_name || '-');
+            const metaLine = (s.nis ? 'NIS ' + s.nis : 'NIS -') + ' \u2022 ' + (s.class_name || '-');
+            const isCrit = (s.alpa_full_days_sem >= 4 || s.alpa_partial_jp_week >= 3 || s.alpa >= 3);
+            const isWarn = !isCrit && (s.alpa >= 1 || s.alpa_partial_jp_week >= 1 || s.alpa_full_days_sem >= 1);
+            const alpaCls = isCrit ? 'is-crit' : (isWarn ? 'is-warn' : '');
+
+            let statusHtml = '<div class="rpt-status-stack">' +
+                '<span class="rpt-status-chip ' + riskBadgeClass(s.risk_level) + '">' + esc(s.risk_label) + '</span>';
+            if (s.trigger_reason) {
+                statusHtml += '<small class="rpt-reason-sub">' + esc(s.trigger_reason) + '</small>';
+            }
+            if (s.dual_trigger) {
+                statusHtml += '<span class="rpt-dual-badge">+ Juga kena Ta\u0027zir Jam</span>';
+            }
+            if (Number(s.tazir_count || 0) > 0) {
+                statusHtml += '<small class="rpt-settled-sub">Riwayat: ' + fmtNum(s.tazir_count) + 'x Ta\u0027zir' + (s.last_tazir_date ? ' (' + esc(fmtIsoDateID(s.last_tazir_date)) + ')' : '') + '</small>';
+            }
+            statusHtml += '</div>';
+
+            let tazirBtnHtml = '';
+            if (s.needs_tazir) {
+                tazirBtnHtml = '<button type="button" class="rpt-acad-row-btn rpt-acad-row-btn-tazir js-rpt-open-tazir" data-student-id="' + esc(s.student_id) + '">Catat Ta\u0027zir</button>';
+            } else if (Number(s.tazir_count || 0) > 0) {
+                tazirBtnHtml = '<button type="button" class="rpt-acad-row-btn js-rpt-open-tazir" data-student-id="' + esc(s.student_id) + '">Riwayat (' + fmtNum(s.tazir_count) + ')</button>';
+            }
+
             return '<tr>' +
                 '<th scope="row">' +
                     '<div class="rpt-cell-main">' + esc(s.name) + '</div>' +
@@ -10871,10 +10957,10 @@ function showReportsView() {
                 '<td data-label="Hadir" class="num">' + fmtNum(s.hadir) + '</td>' +
                 '<td data-label="Izin" class="num">' + fmtNum(s.izin) + '</td>' +
                 '<td data-label="Sakit" class="num">' + fmtNum(s.sakit) + '</td>' +
-                '<td data-label="Alpa" class="num rpt-num-alpa ' + (s.alpa >= 3 ? 'is-crit' : (s.alpa >= 1 ? 'is-warn' : '')) + '">' + fmtNum(s.alpa) + '</td>' +
+                '<td data-label="Alpa" class="num rpt-num-alpa ' + alpaCls + '">' + fmtNum(s.alpa) + '</td>' +
                 '<td data-label="Kehadiran" class="num">' + esc(s.attendance_pct !== null ? fmtPct(s.attendance_pct) : '-') + '</td>' +
-                '<td data-label="Status"><span class="rpt-status-chip ' + riskBadgeClass(s.risk_level) + '">' + esc(s.risk_label) + '</span></td>' +
-                '<td data-label="Aksi" class="actions"><button type="button" class="rpt-acad-row-btn js-rpt-open-student" data-mode="view" data-student-id="' + esc(s.student_id) + '">Lihat Detail</button></td>' +
+                '<td data-label="Status">' + statusHtml + '</td>' +
+                '<td data-label="Aksi" class="actions"><div class="rpt-row-actions">' + tazirBtnHtml + '<button type="button" class="rpt-acad-row-btn js-rpt-open-student" data-mode="view" data-student-id="' + esc(s.student_id) + '">Detail</button></div></td>' +
             '</tr>';
         }).join('');
 
@@ -11116,9 +11202,29 @@ function showReportsView() {
 
         if (state.activeTab === 'discipline') {
             const rows = getFilteredDisciplineRows().map(function(s) {
-                return [s.nis || '-', s.nisn || '-', s.name, s.class_name, s.homeroom_teacher_name || '-', s.hadir, s.izin, s.sakit, s.alpa, s.attendance_pct !== null ? s.attendance_pct + '%' : '-', s.risk_label];
+                return [
+                    s.nis || '-',
+                    s.nisn || '-',
+                    s.name,
+                    s.class_name,
+                    s.homeroom_teacher_name || '-',
+                    s.hadir,
+                    s.izin,
+                    s.sakit,
+                    s.alpa,
+                    s.alpa_full_days_sem || 0,
+                    s.alpa_partial_jp_week || 0,
+                    s.attendance_pct !== null ? s.attendance_pct + '%' : '-',
+                    s.risk_label,
+                    s.trigger_reason || '-',
+                    s.tazir_count || 0
+                ];
             });
-            exportCsvFile('laporan-disiplin-siswa_' + suffix + '.csv', ['NIS', 'NISN', 'Nama Siswa', 'Kelas', 'Wali Kelas', 'Hadir', 'Izin', 'Sakit', 'Alpa', 'Kehadiran', 'Status Risiko'], rows);
+            exportCsvFile(
+                'laporan-disiplin-siswa_' + suffix + '.csv',
+                ['NIS', 'NISN', 'Nama Siswa', 'Kelas', 'Wali Kelas', 'Hadir', 'Izin', 'Sakit', 'Alpa (Periode)', 'Alpa Harian (Smt)', 'Alpa Jam (7 Hr)', 'Kehadiran', 'Status Disiplin', 'Alasan Pemicu', 'Riwayat Ta\u0027zir'],
+                rows
+            );
             return;
         }
         if (state.activeTab === 'teachers') {
@@ -11160,8 +11266,9 @@ function showReportsView() {
             .filter(function(s) { return s.risk_level === 'HIGH' || s.risk_level === 'MEDIUM'; })
             .slice(0, 15)
             .map(function(s) {
-                return '<tr><td>' + esc(s.name) + '</td><td>' + esc(s.class_name) + '</td><td class="num">' + fmtNum(s.alpa) + '</td><td class="num">' + esc(fmtPct(s.attendance_pct)) + '</td><td>' + esc(s.risk_label) + '</td></tr>';
-            }).join('') || '<tr><td colspan="5">Tidak ada siswa kategori Peringatan / Panggil Wali pada periode ini.</td></tr>';
+                const statusCell = '<strong>' + esc(s.risk_label) + '</strong>' + (s.trigger_reason ? '<br><small style="color:#64748b">' + esc(s.trigger_reason) + '</small>' : '');
+                return '<tr><td>' + esc(s.name) + '</td><td>' + esc(s.class_name) + '</td><td class="num">' + fmtNum(s.alpa) + '</td><td class="num">' + esc(fmtPct(s.attendance_pct)) + '</td><td>' + statusCell + '</td></tr>';
+            }).join('') || '<tr><td colspan="5">Tidak ada siswa kategori Ta\u0027zir Alpa Harian / Ta\u0027zir Alpa Jam pada periode ini.</td></tr>';
 
         const html = '<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Ringkasan Eksekutif Laporan Akademik - SIMATA</title>' +
             '<style>' +
@@ -11181,7 +11288,7 @@ function showReportsView() {
             '<div class="kpi">' +
                 '<div class="kpi-box"><small>Kehadiran Siswa</small><strong>' + esc(fmtPct(ov.student_attendance_rate)) + '</strong></div>' +
                 '<div class="kpi-box"><small>Keterlaksanaan Mengajar</small><strong>' + esc(fmtPct(ov.teacher_execution_rate)) + '</strong></div>' +
-                '<div class="kpi-box"><small>Siswa Perlu Perhatian</small><strong>' + fmtNum(ov.attention_students_count) + ' Siswa</strong></div>' +
+                '<div class="kpi-box"><small>Siswa Perlu Ta\u0027zir</small><strong>' + fmtNum(ov.attention_students_count) + ' Siswa (' + fmtNum(ov.harian_tazir_count) + 'H/' + fmtNum(ov.jam_tazir_count) + 'J)</strong></div>' +
                 '<div class="kpi-box"><small>Kelengkapan Berkas</small><strong>' + esc(fmtPct(ov.data_readiness_rate)) + '</strong></div>' +
             '</div>' +
             '<h2>1. Rekapitulasi Kehadiran per Kelas</h2>' +
@@ -11221,6 +11328,10 @@ function showReportsView() {
                 if (errBox) errBox.hidden = true;
                 state.data = res.data;
                 renderAllPanels();
+                if (state.tazirDialogStudentId) {
+                    const updatedStudent = findDisciplineStudent(state.tazirDialogStudentId);
+                    if (updatedStudent) renderTazirTriggerSummary(updatedStudent);
+                }
             })
             .withFailureHandler(function(err) {
                 if (mySeq !== state.reqSeq) return;
@@ -11365,7 +11476,7 @@ function showReportsView() {
             });
         }
 
-        // Delegated actions (KPI shortcuts + Open Student/Teacher Modal)
+        // Delegated actions (KPI shortcuts + Ta'zir Modal + Open Student/Teacher Modal)
         root.addEventListener('click', function(ev) {
             const tabShortcut = ev.target.closest('.js-rpt-switch-tab');
             if (tabShortcut) {
@@ -11375,6 +11486,11 @@ function showReportsView() {
                     renderDisciplinePanel();
                 }
                 setActiveTab(targetTab, { focus: false });
+                return;
+            }
+            const tazirBtn = ev.target.closest('.js-rpt-open-tazir');
+            if (tazirBtn) {
+                openTazirModal(tazirBtn.getAttribute('data-student-id'));
                 return;
             }
             const stuBtn = ev.target.closest('.js-rpt-open-student');
@@ -11393,6 +11509,8 @@ function showReportsView() {
             }
         });
 
+        bindTazirDialogEvents();
+
         root.addEventListener('keydown', function(ev) {
             if (ev.key !== 'Enter' && ev.key !== ' ') return;
             const tabShortcut = ev.target.closest('.js-rpt-switch-tab');
@@ -11401,6 +11519,268 @@ function showReportsView() {
                 tabShortcut.click();
             }
         });
+    }
+
+    function tazirTypeLabel(type) {
+        if (type === 'HARIAN') return 'Ta\u0027zir Alpa Harian';
+        if (type === 'GABUNGAN') return 'Ta\u0027zir Gabungan (Harian + Jam)';
+        return 'Ta\u0027zir Alpa Jam';
+    }
+
+    function findDisciplineStudent(studentId) {
+        const list = (state.data && state.data.discipline && Array.isArray(state.data.discipline.students))
+            ? state.data.discipline.students
+            : [];
+        return list.find(function(item) { return item.student_id === studentId; }) || null;
+    }
+
+    function renderTazirTriggerSummary(studentObj) {
+        const box = document.getElementById('rptTazirTriggerBox');
+        if (!box) return;
+        if (!studentObj) {
+            box.innerHTML = '';
+            return;
+        }
+        const rules = (state.data && state.data.discipline && state.data.discipline.rules) || {};
+        const harianMax = Number(rules.harian_threshold_days || 4);
+        const jamMax = Number(rules.jam_threshold_jp || 3);
+
+        box.innerHTML =
+            '<div class="rpt-tazir-trigger-top">' +
+                '<span class="rpt-status-chip ' + riskBadgeClass(studentObj.risk_level) + '">' + esc(studentObj.risk_label) + '</span>' +
+                '<small class="rpt-reason-sub">' + esc(studentObj.trigger_reason || 'Tidak ada pemicu Ta\u0027zir aktif') + '</small>' +
+            '</div>' +
+            '<div class="rpt-tazir-metrics-row">' +
+                '<div class="rpt-tazir-metric"><small>Alpa Harian Aktif (1 Smt)</small><strong>' + fmtNum(studentObj.alpa_full_days_sem) + ' / ' + fmtNum(harianMax) + ' hr penuh</strong></div>' +
+                '<div class="rpt-tazir-metric"><small>Alpa Jam Aktif (7 Hr)</small><strong>' + fmtNum(studentObj.alpa_partial_jp_week) + ' / ' + fmtNum(jamMax) + ' JP</strong></div>' +
+                '<div class="rpt-tazir-metric"><small>Total Histori Ta\u0027zir</small><strong>' + fmtNum(studentObj.tazir_count) + ' kali</strong></div>' +
+            '</div>';
+    }
+
+    function renderTazirHistoryList(history) {
+        const wrap = document.getElementById('rptTazirHistoryWrap');
+        if (!wrap) return;
+        const rows = Array.isArray(history) ? history : [];
+        if (rows.length === 0) {
+            wrap.innerHTML = '<div class="rpt-acad-empty-chart">Belum ada riwayat pelaksanaan Ta\u0027zir untuk siswa ini.</div>';
+            return;
+        }
+        const canDelete = (typeof isCurrentUserAdmin !== 'undefined' && Boolean(isCurrentUserAdmin));
+        wrap.innerHTML = rows.map(function(h) {
+            const typeSlug = String(h.tazir_type || 'JAM').toLowerCase();
+            const isPendingDel = state.tazirPendingDeleteId === h.tazir_id;
+            let actionRight = '';
+            if (canDelete) {
+                actionRight = '<button type="button" class="rpt-tazir-hist-del-btn js-rpt-tazir-ask-del" data-tazir-id="' + esc(h.tazir_id) + '"' + (isPendingDel ? ' disabled' : '') + '>Hapus</button>';
+            }
+            let confirmBar = '';
+            if (canDelete && isPendingDel) {
+                confirmBar =
+                    '<div class="rpt-tazir-del-confirm-bar">' +
+                        '<span>Hapus catatan Ta\u0027zir ini? Alpa siswa akan dihitung ulang.</span>' +
+                        '<div class="rpt-tazir-del-confirm-btns">' +
+                            '<button type="button" class="rpt-tazir-del-do js-rpt-tazir-confirm-del" data-tazir-id="' + esc(h.tazir_id) + '">Ya, Hapus</button>' +
+                            '<button type="button" class="rpt-tazir-del-cancel js-rpt-tazir-cancel-del">Batal</button>' +
+                        '</div>' +
+                    '</div>';
+            }
+            return '<article class="rpt-tazir-hist-item">' +
+                '<div class="rpt-tazir-hist-top">' +
+                    '<div class="rpt-tazir-hist-badges">' +
+                        '<span class="rpt-tazir-type-badge ' + esc(typeSlug) + '">' + esc(tazirTypeLabel(h.tazir_type)) + '</span>' +
+                        '<span class="rpt-tazir-hist-date">' + esc(fmtIsoDateID(h.action_date)) + '</span>' +
+                    '</div>' +
+                    actionRight +
+                '</div>' +
+                (h.tazir_note ? '<p class="rpt-tazir-hist-note">' + esc(h.tazir_note) + '</p>' : '') +
+                '<div class="rpt-tazir-hist-meta">' +
+                    (h.trigger_summary ? 'Pemicu: ' + esc(h.trigger_summary) + ' \u2022 ' : '') +
+                    'Dicatat oleh: ' + esc(h.recorded_by_name || 'Sistem') +
+                '</div>' +
+                confirmBar +
+            '</article>';
+        }).join('');
+    }
+
+    function loadTazirDialogHistory(studentId) {
+        const wrap = document.getElementById('rptTazirHistoryWrap');
+        if (wrap) wrap.innerHTML = '<div class="rpt-acad-empty-chart">Memuat riwayat Ta\u0027zir...</div>';
+        if (typeof simataClient === 'undefined' || !simataClient.getStudentTazirHistory) return;
+
+        simataClient
+            .withSuccessHandler(function(res) {
+                if (state.tazirDialogStudentId !== studentId) return;
+                const hist = (res && res.data && Array.isArray(res.data.history)) ? res.data.history : [];
+                state.tazirHistoryCache = hist;
+                renderTazirHistoryList(hist);
+            })
+            .withFailureHandler(function(err) {
+                if (state.tazirDialogStudentId !== studentId) return;
+                if (wrap) {
+                    wrap.innerHTML = '<div class="rpt-acad-empty-chart">' + esc((err && err.message) || 'Gagal memuat riwayat Ta\u0027zir.') + '</div>';
+                }
+            })
+            .getStudentTazirHistory(studentId);
+    }
+
+    function openTazirModal(studentId) {
+        const dialog = document.getElementById('rptAcadTazirDialog');
+        if (!dialog || typeof dialog.showModal !== 'function') return;
+        const s = findDisciplineStudent(studentId);
+        state.tazirDialogStudentId = studentId;
+        state.tazirPendingDeleteId = '';
+        state.tazirHistoryCache = [];
+
+        const metaEl = document.getElementById('rptTazirStudentMeta');
+        if (metaEl) {
+            metaEl.textContent = s
+                ? (s.name + ' \u2022 ' + (s.class_name || '-') + (s.nis ? ' \u2022 NIS ' + s.nis : ''))
+                : ('Siswa ' + studentId);
+        }
+        renderTazirTriggerSummary(s);
+
+        const typeSelect = document.getElementById('rptTazirTypeSelect');
+        if (typeSelect) {
+            const rec = s && s.recommended_tazir_type ? s.recommended_tazir_type : 'JAM';
+            typeSelect.value = (rec === 'HARIAN' || rec === 'GABUNGAN' || rec === 'JAM') ? rec : 'JAM';
+        }
+        const dateInput = document.getElementById('rptTazirDateInput');
+        if (dateInput) {
+            const today = todayIsoLocal();
+            dateInput.max = today;
+            dateInput.value = today;
+        }
+        const noteInput = document.getElementById('rptTazirNoteInput');
+        if (noteInput) noteInput.value = '';
+
+        dialog.showModal();
+        loadTazirDialogHistory(studentId);
+    }
+
+    function bindTazirDialogEvents() {
+        const dialog = document.getElementById('rptAcadTazirDialog');
+        if (!dialog) return;
+
+        const closeBtn = document.getElementById('rptTazirCloseBtn');
+        const cancelBtn = document.getElementById('rptTazirCancelBtn');
+        if (closeBtn) closeBtn.addEventListener('click', function() { dialog.close('cancel'); });
+        if (cancelBtn) cancelBtn.addEventListener('click', function() { dialog.close('cancel'); });
+
+        dialog.addEventListener('close', function() {
+            dialog.returnValue = '';
+            state.tazirDialogStudentId = '';
+            state.tazirPendingDeleteId = '';
+            state.tazirHistoryCache = [];
+        });
+
+        // Fallback light-dismiss for browsers without <dialog closedby="any">
+        if (!('closedBy' in HTMLDialogElement.prototype)) {
+            let pressedOutside = false;
+            const isOutsideDialog = function(e) {
+                const r = dialog.getBoundingClientRect();
+                return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
+            };
+            dialog.addEventListener('pointerdown', function(e) {
+                pressedOutside = (e.target === dialog) && isOutsideDialog(e);
+            });
+            dialog.addEventListener('pointerup', function(e) {
+                if (pressedOutside && e.target === dialog && isOutsideDialog(e)) dialog.close('backdrop');
+                pressedOutside = false;
+            });
+        }
+
+        const form = document.getElementById('rptTazirForm');
+        if (form) {
+            form.addEventListener('submit', function(ev) {
+                ev.preventDefault();
+                const sid = state.tazirDialogStudentId;
+                if (!sid) return;
+                const typeSelect = document.getElementById('rptTazirTypeSelect');
+                const dateInput = document.getElementById('rptTazirDateInput');
+                const noteInput = document.getElementById('rptTazirNoteInput');
+                const submitBtn = document.getElementById('rptTazirSubmitBtn');
+                const stuObj = findDisciplineStudent(sid);
+
+                const payload = {
+                    student_id: sid,
+                    tazir_type: typeSelect ? typeSelect.value : 'JAM',
+                    action_date: dateInput ? dateInput.value : todayIsoLocal(),
+                    trigger_summary: stuObj ? (stuObj.trigger_reason || '') : '',
+                    tazir_note: noteInput ? noteInput.value.trim() : ''
+                };
+
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Menyimpan...';
+                }
+
+                simataClient
+                    .withSuccessHandler(function() {
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.textContent = 'Simpan Catatan Ta\u0027zir';
+                        }
+                        if (typeof showToast === 'function') {
+                            showToast('success', 'Ta\u0027zir Tercatat', 'Pelaksanaan Ta\u0027zir disimpan & hitungan Alpa siswa diperbarui.');
+                        }
+                        dialog.close('saved');
+                        loadReportsData();
+                    })
+                    .withFailureHandler(function(err) {
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.textContent = 'Simpan Catatan Ta\u0027zir';
+                        }
+                        if (typeof showToast === 'function') {
+                            showToast('error', 'Gagal Menyimpan Ta\u0027zir', (err && err.message) || 'Terjadi kesalahan saat menyimpan.');
+                        }
+                    })
+                    .recordStudentTazir(payload);
+            });
+        }
+
+        const histWrap = document.getElementById('rptTazirHistoryWrap');
+        if (histWrap) {
+            histWrap.addEventListener('click', function(ev) {
+                const askBtn = ev.target.closest('.js-rpt-tazir-ask-del');
+                if (askBtn) {
+                    state.tazirPendingDeleteId = askBtn.getAttribute('data-tazir-id') || '';
+                    renderTazirHistoryList(state.tazirHistoryCache || []);
+                    return;
+                }
+                const cancelDelBtn = ev.target.closest('.js-rpt-tazir-cancel-del');
+                if (cancelDelBtn) {
+                    state.tazirPendingDeleteId = '';
+                    renderTazirHistoryList(state.tazirHistoryCache || []);
+                    return;
+                }
+                const doDelBtn = ev.target.closest('.js-rpt-tazir-confirm-del');
+                if (doDelBtn) {
+                    const tid = doDelBtn.getAttribute('data-tazir-id');
+                    const sid = state.tazirDialogStudentId;
+                    if (!tid) return;
+                    doDelBtn.disabled = true;
+                    doDelBtn.textContent = 'Menghapus...';
+                    simataClient
+                        .withSuccessHandler(function() {
+                            state.tazirPendingDeleteId = '';
+                            if (typeof showToast === 'function') {
+                                showToast('success', 'Riwayat Dihapus', 'Catatan Ta\u0027zir dihapus & status siswa dihitung ulang.');
+                            }
+                            if (sid) loadTazirDialogHistory(sid);
+                            loadReportsData();
+                        })
+                        .withFailureHandler(function(err) {
+                            doDelBtn.disabled = false;
+                            doDelBtn.textContent = 'Ya, Hapus';
+                            if (typeof showToast === 'function') {
+                                showToast('error', 'Gagal Menghapus', (err && err.message) || 'Akses ditolak atau gagal menghapus.');
+                            }
+                        })
+                        .deleteStudentTazir(tid);
+                }
+            });
+        }
     }
 
     window.__simataInitReportsUi = bindEventsOnce;

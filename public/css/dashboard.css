@@ -4496,3 +4496,426 @@ body.dashboard-page {
     grid-column: 1 / -1;
   }
 }
+
+/* =========================================================
+   TA'ZIR DISCIPLINE STATUS STACK, ACTIONS & NATIVE DIALOG
+========================================================= */
+.rpt-status-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.rpt-reason-sub {
+  font-size: 11px;
+  color: #475569;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.rpt-dual-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.rpt-settled-sub {
+  font-size: 10.5px;
+  color: #047857;
+  font-weight: 600;
+}
+
+.rpt-row-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.rpt-acad-row-btn-tazir {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #b91c1c;
+  font-weight: 700;
+}
+
+.rpt-acad-row-btn-tazir:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #991b1b;
+}
+
+@media (max-width: 768px) {
+  .rpt-status-stack {
+    align-items: flex-end;
+    text-align: right;
+  }
+
+  .rpt-acad-table tbody td.actions .rpt-row-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 8px;
+  }
+}
+
+dialog.rpt-tazir-dialog {
+  margin: auto;
+  padding: 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 18px;
+  width: min(560px, calc(100vw - 24px));
+  max-height: calc(100dvh - 32px);
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 24px 48px -12px rgba(15, 23, 42, 0.25);
+  overflow: hidden;
+}
+
+dialog.rpt-tazir-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+dialog.rpt-tazir-dialog:modal {
+  overscroll-behavior: contain;
+}
+
+dialog.rpt-tazir-dialog::backdrop {
+  overflow: hidden;
+  overscroll-behavior: contain;
+  background-color: rgba(15, 23, 42, 0.48);
+  backdrop-filter: blur(2px);
+}
+
+.rpt-tazir-dialog-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.rpt-tazir-dialog-head h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.rpt-tazir-dialog-sub {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  color: #475569;
+  font-weight: 500;
+}
+
+.rpt-tazir-close {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #475569;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rpt-tazir-close:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.rpt-tazir-dialog-body {
+  padding: 18px 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.rpt-tazir-trigger-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rpt-tazir-trigger-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.rpt-tazir-metrics-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.rpt-tazir-metric {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rpt-tazir-metric small {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.rpt-tazir-metric strong {
+  font-size: 13.5px;
+  color: #0f172a;
+  font-weight: 800;
+}
+
+.rpt-tazir-section-title {
+  margin: 0 0 8px;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.rpt-tazir-form {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rpt-tazir-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.rpt-tazir-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rpt-tazir-field label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.rpt-tazir-field select,
+.rpt-tazir-field input,
+.rpt-tazir-field textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 9px 11px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #0f172a;
+  background: #ffffff;
+}
+
+.rpt-tazir-field select:focus,
+.rpt-tazir-field input:focus,
+.rpt-tazir-field textarea:focus {
+  outline: 2px solid #16a34a;
+  outline-offset: 1px;
+}
+
+.rpt-tazir-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.rpt-tazir-history-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 8px;
+}
+
+.rpt-tazir-history-hint {
+  font-size: 11.5px;
+  color: #64748b;
+}
+
+.rpt-tazir-history-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rpt-tazir-hist-item {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rpt-tazir-hist-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.rpt-tazir-hist-badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.rpt-tazir-type-badge {
+  display: inline-flex;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.rpt-tazir-type-badge.harian,
+.rpt-tazir-type-badge.gabungan {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.rpt-tazir-type-badge.jam {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.rpt-tazir-hist-date {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.rpt-tazir-hist-note {
+  margin: 0;
+  font-size: 12.5px;
+  color: #1e293b;
+  line-height: 1.4;
+}
+
+.rpt-tazir-hist-meta {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.rpt-tazir-hist-del-btn {
+  padding: 4px 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid #fecaca;
+  background: #ffffff;
+  color: #b91c1c;
+  cursor: pointer;
+}
+
+.rpt-tazir-hist-del-btn:hover:not(:disabled) {
+  background: #fee2e2;
+}
+
+.rpt-tazir-hist-del-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.rpt-tazir-del-confirm-bar {
+  margin-top: 4px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  color: #991b1b;
+}
+
+.rpt-tazir-del-confirm-btns {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.rpt-tazir-del-do,
+.rpt-tazir-del-cancel {
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.rpt-tazir-del-do {
+  background: #dc2626;
+  border: 1px solid #b91c1c;
+  color: #ffffff;
+}
+
+.rpt-tazir-del-cancel {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+}
+
+@media (max-width: 560px) {
+  .rpt-tazir-dialog-head,
+  .rpt-tazir-dialog-body {
+    padding: 14px;
+  }
+
+  .rpt-tazir-metrics-row,
+  .rpt-tazir-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rpt-tazir-form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .rpt-tazir-form-actions .rpt-acad-btn {
+    width: 100%;
+    min-height: 42px;
+  }
+}

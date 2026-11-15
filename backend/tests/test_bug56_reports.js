@@ -7,11 +7,15 @@ const app = require('../src/app');
 const testDbEngine = require('./test_db_engine');
 const { setMockQueryHandler, setMockTransactionHandler } = require('../src/config/database');
 
-async function requestJson(baseUrl, method, urlPath, { token = null } = {}) {
+async function requestJson(baseUrl, method, urlPath, { token = null, body = undefined } = {}) {
   const headers = { 'Content-Type': 'application/json' };
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await globalThis.fetch(`${baseUrl}${urlPath}`, { method, headers });
+  const opts = { method, headers };
+  if (body !== undefined) {
+    opts.body = typeof body === 'string' ? body : JSON.stringify(body);
+  }
+  const res = await globalThis.fetch(`${baseUrl}${urlPath}`, opts);
   const json = await res.json();
   return { status: res.status, json };
 }
@@ -238,6 +242,166 @@ function createReportsMockQueryHandler() {
       return { rows, rowCount: rows.length };
     }
 
+    if (q.includes('/* REPORTS: STUDENT_ALPA_DAILY */')) {
+      const [startDate, endDate, classId] = params;
+      const classDayPeriods = new Map();
+      for (const sa of testDbEngine.student_attendance) {
+        if (sa.attendance_date < startDate || sa.attendance_date > endDate) continue;
+        const ck = `${sa.class_id}::${sa.attendance_date}`;
+        if (!classDayPeriods.has(ck)) classDayPeriods.set(ck, new Set());
+        classDayPeriods.get(ck).add(sa.period);
+      }
+
+      const activeStudentSet = new Set(
+        testDbEngine.students
+          .filter((s) => s.status === 'Active' && (!classId || s.class_id === classId))
+          .map((s) => s.student_id)
+      );
+      const stuDayMap = new Map();
+      for (const sa of testDbEngine.student_attendance) {
+        if (!activeStudentSet.has(sa.student_id)) continue;
+        if (sa.attendance_date < startDate || sa.attendance_date > endDate) continue;
+        const sk = `${sa.student_id}::${sa.class_id}::${sa.attendance_date}`;
+        if (!stuDayMap.has(sk)) {
+          stuDayMap.set(sk, {
+            student_id: sa.student_id,
+            class_id: sa.class_id,
+            attendance_date: sa.attendance_date,
+            recorded_periods: 0,
+            hadir_day: 0,
+            izin_day: 0,
+            sakit_day: 0,
+            alpa_day: 0
+          });
+        }
+        const entry = stuDayMap.get(sk);
+        entry.recorded_periods += 1;
+        if (sa.status === 'Hadir') entry.hadir_day += 1;
+        else if (sa.status === 'Izin') entry.izin_day += 1;
+        else if (sa.status === 'Sakit') entry.sakit_day += 1;
+        else if (sa.status === 'Alpa') entry.alpa_day += 1;
+      }
+
+      const rows = [...stuDayMap.values()]
+        .filter((d) => d.alpa_day > 0)
+        .map((d) => {
+          const pSet = classDayPeriods.get(`${d.class_id}::${d.attendance_date}`);
+          return {
+            student_id: d.student_id,
+            attendance_date: d.attendance_date,
+            hadir_day: d.hadir_day,
+            izin_day: d.izin_day,
+            sakit_day: d.sakit_day,
+            alpa_day: d.alpa_day,
+            class_periods_day: pSet ? pSet.size : d.recorded_periods
+          };
+        });
+      return { rows, rowCount: rows.length };
+    }
+
+    if (q.includes('/* REPORTS: STUDENT_TAZIR_SUMMARY */')) {
+      const [endDate, semesterStart] = params;
+      const activeStudentSet = new Set(
+        testDbEngine.students.filter((s) => s.status === 'Active').map((s) => s.student_id)
+      );
+      const tazirRows = (testDbEngine.student_tazir_actions || []).filter(
+        (sta) => activeStudentSet.has(sta.student_id) && sta.action_date <= endDate && sta.action_date >= semesterStart
+      );
+      const byStu = new Map();
+      for (const sta of tazirRows) {
+        if (!byStu.has(sta.student_id)) {
+          byStu.set(sta.student_id, {
+            student_id: sta.student_id,
+            last_harian_date: null,
+            last_jam_date: null,
+            last_action_date: null,
+            total_actions: 0
+          });
+        }
+        const cur = byStu.get(sta.student_id);
+        cur.total_actions += 1;
+        if (!cur.last_action_date || sta.action_date > cur.last_action_date) cur.last_action_date = sta.action_date;
+        if (sta.tazir_type === 'HARIAN' || sta.tazir_type === 'GABUNGAN') {
+          if (!cur.last_harian_date || sta.action_date > cur.last_harian_date) cur.last_harian_date = sta.action_date;
+        }
+        if (sta.tazir_type === 'JAM' || sta.tazir_type === 'GABUNGAN') {
+          if (!cur.last_jam_date || sta.action_date > cur.last_jam_date) cur.last_jam_date = sta.action_date;
+        }
+      }
+      const rows = [...byStu.values()];
+      return { rows, rowCount: rows.length };
+    }
+
+    if (q.includes('/* REPORTS: TAZIR_STUDENT_LOOKUP */')) {
+      const [studentId] = params;
+      const stu = testDbEngine.students.find((s) => s.student_id === studentId);
+      if (!stu) return { rows: [], rowCount: 0 };
+      const cls = testDbEngine.classes.find((c) => c.class_id === stu.class_id) || {};
+      return {
+        rows: [{
+          student_id: stu.student_id,
+          name: stu.name,
+          nis: stu.nis,
+          class_id: stu.class_id,
+          class_name: cls.class_name || stu.class_id
+        }],
+        rowCount: 1
+      };
+    }
+
+    if (q.includes('/* REPORTS: TAZIR_HISTORY_LIST */')) {
+      const [studentId] = params;
+      const rows = (testDbEngine.student_tazir_actions || [])
+        .filter((sta) => sta.student_id === studentId)
+        .sort((a, b) => b.action_date.localeCompare(a.action_date) || String(b.created_at).localeCompare(String(a.created_at)))
+        .map((sta) => {
+          const u = testDbEngine.users.find((x) => x.user_id === sta.recorded_by_user_id) || {};
+          return {
+            tazir_id: sta.tazir_id,
+            student_id: sta.student_id,
+            academic_year_id: sta.academic_year_id,
+            tazir_type: sta.tazir_type,
+            action_date: sta.action_date,
+            trigger_summary: sta.trigger_summary,
+            tazir_note: sta.tazir_note,
+            created_at: sta.created_at,
+            recorded_by_name: u.full_name || null
+          };
+        });
+      return { rows, rowCount: rows.length };
+    }
+
+    if (q.includes('/* REPORTS: TAZIR_STUDENT_CHECK */')) {
+      const [studentId] = params;
+      const stu = testDbEngine.students.find((s) => s.student_id === studentId);
+      return { rows: stu ? [{ student_id: stu.student_id, name: stu.name, status: stu.status }] : [], rowCount: stu ? 1 : 0 };
+    }
+
+    if (q.includes('/* REPORTS: TAZIR_INSERT */')) {
+      const [tazirId, studentId, academicYearId, tazirType, actionDate, triggerSummary, tazirNote, recordedByUserId] = params;
+      const row = {
+        tazir_id: tazirId,
+        student_id: studentId,
+        academic_year_id: academicYearId,
+        tazir_type: tazirType,
+        action_date: actionDate,
+        trigger_summary: triggerSummary,
+        tazir_note: tazirNote,
+        recorded_by_user_id: recordedByUserId,
+        created_at: new Date().toISOString()
+      };
+      testDbEngine.student_tazir_actions.push(row);
+      return { rows: [row], rowCount: 1 };
+    }
+
+    if (q.includes('/* REPORTS: TAZIR_DELETE */')) {
+      const [tazirId] = params;
+      const idx = (testDbEngine.student_tazir_actions || []).findIndex((r) => r.tazir_id === tazirId);
+      if (idx < 0) return { rows: [], rowCount: 0 };
+      const [removed] = testDbEngine.student_tazir_actions.splice(idx, 1);
+      return { rows: [{ tazir_id: removed.tazir_id, student_id: removed.student_id }], rowCount: 1 };
+    }
+
     if (q.includes('/* REPORTS: TEACHER_DATA_AUDIT */')) {
       const rows = testDbEngine.teachers
         .filter((t) => t.status === 'Active')
@@ -279,6 +443,8 @@ function assertCssAndHtmlIntegrity() {
   assert.ok(css.includes('@container (width < 640px)'), 'CSS must include container query card layout for narrow viewports');
   assert.ok(css.includes('.rpt-acad-tab[aria-selected="true"]::after'), 'CSS must include non-color active indicator pseudo-element for tabs');
   assert.ok(css.includes('#reportsContent [hidden]'), 'CSS must enforce display:none for [hidden] elements inside #reportsContent');
+  assert.ok(css.includes('dialog.rpt-tazir-dialog[open]'), 'CSS must scope dialog display via [open] state');
+  assert.ok(css.includes('dialog.rpt-tazir-dialog:modal'), 'CSS must contain modal overscroll containment');
 
   // 2. HTML UI Structure & Scope Boundaries
   const reportsSectionMatch = html.match(/<section id="reportsContent"[\s\S]*?<\/section>/);
@@ -287,6 +453,8 @@ function assertCssAndHtmlIntegrity() {
   assert.ok(!reportsHtml.includes('development-notice'), '#reportsContent placeholder development-notice must be removed');
   assert.ok(reportsHtml.includes('role="tablist"'), '#reportsContent must render accessible role="tablist"');
   assert.ok(reportsHtml.includes('focusgroup="tablist nomemory"'), '#reportsContent tablist must include focusgroup="tablist nomemory"');
+  assert.ok(reportsHtml.includes('<dialog id="rptAcadTazirDialog"'), '#reportsContent must include native <dialog id="rptAcadTazirDialog">');
+  assert.ok(!/id="rptAcadTazirDialog"[^>]*\brole=["']dialog["']/.test(reportsHtml), 'Native modal <dialog> must not set redundant role="dialog"');
   const tabPanelMatches = reportsHtml.match(/role="tabpanel"/g) || [];
   assert.strictEqual(tabPanelMatches.length, 4, '#reportsContent must contain exactly 4 tab panels');
 
@@ -308,18 +476,22 @@ function assertCssAndHtmlIntegrity() {
   assert.ok(compiledScripts >= 2, 'dashboard.html inline scripts must compile cleanly');
   new vm.Script(clientJs, { filename: 'simata-client.js' });
   assert.ok(clientJs.includes('getAcademicReports'), 'simata-client.js must expose getAcademicReports');
+  assert.ok(clientJs.includes('getStudentTazirHistory'), 'simata-client.js must expose getStudentTazirHistory');
+  assert.ok(clientJs.includes('recordStudentTazir'), 'simata-client.js must expose recordStudentTazir');
+  assert.ok(clientJs.includes('deleteStudentTazir'), 'simata-client.js must expose deleteStudentTazir');
 }
 
 async function runBug56ReportsTests() {
   console.log('\n===============================================================');
-  console.log('BUG 56: ACADEMIC REPORTS ANALYTICS & MOBILE UI REGRESSION SUITE');
+  console.log('BUG 56: ACADEMIC REPORTS ANALYTICS & TAZIR DISCIPLINE SUITE');
   console.log('===============================================================');
 
   assertCssAndHtmlIntegrity();
-  console.log('1. PASS: HTML, CSS braces/container queries, and inline JS compilation verified.');
+  console.log('1. PASS: HTML (<dialog> rules), CSS braces/container queries, and inline JS compilation verified.');
 
   await testDbEngine.reset();
   testDbEngine.profile_photos = [];
+  testDbEngine.student_tazir_actions = [];
 
   setMockQueryHandler(createReportsMockQueryHandler());
   setMockTransactionHandler((cb) => testDbEngine.handleTransaction(cb));
@@ -355,16 +527,38 @@ async function runBug56ReportsTests() {
     const guruToken = guruAuth.data.token;
 
     // 3. Seed representative students, attendance, journals, photos, documents
-    testDbEngine.students.push({
-      student_id: 'STD-K11001',
-      class_id: 'CLS-2627-11',
-      name: 'MUHAMMAD RIZQI',
-      gender: 'L',
-      nis: '1101',
-      nisn: '',
-      qr_code_id: 'SQR-11001',
-      status: 'Active'
-    });
+    testDbEngine.students.push(
+      {
+        student_id: 'STD-K11001',
+        class_id: 'CLS-2627-11',
+        name: 'MUHAMMAD RIZQI',
+        gender: 'L',
+        nis: '1101',
+        nisn: '',
+        qr_code_id: 'SQR-11001',
+        status: 'Active'
+      },
+      {
+        student_id: 'STD-K11002',
+        class_id: 'CLS-2627-11',
+        name: 'HISYAM IZIN SAKIT',
+        gender: 'L',
+        nis: '1102',
+        nisn: '001102',
+        qr_code_id: 'SQR-11002',
+        status: 'Active'
+      },
+      {
+        student_id: 'STD-K11003',
+        class_id: 'CLS-2627-11',
+        name: 'AHMAD DUAL TRIGGER',
+        gender: 'L',
+        nis: '1103',
+        nisn: '001103',
+        qr_code_id: 'SQR-11003',
+        status: 'Active'
+      }
+    );
     testDbEngine.teachers[0].teaching_hours = 24;
     testDbEngine.teachers[1].teaching_hours = 18;
 
@@ -391,43 +585,178 @@ async function runBug56ReportsTests() {
       });
     }
 
+    // Earlier in semester (2026-09-01..2026-09-04):
+    // STD-K11003 gets 4 full-day Alpa (2 periods/day, all Alpa) -> triggers Harian from semester window!
+    for (const dt of ['2026-09-01', '2026-09-02', '2026-09-03', '2026-09-04']) {
+      for (let p = 1; p <= 2; p += 1) {
+        testDbEngine.student_attendance.push({
+          attendance_id: `SA-SEP-DUAL-${dt}-${p}`,
+          student_id: 'STD-K11003',
+          class_id: 'CLS-2627-11',
+          academic_year_id: '2026/2027',
+          attendance_date: dt,
+          period: p,
+          status: 'Alpa'
+        });
+      }
+    }
+
     // Current period (2026-11-01 .. 2026-11-15):
-    // STD-K10001: 7 Hadir, 3 Alpa => 70% & Alpa=3 => HIGH ("Panggil Wali")
-    for (let p = 1; p <= 10; p += 1) {
-      testDbEngine.student_attendance.push({
-        attendance_id: `SA-CURR-1-${p}`,
-        student_id: 'STD-K10001',
-        class_id: 'CLS-2627-10',
-        academic_year_id: '2026/2027',
-        attendance_date: p <= 7 ? '2026-11-03' : '2026-11-04',
-        period: ((p - 1) % 7) + 1,
-        status: p <= 7 ? 'Hadir' : 'Alpa'
-      });
+    // CLS-2627-10: STD-K10001 has 4 full-day Alpa (2 periods/day on Nov 2..5) + 2 Hadir (Nov 10) => 4 full days => HIGH ("Ta'zir Alpa Harian")
+    //              STD-K10002 has 10 Hadir on those same 5 days => 100% => SAFE ("Aman")
+    let seqId = 1;
+    for (const dt of ['2026-11-02', '2026-11-03', '2026-11-04', '2026-11-05']) {
+      for (let p = 1; p <= 2; p += 1) {
+        testDbEngine.student_attendance.push(
+          {
+            attendance_id: `SA-CURR-${seqId++}`,
+            student_id: 'STD-K10001',
+            class_id: 'CLS-2627-10',
+            academic_year_id: '2026/2027',
+            attendance_date: dt,
+            period: p,
+            status: 'Alpa'
+          },
+          {
+            attendance_id: `SA-CURR-${seqId++}`,
+            student_id: 'STD-K10002',
+            class_id: 'CLS-2627-10',
+            academic_year_id: '2026/2027',
+            attendance_date: dt,
+            period: p,
+            status: 'Hadir'
+          }
+        );
+      }
     }
-    // STD-K10002: 10 Hadir => 100% => SAFE ("Aman")
-    for (let p = 1; p <= 10; p += 1) {
+    for (let p = 1; p <= 2; p += 1) {
+      testDbEngine.student_attendance.push(
+        {
+          attendance_id: `SA-CURR-${seqId++}`,
+          student_id: 'STD-K10001',
+          class_id: 'CLS-2627-10',
+          academic_year_id: '2026/2027',
+          attendance_date: '2026-11-10',
+          period: p,
+          status: 'Hadir'
+        },
+        {
+          attendance_id: `SA-CURR-${seqId++}`,
+          student_id: 'STD-K10002',
+          class_id: 'CLS-2627-10',
+          academic_year_id: '2026/2027',
+          attendance_date: '2026-11-10',
+          period: p,
+          status: 'Hadir'
+        }
+      );
+    }
+
+    // CLS-2627-11:
+    // STD-K11002: 3 Izin + 3 Sakit, 0 Hadir, 0 Alpa on Nov 9 -> MUST remain WATCH ("Pantauan"), NEVER Ta'zir!
+    for (let p = 1; p <= 6; p += 1) {
       testDbEngine.student_attendance.push({
-        attendance_id: `SA-CURR-2-${p}`,
-        student_id: 'STD-K10002',
-        class_id: 'CLS-2627-10',
+        attendance_id: `SA-CURR-${seqId++}`,
+        student_id: 'STD-K11002',
+        class_id: 'CLS-2627-11',
         academic_year_id: '2026/2027',
-        attendance_date: '2026-11-03',
+        attendance_date: '2026-11-09',
         period: p,
-        status: 'Hadir'
+        status: p <= 3 ? 'Izin' : 'Sakit'
       });
     }
-    // STD-K11001: 3 Hadir, 1 Alpa => 75% => MEDIUM ("Peringatan")
-    for (let p = 1; p <= 4; p += 1) {
-      testDbEngine.student_attendance.push({
-        attendance_id: `SA-CURR-3-${p}`,
+
+    // STD-K11001: 3 partial-JP Alpa in rolling 7 days (Nov 10 p2, Nov 11 p2, Nov 12 sparse 1-period day p1!) => MEDIUM ("Ta'zir Alpa Jam")
+    // STD-K11003: 3 partial-JP Alpa in rolling 7 days (Nov 10 p2, Nov 11 p2, Nov 13 p2) + 4 Sept full days => HIGH Dual Trigger (GABUNGAN)
+    for (const dt of ['2026-11-10', '2026-11-11']) {
+      testDbEngine.student_attendance.push(
+        {
+          attendance_id: `SA-CURR-${seqId++}`,
+          student_id: 'STD-K11001',
+          class_id: 'CLS-2627-11',
+          academic_year_id: '2026/2027',
+          attendance_date: dt,
+          period: 1,
+          status: 'Hadir'
+        },
+        {
+          attendance_id: `SA-CURR-${seqId++}`,
+          student_id: 'STD-K11001',
+          class_id: 'CLS-2627-11',
+          academic_year_id: '2026/2027',
+          attendance_date: dt,
+          period: 2,
+          status: 'Alpa'
+        },
+        {
+          attendance_id: `SA-CURR-${seqId++}`,
+          student_id: 'STD-K11003',
+          class_id: 'CLS-2627-11',
+          academic_year_id: '2026/2027',
+          attendance_date: dt,
+          period: 1,
+          status: 'Hadir'
+        },
+        {
+          attendance_id: `SA-CURR-${seqId++}`,
+          student_id: 'STD-K11003',
+          class_id: 'CLS-2627-11',
+          academic_year_id: '2026/2027',
+          attendance_date: dt,
+          period: 2,
+          status: 'Alpa'
+        }
+      );
+    }
+    // Sparse 1-period class day (2026-11-12): ONLY 1 period in CLS-2627-11 -> counts as Alpa per jam!
+    testDbEngine.student_attendance.push({
+      attendance_id: `SA-CURR-${seqId++}`,
+      student_id: 'STD-K11001',
+      class_id: 'CLS-2627-11',
+      academic_year_id: '2026/2027',
+      attendance_date: '2026-11-12',
+      period: 1,
+      status: 'Alpa'
+    });
+    // 2026-11-13 (2 periods): STD-K11001 Hadir x2, STD-K11003 Hadir+Alpa
+    testDbEngine.student_attendance.push(
+      {
+        attendance_id: `SA-CURR-${seqId++}`,
         student_id: 'STD-K11001',
         class_id: 'CLS-2627-11',
         academic_year_id: '2026/2027',
-        attendance_date: '2026-11-05',
-        period: p,
-        status: p === 4 ? 'Alpa' : 'Hadir'
-      });
-    }
+        attendance_date: '2026-11-13',
+        period: 1,
+        status: 'Hadir'
+      },
+      {
+        attendance_id: `SA-CURR-${seqId++}`,
+        student_id: 'STD-K11001',
+        class_id: 'CLS-2627-11',
+        academic_year_id: '2026/2027',
+        attendance_date: '2026-11-13',
+        period: 2,
+        status: 'Hadir'
+      },
+      {
+        attendance_id: `SA-CURR-${seqId++}`,
+        student_id: 'STD-K11003',
+        class_id: 'CLS-2627-11',
+        academic_year_id: '2026/2027',
+        attendance_date: '2026-11-13',
+        period: 1,
+        status: 'Hadir'
+      },
+      {
+        attendance_id: `SA-CURR-${seqId++}`,
+        student_id: 'STD-K11003',
+        class_id: 'CLS-2627-11',
+        academic_year_id: '2026/2027',
+        attendance_date: '2026-11-13',
+        period: 2,
+        status: 'Alpa'
+      }
+    );
 
     // Teacher attendance + 1 verified photo evidence
     testDbEngine.teacher_attendance.push(
@@ -486,24 +815,65 @@ async function runBug56ReportsTests() {
     assert.strictEqual(rptRes.status, 200, 'Authorized academic report request must succeed');
     const data = rptRes.json.data;
 
-    // Overview KPI assertions: 20 Hadir out of 24 total = 83.3%, prev = 100.0%, delta = -16.7
-    assert.strictEqual(data.overview.student_attendance_rate, 83.3);
-    assert.strictEqual(data.overview.student_attendance_delta, -16.7);
-    assert.strictEqual(data.overview.student_breakdown.alpa, 4);
+    // Overview KPI assertions: 19 Hadir out of 39 total = 48.7%, prev = 100.0%, delta = -51.3
+    assert.strictEqual(data.overview.student_attendance_rate, 48.7);
+    assert.strictEqual(data.overview.student_attendance_delta, -51.3);
+    assert.strictEqual(data.overview.student_breakdown.alpa, 14);
     assert.strictEqual(data.overview.teacher_execution_rate, 66.7); // (1 Hadir + 1 TugasLuar) / 3
     assert.strictEqual(data.overview.teacher_evidence_verified, 1);
-    assert.strictEqual(data.overview.alpa_3plus_count, 1);
-    assert.strictEqual(data.overview.attention_students_count, 2); // HIGH + MEDIUM
+    assert.strictEqual(data.overview.harian_tazir_count, 2); // STD-K10001 + STD-K11003
+    assert.strictEqual(data.overview.jam_tazir_count, 1);    // STD-K11001
+    assert.strictEqual(data.overview.attention_students_count, 3); // Perlu Ta'zir (HIGH + MEDIUM)
     assert.strictEqual(data.overview.rdm_notice.system_name, 'RDM Madrasah Kemenag');
+    assert.deepStrictEqual(data.discipline.rules, {
+      harian_threshold_days: 4,
+      jam_threshold_jp: 3,
+      semester_start: '2026-07-01',
+      week_start: '2026-11-09',
+      window_end: '2026-11-15'
+    });
 
-    // Discipline sorting & risk classification
-    assert.strictEqual(data.discipline.students[0].student_id, 'STD-K10001');
-    assert.strictEqual(data.discipline.students[0].risk_level, 'HIGH');
-    assert.strictEqual(data.discipline.students[0].risk_label, 'Panggil Wali');
-    assert.strictEqual(data.discipline.students[1].student_id, 'STD-K11001');
-    assert.strictEqual(data.discipline.students[1].risk_level, 'MEDIUM');
-    assert.strictEqual(data.discipline.students[2].student_id, 'STD-K10002');
-    assert.strictEqual(data.discipline.students[2].risk_level, 'SAFE');
+    // Discipline sorting, Opsi A classifications & custom rules verification
+    const stuById = new Map(data.discipline.students.map((s) => [s.student_id, s]));
+    const sK10001 = stuById.get('STD-K10001');
+    const sK10002 = stuById.get('STD-K10002');
+    const sK11001 = stuById.get('STD-K11001');
+    const sK11002 = stuById.get('STD-K11002');
+    const sK11003 = stuById.get('STD-K11003');
+
+    // STD-K10001: 4 full days Alpa (8 JP across 4 full days must NOT double-count into partial JP!)
+    assert.strictEqual(sK10001.risk_level, 'HIGH');
+    assert.strictEqual(sK10001.risk_label, "Ta'zir Alpa Harian");
+    assert.strictEqual(sK10001.alpa_full_days_sem, 4);
+    assert.strictEqual(sK10001.alpa_partial_jp_week, 0);
+    assert.strictEqual(sK10001.needs_tazir, true);
+    assert.strictEqual(sK10001.dual_trigger, false);
+    assert.strictEqual(sK10001.recommended_tazir_type, 'HARIAN');
+
+    // STD-K11003: Dual Trigger (4 full days in Sept + 3 partial JP in Nov 7d) -> GABUNGAN
+    assert.strictEqual(sK11003.risk_level, 'HIGH');
+    assert.strictEqual(sK11003.risk_label, "Ta'zir Alpa Harian");
+    assert.strictEqual(sK11003.alpa_full_days_sem, 4);
+    assert.strictEqual(sK11003.alpa_partial_jp_week, 3);
+    assert.strictEqual(sK11003.dual_trigger, true);
+    assert.strictEqual(sK11003.recommended_tazir_type, 'GABUNGAN');
+
+    // STD-K11001: 3 partial-JP Alpa in 7d (including sparse 1-period day on Nov 12) -> Ta'zir Alpa Jam
+    assert.strictEqual(sK11001.risk_level, 'MEDIUM');
+    assert.strictEqual(sK11001.risk_label, "Ta'zir Alpa Jam");
+    assert.strictEqual(sK11001.alpa_full_days_sem, 0);
+    assert.strictEqual(sK11001.alpa_partial_jp_week, 3);
+    assert.strictEqual(sK11001.recommended_tazir_type, 'JAM');
+
+    // STD-K11002: Heavy Izin+Sakit (3+3, 0% hadir) with Alpa=0 -> MUST be WATCH ("Pantauan"), NEVER Ta'zir!
+    assert.strictEqual(sK11002.risk_level, 'WATCH');
+    assert.strictEqual(sK11002.risk_label, 'Pantauan');
+    assert.strictEqual(sK11002.needs_tazir, false);
+    assert.ok(sK11002.trigger_reason.includes('Alpa 0'), 'Izin/Sakit-only student trigger reason must note Alpa 0');
+
+    // STD-K10002: Clean -> Aman
+    assert.strictEqual(sK10002.risk_level, 'SAFE');
+    assert.strictEqual(sK10002.risk_label, 'Aman');
 
     // Teacher latest journal enrichment
     const tch1 = data.teacher_performance.teachers.find((t) => t.teacher_id === 'TCH-0001');
@@ -522,16 +892,87 @@ async function runBug56ReportsTests() {
     const guruClassRes = await requestJson(baseUrl, 'GET', '/api/v1/reports/academic?preset=custom&startDate=2026-11-01&endDate=2026-11-15&classId=CLS-2627-10', { token: guruToken });
     assert.strictEqual(guruClassRes.status, 200, 'GURU must be allowed access to academic reports');
     assert.strictEqual(guruClassRes.json.data.discipline.students.length, 2, 'Class filter must restrict discipline students to CLS-2627-10');
-    assert.strictEqual(guruClassRes.json.data.overview.student_attendance_rate, 85); // 17 Hadir / 20 records
+    assert.strictEqual(guruClassRes.json.data.overview.student_attendance_rate, 60); // 12 Hadir / 20 records
 
-    // 7. Standard presets (7d, month, semester)
+    // 7. Ta'zir Execution, Settlement Reset, History Retrieval & Admin Undo Flow
+    // 7a. Invalid type rejected (400) & Student lookup 404
+    const badTazir = await requestJson(baseUrl, 'POST', '/api/v1/reports/tazir', {
+      token: guruToken,
+      body: { student_id: 'STD-K10001', tazir_type: 'INVALID', action_date: '2026-11-15' }
+    });
+    assert.strictEqual(badTazir.status, 400, 'Invalid tazir_type must return 400');
+
+    // 7b. Record Harian Ta'zir on 2026-11-03 (partially settles Nov 2-3, leaving Nov 4-5 = 2 days -> Pantauan!)
+    const partialSettle = await requestJson(baseUrl, 'POST', '/api/v1/reports/tazir', {
+      token: guruToken,
+      body: {
+        student_id: 'STD-K10001',
+        tazir_type: 'HARIAN',
+        action_date: '2026-11-03',
+        trigger_summary: '2 hr awal',
+        tazir_note: 'Pembinaan awal'
+      }
+    });
+    assert.strictEqual(partialSettle.status, 201, 'GURU must be allowed to record Ta\'zir execution');
+    const partialTazirId = partialSettle.json.data.tazir_id;
+
+    const afterPartial = await requestJson(baseUrl, 'GET', '/api/v1/reports/academic?preset=custom&startDate=2026-11-01&endDate=2026-11-15', { token: guruToken });
+    const k1Partial = afterPartial.json.data.discipline.students.find((s) => s.student_id === 'STD-K10001');
+    assert.strictEqual(k1Partial.alpa_full_days_sem, 2, 'Settlement up to 2026-11-03 must count only subsequent days (Nov 4, Nov 5)');
+    assert.strictEqual(k1Partial.risk_level, 'WATCH', 'With 2 unsettled full days remaining, student drops to Pantauan');
+    assert.strictEqual(k1Partial.tazir_count, 1);
+
+    // 7c. Record GABUNGAN Ta'zir on 2026-11-15 for STD-K11003 (resets both Harian & Jam -> Aman!)
+    const dualSettle = await requestJson(baseUrl, 'POST', '/api/v1/reports/tazir', {
+      token: guruToken,
+      body: {
+        student_id: 'STD-K11003',
+        tazir_type: 'GABUNGAN',
+        action_date: '2026-11-15',
+        trigger_summary: '4 hr penuh + 3 JP',
+        tazir_note: 'Pemanggilan wali murid & hafalan'
+      }
+    });
+    assert.strictEqual(dualSettle.status, 201);
+    const afterDual = await requestJson(baseUrl, 'GET', '/api/v1/reports/academic?preset=custom&startDate=2026-11-01&endDate=2026-11-15', { token: adminToken });
+    const k11003After = afterDual.json.data.discipline.students.find((s) => s.student_id === 'STD-K11003');
+    assert.strictEqual(k11003After.risk_level, 'WATCH', 'After Ta\'zir settlement with Alpa visible in view range, student drops from Ta\'zir to Pantauan');
+    // Actually verify dual unsettlement specifically:
+    assert.strictEqual(k11003After.alpa_full_days_sem, 0, 'GABUNGAN settles Harian full-day count to 0');
+    assert.strictEqual(k11003After.alpa_partial_jp_week, 0, 'GABUNGAN settles Jam partial-JP count to 0');
+    assert.strictEqual(k11003After.needs_tazir, false);
+
+    // Query when view window is after action_date (2026-11-16..2026-11-20 with 0 new Alpa) -> SAFE ("Tuntas 1x Ta'zir")
+    const afterCleanPeriod = await requestJson(baseUrl, 'GET', '/api/v1/reports/academic?preset=custom&startDate=2026-11-16&endDate=2026-11-20', { token: adminToken });
+    const k11003Clean = afterCleanPeriod.json.data.discipline.students.find((s) => s.student_id === 'STD-K11003');
+    assert.strictEqual(k11003Clean.risk_level, 'SAFE');
+    assert.strictEqual(k11003Clean.trigger_reason, "Tuntas 1x Ta'zir");
+
+    // 7d. History GET (GURU allowed) & DELETE RBAC (GURU 403 -> ADMIN 200 restores counts)
+    const histRes = await requestJson(baseUrl, 'GET', '/api/v1/reports/tazir/STD-K10001', { token: guruToken });
+    assert.strictEqual(histRes.status, 200);
+    assert.strictEqual(histRes.json.data.history.length, 1);
+    assert.strictEqual(histRes.json.data.history[0].tazir_id, partialTazirId);
+
+    const guruDelRes = await requestJson(baseUrl, 'DELETE', `/api/v1/reports/tazir/${partialTazirId}`, { token: guruToken });
+    assert.strictEqual(guruDelRes.status, 403, 'Only ADMIN may delete Ta\'zir history');
+
+    const adminDelRes = await requestJson(baseUrl, 'DELETE', `/api/v1/reports/tazir/${partialTazirId}`, { token: adminToken });
+    assert.strictEqual(adminDelRes.status, 200, 'ADMIN delete Ta\'zir history must return 200');
+
+    const restoredReport = await requestJson(baseUrl, 'GET', '/api/v1/reports/academic?preset=custom&startDate=2026-11-01&endDate=2026-11-15', { token: adminToken });
+    const k1Restored = restoredReport.json.data.discipline.students.find((s) => s.student_id === 'STD-K10001');
+    assert.strictEqual(k1Restored.alpa_full_days_sem, 4, 'Deleting Ta\'zir record must restore unsettled full-day count to 4');
+    assert.strictEqual(k1Restored.risk_level, 'HIGH');
+
+    // 8. Standard presets (7d, month, semester)
     for (const preset of ['7d', 'month', 'semester']) {
       const pRes = await requestJson(baseUrl, 'GET', `/api/v1/reports/academic?preset=${preset}`, { token: adminToken });
       assert.strictEqual(pRes.status, 200, `Preset '${preset}' must return HTTP 200`);
     }
 
-    console.log('2. PASS: Reports RBAC, validation, attendance deltas, risk detection, teacher journals & archive audit verified.');
-    console.log('ALL BUG 56 ACADEMIC REPORT TESTS PASSED.');
+    console.log('2. PASS: Reports RBAC, Ta\'zir rules (Harian/Jam/Dual/Alpa=0 Pantauan), settlement & history undo verified.');
+    console.log('ALL BUG 56 ACADEMIC REPORT & TAZIR TESTS PASSED.');
     return true;
   } finally {
     server.close();

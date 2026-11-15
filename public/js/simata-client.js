@@ -1660,6 +1660,26 @@
       const qs = query.toString();
       const res = await apiFetch('/reports/academic' + (qs ? '?' + qs : ''));
       return { success: true, data: res.data };
+    },
+
+    getStudentTazirHistory: async function (studentId) {
+      const res = await apiFetch('/reports/tazir/' + encodeURIComponent(studentId));
+      return { success: true, data: res.data };
+    },
+
+    recordStudentTazir: async function (payload) {
+      const res = await apiFetch('/reports/tazir', {
+        method: 'POST',
+        body: JSON.stringify(payload || {})
+      });
+      return { success: true, message: res.message, data: res.data };
+    },
+
+    deleteStudentTazir: async function (tazirId) {
+      const res = await apiFetch('/reports/tazir/' + encodeURIComponent(tazirId), {
+        method: 'DELETE'
+      });
+      return { success: true, message: res.message, data: res.data };
     }
   };
 

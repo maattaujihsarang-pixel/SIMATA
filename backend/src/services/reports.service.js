@@ -1,9 +1,13 @@
 const db = require('../config/database');
 const { getTodayISODate } = require('../utils/date.util');
-const { BadRequestError } = require('../errors');
+const { generateUUID } = require('../utils/id-generator.util');
+const { BadRequestError, NotFoundError } = require('../errors');
 
 const ISO_DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 const VALID_PRESETS = ['7d', 'month', 'semester', 'custom'];
+const VALID_TAZIR_TYPES = ['HARIAN', 'JAM', 'GABUNGAN'];
+const TAZIR_HARIAN_THRESHOLD_DAYS = 4;
+const TAZIR_JAM_THRESHOLD_JP = 3;
 const MAX_CUSTOM_SPAN_DAYS = 366;
 
 const MONTH_SHORT_ID = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
@@ -60,17 +64,94 @@ function computeRatePct(numerator, denominator) {
   return roundOneDecimal((numerator / denominator) * 100);
 }
 
-function classifyStudentRisk(hadir, izin, sakit, alpa, totalRecords, attendancePct) {
-  if (alpa >= 3) {
-    return { risk_level: 'HIGH', risk_label: 'Panggil Wali', risk_rank: 1 };
+function resolveSemesterStartForDate(endDateIso, activeYear) {
+  const [yearStr, monthStr] = String(endDateIso).split('-');
+  const monthNum = parseInt(monthStr, 10);
+  const fallbackSemesterStart = monthNum >= 7 ? `${yearStr}-07-01` : `${yearStr}-01-01`;
+  const ayStart = activeYear && activeYear.start_date ? String(activeYear.start_date).slice(0, 10) : null;
+  return ayStart && parseISODateUTC(ayStart) && ayStart <= endDateIso
+    ? ayStart
+    : fallbackSemesterStart;
+}
+
+function classifyStudentRisk({
+  alpaFullDaysSem = 0,
+  alpaPartialJpWeek = 0,
+  izin = 0,
+  sakit = 0,
+  alpaDisplay = 0,
+  totalRecords = 0,
+  attendancePct = null,
+  totalTazirCount = 0
+}) {
+  const hitHarian = alpaFullDaysSem >= TAZIR_HARIAN_THRESHOLD_DAYS;
+  const hitJam = alpaPartialJpWeek >= TAZIR_JAM_THRESHOLD_JP;
+
+  if (hitHarian) {
+    return {
+      risk_level: 'HIGH',
+      risk_label: "Ta'zir Alpa Harian",
+      risk_rank: 1,
+      needs_tazir: true,
+      dual_trigger: hitJam,
+      recommended_tazir_type: hitJam ? 'GABUNGAN' : 'HARIAN',
+      trigger_reason: hitJam
+        ? `${alpaFullDaysSem} hr penuh/smt • ${alpaPartialJpWeek} JP/7 hr`
+        : `${alpaFullDaysSem} hr penuh/smt`
+    };
   }
-  if (alpa >= 1 || (totalRecords > 0 && attendancePct !== null && attendancePct < 85)) {
-    return { risk_level: 'MEDIUM', risk_label: 'Peringatan', risk_rank: 2 };
+
+  if (hitJam) {
+    return {
+      risk_level: 'MEDIUM',
+      risk_label: "Ta'zir Alpa Jam",
+      risk_rank: 2,
+      needs_tazir: true,
+      dual_trigger: false,
+      recommended_tazir_type: 'JAM',
+      trigger_reason: `${alpaPartialJpWeek} JP bolos / 7 hr`
+    };
   }
+
+  if (alpaFullDaysSem > 0 || alpaPartialJpWeek > 0 || alpaDisplay > 0) {
+    let reason = `Alpa periode: ${alpaDisplay} JP`;
+    if (alpaPartialJpWeek > 0) {
+      reason = `Alpa: ${alpaPartialJpWeek}/${TAZIR_JAM_THRESHOLD_JP} JP (7 hr)`;
+    } else if (alpaFullDaysSem > 0) {
+      reason = `Alpa: ${alpaFullDaysSem}/${TAZIR_HARIAN_THRESHOLD_DAYS} hr penuh (smt)`;
+    }
+    return {
+      risk_level: 'WATCH',
+      risk_label: 'Pantauan',
+      risk_rank: 3,
+      needs_tazir: false,
+      dual_trigger: false,
+      recommended_tazir_type: null,
+      trigger_reason: reason
+    };
+  }
+
   if (izin + sakit >= 4 || (totalRecords > 0 && attendancePct !== null && attendancePct < 92)) {
-    return { risk_level: 'WATCH', risk_label: 'Perlu Pantauan', risk_rank: 3 };
+    return {
+      risk_level: 'WATCH',
+      risk_label: 'Pantauan',
+      risk_rank: 3,
+      needs_tazir: false,
+      dual_trigger: false,
+      recommended_tazir_type: null,
+      trigger_reason: `Sakit/Izin: ${izin + sakit} JP (Alpa 0)`
+    };
   }
-  return { risk_level: 'SAFE', risk_label: 'Aman', risk_rank: 4 };
+
+  return {
+    risk_level: 'SAFE',
+    risk_label: 'Aman',
+    risk_rank: 4,
+    needs_tazir: false,
+    dual_trigger: false,
+    recommended_tazir_type: null,
+    trigger_reason: totalTazirCount > 0 ? `Tuntas ${totalTazirCount}x Ta'zir` : null
+  };
 }
 
 class ReportsService {
@@ -279,6 +360,9 @@ class ReportsService {
     }
 
     const range = this.resolveDateRange({ preset, startDate, endDate, activeYear });
+    const semesterStart = resolveSemesterStartForDate(range.endDate, activeYear);
+    const weekStart = addDaysISO(range.endDate, -6);
+    const evalMinDate = [range.startDate, semesterStart, weekStart].sort()[0];
 
     // Query parameter builders
     const currParams = cleanClassId
@@ -287,6 +371,9 @@ class ReportsService {
     const prevParams = cleanClassId
       ? [range.prevStartDate, range.prevEndDate, cleanClassId]
       : [range.prevStartDate, range.prevEndDate];
+    const evalParams = cleanClassId
+      ? [evalMinDate, range.endDate, cleanClassId]
+      : [evalMinDate, range.endDate];
 
     const saClassClause = cleanClassId ? 'AND sa.class_id = $3' : '';
     const taClassClause = cleanClassId ? 'AND ta.class_id = $3' : '';
@@ -300,6 +387,8 @@ class ReportsService {
       teacherDailyRes,
       classPerfRes,
       disciplineRes,
+      studentAlpaDailyRes,
+      studentTazirSummaryRes,
       teacherPerfRes,
       recentJournalRes,
       studentAuditRes,
@@ -423,6 +512,69 @@ class ReportsService {
         currParams
       ),
 
+      // 7b. Per-Student Daily Alpa Profile (evaluates Full-Day vs Per-JP Alpa across semester & week windows)
+      db.query(
+        `/* REPORTS: STUDENT_ALPA_DAILY */
+         WITH class_days AS (
+           SELECT sa2.class_id, sa2.attendance_date, COUNT(DISTINCT sa2.period)::int AS class_periods_day
+           FROM student_attendance sa2
+           WHERE sa2.attendance_date BETWEEN $1 AND $2
+           GROUP BY sa2.class_id, sa2.attendance_date
+         ),
+         student_days AS (
+           SELECT
+             sa.student_id,
+             sa.class_id,
+             sa.attendance_date,
+             COUNT(*)::int AS recorded_periods,
+             COUNT(*) FILTER (WHERE sa.status = 'Hadir')::int AS hadir_day,
+             COUNT(*) FILTER (WHERE sa.status = 'Izin')::int AS izin_day,
+             COUNT(*) FILTER (WHERE sa.status = 'Sakit')::int AS sakit_day,
+             COUNT(*) FILTER (WHERE sa.status = 'Alpa')::int AS alpa_day
+           FROM student_attendance sa
+           JOIN students s ON s.student_id = sa.student_id
+           WHERE s.status = 'Active'
+             AND sa.attendance_date BETWEEN $1 AND $2
+             ${studentClassClause}
+           GROUP BY sa.student_id, sa.class_id, sa.attendance_date
+           HAVING COUNT(*) FILTER (WHERE sa.status = 'Alpa') > 0
+         )
+         SELECT
+           sd.student_id,
+           sd.attendance_date::text AS attendance_date,
+           sd.hadir_day,
+           sd.izin_day,
+           sd.sakit_day,
+           sd.alpa_day,
+           COALESCE(cd.class_periods_day, sd.recorded_periods)::int AS class_periods_day
+         FROM student_days sd
+         LEFT JOIN class_days cd
+           ON cd.class_id = sd.class_id
+          AND cd.attendance_date = sd.attendance_date`,
+        evalParams
+      ),
+
+      // 7c. Student Ta'zir Settlement History Summary (within active semester up to endDate)
+      db.query(
+        `/* REPORTS: STUDENT_TAZIR_SUMMARY */
+         SELECT
+           sta.student_id,
+           MAX(sta.action_date) FILTER (WHERE sta.tazir_type IN ('HARIAN', 'GABUNGAN'))::text AS last_harian_date,
+           MAX(sta.action_date) FILTER (WHERE sta.tazir_type IN ('JAM', 'GABUNGAN'))::text AS last_jam_date,
+           MAX(sta.action_date)::text AS last_action_date,
+           COUNT(*)::int AS total_actions
+         FROM student_tazir_actions sta
+         JOIN students s ON s.student_id = sta.student_id
+         WHERE s.status = 'Active'
+           AND sta.action_date <= $1
+           AND sta.action_date >= $2
+         GROUP BY sta.student_id`,
+        [range.endDate, semesterStart]
+      ).catch((err) => {
+        if (err && err.code === '42P01') return { rows: [] };
+        throw err;
+      }),
+
       // 8. Teacher Performance & Verified Evidence Counts
       db.query(
         `/* REPORTS: TEACHER_PERFORMANCE */
@@ -538,6 +690,61 @@ class ReportsService {
       ? roundOneDecimal(studentRate - prevRate)
       : null;
 
+    // Index settled Ta'zir actions per student
+    const tazirSummaryByStudent = new Map();
+    for (const row of (studentTazirSummaryRes.rows || [])) {
+      tazirSummaryByStudent.set(row.student_id, {
+        last_harian_date: row.last_harian_date ? String(row.last_harian_date).slice(0, 10) : null,
+        last_jam_date: row.last_jam_date ? String(row.last_jam_date).slice(0, 10) : null,
+        last_action_date: row.last_action_date ? String(row.last_action_date).slice(0, 10) : null,
+        total_actions: Number(row.total_actions || 0)
+      });
+    }
+
+    // Classify daily Alpa per student into Full-Day (semester) vs Partial-JP (weekly)
+    const alpaStatsByStudent = new Map();
+    for (const row of (studentAlpaDailyRes.rows || [])) {
+      const sid = row.student_id;
+      const dt = String(row.attendance_date).slice(0, 10);
+      const hadirDay = Number(row.hadir_day || 0);
+      const izinDay = Number(row.izin_day || 0);
+      const sakitDay = Number(row.sakit_day || 0);
+      const alpaDay = Number(row.alpa_day || 0);
+      const classPeriodsDay = Number(row.class_periods_day || 0);
+
+      if (!alpaStatsByStudent.has(sid)) {
+        alpaStatsByStudent.set(sid, {
+          unsettledFullDaysSem: 0,
+          unsettledPartialJpWeek: 0,
+          totalFullDaysSem: 0,
+          totalPartialJpWeek: 0
+        });
+      }
+      const bucket = alpaStatsByStudent.get(sid);
+      const settle = tazirSummaryByStudent.get(sid) || {};
+
+      // Full-day Alpa requires >= 2 periods recorded for class on that day AND 0 Hadir/Izin/Sakit
+      const isFullDayAlpa =
+        alpaDay > 0 &&
+        hadirDay === 0 &&
+        izinDay === 0 &&
+        sakitDay === 0 &&
+        classPeriodsDay >= 2 &&
+        alpaDay >= classPeriodsDay;
+
+      if (isFullDayAlpa && dt >= semesterStart && dt <= range.endDate) {
+        bucket.totalFullDaysSem += 1;
+        if (!settle.last_harian_date || dt > settle.last_harian_date) {
+          bucket.unsettledFullDaysSem += 1;
+        }
+      } else if (!isFullDayAlpa && dt >= weekStart && dt <= range.endDate) {
+        bucket.totalPartialJpWeek += alpaDay;
+        if (!settle.last_jam_date || dt > settle.last_jam_date) {
+          bucket.unsettledPartialJpWeek += alpaDay;
+        }
+      }
+    }
+
     // Build Discipline Rows & Counters
     const discCounters = {
       high: 0,
@@ -545,6 +752,7 @@ class ReportsService {
       watch: 0,
       safe: 0,
       alpa_3plus: 0,
+      tazir_total: 0,
       total_alpa: 0,
       total_izin: 0,
       total_sakit: 0
@@ -557,7 +765,30 @@ class ReportsService {
       const alpa = Number(row.alpa || 0);
       const totalRecords = Number(row.total_records || 0);
       const pct = computeRatePct(hadir, totalRecords);
-      const risk = classifyStudentRisk(hadir, izin, sakit, alpa, totalRecords, pct);
+
+      const alpaStats = alpaStatsByStudent.get(row.student_id) || {
+        unsettledFullDaysSem: 0,
+        unsettledPartialJpWeek: 0,
+        totalFullDaysSem: 0,
+        totalPartialJpWeek: 0
+      };
+      const tazirInfo = tazirSummaryByStudent.get(row.student_id) || {
+        last_harian_date: null,
+        last_jam_date: null,
+        last_action_date: null,
+        total_actions: 0
+      };
+
+      const risk = classifyStudentRisk({
+        alpaFullDaysSem: alpaStats.unsettledFullDaysSem,
+        alpaPartialJpWeek: alpaStats.unsettledPartialJpWeek,
+        izin,
+        sakit,
+        alpaDisplay: alpa,
+        totalRecords,
+        attendancePct: pct,
+        totalTazirCount: tazirInfo.total_actions
+      });
 
       if (risk.risk_level === 'HIGH') discCounters.high += 1;
       else if (risk.risk_level === 'MEDIUM') discCounters.medium += 1;
@@ -565,6 +796,7 @@ class ReportsService {
       else discCounters.safe += 1;
 
       if (alpa >= 3) discCounters.alpa_3plus += 1;
+      if (risk.needs_tazir) discCounters.tazir_total += 1;
       discCounters.total_alpa += alpa;
       discCounters.total_izin += izin;
       discCounters.total_sakit += sakit;
@@ -583,10 +815,20 @@ class ReportsService {
         sakit,
         alpa,
         attendance_pct: pct,
+        alpa_full_days_sem: alpaStats.unsettledFullDaysSem,
+        alpa_partial_jp_week: alpaStats.unsettledPartialJpWeek,
+        total_semester_full_alpa_days: alpaStats.totalFullDaysSem,
+        total_week_partial_alpa_jp: alpaStats.totalPartialJpWeek,
+        tazir_count: tazirInfo.total_actions,
+        last_tazir_date: tazirInfo.last_action_date,
+        last_harian_tazir_date: tazirInfo.last_harian_date,
+        last_jam_tazir_date: tazirInfo.last_jam_date,
         ...risk
       };
     }).sort((a, b) => {
       if (a.risk_rank !== b.risk_rank) return a.risk_rank - b.risk_rank;
+      if (a.alpa_full_days_sem !== b.alpa_full_days_sem) return b.alpa_full_days_sem - a.alpa_full_days_sem;
+      if (a.alpa_partial_jp_week !== b.alpa_partial_jp_week) return b.alpa_partial_jp_week - a.alpa_partial_jp_week;
       if (a.alpa !== b.alpa) return b.alpa - a.alpa;
       const aPct = a.attendance_pct === null ? 999 : a.attendance_pct;
       const bPct = b.attendance_pct === null ? 999 : b.attendance_pct;
@@ -826,6 +1068,8 @@ class ReportsService {
         teacher_total_count: teacherRows.length,
         teacher_evidence_verified: tTotalEvidence,
         attention_students_count: attentionStudentsCount,
+        harian_tazir_count: discCounters.high,
+        jam_tazir_count: discCounters.medium,
         alpa_3plus_count: discCounters.alpa_3plus,
         data_readiness_rate: overallAuditPct,
         total_active_students: disciplineStudents.length,
@@ -844,6 +1088,13 @@ class ReportsService {
       ),
       per_class: perClass,
       discipline: {
+        rules: {
+          harian_threshold_days: TAZIR_HARIAN_THRESHOLD_DAYS,
+          jam_threshold_jp: TAZIR_JAM_THRESHOLD_JP,
+          semester_start: semesterStart,
+          week_start: weekStart,
+          window_end: range.endDate
+        },
         summary: {
           total_students: disciplineStudents.length,
           ...discCounters
@@ -880,6 +1131,143 @@ class ReportsService {
         all_teachers: auditTeacherRows
       }
     };
+  }
+
+  /**
+   * Fetch Ta'zir execution history for a student.
+   */
+  async getStudentTazirHistory(studentId) {
+    if (!studentId || !String(studentId).trim()) {
+      throw new BadRequestError('studentId wajib diisi');
+    }
+    const cleanId = String(studentId).trim();
+
+    const stuRes = await db.query(
+      `/* REPORTS: TAZIR_STUDENT_LOOKUP */
+       SELECT s.student_id, s.name, s.nis, s.class_id, c.class_name
+       FROM students s
+       JOIN classes c ON s.class_id = c.class_id
+       WHERE s.student_id = $1
+       LIMIT 1`,
+      [cleanId]
+    );
+    if (!stuRes.rows || stuRes.rows.length === 0) {
+      throw new NotFoundError(`Siswa '${cleanId}' tidak ditemukan`);
+    }
+
+    const histRes = await db.query(
+      `/* REPORTS: TAZIR_HISTORY_LIST */
+       SELECT
+         sta.tazir_id,
+         sta.student_id,
+         sta.academic_year_id,
+         sta.tazir_type,
+         sta.action_date::text AS action_date,
+         sta.trigger_summary,
+         sta.tazir_note,
+         sta.created_at,
+         u.full_name AS recorded_by_name
+       FROM student_tazir_actions sta
+       LEFT JOIN users u ON u.user_id = sta.recorded_by_user_id
+       WHERE sta.student_id = $1
+       ORDER BY sta.action_date DESC, sta.created_at DESC`,
+      [cleanId]
+    );
+
+    return {
+      student: stuRes.rows[0],
+      history: histRes.rows || []
+    };
+  }
+
+  /**
+   * Record execution of a student's Ta'zir action (resets unsettled counter up to actionDate).
+   */
+  async recordStudentTazirAction({ studentId, tazirType, actionDate, triggerSummary, note, operatorUserId }) {
+    if (!studentId || !String(studentId).trim()) {
+      throw new BadRequestError('student_id wajib diisi');
+    }
+    const cleanStudentId = String(studentId).trim();
+    const cleanType = String(tazirType || '').toUpperCase().trim();
+    if (!VALID_TAZIR_TYPES.includes(cleanType)) {
+      throw new BadRequestError(`tazir_type tidak valid. Gunakan: ${VALID_TAZIR_TYPES.join(', ')}`);
+    }
+
+    const today = getTodayISODate();
+    const cleanDate = actionDate ? String(actionDate).trim() : today;
+    if (!parseISODateUTC(cleanDate)) {
+      throw new BadRequestError('Format tanggal action_date harus YYYY-MM-DD yang valid');
+    }
+    if (cleanDate > today) {
+      throw new BadRequestError('Tanggal eksekusi Ta\'zir tidak boleh di masa depan');
+    }
+
+    const [stuRes, yearRes] = await Promise.all([
+      db.query(
+        `/* REPORTS: TAZIR_STUDENT_CHECK */
+         SELECT student_id, name, status FROM students WHERE student_id = $1 LIMIT 1`,
+        [cleanStudentId]
+      ),
+      db.query(
+        `/* REPORTS: ACTIVE_YEAR */
+         SELECT academic_year_id, name, start_date, end_date
+         FROM academic_years
+         WHERE is_active = TRUE
+         LIMIT 1`
+      )
+    ]);
+
+    if (!stuRes.rows || stuRes.rows.length === 0) {
+      throw new NotFoundError(`Siswa '${cleanStudentId}' tidak ditemukan`);
+    }
+
+    const activeYear = yearRes.rows[0] || {};
+    const tazirId = `TZR-${generateUUID().replace(/-/g, '').substring(0, 12).toUpperCase()}`;
+    const cleanSummary = triggerSummary ? String(triggerSummary).trim().slice(0, 160) : null;
+    const cleanNote = note ? String(note).trim().slice(0, 1000) : null;
+
+    const insertRes = await db.query(
+      `/* REPORTS: TAZIR_INSERT */
+       INSERT INTO student_tazir_actions (
+         tazir_id, student_id, academic_year_id, tazir_type, action_date,
+         trigger_summary, tazir_note, recorded_by_user_id
+       )
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING tazir_id, student_id, academic_year_id, tazir_type,
+                 action_date::text AS action_date, trigger_summary, tazir_note, created_at`,
+      [
+        tazirId,
+        cleanStudentId,
+        activeYear.academic_year_id || null,
+        cleanType,
+        cleanDate,
+        cleanSummary,
+        cleanNote,
+        operatorUserId || null
+      ]
+    );
+
+    return insertRes.rows[0];
+  }
+
+  /**
+   * Delete an existing Ta'zir record (Admin undo).
+   */
+  async deleteStudentTazirAction(tazirId) {
+    if (!tazirId || !String(tazirId).trim()) {
+      throw new BadRequestError('tazirId wajib diisi');
+    }
+    const res = await db.query(
+      `/* REPORTS: TAZIR_DELETE */
+       DELETE FROM student_tazir_actions
+       WHERE tazir_id = $1
+       RETURNING tazir_id, student_id`,
+      [String(tazirId).trim()]
+    );
+    if (!res.rows || res.rows.length === 0) {
+      throw new NotFoundError(`Riwayat Ta'zir '${tazirId}' tidak ditemukan`);
+    }
+    return res.rows[0];
   }
 }
 
