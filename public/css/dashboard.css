@@ -4222,7 +4222,9 @@ body.dashboard-page {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+  line-clamp: 2;
   overflow: hidden;
+  overflow: clip;
   max-width: 260px;
 }
 
