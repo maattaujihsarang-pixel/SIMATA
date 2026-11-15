@@ -812,7 +812,7 @@ html, body {
   }
 }
 </style>
-  <link rel="stylesheet" href="/css/dashboard.css?v=bug41">
+  <link rel="stylesheet" href="/css/dashboard.css?v=bug54">
   <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
   <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
@@ -828,7 +828,7 @@ html, body {
 </head>
 
 
-<body class="dashboard-page">
+<body class="dashboard-page is-home-view">
 
 <!-- GLOBAL INITIAL & SESSION LOADING OVERLAY (BUG 20) -->
 <div id="globalLoadingOverlay" class="loading-overlay show" role="status" aria-live="polite">
@@ -1069,6 +1069,14 @@ html, body {
         </svg>
       </button>
 
+      <div class="mobile-home-brand" aria-hidden="true">
+        <img src="/assets/logo.png" alt="" class="mobile-home-emblem" />
+        <div class="mobile-home-brand-text">
+          <strong>SIMATA</strong>
+          <small>MA At-Taujih Sarang</small>
+        </div>
+      </div>
+
       <div class="topbar-left">
 
         <span class="topbar-label" id="topbarCategoryLabel">
@@ -1200,9 +1208,12 @@ html, body {
 
         <div class="welcome-content">
 
-          <span class="section-label">
-            DASHBOARD UTAMA
-          </span>
+          <div class="welcome-label-row">
+            <span class="section-label">
+              DASHBOARD UTAMA
+            </span>
+            <span class="hero-date-pill" id="mobileHeroDate"></span>
+          </div>
 
           <h2>
             Selamat Datang<span id="welcomeGreetingNameWrapper">, <span id="welcomeGreetingName"></span></span>
@@ -1212,6 +1223,11 @@ html, body {
             Kelola dan pantau aktivitas akademik
             MA At-Taujih Sarang melalui SIMATA.
           </p>
+
+          <div class="hero-status-pill" aria-hidden="true">
+            <span class="hero-status-dot"></span>
+            <span>Presensi Hari Ini: <strong>Aktif</strong></span>
+          </div>
 
         </div>
 
@@ -1250,6 +1266,7 @@ html, body {
               <span class="quick-label">Scan QR Siswa</span>
               <span class="quick-sub">Presensi cepat</span>
             </div>
+            <svg class="quick-chevron" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
             <div class="quick-pill">Mulai</div>
           </button>
 
@@ -1265,6 +1282,7 @@ html, body {
               <span class="quick-label">Responder Guru</span>
               <span class="quick-sub">Presensi terpadu</span>
             </div>
+            <svg class="quick-chevron" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
             <div class="quick-pill">Buka</div>
           </button>
 
@@ -1279,6 +1297,7 @@ html, body {
               <span class="quick-label">Presensi Siswa</span>
               <span class="quick-sub">Input &amp; riwayat</span>
             </div>
+            <svg class="quick-chevron" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
           </button>
 
           <!-- 4. Rekap & Cetak -->
@@ -1292,6 +1311,7 @@ html, body {
               <span class="quick-label">Rekap Presensi</span>
               <span class="quick-sub">Cetak laporan</span>
             </div>
+            <svg class="quick-chevron" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
           </button>
         </div>
       </section>
@@ -20858,6 +20878,7 @@ window.addEventListener('beforeunload', function() {
     const ttl = document.getElementById('topbarPageTitle');
     if (lbl && categoryLabel) lbl.textContent = categoryLabel;
     if (ttl && pageTitle) ttl.textContent = pageTitle;
+    document.body.classList.toggle('is-home-view', viewKey === 'dashboard');
 
     // Update bottom nav active state
     document.querySelectorAll('.bottom-nav-item').forEach(function(btn) {
@@ -20937,12 +20958,13 @@ window.addEventListener('beforeunload', function() {
 
   // Populate formatted Indonesian date on Home mobile
   try {
+    const now = new Date();
+    const options = { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' };
+    const formattedDate = now.toLocaleDateString('id-ID', options);
     const dtEl = document.getElementById('mobileCurrentDate');
-    if (dtEl) {
-      const now = new Date();
-      const options = { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' };
-      dtEl.textContent = now.toLocaleDateString('id-ID', options);
-    }
+    if (dtEl) dtEl.textContent = formattedDate;
+    const heroDtEl = document.getElementById('mobileHeroDate');
+    if (heroDtEl) heroDtEl.textContent = formattedDate;
   } catch (_) {}
 
   // Wire Bottom Nav buttons
