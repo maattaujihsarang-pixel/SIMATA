@@ -812,7 +812,7 @@ html, body {
   }
 }
 </style>
-  <link rel="stylesheet" href="/css/dashboard.css?v=bug54d">
+  <link rel="stylesheet" href="/css/dashboard.css?v=bug56">
   <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
   <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
@@ -2891,18 +2891,227 @@ html, body {
           </div>
         </section>
 
-        <!-- REPORTS CONTENT (hidden by default) -->
+        <!-- REPORTS CONTENT (Laporan Akademik - BUG 56) -->
         <section id="reportsContent" class="content" style="display:none;">
-          <div class="development-notice" role="status" aria-live="polite">
-            <div class="development-notice__icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="9"></circle>
-                <path d="M12 7v5l3 2"></path>
-              </svg>
+          <div class="section-heading rpt-acad-header">
+            <div class="rpt-acad-title-wrap">
+              <span class="section-label">LAPORAN AKADEMIK &amp; ANALISIS</span>
+              <h2>Laporan Akademik</h2>
+              <p class="rpt-acad-subtitle">Ringkasan eksekutif kehadiran, deteksi dini disiplin siswa, kinerja mengajar guru, dan audit berkas.</p>
             </div>
-            <span class="development-notice__badge"><span></span>Sedang dikembangkan</span>
-            <h2>Halaman Laporan</h2>
-            <p>Fitur laporan sedang kami siapkan. Silakan kembali lagi nanti untuk melihat pembaruan.</p>
+            <div class="rpt-acad-actions">
+              <button type="button" class="rpt-acad-btn rpt-acad-btn-ghost" id="rptAcadRefreshBtn">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
+                <span>Muat Ulang</span>
+              </button>
+              <button type="button" class="rpt-acad-btn rpt-acad-btn-secondary" id="rptAcadExportCsvBtn">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span>Export CSV</span>
+              </button>
+              <button type="button" class="rpt-acad-btn rpt-acad-btn-primary" id="rptAcadPrintBtn">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                <span>Cetak Ringkasan</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Global Period & Class Filter Bar -->
+          <div class="rpt-acad-filter-card">
+            <div class="rpt-acad-filter-top">
+              <div class="rpt-acad-period-wrap">
+                <span class="rpt-acad-filter-label">Periode Analisis</span>
+                <div class="rpt-acad-preset-group" id="rptAcadPresetGroup" role="group" aria-label="Pilih periode laporan">
+                  <button type="button" class="rpt-acad-preset-btn" data-preset="7d">7 Hari</button>
+                  <button type="button" class="rpt-acad-preset-btn active" data-preset="month">Bulan Ini</button>
+                  <button type="button" class="rpt-acad-preset-btn" data-preset="semester">Semester</button>
+                  <button type="button" class="rpt-acad-preset-btn" data-preset="custom">Kustom</button>
+                </div>
+              </div>
+
+              <div class="rpt-acad-class-wrap">
+                <label class="rpt-acad-filter-label" for="rptAcadClassFilter">Filter Rombel / Kelas</label>
+                <select id="rptAcadClassFilter" class="input-box rpt-acad-select">
+                  <option value="">Semua Kelas Aktif</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="rpt-acad-custom-dates" id="rptAcadCustomDates" hidden>
+              <div class="rpt-acad-date-field">
+                <label for="rptAcadStartDate">Dari Tanggal</label>
+                <input type="date" id="rptAcadStartDate" class="input-box">
+              </div>
+              <div class="rpt-acad-date-field">
+                <label for="rptAcadEndDate">Sampai Tanggal</label>
+                <input type="date" id="rptAcadEndDate" class="input-box">
+              </div>
+              <button type="button" class="rpt-acad-btn rpt-acad-btn-primary" id="rptAcadApplyCustomBtn">Terapkan</button>
+            </div>
+
+            <div class="rpt-acad-meta-strip" id="rptAcadMetaStrip">
+              <span class="rpt-acad-meta-pill" id="rptAcadYearBadge">Tahun Ajaran Aktif</span>
+              <span class="rpt-acad-meta-pill rpt-acad-meta-range" id="rptAcadRangeBadge">Memuat rentang periode...</span>
+            </div>
+          </div>
+
+          <!-- Accessible Single-Row Tab Bar -->
+          <div class="rpt-acad-tabs-shell">
+            <div class="rpt-acad-tablist" id="rptAcadTablist" role="tablist" aria-label="Kategori Laporan Akademik" focusgroup="tablist nomemory">
+              <button type="button" role="tab" class="rpt-acad-tab" id="rptAcadTabOverview" aria-controls="rptAcadPanelOverview" aria-selected="true" data-tab="overview">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 17l2.5 2.5L21 14"/></svg>
+                <span>Ringkasan &amp; Tren</span>
+              </button>
+              <button type="button" role="tab" class="rpt-acad-tab" id="rptAcadTabDiscipline" aria-controls="rptAcadPanelDiscipline" aria-selected="false" tabindex="-1" data-tab="discipline">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <span>Disiplin Siswa</span>
+                <span class="rpt-acad-tab-badge" id="rptAcadAlertCountBadge" hidden>0</span>
+              </button>
+              <button type="button" role="tab" class="rpt-acad-tab" id="rptAcadTabTeachers" aria-controls="rptAcadPanelTeachers" aria-selected="false" tabindex="-1" data-tab="teachers">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                <span>Kinerja Guru</span>
+              </button>
+              <button type="button" role="tab" class="rpt-acad-tab" id="rptAcadTabAudit" aria-controls="rptAcadPanelAudit" aria-selected="false" tabindex="-1" data-tab="audit">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="m9 15 2 2 4-4"/></svg>
+                <span>Kelengkapan Berkas</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Loading / Error Banner -->
+          <div id="rptAcadLoadingState" class="rpt-acad-state-box" hidden>
+            <div class="rpt-acad-spinner" aria-hidden="true"></div>
+            <p>Menghitung analitik kehadiran dan kelengkapan berkas madrasah...</p>
+          </div>
+          <div id="rptAcadErrorState" class="rpt-acad-state-box rpt-acad-state-error" hidden>
+            <p id="rptAcadErrorMsg">Gagal memuat data laporan akademik.</p>
+            <button type="button" class="rpt-acad-btn rpt-acad-btn-secondary" id="rptAcadRetryBtn">Coba Lagi</button>
+          </div>
+
+          <!-- TAB PANEL 1: RINGKASAN & TREN -->
+          <div id="rptAcadPanelOverview" role="tabpanel" aria-labelledby="rptAcadTabOverview" class="rpt-acad-tabpanel">
+            <div class="rpt-acad-panel-body">
+              <div class="rpt-acad-kpi-grid" id="rptAcadKpiGrid"></div>
+
+              <div class="rpt-acad-overview-split">
+                <article class="rpt-acad-card">
+                  <div class="rpt-acad-card-head">
+                    <div>
+                      <h3>Tren Kehadiran Harian / Mingguan</h3>
+                      <p class="rpt-acad-card-sub" id="rptAcadTrendSub">Perbandingan persentase kehadiran siswa &amp; keterlaksanaan mengajar guru</p>
+                    </div>
+                    <div class="rpt-acad-legend">
+                      <span class="rpt-acad-legend-item"><i class="dot-student"></i>Siswa (%)</span>
+                      <span class="rpt-acad-legend-item"><i class="dot-teacher"></i>Guru (%)</span>
+                    </div>
+                  </div>
+                  <div id="rptAcadTrendChartWrap" class="rpt-acad-chart-wrap"></div>
+                  <div id="rptAcadTrendInspect" class="rpt-acad-chart-inspect" aria-live="polite">
+                    Sentuh atau arahkan kursor ke titik grafik untuk melihat rincian tanggal.
+                  </div>
+                </article>
+
+                <article class="rpt-acad-card">
+                  <div class="rpt-acad-card-head">
+                    <div>
+                      <h3>Perbandingan per Kelas</h3>
+                      <p class="rpt-acad-card-sub">Tingkat kehadiran dan komposisi presensi tiap rombel aktif</p>
+                    </div>
+                  </div>
+                  <div id="rptAcadClassBarsWrap" class="rpt-acad-class-bars"></div>
+                </article>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB PANEL 2: DISIPLIN SISWA & EARLY WARNING -->
+          <div id="rptAcadPanelDiscipline" role="tabpanel" aria-labelledby="rptAcadTabDiscipline" class="rpt-acad-tabpanel" hidden>
+            <div class="rpt-acad-panel-body">
+              <article class="rpt-acad-card">
+                <div class="rpt-acad-card-head rpt-acad-card-head-wrap">
+                  <div>
+                    <h3 id="rptAcadDiscHeading">Monitoring Disiplin &amp; Deteksi Dini Siswa</h3>
+                    <p class="rpt-acad-card-sub">Prioritas tindak lanjut siswa berdasarkan akumulasi Alpa (&ge; 3x = Panggil Wali) dan rasio kehadiran &lt; 85%.</p>
+                  </div>
+                  <div class="rpt-acad-toolbar-controls">
+                    <input type="search" id="rptAcadDiscSearch" class="input-box rpt-acad-search" placeholder="Cari nama, NIS, atau kelas..." aria-label="Cari siswa pada laporan disiplin">
+                  </div>
+                </div>
+                <div class="rpt-acad-pill-filters" id="rptAcadRiskPills" role="group" aria-label="Filter status risiko siswa"></div>
+                <div class="rpt-acad-table-region" id="rptAcadDiscTableWrap" tabindex="0" role="region" aria-labelledby="rptAcadDiscHeading"></div>
+              </article>
+            </div>
+          </div>
+
+          <!-- TAB PANEL 3: KINERJA & JURNAL GURU -->
+          <div id="rptAcadPanelTeachers" role="tabpanel" aria-labelledby="rptAcadTabTeachers" class="rpt-acad-tabpanel" hidden>
+            <div class="rpt-acad-panel-body">
+              <article class="rpt-acad-card">
+                <div class="rpt-acad-card-head rpt-acad-card-head-wrap">
+                  <div>
+                    <h3 id="rptAcadTchHeading">Rekap Kinerja Mengajar &amp; Verifikasi Kamera Guru</h3>
+                    <p class="rpt-acad-card-sub">Akumulasi jam pelajaran (JP) terlaksana melalui Responder Guru, verifikasi foto kamera, serta topik materi terakhir.</p>
+                  </div>
+                  <div class="rpt-acad-toolbar-controls">
+                    <input type="search" id="rptAcadTchSearch" class="input-box rpt-acad-search" placeholder="Cari nama guru atau mapel..." aria-label="Cari guru pada laporan kinerja">
+                  </div>
+                </div>
+                <div class="rpt-acad-summary-chips" id="rptAcadTchSummaryChips"></div>
+                <div class="rpt-acad-table-region" id="rptAcadTchTableWrap" tabindex="0" role="region" aria-labelledby="rptAcadTchHeading"></div>
+              </article>
+
+              <article class="rpt-acad-card rpt-acad-journal-feed-card">
+                <div class="rpt-acad-card-head">
+                  <div>
+                    <h3>Log Jurnal Materi Terbaru</h3>
+                    <p class="rpt-acad-card-sub">15 entri pembelajaran terakhir yang tercatat pada periode terpilih</p>
+                  </div>
+                </div>
+                <div id="rptAcadRecentJournalsWrap" class="rpt-acad-journal-list"></div>
+              </article>
+            </div>
+          </div>
+
+          <!-- TAB PANEL 4: KELENGKAPAN BERKAS & INFO RDM -->
+          <div id="rptAcadPanelAudit" role="tabpanel" aria-labelledby="rptAcadTabAudit" class="rpt-acad-tabpanel" hidden>
+            <div class="rpt-acad-panel-body">
+              <div class="rpt-acad-rdm-banner" role="note">
+                <div class="rpt-acad-rdm-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                </div>
+                <div>
+                  <strong>Catatan Penilaian Akademik (RDM Madrasah Kemenag)</strong>
+                  <p>Pengelolaan nilai &amp; rapor akademik akan diarahkan langsung ke <strong>RDM Kemenag</strong> pada tahap integrasi berikutnya. Fokus panel ini menjaga kesiapan data induk NIS/NISN, pasfoto, dan arsip Kartu Pelajar.</p>
+                </div>
+              </div>
+
+              <article class="rpt-acad-card">
+                <div class="rpt-acad-card-head">
+                  <div>
+                    <h3>Kesiapan Berkas per Rombel</h3>
+                    <p class="rpt-acad-card-sub">Persentase siswa dengan data lengkap (NIS, NISN, Gender, Pasfoto, dan Kartu Pelajar)</p>
+                  </div>
+                </div>
+                <div id="rptAcadAuditClassGrid" class="rpt-acad-audit-class-grid"></div>
+              </article>
+
+              <article class="rpt-acad-card">
+                <div class="rpt-acad-card-head rpt-acad-card-head-wrap">
+                  <div>
+                    <h3 id="rptAcadAuditHeading">Daftar Kelengkapan Data &amp; Arsip</h3>
+                    <p class="rpt-acad-card-sub">Prioritaskan entri yang masih memiliki kekurangan dokumen atau nomor identitas pokok.</p>
+                  </div>
+                  <div class="rpt-acad-toolbar-controls">
+                    <input type="search" id="rptAcadAuditSearch" class="input-box rpt-acad-search" placeholder="Cari nama siswa / guru..." aria-label="Cari data audit kelengkapan">
+                  </div>
+                </div>
+                <div class="rpt-acad-pill-filters" id="rptAcadAuditPills" role="group" aria-label="Filter tipe data audit">
+                  <button type="button" class="rpt-acad-pill active" data-audit-filter="incomplete">Perlu Dilengkapi</button>
+                  <button type="button" class="rpt-acad-pill" data-audit-filter="students">Semua Siswa</button>
+                  <button type="button" class="rpt-acad-pill" data-audit-filter="teachers">Semua Guru</button>
+                </div>
+                <div class="rpt-acad-table-region" id="rptAcadAuditTableWrap" tabindex="0" role="region" aria-labelledby="rptAcadAuditHeading"></div>
+              </article>
+            </div>
           </div>
         </section>
 
@@ -10209,6 +10418,9 @@ function initReportsModule() {
             showReportsView();
         });
     }
+    if (typeof window.__simataInitReportsUi === 'function') {
+        window.__simataInitReportsUi();
+    }
 }
 
 function showGradesView() {
@@ -10227,7 +10439,975 @@ function showReportsView() {
     document.querySelectorAll('.sidebar-menu li').forEach(function(li){ li.classList.remove('active'); });
     const menu = document.getElementById('menu-reports'); if (menu) menu.classList.add('active');
     updatePageContext('reports', 'LAPORAN', 'Laporan Akademik');
+    if (typeof window.__simataLoadAcademicReports === 'function') {
+        window.__simataLoadAcademicReports();
+    }
 }
+
+(function initAcademicReportsController() {
+    const MONTHS_ID = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    const state = {
+        initialized: false,
+        reqSeq: 0,
+        activeTab: 'overview',
+        preset: 'month',
+        startDate: '',
+        endDate: '',
+        classId: '',
+        discRiskFilter: 'ALL',
+        discSearch: '',
+        tchSearch: '',
+        auditFilter: 'incomplete',
+        auditSearch: '',
+        data: null
+    };
+
+    function esc(val) {
+        if (val === null || val === undefined) return '';
+        return String(val)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function fmtNum(n) {
+        return Number(n || 0).toLocaleString('id-ID');
+    }
+
+    function fmtPct(v) {
+        if (v === null || v === undefined || Number.isNaN(Number(v))) return 'Belum ada data';
+        return Number(v).toFixed(1).replace(/\.0$/, '') + '%';
+    }
+
+    function fmtIsoDateID(iso) {
+        if (!iso) return '-';
+        const parts = String(iso).slice(0, 10).split('-');
+        if (parts.length !== 3) return String(iso);
+        const mIdx = parseInt(parts[1], 10) - 1;
+        return parseInt(parts[2], 10) + ' ' + (MONTHS_ID[mIdx] || parts[1]) + ' ' + parts[0];
+    }
+
+    function getPanelIds() {
+        return {
+            overview: 'rptAcadPanelOverview',
+            discipline: 'rptAcadPanelDiscipline',
+            teachers: 'rptAcadPanelTeachers',
+            audit: 'rptAcadPanelAudit'
+        };
+    }
+
+    function setActiveTab(tabKey, options) {
+        const opts = options || {};
+        const validKeys = ['overview', 'discipline', 'teachers', 'audit'];
+        const nextKey = validKeys.indexOf(tabKey) >= 0 ? tabKey : 'overview';
+        state.activeTab = nextKey;
+
+        const panelMap = getPanelIds();
+        document.querySelectorAll('#rptAcadTablist [role="tab"]').forEach(function(btn) {
+            const isSelected = btn.getAttribute('data-tab') === nextKey;
+            btn.setAttribute('aria-selected', isSelected ? 'true' : 'false');
+            btn.setAttribute('tabindex', isSelected ? '0' : '-1');
+            if (isSelected && opts.focus) {
+                btn.focus();
+            }
+            if (isSelected) {
+                try {
+                    btn.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+                } catch (_) {}
+            }
+        });
+
+        Object.keys(panelMap).forEach(function(key) {
+            const panel = document.getElementById(panelMap[key]);
+            if (panel) {
+                panel.hidden = (key !== nextKey);
+            }
+        });
+    }
+
+    function setLoading(isLoading) {
+        const loader = document.getElementById('rptAcadLoadingState');
+        const errBox = document.getElementById('rptAcadErrorState');
+        const panels = document.querySelectorAll('#reportsContent .rpt-acad-tabpanel');
+        if (loader) loader.hidden = !isLoading;
+        if (isLoading && errBox) errBox.hidden = true;
+        panels.forEach(function(p) {
+            if (isLoading) {
+                p.classList.add('is-loading');
+            } else {
+                p.classList.remove('is-loading');
+            }
+        });
+    }
+
+    function showError(msg) {
+        const errBox = document.getElementById('rptAcadErrorState');
+        const errMsg = document.getElementById('rptAcadErrorMsg');
+        if (errMsg) errMsg.textContent = msg || 'Gagal memuat laporan akademik.';
+        if (errBox) errBox.hidden = false;
+    }
+
+    function ensureStudentClassOptions(data) {
+        const modalClassSel = document.getElementById('f_classId');
+        const classes = data && data.meta && Array.isArray(data.meta.classes) ? data.meta.classes : [];
+        if (modalClassSel && modalClassSel.options.length <= 1 && classes.length > 0) {
+            modalClassSel.innerHTML = '<option value="">(Pilih Kelas)</option>' +
+                classes.map(function(c) {
+                    return '<option value="' + esc(c.class_id) + '">' + esc(c.class_name) + '</option>';
+                }).join('');
+        }
+    }
+
+    function syncFilterMeta(meta) {
+        const yearBadge = document.getElementById('rptAcadYearBadge');
+        const rangeBadge = document.getElementById('rptAcadRangeBadge');
+        const classSel = document.getElementById('rptAcadClassFilter');
+
+        if (yearBadge) {
+            yearBadge.textContent = (meta && meta.academic_year_name) ? meta.academic_year_name : 'Tahun Ajaran Aktif';
+        }
+        if (rangeBadge && meta) {
+            const classObj = (meta.classes || []).find(function(c) { return c.class_id === state.classId; });
+            const classLabel = classObj ? classObj.class_name : 'Semua Kelas';
+            rangeBadge.textContent = fmtIsoDateID(meta.start_date) + ' - ' + fmtIsoDateID(meta.end_date) + ' (' + classLabel + ')';
+        }
+        if (classSel && meta && Array.isArray(meta.classes)) {
+            const prevVal = state.classId || '';
+            classSel.innerHTML = '<option value="">Semua Kelas Aktif</option>' +
+                meta.classes.map(function(c) {
+                    return '<option value="' + esc(c.class_id) + '">' + esc(c.class_name) + '</option>';
+                }).join('');
+            classSel.value = prevVal;
+        }
+    }
+
+    function renderOverviewPanel(data) {
+        const ov = data.overview || {};
+        const bd = ov.student_breakdown || {};
+        const kpiGrid = document.getElementById('rptAcadKpiGrid');
+        if (kpiGrid) {
+            let deltaHtml = '<span class="rpt-kpi-badge neutral">Periode aktif</span>';
+            if (ov.student_attendance_delta !== null && ov.student_attendance_delta !== undefined) {
+                const d = Number(ov.student_attendance_delta);
+                const sign = d > 0 ? '+' : '';
+                const cls = d >= 0 ? 'up' : 'down';
+                const arrow = d >= 0 ? '&#9650;' : '&#9660;';
+                deltaHtml = '<span class="rpt-kpi-badge ' + cls + '">' + arrow + ' ' + sign + d.toFixed(1).replace(/\.0$/, '') + '% vs sblmnya</span>';
+            }
+
+            const studentRateDisplay = ov.student_attendance_rate !== null && ov.student_attendance_rate !== undefined
+                ? fmtPct(ov.student_attendance_rate)
+                : '-';
+            const teacherRateDisplay = ov.teacher_execution_rate !== null && ov.teacher_execution_rate !== undefined
+                ? fmtPct(ov.teacher_execution_rate)
+                : '-';
+
+            kpiGrid.innerHTML =
+                '<article class="rpt-acad-kpi-card">' +
+                    '<div class="rpt-kpi-top"><span class="rpt-kpi-label">Kehadiran Siswa</span>' + deltaHtml + '</div>' +
+                    '<div class="rpt-kpi-val">' + esc(studentRateDisplay) + '</div>' +
+                    '<div class="rpt-kpi-sub">H: ' + fmtNum(bd.hadir) + ' &bull; I/S: ' + fmtNum((bd.izin || 0) + (bd.sakit || 0)) + ' &bull; A: ' + fmtNum(bd.alpa) + '</div>' +
+                '</article>' +
+                '<article class="rpt-acad-kpi-card">' +
+                    '<div class="rpt-kpi-top"><span class="rpt-kpi-label">Keterlaksanaan Mengajar</span><span class="rpt-kpi-badge emerald">' + fmtNum(ov.teacher_active_count) + '/' + fmtNum(ov.teacher_total_count) + ' guru</span></div>' +
+                    '<div class="rpt-kpi-val">' + esc(teacherRateDisplay) + '</div>' +
+                    '<div class="rpt-kpi-sub">' + fmtNum(ov.teacher_total_logs) + ' JP sesi &bull; ' + fmtNum(ov.teacher_evidence_verified) + ' bukti foto</div>' +
+                '</article>' +
+                '<article class="rpt-acad-kpi-card rpt-kpi-clickable js-rpt-switch-tab" data-target-tab="discipline" role="button" tabindex="0">' +
+                    '<div class="rpt-kpi-top"><span class="rpt-kpi-label">Perlu Perhatian</span><span class="rpt-kpi-badge ' + ((ov.alpa_3plus_count || 0) > 0 ? 'danger' : 'neutral') + '">' + fmtNum(ov.alpa_3plus_count) + ' Alpa &ge; 3x</span></div>' +
+                    '<div class="rpt-kpi-val">' + fmtNum(ov.attention_students_count) + ' <small>siswa</small></div>' +
+                    '<div class="rpt-kpi-sub">Dari ' + fmtNum(ov.total_active_students) + ' siswa aktif &bull; Lihat daftar &rarr;</div>' +
+                '</article>' +
+                '<article class="rpt-acad-kpi-card rpt-kpi-clickable js-rpt-switch-tab" data-target-tab="audit" role="button" tabindex="0">' +
+                    '<div class="rpt-kpi-top"><span class="rpt-kpi-label">Kelengkapan Berkas</span><span class="rpt-kpi-badge emerald">Induk &amp; Arsip</span></div>' +
+                    '<div class="rpt-kpi-val">' + esc(fmtPct(ov.data_readiness_rate)) + '</div>' +
+                    '<div class="rpt-kpi-sub">Pasfoto, NIS/NISN &amp; Kartu Pelajar &bull; Audit &rarr;</div>' +
+                '</article>';
+        }
+
+        // Alert badge on tab 2
+        const alertBadge = document.getElementById('rptAcadAlertCountBadge');
+        if (alertBadge) {
+            const count = Number(ov.attention_students_count || 0);
+            alertBadge.textContent = count > 99 ? '99+' : String(count);
+            alertBadge.hidden = count <= 0;
+        }
+
+        renderTrendChart(data.trends || { granularity: 'daily', points: [] });
+        renderClassComparisonBars(data.per_class || []);
+    }
+
+    function renderTrendChart(trends) {
+        const wrap = document.getElementById('rptAcadTrendChartWrap');
+        const subEl = document.getElementById('rptAcadTrendSub');
+        const inspectEl = document.getElementById('rptAcadTrendInspect');
+        if (!wrap) return;
+
+        const points = Array.isArray(trends.points) ? trends.points : [];
+        if (subEl) {
+            subEl.textContent = trends.granularity === 'weekly'
+                ? 'Agregasi mingguan: persentase hadir siswa (%) vs keterlaksanaan mengajar guru (%)'
+                : 'Tren harian: persentase hadir siswa (%) vs keterlaksanaan mengajar guru (%)';
+        }
+
+        const hasAnyValue = points.some(function(p) {
+            return p.student_rate !== null || p.teacher_rate !== null;
+        });
+
+        if (points.length === 0 || !hasAnyValue) {
+            wrap.innerHTML = '<div class="rpt-acad-empty-chart">Belum ada transaksi presensi siswa maupun guru pada rentang tanggal yang dipilih.</div>';
+            if (inspectEl) inspectEl.textContent = 'Pilih rentang periode lain (misalnya Semester) untuk melihat histori.';
+            return;
+        }
+
+        const W = 560;
+        const H = 220;
+        const padL = 38;
+        const padR = 16;
+        const padT = 18;
+        const padB = 34;
+        const plotW = W - padL - padR;
+        const plotH = H - padT - padB;
+        const n = points.length;
+
+        function xFor(idx) {
+            if (n === 1) return padL + plotW / 2;
+            return padL + (idx / (n - 1)) * plotW;
+        }
+        function yFor(pct) {
+            const clamped = Math.max(0, Math.min(100, Number(pct)));
+            return padT + (1 - clamped / 100) * plotH;
+        }
+
+        function buildSegmentedPaths(key) {
+            const paths = [];
+            let current = [];
+            points.forEach(function(pt, idx) {
+                if (pt[key] !== null && pt[key] !== undefined) {
+                    current.push({ x: xFor(idx), y: yFor(pt[key]) });
+                } else if (current.length > 0) {
+                    paths.push(current);
+                    current = [];
+                }
+            });
+            if (current.length > 0) paths.push(current);
+            return paths;
+        }
+
+        const gridLines = [0, 50, 100].map(function(val) {
+            const y = yFor(val).toFixed(1);
+            return '<line x1="' + padL + '" y1="' + y + '" x2="' + (W - padR) + '" y2="' + y + '" class="rpt-svg-grid"/>' +
+                '<text x="' + (padL - 8) + '" y="' + (Number(y) + 4).toFixed(1) + '" text-anchor="end" class="rpt-svg-axis-txt">' + val + '%</text>';
+        }).join('');
+
+        const sPaths = buildSegmentedPaths('student_rate').map(function(seg) {
+            if (seg.length < 2) return '';
+            const dLine = seg.map(function(p, i) { return (i === 0 ? 'M' : 'L') + p.x.toFixed(1) + ' ' + p.y.toFixed(1); }).join(' ');
+            const dArea = dLine + ' L' + seg[seg.length - 1].x.toFixed(1) + ' ' + (padT + plotH).toFixed(1) +
+                ' L' + seg[0].x.toFixed(1) + ' ' + (padT + plotH).toFixed(1) + ' Z';
+            return '<path d="' + dArea + '" class="rpt-svg-area-student"/>' +
+                '<path d="' + dLine + '" class="rpt-svg-line-student"/>';
+        }).join('');
+
+        const tPaths = buildSegmentedPaths('teacher_rate').map(function(seg) {
+            if (seg.length < 2) return '';
+            const dLine = seg.map(function(p, i) { return (i === 0 ? 'M' : 'L') + p.x.toFixed(1) + ' ' + p.y.toFixed(1); }).join(' ');
+            return '<path d="' + dLine + '" class="rpt-svg-line-teacher"/>';
+        }).join('');
+
+        const stepLabel = n > 7 ? Math.ceil(n / 6) : 1;
+        const xLabels = points.map(function(pt, idx) {
+            if (idx !== 0 && idx !== n - 1 && idx % stepLabel !== 0) return '';
+            return '<text x="' + xFor(idx).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle" class="rpt-svg-axis-txt">' + esc(pt.label) + '</text>';
+        }).join('');
+
+        const colWidth = n > 1 ? Math.max(18, plotW / n) : plotW;
+        const dotsAndHits = points.map(function(pt, idx) {
+            const cx = xFor(idx).toFixed(1);
+            let circles = '';
+            if (pt.student_rate !== null && pt.student_rate !== undefined) {
+                circles += '<circle cx="' + cx + '" cy="' + yFor(pt.student_rate).toFixed(1) + '" r="4" class="rpt-svg-dot-student"/>';
+            }
+            if (pt.teacher_rate !== null && pt.teacher_rate !== undefined) {
+                circles += '<circle cx="' + cx + '" cy="' + yFor(pt.teacher_rate).toFixed(1) + '" r="3.6" class="rpt-svg-dot-teacher"/>';
+            }
+            const hitX = Math.max(padL, Number(cx) - colWidth / 2).toFixed(1);
+            return circles +
+                '<rect x="' + hitX + '" y="' + padT + '" width="' + colWidth.toFixed(1) + '" height="' + plotH + '" fill="transparent" class="rpt-svg-hit" data-point-idx="' + idx + '"/>';
+        }).join('');
+
+        wrap.innerHTML =
+            '<svg viewBox="0 0 ' + W + ' ' + H + '" class="rpt-acad-svg-chart" role="img" aria-label="Grafik tren persentase kehadiran siswa dan keterlaksanaan mengajar guru">' +
+                '<title>Grafik Tren Kehadiran Siswa dan Keterlaksanaan Guru</title>' +
+                gridLines +
+                sPaths +
+                tPaths +
+                xLabels +
+                dotsAndHits +
+            '</svg>';
+
+        function showPointInspect(idx) {
+            const pt = points[idx];
+            if (!pt || !inspectEl) return;
+            const titleLabel = pt.range_label || pt.label || pt.key;
+            const sTxt = pt.student_rate !== null ? fmtPct(pt.student_rate) + ' (' + pt.student_hadir + '/' + pt.student_total + ' rec)' : 'Nihil';
+            const tTxt = pt.teacher_rate !== null ? fmtPct(pt.teacher_rate) + ' (' + pt.teacher_hadir + '/' + pt.teacher_total + ' JP)' : 'Nihil';
+            inspectEl.innerHTML = '<strong>' + esc(titleLabel) + '</strong> &mdash; Siswa: <span>' + esc(sTxt) + '</span> &bull; Guru: <span>' + esc(tTxt) + '</span>';
+        }
+
+        const latestWithDataIdx = points.reduce(function(acc, pt, idx) {
+            return (pt.student_rate !== null || pt.teacher_rate !== null) ? idx : acc;
+        }, -1);
+        if (latestWithDataIdx >= 0) {
+            showPointInspect(latestWithDataIdx);
+        }
+
+        wrap.querySelectorAll('.rpt-svg-hit').forEach(function(hit) {
+            const idx = parseInt(hit.getAttribute('data-point-idx'), 10);
+            hit.addEventListener('mouseenter', function() { showPointInspect(idx); });
+            hit.addEventListener('click', function() { showPointInspect(idx); });
+        });
+    }
+
+    function renderClassComparisonBars(perClass) {
+        const wrap = document.getElementById('rptAcadClassBarsWrap');
+        if (!wrap) return;
+        if (!perClass || perClass.length === 0) {
+            wrap.innerHTML = '<div class="rpt-acad-empty-chart">Belum ada data rombel aktif.</div>';
+            return;
+        }
+
+        wrap.innerHTML = perClass.map(function(c) {
+            const pct = c.attendance_pct !== null && c.attendance_pct !== undefined ? Number(c.attendance_pct) : null;
+            const barWidth = pct !== null ? Math.max(0, Math.min(100, pct)) : 0;
+            const pctTone = pct === null ? 'muted' : (pct >= 90 ? 'good' : (pct >= 80 ? 'warn' : 'bad'));
+            const selectedCls = c.is_selected ? ' is-selected-class' : '';
+            const waliTxt = c.homeroom_teacher_name ? 'Wali: ' + c.homeroom_teacher_name : 'Wali kelas belum diatur';
+
+            return '<div class="rpt-class-bar-item' + selectedCls + '">' +
+                '<div class="rpt-class-bar-top">' +
+                    '<div><strong>' + esc(c.class_name) + '</strong> <small>(' + fmtNum(c.active_students) + ' siswa)</small><div class="rpt-class-wali">' + esc(waliTxt) + '</div></div>' +
+                    '<span class="rpt-class-pct-pill ' + pctTone + '">' + esc(pct !== null ? fmtPct(pct) : 'N/A') + '</span>' +
+                '</div>' +
+                '<div class="rpt-class-progress-track" aria-hidden="true">' +
+                    '<div class="rpt-class-progress-fill ' + pctTone + '" style="width:' + barWidth.toFixed(1) + '%"></div>' +
+                '</div>' +
+                '<div class="rpt-class-bar-foot">' +
+                    '<span>Hadir: ' + fmtNum(c.hadir) + '</span>' +
+                    '<span>Izin: ' + fmtNum(c.izin) + '</span>' +
+                    '<span>Sakit: ' + fmtNum(c.sakit) + '</span>' +
+                    '<span>Alpa: ' + fmtNum(c.alpa) + '</span>' +
+                '</div>' +
+            '</div>';
+        }).join('');
+    }
+
+    function riskBadgeClass(level) {
+        if (level === 'HIGH') return 'danger';
+        if (level === 'MEDIUM') return 'warning';
+        if (level === 'WATCH') return 'info';
+        return 'success';
+    }
+
+    function getFilteredDisciplineRows() {
+        const list = (state.data && state.data.discipline && Array.isArray(state.data.discipline.students))
+            ? state.data.discipline.students
+            : [];
+        const q = (state.discSearch || '').trim().toLowerCase();
+        return list.filter(function(s) {
+            if (state.discRiskFilter === 'ATTENTION') {
+                if (s.risk_level !== 'HIGH' && s.risk_level !== 'MEDIUM') return false;
+            } else if (state.discRiskFilter !== 'ALL' && s.risk_level !== state.discRiskFilter) {
+                return false;
+            }
+            if (!q) return true;
+            return (
+                String(s.name || '').toLowerCase().includes(q) ||
+                String(s.nis || '').toLowerCase().includes(q) ||
+                String(s.nisn || '').toLowerCase().includes(q) ||
+                String(s.class_name || '').toLowerCase().includes(q)
+            );
+        });
+    }
+
+    function renderDisciplinePanel() {
+        if (!state.data || !state.data.discipline) return;
+        const summary = state.data.discipline.summary || {};
+        const pillsEl = document.getElementById('rptAcadRiskPills');
+        if (pillsEl) {
+            const defs = [
+                { key: 'ALL', label: 'Semua Siswa (' + fmtNum(summary.total_students) + ')' },
+                { key: 'ATTENTION', label: 'Perlu Perhatian (' + fmtNum((summary.high || 0) + (summary.medium || 0)) + ')' },
+                { key: 'HIGH', label: 'Panggil Wali (' + fmtNum(summary.high) + ')' },
+                { key: 'MEDIUM', label: 'Peringatan (' + fmtNum(summary.medium) + ')' },
+                { key: 'WATCH', label: 'Pantauan (' + fmtNum(summary.watch) + ')' },
+                { key: 'SAFE', label: 'Aman (' + fmtNum(summary.safe) + ')' }
+            ];
+            pillsEl.innerHTML = defs.map(function(d) {
+                const active = state.discRiskFilter === d.key ? ' active' : '';
+                return '<button type="button" class="rpt-acad-pill' + active + '" data-risk-filter="' + d.key + '">' + esc(d.label) + '</button>';
+            }).join('');
+        }
+
+        const wrap = document.getElementById('rptAcadDiscTableWrap');
+        if (!wrap) return;
+        const rows = getFilteredDisciplineRows();
+        if (rows.length === 0) {
+            wrap.innerHTML = '<div class="rpt-acad-empty-chart">Tidak ada data siswa yang sesuai dengan filter pencarian.</div>';
+            return;
+        }
+
+        const bodyHtml = rows.map(function(s) {
+            const metaLine = (s.nis ? 'NIS ' + s.nis : 'NIS -') + ' • ' + (s.class_name || '-');
+            return '<tr>' +
+                '<th scope="row">' +
+                    '<div class="rpt-cell-main">' + esc(s.name) + '</div>' +
+                    '<div class="rpt-cell-sub">' + esc(metaLine) + '</div>' +
+                '</th>' +
+                '<td data-label="Kelas &amp; Wali"><div class="rpt-td-stack"><span>' + esc(s.class_name || '-') + '</span><small class="rpt-td-sub">' + esc(s.homeroom_teacher_name || 'Wali belum diset') + '</small></div></td>' +
+                '<td data-label="Hadir" class="num">' + fmtNum(s.hadir) + '</td>' +
+                '<td data-label="Izin" class="num">' + fmtNum(s.izin) + '</td>' +
+                '<td data-label="Sakit" class="num">' + fmtNum(s.sakit) + '</td>' +
+                '<td data-label="Alpa" class="num rpt-num-alpa ' + (s.alpa >= 3 ? 'is-crit' : (s.alpa >= 1 ? 'is-warn' : '')) + '">' + fmtNum(s.alpa) + '</td>' +
+                '<td data-label="Kehadiran" class="num">' + esc(s.attendance_pct !== null ? fmtPct(s.attendance_pct) : '-') + '</td>' +
+                '<td data-label="Status"><span class="rpt-status-chip ' + riskBadgeClass(s.risk_level) + '">' + esc(s.risk_label) + '</span></td>' +
+                '<td data-label="Aksi" class="actions"><button type="button" class="rpt-acad-row-btn js-rpt-open-student" data-mode="view" data-student-id="' + esc(s.student_id) + '">Lihat Detail</button></td>' +
+            '</tr>';
+        }).join('');
+
+        wrap.innerHTML =
+            '<table class="rpt-acad-table">' +
+                '<thead><tr>' +
+                    '<th scope="col">Siswa</th>' +
+                    '<th scope="col">Kelas &amp; Wali</th>' +
+                    '<th scope="col" class="num">Hadir</th>' +
+                    '<th scope="col" class="num">Izin</th>' +
+                    '<th scope="col" class="num">Sakit</th>' +
+                    '<th scope="col" class="num">Alpa</th>' +
+                    '<th scope="col" class="num">Kehadiran</th>' +
+                    '<th scope="col">Status</th>' +
+                    '<th scope="col" class="actions">Aksi</th>' +
+                '</tr></thead>' +
+                '<tbody>' + bodyHtml + '</tbody>' +
+            '</table>';
+    }
+
+    function getFilteredTeacherRows() {
+        const list = (state.data && state.data.teacher_performance && Array.isArray(state.data.teacher_performance.teachers))
+            ? state.data.teacher_performance.teachers
+            : [];
+        const q = (state.tchSearch || '').trim().toLowerCase();
+        if (!q) return list;
+        return list.filter(function(t) {
+            return (
+                String(t.name || '').toLowerCase().includes(q) ||
+                String(t.subject || '').toLowerCase().includes(q) ||
+                String(t.position || '').toLowerCase().includes(q)
+            );
+        });
+    }
+
+    function renderTeacherPanel() {
+        if (!state.data || !state.data.teacher_performance) return;
+        const tp = state.data.teacher_performance;
+        const sum = tp.summary || {};
+
+        const chipsEl = document.getElementById('rptAcadTchSummaryChips');
+        if (chipsEl) {
+            chipsEl.innerHTML =
+                '<span class="rpt-chip"><strong>' + fmtNum(sum.active_teaching_teachers) + '/' + fmtNum(sum.total_teachers) + '</strong> guru mencatat jurnal</span>' +
+                '<span class="rpt-chip"><strong>' + fmtNum(sum.total_logs) + ' JP</strong> total sesi mengajar</span>' +
+                '<span class="rpt-chip"><strong>' + fmtNum(sum.verified_evidence_count) + '</strong> foto bukti kamera</span>' +
+                '<span class="rpt-chip">Keterlaksanaan: <strong>' + esc(fmtPct(sum.execution_rate)) + '</strong></span>';
+        }
+
+        const wrap = document.getElementById('rptAcadTchTableWrap');
+        const rows = getFilteredTeacherRows();
+        if (wrap) {
+            if (rows.length === 0) {
+                wrap.innerHTML = '<div class="rpt-acad-empty-chart">Tidak ada guru yang cocok dengan pencarian.</div>';
+            } else {
+                const bodyHtml = rows.map(function(t) {
+                    const topicText = t.latest_materi
+                        ? (t.latest_class_name ? t.latest_class_name + ': ' : '') + t.latest_materi
+                        : 'Belum ada jurnal di periode ini';
+                    const breakdown = 'H: ' + fmtNum(t.hadir_logs) + ' • TL: ' + fmtNum(t.tugas_luar_logs) + ' • I/S: ' + fmtNum(t.izin_logs + t.sakit_logs);
+                    return '<tr>' +
+                        '<th scope="row">' +
+                            '<div class="rpt-cell-main">' + esc(t.name) + '</div>' +
+                            '<div class="rpt-cell-sub">' + esc(t.position || 'Guru Mapel') + '</div>' +
+                        '</th>' +
+                        '<td data-label="Mapel">' + esc(t.subject || '-') + '</td>' +
+                        '<td data-label="Target JP/Mg" class="num">' + (t.target_weekly_hours > 0 ? fmtNum(t.target_weekly_hours) + ' JP' : '-') + '</td>' +
+                        '<td data-label="Terlaksana" class="num"><div class="rpt-td-stack"><strong>' + fmtNum(t.total_logs) + ' JP</strong><small class="rpt-td-sub">' + fmtNum(t.active_days) + ' hari aktif</small></div></td>' +
+                        '<td data-label="Rincian">' + esc(breakdown) + '</td>' +
+                        '<td data-label="Bukti Kamera" class="num"><span class="rpt-status-chip ' + (t.verified_evidence_count > 0 ? 'success' : 'neutral') + '">' + fmtNum(t.verified_evidence_count) + ' foto</span></td>' +
+                        '<td data-label="Materi Terakhir"><div class="rpt-td-stack"><span class="rpt-topic-clamp">' + esc(topicText) + '</span>' + (t.latest_date ? '<small class="rpt-td-sub">' + esc(fmtIsoDateID(t.latest_date)) + '</small>' : '') + '</div></td>' +
+                    '</tr>';
+                }).join('');
+
+                wrap.innerHTML =
+                    '<table class="rpt-acad-table">' +
+                        '<thead><tr>' +
+                            '<th scope="col">Nama Guru</th>' +
+                            '<th scope="col">Mapel</th>' +
+                            '<th scope="col" class="num">Target JP</th>' +
+                            '<th scope="col" class="num">Sesi Terlaksana</th>' +
+                            '<th scope="col">Kehadiran</th>' +
+                            '<th scope="col" class="num">Bukti Foto</th>' +
+                            '<th scope="col">Jurnal Terakhir</th>' +
+                        '</tr></thead>' +
+                        '<tbody>' + bodyHtml + '</tbody>' +
+                    '</table>';
+            }
+        }
+
+        const feedWrap = document.getElementById('rptAcadRecentJournalsWrap');
+        const journals = Array.isArray(tp.recent_journals) ? tp.recent_journals : [];
+        if (feedWrap) {
+            if (journals.length === 0) {
+                feedWrap.innerHTML = '<div class="rpt-acad-empty-chart">Belum ada log jurnal mengajar pada periode terpilih.</div>';
+            } else {
+                feedWrap.innerHTML = journals.map(function(j) {
+                    return '<div class="rpt-journal-item">' +
+                        '<div class="rpt-journal-top">' +
+                            '<span class="rpt-journal-date">' + esc(fmtIsoDateID(j.attendance_date)) + ' &bull; JP ' + fmtNum(j.period) + ' &bull; ' + esc(j.class_name) + '</span>' +
+                            '<span class="rpt-status-chip ' + (j.has_evidence ? 'success' : 'neutral') + '">' + (j.has_evidence ? 'Terverifikasi Foto' : esc(j.status)) + '</span>' +
+                        '</div>' +
+                        '<div class="rpt-journal-teacher">' + esc(j.teacher_name) + ' &mdash; <strong>' + esc(j.subject) + '</strong></div>' +
+                        '<p class="rpt-journal-materi">' + esc(j.materi) + '</p>' +
+                    '</div>';
+                }).join('');
+            }
+        }
+    }
+
+    function getFilteredAuditRows() {
+        const audit = state.data && state.data.data_audit ? state.data.data_audit : {};
+        let base = [];
+        if (state.auditFilter === 'students') {
+            base = Array.isArray(audit.all_students) ? audit.all_students : [];
+        } else if (state.auditFilter === 'teachers') {
+            base = Array.isArray(audit.all_teachers) ? audit.all_teachers : [];
+        } else {
+            base = Array.isArray(audit.incomplete_items) ? audit.incomplete_items : [];
+        }
+        const q = (state.auditSearch || '').trim().toLowerCase();
+        if (!q) return base;
+        return base.filter(function(r) {
+            return (
+                String(r.name || '').toLowerCase().includes(q) ||
+                String(r.subtitle || '').toLowerCase().includes(q) ||
+                String(r.nis || '').toLowerCase().includes(q) ||
+                String(r.nisn || '').toLowerCase().includes(q)
+            );
+        });
+    }
+
+    function renderAuditPanel() {
+        if (!state.data || !state.data.data_audit) return;
+        const audit = state.data.data_audit;
+        const classGrid = document.getElementById('rptAcadAuditClassGrid');
+        if (classGrid) {
+            const classRows = Array.isArray(audit.per_class) ? audit.per_class : [];
+            if (classRows.length === 0) {
+                classGrid.innerHTML = '<div class="rpt-acad-empty-chart">Belum ada data kelas.</div>';
+            } else {
+                classGrid.innerHTML = classRows.map(function(ca) {
+                    const pct = Number(ca.completeness_pct || 0);
+                    return '<div class="rpt-audit-class-card">' +
+                        '<div class="rpt-audit-class-top"><strong>' + esc(ca.class_name) + '</strong><span>' + esc(fmtPct(pct)) + '</span></div>' +
+                        '<div class="rpt-class-progress-track"><div class="rpt-class-progress-fill ' + (pct >= 85 ? 'good' : (pct >= 60 ? 'warn' : 'bad')) + '" style="width:' + Math.min(100, pct).toFixed(1) + '%"></div></div>' +
+                        '<div class="rpt-audit-class-meta">' +
+                            '<span>Lengkap: ' + fmtNum(ca.complete_students) + '/' + fmtNum(ca.total_students) + '</span>' +
+                            '<span>Foto: ' + fmtNum(ca.photo_count) + '</span>' +
+                            '<span>Kartu: ' + fmtNum(ca.kartu_count) + '</span>' +
+                        '</div>' +
+                    '</div>';
+                }).join('');
+            }
+        }
+
+        document.querySelectorAll('#rptAcadAuditPills [data-audit-filter]').forEach(function(btn) {
+            btn.classList.toggle('active', btn.getAttribute('data-audit-filter') === state.auditFilter);
+        });
+
+        const wrap = document.getElementById('rptAcadAuditTableWrap');
+        if (!wrap) return;
+        const rows = getFilteredAuditRows();
+        if (rows.length === 0) {
+            wrap.innerHTML = '<div class="rpt-acad-empty-chart">' +
+                (state.auditFilter === 'incomplete'
+                    ? 'Seluruh data induk, pasfoto, dan Kartu Pelajar siswa/guru aktif sudah lengkap.'
+                    : 'Tidak ada data yang sesuai dengan pencarian.') +
+                '</div>';
+            return;
+        }
+
+        const actionMode = (typeof isCurrentUserAdmin !== 'undefined' && isCurrentUserAdmin) ? 'edit' : 'view';
+        const bodyHtml = rows.map(function(item) {
+            const isStudent = item.entity_type === 'STUDENT';
+            const checkChips = isStudent
+                ? [
+                    { label: 'NIS', ok: item.has_nis },
+                    { label: 'NISN', ok: item.has_nisn },
+                    { label: 'Pasfoto', ok: item.has_photo },
+                    { label: 'Kartu Pelajar', ok: item.has_kartu_pelajar }
+                ]
+                : [
+                    { label: 'NUPTK/NIP', ok: item.has_nuptk || item.has_nip },
+                    { label: 'NIK', ok: item.has_nik },
+                    { label: 'Pasfoto', ok: item.has_photo }
+                ];
+
+            const chipsHtml = checkChips.map(function(ch) {
+                return '<span class="rpt-check-chip ' + (ch.ok ? 'ok' : 'miss') + '">' + (ch.ok ? '&#10003; ' : '&#10007; ') + esc(ch.label) + '</span>';
+            }).join('');
+
+            const actionBtn = isStudent
+                ? '<button type="button" class="rpt-acad-row-btn js-rpt-open-student" data-mode="' + actionMode + '" data-student-id="' + esc(item.id) + '">Buka Siswa</button>'
+                : '<button type="button" class="rpt-acad-row-btn js-rpt-open-teacher" data-mode="' + actionMode + '" data-teacher-id="' + esc(item.id) + '">Buka Guru</button>';
+
+            return '<tr>' +
+                '<th scope="row">' +
+                    '<div class="rpt-cell-main">' + esc(item.name) + '</div>' +
+                    '<div class="rpt-cell-sub">' + esc((isStudent ? 'Siswa' : 'Guru') + ' &bull; ' + (item.subtitle || '-')) + '</div>' +
+                '</th>' +
+                '<td data-label="Kategori"><span class="rpt-status-chip ' + (isStudent ? 'info' : 'neutral') + '">' + (isStudent ? 'Siswa' : 'Guru') + '</span></td>' +
+                '<td data-label="Kelengkapan Item"><div class="rpt-check-grid">' + chipsHtml + '</div></td>' +
+                '<td data-label="Status Berkas"><span class="rpt-status-chip ' + (item.is_complete ? 'success' : 'warning') + '">' + (item.is_complete ? 'Lengkap' : 'Kurang ' + item.missing_items.length + ' item') + '</span></td>' +
+                '<td data-label="Aksi" class="actions">' + actionBtn + '</td>' +
+            '</tr>';
+        }).join('');
+
+        wrap.innerHTML =
+            '<table class="rpt-acad-table">' +
+                '<thead><tr>' +
+                    '<th scope="col">Nama &amp; Unit</th>' +
+                    '<th scope="col">Peran</th>' +
+                    '<th scope="col">Status Kelengkapan</th>' +
+                    '<th scope="col">Ringkasan</th>' +
+                    '<th scope="col" class="actions">Tindak Lanjut</th>' +
+                '</tr></thead>' +
+                '<tbody>' + bodyHtml + '</tbody>' +
+            '</table>';
+    }
+
+    function renderAllPanels() {
+        if (!state.data) return;
+        syncFilterMeta(state.data.meta || {});
+        ensureStudentClassOptions(state.data);
+        renderOverviewPanel(state.data);
+        renderDisciplinePanel();
+        renderTeacherPanel();
+        renderAuditPanel();
+    }
+
+    function exportCurrentTabCsv() {
+        if (!state.data) {
+            if (typeof showToast === 'function') showToast('warning', 'Belum Siap', 'Tunggu data laporan selesai dimuat.');
+            return;
+        }
+        const meta = state.data.meta || {};
+        const suffix = (meta.start_date || 'awal') + '_sd_' + (meta.end_date || 'akhir');
+
+        if (state.activeTab === 'discipline') {
+            const rows = getFilteredDisciplineRows().map(function(s) {
+                return [s.nis || '-', s.nisn || '-', s.name, s.class_name, s.homeroom_teacher_name || '-', s.hadir, s.izin, s.sakit, s.alpa, s.attendance_pct !== null ? s.attendance_pct + '%' : '-', s.risk_label];
+            });
+            exportCsvFile('laporan-disiplin-siswa_' + suffix + '.csv', ['NIS', 'NISN', 'Nama Siswa', 'Kelas', 'Wali Kelas', 'Hadir', 'Izin', 'Sakit', 'Alpa', 'Kehadiran', 'Status Risiko'], rows);
+            return;
+        }
+        if (state.activeTab === 'teachers') {
+            const rows = getFilteredTeacherRows().map(function(t) {
+                return [t.name, t.position || '-', t.subject || '-', t.target_weekly_hours, t.total_logs, t.hadir_logs, t.tugas_luar_logs, t.izin_logs, t.sakit_logs, t.verified_evidence_count, t.latest_materi || '-'];
+            });
+            exportCsvFile('laporan-kinerja-guru_' + suffix + '.csv', ['Nama Guru', 'Jabatan', 'Mapel', 'Target JP/Mg', 'Sesi Jurnal', 'Hadir', 'Tugas Luar', 'Izin', 'Sakit', 'Bukti Foto', 'Materi Terakhir'], rows);
+            return;
+        }
+        if (state.activeTab === 'audit') {
+            const rows = getFilteredAuditRows().map(function(r) {
+                return [r.entity_type === 'STUDENT' ? 'Siswa' : 'Guru', r.name, r.subtitle || '-', r.is_complete ? 'Lengkap' : 'Belum Lengkap', (r.missing_items || []).join('; ') || '-'];
+            });
+            exportCsvFile('laporan-kelengkapan-berkas_' + suffix + '.csv', ['Kategori', 'Nama', 'Kelas/Jabatan', 'Status', 'Item Kurang'], rows);
+            return;
+        }
+        const perClassRows = (state.data.per_class || []).map(function(c) {
+            return [c.class_name, c.homeroom_teacher_name || '-', c.active_students, c.hadir, c.izin, c.sakit, c.alpa, c.attendance_pct !== null ? c.attendance_pct + '%' : '-'];
+        });
+        exportCsvFile('laporan-ringkasan-akademik_' + suffix + '.csv', ['Kelas', 'Wali Kelas', 'Siswa Aktif', 'Hadir', 'Izin', 'Sakit', 'Alpa', 'Persentase Hadir'], perClassRows);
+    }
+
+    function printExecutiveSummary() {
+        if (!state.data) return;
+        const win = window.open('', '_blank', 'width=960,height=740');
+        if (!win) {
+            if (typeof showToast === 'function') {
+                showToast('warning', 'Pop-up Diblokir', 'Izinkan pop-up browser untuk mencetak Ringkasan Eksekutif.');
+            }
+            return;
+        }
+        const d = state.data;
+        const ov = d.overview || {};
+        const meta = d.meta || {};
+        const classRows = (d.per_class || []).map(function(c) {
+            return '<tr><td>' + esc(c.class_name) + '</td><td>' + esc(c.homeroom_teacher_name || '-') + '</td><td class="num">' + fmtNum(c.active_students) + '</td><td class="num">' + fmtNum(c.hadir) + '</td><td class="num">' + fmtNum(c.izin) + '</td><td class="num">' + fmtNum(c.sakit) + '</td><td class="num">' + fmtNum(c.alpa) + '</td><td class="num"><strong>' + esc(fmtPct(c.attendance_pct)) + '</strong></td></tr>';
+        }).join('');
+        const highRiskRows = (d.discipline && d.discipline.students ? d.discipline.students : [])
+            .filter(function(s) { return s.risk_level === 'HIGH' || s.risk_level === 'MEDIUM'; })
+            .slice(0, 15)
+            .map(function(s) {
+                return '<tr><td>' + esc(s.name) + '</td><td>' + esc(s.class_name) + '</td><td class="num">' + fmtNum(s.alpa) + '</td><td class="num">' + esc(fmtPct(s.attendance_pct)) + '</td><td>' + esc(s.risk_label) + '</td></tr>';
+            }).join('') || '<tr><td colspan="5">Tidak ada siswa kategori Peringatan / Panggil Wali pada periode ini.</td></tr>';
+
+        const html = '<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Ringkasan Eksekutif Laporan Akademik - SIMATA</title>' +
+            '<style>' +
+            'body{font-family:Arial,sans-serif;color:#0f172a;margin:28px;font-size:12.5px;line-height:1.45;}' +
+            '.kop{border-bottom:2.5px solid #14532d;padding-bottom:10px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:flex-end;}' +
+            '.kop h1{margin:0;font-size:18px;color:#14532d;} .kop p{margin:3px 0 0;color:#475569;font-size:12px;}' +
+            '.kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px;}' +
+            '.kpi-box{border:1px solid #cbd5e1;border-radius:8px;padding:10px;background:#f8fafc;}' +
+            '.kpi-box small{color:#475569;display:block;font-size:11px;} .kpi-box strong{font-size:18px;color:#0f172a;display:block;margin-top:4px;}' +
+            'h2{font-size:14px;color:#14532d;margin:18px 0 8px;}' +
+            'table{width:100%;border-collapse:collapse;margin-bottom:16px;}' +
+            'th,td{border:1px solid #cbd5e1;padding:6px 8px;text-align:left;} th{background:#f1f5f9;font-weight:700;} .num{text-align:right;}' +
+            '.foot{margin-top:20px;font-size:11px;color:#64748b;display:flex;justify-content:space-between;}' +
+            '@media print{.no-print{display:none;}}' +
+            '</style></head><body>' +
+            '<div class="kop"><div><h1>MA AT-TAUJIH SARANG &mdash; RINGKASAN LAPORAN AKADEMIK</h1><p>' + esc(meta.academic_year_name || '') + ' &bull; Periode: ' + esc(fmtIsoDateID(meta.start_date)) + ' s.d. ' + esc(fmtIsoDateID(meta.end_date)) + '</p></div><button class="no-print" onclick="window.print()" style="padding:7px 14px;background:#14532d;color:#fff;border:none;border-radius:6px;cursor:pointer;">Cetak</button></div>' +
+            '<div class="kpi">' +
+                '<div class="kpi-box"><small>Kehadiran Siswa</small><strong>' + esc(fmtPct(ov.student_attendance_rate)) + '</strong></div>' +
+                '<div class="kpi-box"><small>Keterlaksanaan Mengajar</small><strong>' + esc(fmtPct(ov.teacher_execution_rate)) + '</strong></div>' +
+                '<div class="kpi-box"><small>Siswa Perlu Perhatian</small><strong>' + fmtNum(ov.attention_students_count) + ' Siswa</strong></div>' +
+                '<div class="kpi-box"><small>Kelengkapan Berkas</small><strong>' + esc(fmtPct(ov.data_readiness_rate)) + '</strong></div>' +
+            '</div>' +
+            '<h2>1. Rekapitulasi Kehadiran per Kelas</h2>' +
+            '<table><thead><tr><th>Kelas</th><th>Wali Kelas</th><th class="num">Siswa</th><th class="num">Hadir</th><th class="num">Izin</th><th class="num">Sakit</th><th class="num">Alpa</th><th class="num">Persentase</th></tr></thead><tbody>' + classRows + '</tbody></table>' +
+            '<h2>2. Daftar Prioritas Disiplin Siswa (Maks. 15)</h2>' +
+            '<table><thead><tr><th>Nama Siswa</th><th>Kelas</th><th class="num">Alpa</th><th class="num">Kehadiran</th><th>Status</th></tr></thead><tbody>' + highRiskRows + '</tbody></table>' +
+            '<div class="foot"><span>Dicetak dari SIMATA &bull; Penilaian akademik mengacu pada RDM Kemenag</span><span>Tanggal cetak: ' + esc(new Date().toLocaleString('id-ID')) + '</span></div>' +
+            '<script>setTimeout(function(){ window.print(); }, 250);<' + '/script></body></html>';
+
+        win.document.open();
+        win.document.write(html);
+        win.document.close();
+    }
+
+    function loadReportsData() {
+        const mySeq = ++state.reqSeq;
+        setLoading(true);
+
+        const params = { preset: state.preset };
+        if (state.preset === 'custom') {
+            params.startDate = state.startDate;
+            params.endDate = state.endDate;
+        }
+        if (state.classId) {
+            params.classId = state.classId;
+        }
+
+        simataClient
+            .withSuccessHandler(function(res) {
+                if (mySeq !== state.reqSeq) return;
+                setLoading(false);
+                if (!res || !res.success || !res.data) {
+                    showError('Respons laporan akademik tidak valid.');
+                    return;
+                }
+                const errBox = document.getElementById('rptAcadErrorState');
+                if (errBox) errBox.hidden = true;
+                state.data = res.data;
+                renderAllPanels();
+            })
+            .withFailureHandler(function(err) {
+                if (mySeq !== state.reqSeq) return;
+                setLoading(false);
+                showError((err && err.message) || 'Gagal memuat laporan akademik dari server.');
+            })
+            .getAcademicReports(params);
+    }
+
+    function bindEventsOnce() {
+        if (state.initialized) return;
+        state.initialized = true;
+
+        const root = document.getElementById('reportsContent');
+        if (!root) return;
+
+        // Preset buttons
+        const presetGroup = document.getElementById('rptAcadPresetGroup');
+        const customDatesEl = document.getElementById('rptAcadCustomDates');
+        const startInput = document.getElementById('rptAcadStartDate');
+        const endInput = document.getElementById('rptAcadEndDate');
+
+        if (presetGroup) {
+            presetGroup.addEventListener('click', function(ev) {
+                const btn = ev.target.closest('[data-preset]');
+                if (!btn) return;
+                const nextPreset = btn.getAttribute('data-preset');
+                presetGroup.querySelectorAll('[data-preset]').forEach(function(b) {
+                    b.classList.toggle('active', b === btn);
+                });
+                state.preset = nextPreset;
+                if (customDatesEl) customDatesEl.hidden = (nextPreset !== 'custom');
+                if (nextPreset === 'custom') {
+                    if (state.data && state.data.meta) {
+                        if (startInput && !startInput.value) startInput.value = state.data.meta.start_date || '';
+                        if (endInput && !endInput.value) endInput.value = state.data.meta.end_date || '';
+                    }
+                    return;
+                }
+                loadReportsData();
+            });
+        }
+
+        const applyCustomBtn = document.getElementById('rptAcadApplyCustomBtn');
+        if (applyCustomBtn) {
+            applyCustomBtn.addEventListener('click', function() {
+                const s = startInput ? startInput.value : '';
+                const e = endInput ? endInput.value : '';
+                if (!s || !e || s > e) {
+                    if (typeof showToast === 'function') {
+                        showToast('warning', 'Tanggal Tidak Valid', 'Pastikan tanggal mulai dan selesai terisi dengan benar.');
+                    }
+                    return;
+                }
+                state.startDate = s;
+                state.endDate = e;
+                loadReportsData();
+            });
+        }
+
+        const classFilter = document.getElementById('rptAcadClassFilter');
+        if (classFilter) {
+            classFilter.addEventListener('change', function() {
+                state.classId = classFilter.value || '';
+                loadReportsData();
+            });
+        }
+
+        const refreshBtn = document.getElementById('rptAcadRefreshBtn');
+        if (refreshBtn) refreshBtn.addEventListener('click', loadReportsData);
+        const retryBtn = document.getElementById('rptAcadRetryBtn');
+        if (retryBtn) retryBtn.addEventListener('click', loadReportsData);
+        const exportBtn = document.getElementById('rptAcadExportCsvBtn');
+        if (exportBtn) exportBtn.addEventListener('click', exportCurrentTabCsv);
+        const printBtn = document.getElementById('rptAcadPrintBtn');
+        if (printBtn) printBtn.addEventListener('click', printExecutiveSummary);
+
+        // Accessible Tablist Click & Keyboard Roving Navigation
+        const tablist = document.getElementById('rptAcadTablist');
+        if (tablist) {
+            const tabBtns = Array.from(tablist.querySelectorAll('[role="tab"]'));
+            tablist.addEventListener('click', function(ev) {
+                const btn = ev.target.closest('[role="tab"]');
+                if (!btn) return;
+                setActiveTab(btn.getAttribute('data-tab'), { focus: false });
+            });
+            tablist.addEventListener('keydown', function(ev) {
+                const curIdx = tabBtns.indexOf(document.activeElement);
+                if (curIdx < 0) return;
+                let nextIdx = -1;
+                if (ev.key === 'ArrowRight') nextIdx = (curIdx + 1) % tabBtns.length;
+                else if (ev.key === 'ArrowLeft') nextIdx = (curIdx - 1 + tabBtns.length) % tabBtns.length;
+                else if (ev.key === 'Home') nextIdx = 0;
+                else if (ev.key === 'End') nextIdx = tabBtns.length - 1;
+                if (nextIdx >= 0) {
+                    ev.preventDefault();
+                    setActiveTab(tabBtns[nextIdx].getAttribute('data-tab'), { focus: true });
+                }
+            });
+        }
+
+        // Searches & Pills
+        const discSearch = document.getElementById('rptAcadDiscSearch');
+        if (discSearch) {
+            discSearch.addEventListener('input', function() {
+                state.discSearch = discSearch.value || '';
+                renderDisciplinePanel();
+            });
+        }
+        const riskPills = document.getElementById('rptAcadRiskPills');
+        if (riskPills) {
+            riskPills.addEventListener('click', function(ev) {
+                const btn = ev.target.closest('[data-risk-filter]');
+                if (!btn) return;
+                state.discRiskFilter = btn.getAttribute('data-risk-filter') || 'ALL';
+                renderDisciplinePanel();
+            });
+        }
+
+        const tchSearch = document.getElementById('rptAcadTchSearch');
+        if (tchSearch) {
+            tchSearch.addEventListener('input', function() {
+                state.tchSearch = tchSearch.value || '';
+                renderTeacherPanel();
+            });
+        }
+
+        const auditSearch = document.getElementById('rptAcadAuditSearch');
+        if (auditSearch) {
+            auditSearch.addEventListener('input', function() {
+                state.auditSearch = auditSearch.value || '';
+                renderAuditPanel();
+            });
+        }
+        const auditPills = document.getElementById('rptAcadAuditPills');
+        if (auditPills) {
+            auditPills.addEventListener('click', function(ev) {
+                const btn = ev.target.closest('[data-audit-filter]');
+                if (!btn) return;
+                state.auditFilter = btn.getAttribute('data-audit-filter') || 'incomplete';
+                renderAuditPanel();
+            });
+        }
+
+        // Delegated actions (KPI shortcuts + Open Student/Teacher Modal)
+        root.addEventListener('click', function(ev) {
+            const tabShortcut = ev.target.closest('.js-rpt-switch-tab');
+            if (tabShortcut) {
+                const targetTab = tabShortcut.getAttribute('data-target-tab');
+                if (targetTab === 'discipline') {
+                    state.discRiskFilter = 'ATTENTION';
+                    renderDisciplinePanel();
+                }
+                setActiveTab(targetTab, { focus: false });
+                return;
+            }
+            const stuBtn = ev.target.closest('.js-rpt-open-student');
+            if (stuBtn) {
+                ensureStudentClassOptions(state.data);
+                if (typeof openStudentModal === 'function') {
+                    openStudentModal(stuBtn.getAttribute('data-mode') || 'view', stuBtn.getAttribute('data-student-id'));
+                }
+                return;
+            }
+            const tchBtn = ev.target.closest('.js-rpt-open-teacher');
+            if (tchBtn) {
+                if (typeof openTeacherModal === 'function') {
+                    openTeacherModal(tchBtn.getAttribute('data-mode') || 'view', tchBtn.getAttribute('data-teacher-id'));
+                }
+            }
+        });
+
+        root.addEventListener('keydown', function(ev) {
+            if (ev.key !== 'Enter' && ev.key !== ' ') return;
+            const tabShortcut = ev.target.closest('.js-rpt-switch-tab');
+            if (tabShortcut) {
+                ev.preventDefault();
+                tabShortcut.click();
+            }
+        });
+    }
+
+    window.__simataInitReportsUi = bindEventsOnce;
+    window.__simataLoadAcademicReports = function() {
+        bindEventsOnce();
+        loadReportsData();
+    };
+})();
 
 function populateGradeSelects() {
     simataClient.withSuccessHandler(function(studentsRes){

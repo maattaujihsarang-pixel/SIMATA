@@ -12,6 +12,7 @@ const evidenceRoutes = require('./evidence.routes');
 const dashboardRoutes = require('./dashboard.routes');
 const chatbotRoutes = require('./chatbot.routes');
 const financeRoutes = require('./finance.routes');
+const reportsRoutes = require('./reports.routes');
 const masterService = require('../services/master.service');
 const authMiddleware = require('../middleware/auth.middleware');
 
@@ -58,6 +59,7 @@ router.use('/evidences', evidenceRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/chatbot', chatbotRoutes);
 router.use('/finance', financeRoutes);
+router.use('/reports', reportsRoutes);
 
 module.exports = router;
 

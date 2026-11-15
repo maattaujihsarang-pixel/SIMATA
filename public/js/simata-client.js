@@ -1648,6 +1648,18 @@
         body: JSON.stringify(payload || {})
       });
       return { success: true, message: res.message, data: res.data };
+    },
+
+    getAcademicReports: async function (params) {
+      const p = params || {};
+      const query = new URLSearchParams();
+      if (p.preset) query.append('preset', p.preset);
+      if (p.startDate) query.append('startDate', p.startDate);
+      if (p.endDate) query.append('endDate', p.endDate);
+      if (p.classId) query.append('classId', p.classId);
+      const qs = query.toString();
+      const res = await apiFetch('/reports/academic' + (qs ? '?' + qs : ''));
+      return { success: true, data: res.data };
     }
   };
 
