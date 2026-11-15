@@ -542,8 +542,9 @@ html, body {
   transform: translateX(2px);
 }
 
-.login-layout .login-button:active {
-  transform: translateY(0);
+.login-layout .login-button:active,
+.login-layout .login-button.is-pressed {
+  transform: translateY(1px);
   box-shadow: 0 2px 6px rgba(22, 101, 52, 0.2);
 }
 
@@ -1071,7 +1072,7 @@ html, body {
                 Silakan masuk ke akun SIMATA Anda.
             </p>
 
-<form class="login-form" onsubmit="return false;">
+<form id="loginForm" class="login-form" method="post" novalidate>
 
     <div class="form-group">
         <label class="input-label" for="username">Username</label>
@@ -1085,12 +1086,18 @@ html, body {
             <input
                 type="text"
                 id="username"
+                name="username"
                 class="input-box"
                 placeholder="Masukkan username Anda"
                 autocomplete="username"
+                autocorrect="off"
+                autocapitalize="none"
+                spellcheck="false"
+                enterkeyhint="next"
+                required
                 oninput="clearUsernameError()">
         </div>
-        <div id="usernameError" class="error-message"></div>
+        <div id="usernameError" class="error-message" aria-live="polite"></div>
     </div>
 
     <div class="form-group">
@@ -1106,9 +1113,12 @@ html, body {
                 <input
                     type="password"
                     id="password"
+                    name="password"
                     class="input-box"
                     placeholder="Masukkan password Anda"
                     autocomplete="current-password"
+                    enterkeyhint="done"
+                    required
                     oninput="clearPasswordError()">
 
                 <button
@@ -1127,7 +1137,7 @@ html, body {
                 </button>
             </div>
         </div>
-        <div id="passwordError" class="error-message"></div>
+        <div id="passwordError" class="error-message" aria-live="polite"></div>
     </div>
 
     <div class="login-options-row">
@@ -1154,7 +1164,7 @@ html, body {
     <button
         id="loginButton"
         class="login-button"
-        type="button">
+        type="submit">
         <span class="btn-icon">
             <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
@@ -1250,34 +1260,53 @@ function togglePassword() {
 
 function login(){
 
-    const username = document.getElementById("username").value.trim();
-    const password = document.getElementById("password").value.trim();
+    const usernameEl = document.getElementById("username");
+    const passwordEl = document.getElementById("password");
+    const username = usernameEl ? usernameEl.value.trim() : "";
+    const password = passwordEl ? passwordEl.value.trim() : "";
     const button = document.getElementById("loginButton");
     const buttonText = document.getElementById("buttonText");
     const usernameError = document.getElementById("usernameError");
     const passwordError = document.getElementById("passwordError");
-    
+
+    if (button && button.disabled) {
+        return;
+    }
+
     saveRememberedUser(username);
-    
 
-// Bersihkan pesan sebelumnya
-usernameError.textContent = "";
-passwordError.textContent = "";
+    // Bersihkan pesan error sebelumnya
+    usernameError.textContent = "";
+    passwordError.textContent = "";
 
-document.getElementById("username").classList.remove("input-error");
-document.getElementById("password").classList.remove("input-error");
+    if (usernameEl) {
+        usernameEl.classList.remove("input-error");
+        usernameEl.removeAttribute("aria-invalid");
+    }
+    if (passwordEl) {
+        passwordEl.classList.remove("input-error");
+        passwordEl.removeAttribute("aria-invalid");
+    }
 
-if(username === ""){
-    usernameError.textContent = "⚠ Username wajib diisi.";
-    document.getElementById("username").classList.add("input-error");
-    return;
-}
+    if (username === "") {
+        usernameError.textContent = "⚠ Username wajib diisi.";
+        if (usernameEl) {
+            usernameEl.classList.add("input-error");
+            usernameEl.setAttribute("aria-invalid", "true");
+            usernameEl.focus();
+        }
+        return;
+    }
 
-if(password === ""){
-    passwordError.textContent = "⚠ Password wajib diisi.";
-    document.getElementById("password").classList.add("input-error");
-    return;
-}
+    if (password === "") {
+        passwordError.textContent = "⚠ Password wajib diisi.";
+        if (passwordEl) {
+            passwordEl.classList.add("input-error");
+            passwordEl.setAttribute("aria-invalid", "true");
+            passwordEl.focus();
+        }
+        return;
+    }
 
     // Ubah tombol menjadi loading
     button.disabled = true;
@@ -1367,15 +1396,23 @@ function checkExistingSession() {
 
 function clearUsernameError(){
 
+    const input = document.getElementById("username");
     document.getElementById("usernameError").textContent = "";
-    document.getElementById("username").classList.remove("input-error");
+    if (input) {
+        input.classList.remove("input-error");
+        input.removeAttribute("aria-invalid");
+    }
 
 }
 
 function clearPasswordError(){
 
+    const input = document.getElementById("password");
     document.getElementById("passwordError").textContent = "";
-    document.getElementById("password").classList.remove("input-error");
+    if (input) {
+        input.classList.remove("input-error");
+        input.removeAttribute("aria-invalid");
+    }
 
 }
 
@@ -1421,28 +1458,27 @@ function hideLoading() {
     document.getElementById("loadingOverlay").classList.remove("show");
 }
 
-function createRipple(event){
+function createRipple(event, targetButton){
 
-    const button = event.currentTarget;
+    const button = targetButton || (event && event.currentTarget);
+    if (!button) return;
 
     const circle = document.createElement("span");
-
     const diameter = Math.max(button.clientWidth, button.clientHeight);
-
     const radius = diameter / 2;
+    const rect = button.getBoundingClientRect();
+    const isPointerClick = Boolean(
+        event &&
+        typeof event.clientX === "number" &&
+        (event.clientX !== 0 || event.clientY !== 0)
+    );
 
     circle.style.width = circle.style.height = diameter + "px";
-
-    circle.style.left =
-        (event.clientX - button.getBoundingClientRect().left - radius) + "px";
-
-    circle.style.top =
-        (event.clientY - button.getBoundingClientRect().top - radius) + "px";
-
+    circle.style.left = (isPointerClick ? (event.clientX - rect.left - radius) : (rect.width / 2 - radius)) + "px";
+    circle.style.top = (isPointerClick ? (event.clientY - rect.top - radius) : (rect.height / 2 - radius)) + "px";
     circle.classList.add("ripple");
 
     const ripple = button.getElementsByClassName("ripple")[0];
-
     if(ripple){
         ripple.remove();
     }
@@ -1451,7 +1487,16 @@ function createRipple(event){
 
 }
 
-// Pasang listener klik setelah DOM siap (menggantikan atribut inline onclick)
+function triggerKeyboardButtonFeedback(button) {
+    if (!button) return;
+    createRipple(null, button);
+    button.classList.add("is-pressed");
+    setTimeout(function() {
+        button.classList.remove("is-pressed");
+    }, 180);
+}
+
+// Pasang listener submit & klik setelah DOM siap (Enter di form otomatis mengeksekusi Masuk)
 document.addEventListener('DOMContentLoaded', function() {
 
   // Cek session yang masih aktif
@@ -1460,7 +1505,10 @@ document.addEventListener('DOMContentLoaded', function() {
   // Muat username tersimpan jika ada (Ingatkan saya)
   loadRememberedUser();
 
+  var form = document.getElementById('loginForm');
   var btn = document.getElementById('loginButton');
+  var rememberCheckbox = document.getElementById('rememberMe');
+  var lastPointerClickAt = 0;
 
   if (btn) {
     try {
@@ -1468,8 +1516,40 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch (e) {}
 
     btn.addEventListener('click', function(e) {
-      createRipple(e);
+      if (e && e.detail > 0) {
+        lastPointerClickAt = Date.now();
+        createRipple(e, btn);
+      }
+    });
+  }
+
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      if (btn && (Date.now() - lastPointerClickAt > 250)) {
+        triggerKeyboardButtonFeedback(btn);
+      }
       login();
+    });
+  } else if (btn) {
+    btn.addEventListener('click', function() {
+      login();
+    });
+  }
+
+  if (rememberCheckbox && form) {
+    rememberCheckbox.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (e.isComposing || e.keyCode === 229) {
+          return;
+        }
+        if (typeof form.requestSubmit === 'function') {
+          form.requestSubmit(btn || undefined);
+        } else if (btn) {
+          btn.click();
+        }
+      }
     });
   }
 });
