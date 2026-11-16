@@ -812,7 +812,7 @@ html, body {
   }
 }
 </style>
-  <link rel="stylesheet" href="/css/dashboard.css?v=bug59a">
+  <link rel="stylesheet" href="/css/dashboard.css?v=bug59b">
   <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
   <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
@@ -12985,6 +12985,14 @@ function showSchedulesView(opts) {
         return rows;
     }
 
+    function formatPrintClassLabel(cls) {
+        const lvl = Number(cls && cls.level);
+        if (lvl === 10) return 'X';
+        if (lvl === 11) return 'XI';
+        if (lvl === 12) return 'XII';
+        return cls && cls.class_name ? String(cls.class_name).toUpperCase() : '-';
+    }
+
     function handlePrintMatrix() {
         if (!state.data) return;
         const container = document.getElementById('schedPrintSheet');
@@ -12994,63 +13002,167 @@ function showSchedulesView(opts) {
         const days = getDayList();
         const periods = Array.isArray(state.data.periods) ? state.data.periods : [];
         const classes = Array.isArray(state.data.classes) ? state.data.classes : [];
-        const slotMap = buildSlotMap(state.data.slots);
-        const teachers = (state.data.teachers || []).filter(function(t) { return t.scheduled_weekly_jp > 0 || t.short_code; });
-        const subjects = (state.data.subjects || []).filter(function(s) { return s.category === 'KBM'; });
+        const slots = Array.isArray(state.data.slots) ? state.data.slots : [];
+        const slotMap = buildSlotMap(slots);
+        const allTeachers = Array.isArray(state.data.teachers) ? state.data.teachers : [];
+        const semTitle = meta.semester === 'GENAP' ? 'GENAP' : 'GANJIL';
+        const yearTitle = String(meta.academic_year_id || '2026/2027');
 
-        const rowsHtml = days.map(function(dayObj) {
-            const teachingPeriods = periods.filter(function(p) { return !p.is_break; });
-            return teachingPeriods.map(function(p, idx) {
-                const clsCells = classes.map(function(c) {
-                    const s = slotMap.get(dayObj.day_of_week + '|' + p.period_number + '|' + c.class_id);
-                    if (!s) return '<td></td>';
-                    const cellText = s.teacher_short_code ? (s.subject_code + ' / ' + s.teacher_short_code) : s.subject_code;
-                    return '<td style="' + (s.subject_category === 'NON_KBM' ? 'background:#f1f5f9;font-weight:700;' : 'font-weight:700;') + '">' + esc(cellText) + '</td>';
+        // Build 3 paired-day blocks: [Sabtu, Ahad], [Senin, Selasa], [Rabu, Kamis]
+        const dayPairs = [];
+        for (let i = 0; i < days.length; i += 2) {
+            dayPairs.push(days.slice(i, i + 2));
+        }
+
+        const pairBlocksHtml = dayPairs.map(function(pairDays) {
+            const perDayCols = Math.max(1, classes.length) * 2;
+            const slotPct = pairDays.length > 0 && classes.length > 0
+                ? (87.6 / (pairDays.length * classes.length))
+                : 14.6;
+            const mpPct = (slotPct * 0.64).toFixed(2);
+            const grPct = (slotPct * 0.36).toFixed(2);
+
+            const colgroupHtml = '<colgroup>' +
+                '<col style="width:3.2%;"><col style="width:9.2%;">' +
+                pairDays.map(function() {
+                    return classes.map(function() {
+                        return '<col style="width:' + mpPct + '%;"><col style="width:' + grPct + '%;">';
+                    }).join('');
+                }).join('') +
+            '</colgroup>';
+
+            const headRow1 = '<tr>' +
+                '<th rowspan="2">JAM</th>' +
+                '<th rowspan="2">KELAS</th>' +
+                pairDays.map(function(d) {
+                    return '<th class="sp-day-head" colspan="' + perDayCols + '">' + esc(d.label.toUpperCase()) + '</th>';
+                }).join('') +
+            '</tr>';
+
+            const headRow2 = '<tr>' +
+                pairDays.map(function() {
+                    return classes.map(function(c) {
+                        return '<th colspan="2">' + esc(formatPrintClassLabel(c)) + '</th>';
+                    }).join('');
+                }).join('') +
+            '</tr>';
+
+            const headRow3 = '<tr>' +
+                '<th class="sp-sub-head">KE</th>' +
+                '<th class="sp-sub-head">WAKTU</th>' +
+                pairDays.map(function() {
+                    return classes.map(function() {
+                        return '<th class="sp-sub-head">MP</th><th class="sp-sub-head">GURU</th>';
+                    }).join('');
+                }).join('') +
+            '</tr>';
+
+            const bodyRows = periods.map(function(p) {
+                if (p.is_break) {
+                    return '<tr class="sp-break-row">' +
+                        '<td></td>' +
+                        '<td class="sp-time">' + esc(p.start_time + ' - ' + p.end_time) + '</td>' +
+                        pairDays.map(function() {
+                            return '<td colspan="' + perDayCols + '">' + esc(String(p.label || 'ISTIRAHAT').toUpperCase()) + '</td>';
+                        }).join('') +
+                    '</tr>';
+                }
+
+                const dayCells = pairDays.map(function(d) {
+                    return classes.map(function(c) {
+                        const s = slotMap.get(d.day_of_week + '|' + p.period_number + '|' + c.class_id);
+                        if (!s) return '<td></td><td></td>';
+                        if (s.subject_category !== 'KBM' || !s.teacher_short_code) {
+                            return '<td colspan="2" class="sp-nonkbm">' + esc(s.subject_code) + '</td>';
+                        }
+                        return '<td class="sp-mp">' + esc(s.subject_code) + '</td>' +
+                            '<td class="sp-gr">' + esc(s.teacher_short_code) + '</td>';
+                    }).join('');
                 }).join('');
-                const dayCell = idx === 0
-                    ? '<td rowspan="' + teachingPeriods.length + '" style="font-weight:700;background:#f8fafc;">' + esc(dayObj.label.toUpperCase()) + '</td>'
+
+                return '<tr>' +
+                    '<td class="sp-jam">' + esc(p.period_number) + '</td>' +
+                    '<td class="sp-time">' + esc(p.start_time + ' - ' + p.end_time) + '</td>' +
+                    dayCells +
+                '</tr>';
+            }).join('');
+
+            return '<table class="sched-print-pair-table">' +
+                colgroupHtml +
+                '<thead>' + headRow1 + headRow2 + headRow3 + '</thead>' +
+                '<tbody>' + bodyRows + '</tbody>' +
+            '</table>';
+        }).join('');
+
+        // Build dynamic right-hand legend: MP | KODE | NAMA GURU | JAM + Total
+        let totalLegendJp = 0;
+        const legendRowsHtml = allTeachers.map(function(t) {
+            const teacherKbmSlots = slots.filter(function(s) {
+                return s.teacher_id === t.teacher_id && s.subject_category === 'KBM';
+            });
+            if (teacherKbmSlots.length === 0) return '';
+
+            const bySubject = new Map();
+            teacherKbmSlots.forEach(function(s) {
+                bySubject.set(s.subject_code, (bySubject.get(s.subject_code) || 0) + 1);
+            });
+            const entries = Array.from(bySubject.entries());
+            const span = entries.length;
+
+            return entries.map(function(entry, idx) {
+                const subjCode = entry[0];
+                const jpCount = entry[1];
+                totalLegendJp += jpCount;
+                const mergedCols = idx === 0
+                    ? '<td rowspan="' + span + '" class="sp-lg-code">' + esc(t.short_code || '-') + '</td>' +
+                      '<td rowspan="' + span + '" class="sp-lg-name" title="' + esc(t.name) + '">' + esc(t.name) + '</td>'
                     : '';
                 return '<tr>' +
-                    dayCell +
-                    '<td>' + p.period_number + '</td>' +
-                    '<td>' + esc(p.start_time + '–' + p.end_time) + '</td>' +
-                    clsCells +
+                    '<td class="sp-lg-mp">' + esc(subjCode) + '</td>' +
+                    mergedCols +
+                    '<td class="sp-lg-jp">' + jpCount + '</td>' +
                 '</tr>';
             }).join('');
         }).join('');
 
-        const teacherLegendRows = teachers.map(function(t) {
-            return '<tr><td style="font-weight:700;text-align:center;">' + esc(t.short_code || '-') + '</td><td>' + esc(t.name) + '</td><td>' + esc(t.scheduled_subjects || t.subject || '-') + '</td><td style="text-align:center;">' + t.scheduled_weekly_jp + '</td></tr>';
-        }).join('');
-
-        const subjLegendItems = subjects.map(function(s) {
-            return '<span><strong>' + esc(s.code) + '</strong>: ' + esc(s.name) + '</span>';
-        }).join(' &bull; ');
+        const kepalaTeacher = allTeachers.find(function(t) {
+            return /kepala/i.test(String(t.position || ''));
+        });
+        const kepalaName = kepalaTeacher ? kepalaTeacher.name : '_________________________';
+        const todayId = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+        const breakPeriod = periods.find(function(p) { return p.is_break; });
+        const breakStr = breakPeriod ? (breakPeriod.start_time + '–' + breakPeriod.end_time + ' WIB') : '09:40–10:10 WIB';
 
         container.innerHTML =
             '<div class="sched-print-head">' +
-                '<h2>JADWAL PELAJARAN MADRASAH ALIYAH AT-TAUJIH SARANG</h2>' +
-                '<p>' + esc(meta.academic_year_name || ('Tahun Ajaran ' + meta.academic_year_id)) + ' &bull; Semester ' + esc(meta.semester === 'GENAP' ? 'Genap' : 'Ganjil') + '</p>' +
+                '<h2>JADWAL PELAJARAN SEMESTER ' + esc(semTitle) + '</h2>' +
+                '<div class="sp-madrasah">MA. AT-TAUJIH SARANG</div>' +
+                '<div class="sp-year">TAHUN PELAJARAN ' + esc(yearTitle) + '</div>' +
             '</div>' +
-            '<table class="sched-print-grid">' +
-                '<thead><tr>' +
-                    '<th style="width:74px;">HARI</th><th style="width:36px;">JAM</th><th style="width:88px;">WAKTU</th>' +
-                    classes.map(function(c) { return '<th>' + esc(c.class_name.toUpperCase()) + '</th>'; }).join('') +
-                '</tr></thead>' +
-                '<tbody>' + rowsHtml + '</tbody>' +
-            '</table>' +
-            '<div class="sched-print-legends">' +
-                '<div>' +
-                    '<strong>Daftar Kode Guru Pengampu</strong>' +
-                    '<table class="sched-print-grid" style="margin-top:4px;"><thead><tr><th style="width:36px;">Kode</th><th>Nama Guru</th><th>Mapel</th><th style="width:34px;">JP</th></tr></thead><tbody>' + teacherLegendRows + '</tbody></table>' +
+            '<div class="sched-print-shell">' +
+                '<div class="sched-print-left">' + pairBlocksHtml + '</div>' +
+                '<div class="sched-print-right">' +
+                    '<table class="sched-print-legend-table">' +
+                        '<colgroup><col style="width:20%;"><col style="width:11%;"><col style="width:57%;"><col style="width:12%;"></colgroup>' +
+                        '<thead><tr><th>MP</th><th>KODE</th><th>NAMA GURU</th><th>JAM</th></tr></thead>' +
+                        '<tbody>' +
+                            legendRowsHtml +
+                            '<tr class="sp-lg-total"><td colspan="3">TOTAL JAM PELAJARAN (KBM)</td><td>' + totalLegendJp + '</td></tr>' +
+                        '</tbody>' +
+                    '</table>' +
+                    '<div class="sched-print-note">' +
+                        '<strong>Keterangan:</strong> <strong>PB</strong>: Pembelajaran Bahasa (Pembina Bahasa) &bull; ' +
+                        '<strong>UPACARA</strong>: Upacara Bendera &bull; <strong>Istirahat</strong>: ' + esc(breakStr) +
+                    '</div>' +
+                    '<div class="sched-print-sign">' +
+                        '<div class="sched-print-sign-box">' +
+                            '<div>Sarang, ' + esc(todayId) + '</div>' +
+                            '<div>Kepala MA. At-Taujih</div>' +
+                            '<div class="sched-print-sign-space"></div>' +
+                            '<div style="font-weight:700;text-decoration:underline;">' + esc(kepalaName) + '</div>' +
+                        '</div>' +
+                    '</div>' +
                 '</div>' +
-                '<div>' +
-                    '<strong>Keterangan Kode Mata Pelajaran</strong>' +
-                    '<div style="border:1px solid #334155;padding:6px 8px;margin-top:4px;line-height:1.45;">' + subjLegendItems + ' &bull; <strong>PB</strong>: Pembelajaran Bahasa (Pembina Bahasa)</div>' +
-                '</div>' +
-            '</div>' +
-            '<div class="sched-print-sign">' +
-                '<div style="text-align:center;">Sarang, ' + new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) + '<br>Kepala Madrasah / Waka Kurikulum<br><br><br>___________________________</div>' +
             '</div>';
 
         document.body.classList.add('simata-printing-schedule');
