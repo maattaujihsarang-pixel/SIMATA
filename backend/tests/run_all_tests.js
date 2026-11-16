@@ -14,6 +14,7 @@ const runFeature005bTests = require('./test_feature005b_invoicing');
 const runBug40AdminEditTest = require('./test_bug40_admin_edit');
 const runBug53EvidenceRetentionTests = require('./test_bug53_evidence_retention');
 const runBug56ReportsTests = require('./test_bug56_reports');
+const runBug57MobileChatbotTests = require('./test_bug57_mobile_chatbot');
 
 async function runAllTests() {
   console.log('===============================================================');
@@ -36,7 +37,8 @@ async function runAllTests() {
     feature005b_invoicing: false,
     bug40_admin_edit: false,
     bug53_evidence_retention: false,
-    bug56_reports: false
+    bug56_reports: false,
+    bug57_mobile_chatbot: false
   };
 
   try {
@@ -56,6 +58,7 @@ async function runAllTests() {
     results.bug40_admin_edit = await runBug40AdminEditTest();
     results.bug53_evidence_retention = await runBug53EvidenceRetentionTests();
     results.bug56_reports = await runBug56ReportsTests();
+    results.bug57_mobile_chatbot = await runBug57MobileChatbotTests();
 
     console.log('\n===============================================================');
     console.log('VERIFICATION SUMMARY');
