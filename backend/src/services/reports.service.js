@@ -475,7 +475,8 @@ class ReportsService {
       teacherPerfRes,
       recentJournalRes,
       studentAuditRes,
-      teacherAuditRes
+      teacherAuditRes,
+      teacherScheduleRes
     ] = await Promise.all([
       // 2. Current Period Student Attendance Totals (Daily Student-Days + JP totals)
       db.query(
@@ -775,9 +776,33 @@ class ReportsService {
            (pp.photo_id IS NOT NULL) AS has_photo
          FROM teachers t
          LEFT JOIN profile_photos pp ON pp.teacher_id = t.teacher_id
-         WHERE t.status = 'Active'
-         ORDER BY t.name ASC`
-      )
+          WHERE t.status = 'Active'
+          ORDER BY t.name ASC`
+      ),
+
+      // 12. Scheduled Weekly JP Load per Teacher (active year / schedule semester, non-breaking on unmigrated/mock DB)
+      db.query(
+        `/* REPORTS: TEACHER_SCHEDULE_LOAD */
+         SELECT
+           cs.teacher_id,
+           COUNT(*) FILTER (WHERE sub.category = 'KBM')::int AS scheduled_weekly_jp,
+           COUNT(DISTINCT cs.class_id)::int AS scheduled_classes_count
+         FROM class_schedules cs
+         JOIN subjects sub ON sub.subject_id = cs.subject_id
+         WHERE cs.teacher_id IS NOT NULL
+           AND ($1::text IS NULL OR cs.academic_year_id = $1)
+           AND cs.semester = COALESCE(
+             (SELECT semester FROM class_schedules
+              WHERE ($1::text IS NULL OR academic_year_id = $1)
+              GROUP BY semester ORDER BY COUNT(*) DESC LIMIT 1),
+             'GANJIL'
+           )
+         GROUP BY cs.teacher_id`,
+        [activeYear.academic_year_id || null]
+      ).catch((err) => {
+        if (err && err.code === '42P01') return { rows: [] };
+        throw err;
+      })
     ]);
 
     // Aggregate Student KPI & Prev Delta (Daily Student-Days primary + JP preserved)
@@ -999,6 +1024,14 @@ class ReportsService {
     });
 
     // Teacher Performance Aggregation
+    const teacherSchedMap = new Map();
+    for (const sRow of (teacherScheduleRes.rows || [])) {
+      teacherSchedMap.set(sRow.teacher_id, {
+        scheduled_weekly_jp: Number(sRow.scheduled_weekly_jp || 0),
+        scheduled_classes_count: Number(sRow.scheduled_classes_count || 0)
+      });
+    }
+
     let tTotalLogs = 0;
     let tTotalExec = 0;
     let tTotalEvidence = 0;
@@ -1018,12 +1051,17 @@ class ReportsService {
       if (totalLogs > 0) tActiveTeachingTeachers += 1;
 
       const latest = latestJournalByTeacher.get(t.teacher_id) || null;
+      const schedInfo = teacherSchedMap.get(t.teacher_id) || { scheduled_weekly_jp: 0, scheduled_classes_count: 0 };
+      const manualTargetHours = Number(t.target_weekly_hours || 0);
+      const effectiveTargetHours = manualTargetHours > 0 ? manualTargetHours : schedInfo.scheduled_weekly_jp;
       return {
         teacher_id: t.teacher_id,
         name: t.name,
         position: t.position,
         subject: t.subject,
-        target_weekly_hours: Number(t.target_weekly_hours || 0),
+        target_weekly_hours: effectiveTargetHours,
+        scheduled_weekly_hours: schedInfo.scheduled_weekly_jp,
+        scheduled_classes_count: schedInfo.scheduled_classes_count,
         total_logs: totalLogs,
         hadir_logs: hadirLogs,
         izin_logs: izinLogs,

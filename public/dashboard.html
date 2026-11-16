@@ -812,7 +812,7 @@ html, body {
   }
 }
 </style>
-  <link rel="stylesheet" href="/css/dashboard.css?v=bug58c">
+  <link rel="stylesheet" href="/css/dashboard.css?v=bug59a">
   <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
   <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
@@ -990,6 +990,16 @@ html, body {
               </svg>
             </span>
             <span class="menu-text">Kelas</span>
+          </li>
+
+          <li id="menu-schedules">
+            <span class="menu-icon">
+              <svg viewBox="0 0 24 24">
+                <rect x="3" y="4" width="18" height="18" rx="2"/>
+                <path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/>
+              </svg>
+            </span>
+            <span class="menu-text">Jadwal Pelajaran</span>
           </li>
 
           <li id="menu-grades">
@@ -1695,6 +1705,13 @@ html, body {
 
                 <!-- FORM MANUAL PRESENSI GURU -->
                 <div class="responder-form-card">
+                  <div id="rg_scheduleAssistBanner" class="rg-sched-banner" style="display:none;" role="region" aria-label="Bantuan Jadwal Aktif">
+                    <div class="rg-sched-banner-top">
+                      <span id="rg_scheduleAssistTitle">Jadwal Mengajar Hari Ini</span>
+                      <span id="rg_scheduleAssistMeta" class="sched-badge sched-badge-success">Live WIB</span>
+                    </div>
+                    <div id="rg_scheduleAssistPills" class="rg-sched-pills"></div>
+                  </div>
                   <div class="responder-form-grid">
                     <div class="responder-field-group">
                       <label for="rg_teacherId" class="responder-field-label">Nama Guru <span class="responder-required">*</span></label>
@@ -3170,6 +3187,299 @@ html, body {
           </dialog>
         </section>
 
+        <!-- SCHEDULES CONTENT (BUG 59: JADWAL PELAJARAN DESKTOP + MOBILE) -->
+        <section id="schedulesContent" class="content" style="display:none;">
+          <div class="section-heading sched-header">
+            <div class="sched-title-wrap">
+              <span class="section-label">DATA &amp; AKADEMIK</span>
+              <h2>Jadwal Pelajaran</h2>
+              <p class="sched-subtitle">Pengaturan jadwal mingguan per Tahun Ajaran &amp; Semester (Sabtu–Kamis), terintegrasi dengan Responder Guru &amp; Laporan Kinerja.</p>
+            </div>
+            <div class="sched-header-actions">
+              <button type="button" class="sched-btn sched-btn-soft" id="schedSeedBtn" style="display:none;">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/></svg>
+                <span>Muat Jadwal 2026/2027</span>
+              </button>
+              <button type="button" class="sched-btn sched-admin-only" id="schedCopyBtn" style="display:none;">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                <span>Salin Tahun/Semester</span>
+              </button>
+              <button type="button" class="sched-btn sched-admin-only" id="schedMasterBtn" style="display:none;">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                <span>Master Mapel &amp; Jam</span>
+              </button>
+              <button type="button" class="sched-btn sched-admin-only" id="schedImportBtn" style="display:none;">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <span>Import CSV</span>
+              </button>
+              <button type="button" class="sched-btn" id="schedRefreshBtn">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
+                <span>Muat Ulang</span>
+              </button>
+              <button type="button" class="sched-btn sched-btn-primary" id="schedPrintBtn">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                <span>Cetak Matriks PDF</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="sched-filter-card" role="region" aria-label="Filter Jadwal Pelajaran">
+            <div class="sched-filter-top">
+              <div class="sched-filter-block">
+                <label for="schedYearSelect" class="sched-filter-label">Tahun Ajaran</label>
+                <select id="schedYearSelect" class="sched-select"></select>
+              </div>
+              <div class="sched-filter-block">
+                <span class="sched-filter-label">Semester</span>
+                <div class="sched-seg-group" id="schedSemesterGroup" role="group" aria-label="Pilih Semester">
+                  <button type="button" class="sched-seg-btn active" data-semester="GANJIL">Ganjil</button>
+                  <button type="button" class="sched-seg-btn" data-semester="GENAP">Genap</button>
+                </div>
+              </div>
+              <div class="sched-filter-block">
+                <span class="sched-filter-label">Mode Tampilan</span>
+                <div class="sched-seg-group" id="schedModeGroup" role="group" aria-label="Mode Tampilan Jadwal">
+                  <button type="button" class="sched-seg-btn active" data-mode="matrix">Matriks Kelas</button>
+                  <button type="button" class="sched-seg-btn" data-mode="class">Per Kelas</button>
+                  <button type="button" class="sched-seg-btn" data-mode="teacher" id="schedModeTeacherBtn">Per Guru</button>
+                </div>
+              </div>
+              <div class="sched-filter-block" id="schedClassFilterWrap" style="display:none;">
+                <label for="schedClassSelect" class="sched-filter-label">Pilih Kelas</label>
+                <select id="schedClassSelect" class="sched-select"></select>
+              </div>
+              <div class="sched-filter-block" id="schedTeacherFilterWrap" style="display:none;flex:1 1 220px;">
+                <label for="schedTeacherSelect" class="sched-filter-label">Pilih Guru</label>
+                <select id="schedTeacherSelect" class="sched-select"></select>
+              </div>
+            </div>
+
+            <div class="sched-filter-days-row">
+              <div class="sched-day-pills" id="schedDayPills" role="group" aria-label="Filter Hari Aktif"></div>
+              <search class="sched-search-box">
+                <svg class="sched-search-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="search" id="schedSearchInput" placeholder="Cari mapel atau nama guru..." aria-label="Cari mata pelajaran atau guru">
+              </search>
+            </div>
+          </div>
+
+          <div class="sched-workspace">
+            <div class="sched-main-card">
+              <div class="sched-card-head">
+                <div>
+                  <h3 id="schedBoardTitle" class="sched-card-title">Matriks Jadwal Mengajar</h3>
+                  <p id="schedBoardSub" class="sched-card-sub">Memuat jadwal aktif...</p>
+                </div>
+                <div id="schedBoardBadges" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"></div>
+              </div>
+              <div id="schedBoardBody">
+                <div style="padding:36px;text-align:center;color:#64748b;font-size:13px;">Memuat jadwal pelajaran...</div>
+              </div>
+            </div>
+
+            <aside class="sched-aside-card" aria-label="Ringkasan dan Beban Guru">
+              <div class="sched-card-head">
+                <div>
+                  <h3 class="sched-card-title">Ringkasan &amp; Beban Guru</h3>
+                  <p class="sched-card-sub">Validasi bentrok &amp; distribusi JP/minggu</p>
+                </div>
+                <span id="schedConflictBadge" class="sched-badge sched-badge-success">0 Bentrok</span>
+              </div>
+              <div class="sched-kpi-grid">
+                <div class="sched-kpi-box">
+                  <div class="sched-kpi-label">Total KBM</div>
+                  <div class="sched-kpi-val" id="schedKpiKbm">0 JP</div>
+                </div>
+                <div class="sched-kpi-box">
+                  <div class="sched-kpi-label">Non-KBM &amp; Guru</div>
+                  <div class="sched-kpi-val" id="schedKpiTeachers">0</div>
+                </div>
+              </div>
+              <div id="schedTeacherLoadList" class="sched-teacher-load-list"></div>
+            </aside>
+          </div>
+
+          <!-- Dialog 1: Edit / Assign Schedule Slot (Admin) -->
+          <dialog id="schedSlotDialog" class="sched-dialog" closedby="any" aria-labelledby="schedSlotDialogTitle">
+            <div class="sched-dialog-head">
+              <h3 id="schedSlotDialogTitle" class="sched-dialog-title">Atur Slot Jadwal</h3>
+              <button type="button" class="sched-dialog-close" data-close-dialog="schedSlotDialog" aria-label="Tutup">&times;</button>
+            </div>
+            <form id="schedSlotForm" class="sched-dialog-body">
+              <div id="schedSlotContextBanner" class="sched-info-alert"></div>
+              <div id="schedSlotConflictWarn" class="sched-conflict-alert" style="display:none;" role="alert"></div>
+              <div class="sched-field">
+                <label>Jam ke- (Bisa pilih beberapa jam berurutan)</label>
+                <div id="schedSlotPeriodsGrid" class="sched-period-check-grid"></div>
+              </div>
+              <div class="sched-form-grid">
+                <div class="sched-field">
+                  <label for="schedSlotSubject">Mata Pelajaran / Program</label>
+                  <select id="schedSlotSubject" required></select>
+                </div>
+                <div class="sched-field">
+                  <label for="schedSlotTeacher">Guru Pengampu</label>
+                  <select id="schedSlotTeacher"></select>
+                </div>
+              </div>
+              <div class="sched-field">
+                <label for="schedSlotNote">Catatan Tambahan (Opsional)</label>
+                <input type="text" id="schedSlotNote" maxlength="200" placeholder="Misal: Praktikum lab, Pembina Bahasa, dsb.">
+              </div>
+            </form>
+            <div class="sched-dialog-foot">
+              <button type="button" class="sched-btn sched-btn-danger" id="schedSlotClearBtn" style="display:none;">Kosongkan Jam Ini</button>
+              <div style="display:flex;gap:8px;margin-left:auto;">
+                <button type="button" class="sched-btn" data-close-dialog="schedSlotDialog">Batal</button>
+                <button type="submit" form="schedSlotForm" class="sched-btn sched-btn-primary" id="schedSlotSaveBtn">Simpan Jadwal</button>
+              </div>
+            </div>
+          </dialog>
+
+          <!-- Dialog 2: Copy Schedule From Another Year / Semester (Admin) -->
+          <dialog id="schedCopyDialog" class="sched-dialog" closedby="any" aria-labelledby="schedCopyDialogTitle">
+            <div class="sched-dialog-head">
+              <h3 id="schedCopyDialogTitle" class="sched-dialog-title">Salin Jadwal Tahun Ajaran / Semester</h3>
+              <button type="button" class="sched-dialog-close" data-close-dialog="schedCopyDialog" aria-label="Tutup">&times;</button>
+            </div>
+            <form id="schedCopyForm" class="sched-dialog-body">
+              <div class="sched-info-alert">Salin pengaturan jam belajar, kode guru, dan seluruh matriks jadwal antar tahun ajaran atau semester tanpa input ulang.</div>
+              <div class="sched-form-grid">
+                <div class="sched-field">
+                  <label for="schedCopyFromYear">Dari Tahun Ajaran</label>
+                  <select id="schedCopyFromYear" required></select>
+                </div>
+                <div class="sched-field">
+                  <label for="schedCopyFromSem">Dari Semester</label>
+                  <select id="schedCopyFromSem" required>
+                    <option value="GANJIL">Ganjil</option>
+                    <option value="GENAP">Genap</option>
+                  </select>
+                </div>
+                <div class="sched-field">
+                  <label for="schedCopyToYear">Ke Tahun Ajaran</label>
+                  <select id="schedCopyToYear" required></select>
+                </div>
+                <div class="sched-field">
+                  <label for="schedCopyToSem">Ke Semester</label>
+                  <select id="schedCopyToSem" required>
+                    <option value="GANJIL">Ganjil</option>
+                    <option value="GENAP">Genap</option>
+                  </select>
+                </div>
+              </div>
+              <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:#334155;font-weight:600;cursor:pointer;">
+                <input type="checkbox" id="schedCopyOverwrite" style="width:16px;height:16px;accent-color:#166534;">
+                <span>Timpa semua slot yang sudah ada pada semester tujuan</span>
+              </label>
+            </form>
+            <div class="sched-dialog-foot">
+              <div style="display:flex;gap:8px;margin-left:auto;">
+                <button type="button" class="sched-btn" data-close-dialog="schedCopyDialog">Batal</button>
+                <button type="submit" form="schedCopyForm" class="sched-btn sched-btn-primary" id="schedCopySubmitBtn">Salin Jadwal Sekarang</button>
+              </div>
+            </div>
+          </dialog>
+
+          <!-- Dialog 3: Master Mapel, Jam Pelajaran & Kode Guru (Admin) -->
+          <dialog id="schedMasterDialog" class="sched-dialog sched-dialog-wide" closedby="any" aria-labelledby="schedMasterDialogTitle">
+            <div class="sched-dialog-head">
+              <h3 id="schedMasterDialogTitle" class="sched-dialog-title">Master Mapel, Jam Pelajaran &amp; Kode Guru</h3>
+              <button type="button" class="sched-dialog-close" data-close-dialog="schedMasterDialog" aria-label="Tutup">&times;</button>
+            </div>
+            <div class="sched-dialog-body">
+              <div class="sched-seg-group" id="schedMasterTabs" role="tablist">
+                <button type="button" class="sched-seg-btn active" data-master-tab="subjects" role="tab" aria-selected="true">Master Mapel</button>
+                <button type="button" class="sched-seg-btn" data-master-tab="periods" role="tab" aria-selected="false">Jam &amp; Istirahat</button>
+                <button type="button" class="sched-seg-btn" data-master-tab="codes" role="tab" aria-selected="false">Kode Guru (A–S)</button>
+              </div>
+
+              <div id="schedMasterPaneSubjects">
+                <form id="schedSubjectForm" style="display:grid;grid-template-columns:100px 1fr 120px 100px auto;gap:8px;align-items:end;margin-bottom:14px;">
+                  <div class="sched-field">
+                    <label for="schedSubjCode">Kode</label>
+                    <input type="text" id="schedSubjCode" maxlength="20" placeholder="FQ" required>
+                  </div>
+                  <div class="sched-field">
+                    <label for="schedSubjName">Nama Mata Pelajaran</label>
+                    <input type="text" id="schedSubjName" maxlength="120" placeholder="Fiqih" required>
+                  </div>
+                  <div class="sched-field">
+                    <label for="schedSubjCat">Kategori</label>
+                    <select id="schedSubjCat">
+                      <option value="KBM">KBM</option>
+                      <option value="NON_KBM">Non-KBM</option>
+                    </select>
+                  </div>
+                  <div class="sched-field">
+                    <label for="schedSubjTone">Warna</label>
+                    <select id="schedSubjTone">
+                      <option value="emerald">Hijau</option>
+                      <option value="teal">Teal</option>
+                      <option value="indigo">Indigo</option>
+                      <option value="sky">Biru</option>
+                      <option value="amber">Oranye</option>
+                      <option value="rose">Merah</option>
+                      <option value="violet">Ungu</option>
+                      <option value="slate">Abu-abu</option>
+                    </select>
+                  </div>
+                  <button type="submit" class="sched-btn sched-btn-primary">Simpan</button>
+                </form>
+                <div id="schedMasterSubjectsList" style="max-height:300px;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px;"></div>
+              </div>
+
+              <div id="schedMasterPanePeriods" style="display:none;">
+                <p style="margin:0 0 10px;font-size:12.5px;color:#475569;">Sesuaikan rentang jam pelajaran &amp; waktu istirahat (WIB) untuk semester ini:</p>
+                <div id="schedMasterPeriodsList" style="display:flex;flex-direction:column;gap:8px;max-height:320px;overflow-y:auto;"></div>
+                <div style="margin-top:12px;display:flex;justify-content:flex-end;">
+                  <button type="button" class="sched-btn sched-btn-primary" id="schedSavePeriodsBtn">Simpan Pengaturan Jam</button>
+                </div>
+              </div>
+
+              <div id="schedMasterPaneCodes" style="display:none;">
+                <p style="margin:0 0 10px;font-size:12.5px;color:#475569;">Kode huruf singkat digunakan pada tampilan PDF cetak matriks &amp; impor CSV.</p>
+                <div id="schedMasterCodesList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;max-height:330px;overflow-y:auto;"></div>
+              </div>
+            </div>
+            <div class="sched-dialog-foot">
+              <button type="button" class="sched-btn" data-close-dialog="schedMasterDialog" style="margin-left:auto;">Selesai</button>
+            </div>
+          </dialog>
+
+          <!-- Dialog 4: Import CSV Jadwal (Admin) -->
+          <dialog id="schedImportDialog" class="sched-dialog" closedby="any" aria-labelledby="schedImportDialogTitle">
+            <div class="sched-dialog-head">
+              <h3 id="schedImportDialogTitle" class="sched-dialog-title">Import Jadwal dari CSV</h3>
+              <button type="button" class="sched-dialog-close" data-close-dialog="schedImportDialog" aria-label="Tutup">&times;</button>
+            </div>
+            <form id="schedImportForm" class="sched-dialog-body">
+              <div class="sched-info-alert">
+                Format CSV: <code>Hari,Jam,Kelas,Mapel,Guru</code> (contoh: <code>SABTU,2,10,PKN,M</code> atau <code>SENIN,1,10,UPACARA,</code>).
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                <input type="file" id="schedImportFileInput" accept=".csv,text/csv" style="font-size:12.5px;flex:1;">
+                <button type="button" class="sched-btn sched-btn-soft" id="schedDownloadCsvTplBtn">Unduh Template CSV</button>
+              </div>
+              <div class="sched-field">
+                <label for="schedImportTextarea">Atau Tempel Data CSV Langsung</label>
+                <textarea id="schedImportTextarea" rows="7" placeholder="Hari,Jam,Kelas,Mapel,Guru&#10;SABTU,1,10,PB,&#10;SABTU,2,10,PKN,M"></textarea>
+              </div>
+              <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:#334155;font-weight:600;cursor:pointer;">
+                <input type="checkbox" id="schedImportOverwrite" style="width:16px;height:16px;accent-color:#166534;">
+                <span>Timpa jadwal semester ini dengan isi CSV di atas</span>
+              </label>
+              <div id="schedImportPreviewInfo" style="font-size:12px;color:#475569;"></div>
+            </form>
+            <div class="sched-dialog-foot">
+              <div style="display:flex;gap:8px;margin-left:auto;">
+                <button type="button" class="sched-btn" data-close-dialog="schedImportDialog">Batal</button>
+                <button type="submit" form="schedImportForm" class="sched-btn sched-btn-primary" id="schedImportSubmitBtn">Proses Import CSV</button>
+              </div>
+            </div>
+          </dialog>
+        </section>
+
         <section id="studentsContent" class="content" style="display:none;">
 
           <div class="section-heading">
@@ -3977,6 +4287,12 @@ html, body {
                       <option value="Active">Active (Aktif)</option>
                       <option value="Inactive">Inactive (Tidak Aktif)</option>
                     </select>
+                  </div>
+                  <div class="student-form-group student-col-span-2" id="t_viewScheduleWrap" style="display:none;">
+                    <button type="button" id="t_viewScheduleBtn" class="sched-btn sched-btn-soft" style="width:100%;">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                      <span>Lihat Jadwal Mengajar Guru Ini</span>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -5865,6 +6181,7 @@ function guardDashboard() {
             try { initStudentsModule(); } catch (e) {}
             try { initTeachersModule(); } catch (e) {}
             try { initClassesModule(); } catch (e) {}
+            try { initSchedulesModule(); } catch (e) {}
             try { initGradesModule(); } catch (e) {}
             try { initReportsModule(); } catch (e) {}
             try { initAttendanceModule(); } catch (e) {}
@@ -9307,6 +9624,8 @@ function openTeacherModal(mode, teacherId) {
 
         if (saveBtn) { saveBtn.style.removeProperty('display'); saveBtn.disabled = false; saveBtn.textContent = 'Simpan'; }
         if (cancelBtn) cancelBtn.textContent = 'Batal';
+        const schedWrapCreate = document.getElementById('t_viewScheduleWrap');
+        if (schedWrapCreate) schedWrapCreate.style.display = 'none';
         const hint = document.getElementById('teacher_photo_hint');
         if (hint) { hint.textContent = ''; hint.style.display = 'none'; }
         modal.style.display = 'flex';
@@ -9353,6 +9672,16 @@ function openTeacherModal(mode, teacherId) {
             saveBtn.textContent = 'Simpan';
         }
         if (cancelBtn) cancelBtn.textContent = isView ? 'Tutup' : 'Batal';
+
+        const schedWrap = document.getElementById('t_viewScheduleWrap');
+        const schedBtn = document.getElementById('t_viewScheduleBtn');
+        if (schedWrap && schedBtn) {
+            schedWrap.style.display = '';
+            schedBtn.onclick = function() {
+                closeTeacherModal();
+                showSchedulesView({ viewMode: 'teacher', teacherId: t.teacherId });
+            };
+        }
 
         modal.style.display = 'flex';
 
@@ -11094,7 +11423,7 @@ function showReportsView() {
                             '<div class="rpt-cell-sub">' + esc(t.position || 'Guru Mapel') + '</div>' +
                         '</th>' +
                         '<td data-label="Mapel">' + esc(t.subject || '-') + '</td>' +
-                        '<td data-label="Target JP/Mg" class="num">' + (t.target_weekly_hours > 0 ? fmtNum(t.target_weekly_hours) + ' JP' : '-') + '</td>' +
+                        '<td data-label="Target JP/Mg" class="num">' + (t.target_weekly_hours > 0 ? '<div class="rpt-td-stack"><strong>' + fmtNum(t.target_weekly_hours) + ' JP</strong>' + (t.scheduled_classes_count > 0 ? '<small class="rpt-td-sub">' + fmtNum(t.scheduled_classes_count) + ' rombel terjadwal</small>' : '') + '</div>' : '-') + '</td>' +
                         '<td data-label="Terlaksana" class="num"><div class="rpt-td-stack"><strong>' + fmtNum(t.total_logs) + ' JP</strong><small class="rpt-td-sub">' + fmtNum(t.active_days) + ' hari aktif</small></div></td>' +
                         '<td data-label="Rincian">' + esc(breakdown) + '</td>' +
                         '<td data-label="Bukti Kamera" class="num"><span class="rpt-status-chip ' + (t.verified_evidence_count > 0 ? 'success' : 'neutral') + '">' + fmtNum(t.verified_evidence_count) + ' foto</span></td>' +
@@ -11917,6 +12246,1330 @@ function showReportsView() {
     window.__simataLoadAcademicReports = function() {
         bindEventsOnce();
         loadReportsData();
+    };
+})();
+
+function initSchedulesModule() {
+    const menu = document.getElementById('menu-schedules');
+    if (menu) {
+        menu.addEventListener('click', function() {
+            showSchedulesView();
+        });
+    }
+    if (typeof window.__simataInitSchedulesUi === 'function') {
+        window.__simataInitSchedulesUi();
+    }
+}
+
+function showSchedulesView(opts) {
+    hideAllViews();
+    const content = document.getElementById('schedulesContent');
+    if (content) content.style.display = '';
+    document.querySelectorAll('.sidebar-menu li').forEach(function(li) {
+        li.classList.remove('active');
+    });
+    const menu = document.getElementById('menu-schedules');
+    if (menu) menu.classList.add('active');
+    if (typeof updatePageContext === 'function') {
+        updatePageContext('schedules', 'AKADEMIK', 'Jadwal Pelajaran');
+    }
+    if (typeof window.__simataLoadSchedules === 'function') {
+        window.__simataLoadSchedules(opts || null);
+    }
+}
+
+(function initSchedulesController() {
+    const state = {
+        initialized: false,
+        mobileDefaultApplied: false,
+        academicYearId: '',
+        semester: '',
+        viewMode: 'matrix',
+        dayFilter: 'TODAY',
+        selectedClassId: '',
+        selectedTeacherId: '',
+        searchQuery: '',
+        data: null,
+        editingSlot: null,
+        masterTab: 'subjects'
+    };
+
+    function esc(v) {
+        if (v === null || v === undefined) return '';
+        return String(v)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function isMobileViewport() {
+        return typeof window.matchMedia === 'function'
+            ? window.matchMedia('(max-width: 768px)').matches
+            : window.innerWidth <= 768;
+    }
+
+    function toast(type, title, msg) {
+        if (typeof showToast === 'function') {
+            showToast(type, title, msg);
+        } else {
+            alert(title + ': ' + msg);
+        }
+    }
+
+    function isUserAdmin() {
+        if (state.data && state.data.viewer) return Boolean(state.data.viewer.is_admin);
+        return Boolean(typeof isCurrentUserAdmin !== 'undefined' && isCurrentUserAdmin);
+    }
+
+    function getDayList() {
+        return (state.data && Array.isArray(state.data.meta && state.data.meta.days))
+            ? state.data.meta.days
+            : [
+                { day_of_week: 6, code: 'SABTU', short_label: 'Sab', label: 'Sabtu' },
+                { day_of_week: 0, code: 'AHAD', short_label: 'Ahd', label: 'Ahad' },
+                { day_of_week: 1, code: 'SENIN', short_label: 'Sen', label: 'Senin' },
+                { day_of_week: 2, code: 'SELASA', short_label: 'Sel', label: 'Selasa' },
+                { day_of_week: 3, code: 'RABU', short_label: 'Rab', label: 'Rabu' },
+                { day_of_week: 4, code: 'KAMIS', short_label: 'Kam', label: 'Kamis' }
+            ];
+    }
+
+    function getDayLabel(dayNum) {
+        const found = getDayList().find(function(d) { return Number(d.day_of_week) === Number(dayNum); });
+        return found ? found.label : 'Hari';
+    }
+
+    function formatTeacherLabel(name, shortCode) {
+        if (!name) return 'Pembina Program';
+        return shortCode ? name + ' (' + shortCode + ')' : name;
+    }
+
+    function matchesSearch(slot) {
+        const q = (state.searchQuery || '').trim().toLowerCase();
+        if (!q) return true;
+        const hay = [
+            slot.subject_name,
+            slot.subject_code,
+            slot.teacher_name,
+            slot.teacher_short_code,
+            slot.class_name
+        ].join(' ').toLowerCase();
+        return hay.includes(q);
+    }
+
+    function buildSlotMap(slots) {
+        const map = new Map();
+        (slots || []).forEach(function(s) {
+            map.set(Number(s.day_of_week) + '|' + Number(s.period_number) + '|' + s.class_id, s);
+        });
+        return map;
+    }
+
+    function resolveActiveDaySelection() {
+        const days = getDayList();
+        const today = state.data && state.data.meta ? state.data.meta.today_day_of_week : 6;
+        const hasToday = days.some(function(d) { return Number(d.day_of_week) === Number(today); });
+        if (state.dayFilter === 'TODAY') {
+            return hasToday ? Number(today) : 6;
+        }
+        return state.dayFilter;
+    }
+
+    function syncRoleAndHeaderControls() {
+        const admin = isUserAdmin();
+        document.querySelectorAll('.sched-admin-only').forEach(function(el) {
+            el.style.display = admin ? 'inline-flex' : 'none';
+        });
+        const seedBtn = document.getElementById('schedSeedBtn');
+        if (seedBtn) {
+            const empty = !state.data || !Array.isArray(state.data.slots) || state.data.slots.length === 0;
+            seedBtn.style.display = (admin && empty) ? 'inline-flex' : 'none';
+        }
+        const tModeBtn = document.getElementById('schedModeTeacherBtn');
+        if (tModeBtn) {
+            const isGuruPersonal = state.data && state.data.viewer && state.data.viewer.teacher_id && !admin;
+            tModeBtn.textContent = isGuruPersonal ? 'Jadwal Saya' : 'Per Guru';
+        }
+    }
+
+    function renderFilters() {
+        if (!state.data) return;
+        const meta = state.data.meta || {};
+        const years = Array.isArray(meta.academic_years) ? meta.academic_years : [];
+        const yearSel = document.getElementById('schedYearSelect');
+        if (yearSel) {
+            yearSel.innerHTML = years.map(function(y) {
+                const selected = y.academic_year_id === meta.academic_year_id ? ' selected' : '';
+                return '<option value="' + esc(y.academic_year_id) + '"' + selected + '>' + esc(y.name || y.academic_year_id) + (y.is_active ? ' (Aktif)' : '') + '</option>';
+            }).join('');
+            state.academicYearId = meta.academic_year_id;
+        }
+
+        state.semester = meta.semester || 'GANJIL';
+        document.querySelectorAll('#schedSemesterGroup .sched-seg-btn').forEach(function(btn) {
+            btn.classList.toggle('active', btn.getAttribute('data-semester') === state.semester);
+        });
+
+        document.querySelectorAll('#schedModeGroup .sched-seg-btn').forEach(function(btn) {
+            btn.classList.toggle('active', btn.getAttribute('data-mode') === state.viewMode);
+        });
+
+        // Class selector (for Per Kelas)
+        const classes = Array.isArray(state.data.classes) ? state.data.classes : [];
+        const classWrap = document.getElementById('schedClassFilterWrap');
+        const classSel = document.getElementById('schedClassSelect');
+        if (classWrap && classSel) {
+            classWrap.style.display = state.viewMode === 'class' ? 'flex' : 'none';
+            if (!state.selectedClassId || !classes.some(function(c) { return c.class_id === state.selectedClassId; })) {
+                state.selectedClassId = classes[0] ? classes[0].class_id : '';
+            }
+            classSel.innerHTML = classes.map(function(c) {
+                const sel = c.class_id === state.selectedClassId ? ' selected' : '';
+                return '<option value="' + esc(c.class_id) + '"' + sel + '>' + esc(c.class_name) + '</option>';
+            }).join('');
+        }
+
+        // Teacher selector (for Per Guru)
+        const teachers = Array.isArray(state.data.teachers) ? state.data.teachers : [];
+        const teacherWrap = document.getElementById('schedTeacherFilterWrap');
+        const teacherSel = document.getElementById('schedTeacherSelect');
+        if (teacherWrap && teacherSel) {
+            teacherWrap.style.display = state.viewMode === 'teacher' ? 'flex' : 'none';
+            const viewerTeacherId = state.data.viewer && state.data.viewer.teacher_id;
+            if (!state.selectedTeacherId || !teachers.some(function(t) { return t.teacher_id === state.selectedTeacherId; })) {
+                state.selectedTeacherId = (viewerTeacherId && teachers.some(function(t) { return t.teacher_id === viewerTeacherId; }))
+                    ? viewerTeacherId
+                    : (teachers[0] ? teachers[0].teacher_id : '');
+            }
+            teacherSel.innerHTML = teachers.map(function(t) {
+                const codeStr = t.short_code ? '[' + t.short_code + '] ' : '';
+                const sel = t.teacher_id === state.selectedTeacherId ? ' selected' : '';
+                return '<option value="' + esc(t.teacher_id) + '"' + sel + '>' + esc(codeStr + t.name + ' (' + t.scheduled_weekly_jp + ' JP)') + '</option>';
+            }).join('');
+        }
+
+        // Day filter pills
+        const dayWrap = document.getElementById('schedDayPills');
+        if (dayWrap) {
+            const activeDay = resolveActiveDaySelection();
+            const days = getDayList();
+            const todayNum = meta.today_day_of_week;
+            const mobile = isMobileViewport();
+
+            let pillsHtml = '<button type="button" class="sched-day-pill' + (activeDay === 'ALL' ? ' active' : '') + '" data-day="ALL">' +
+                (mobile ? 'Minggu' : 'Semua Hari (6 Hari)') + '</button>';
+
+            days.forEach(function(d) {
+                const isToday = Number(d.day_of_week) === Number(todayNum);
+                const isActive = activeDay !== 'ALL' && Number(activeDay) === Number(d.day_of_week);
+                const labelText = mobile ? d.short_label : d.label;
+                pillsHtml += '<button type="button" class="sched-day-pill' + (isActive ? ' active' : '') + '" data-day="' + d.day_of_week + '">' +
+                    (isToday ? '<span class="sched-day-today-dot" title="Hari Ini"></span>' : '') +
+                    '<span>' + esc(labelText) + '</span>' +
+                    '</button>';
+            });
+            dayWrap.innerHTML = pillsHtml;
+        }
+    }
+
+    function renderAsideSummary() {
+        if (!state.data) return;
+        const sum = state.data.summary || {};
+        const badge = document.getElementById('schedConflictBadge');
+        if (badge) {
+            const c = Number(sum.conflict_count || 0);
+            badge.textContent = c === 0 ? '0 Bentrok' : c + ' Bentrok!';
+            badge.className = 'sched-badge ' + (c === 0 ? 'sched-badge-success' : 'sched-badge-muted');
+        }
+        const kpiKbm = document.getElementById('schedKpiKbm');
+        if (kpiKbm) kpiKbm.textContent = (sum.kbm_jp || 0) + ' JP';
+        const kpiT = document.getElementById('schedKpiTeachers');
+        if (kpiT) kpiT.textContent = (sum.non_kbm_slots || 0) + ' Non-KBM • ' + (sum.active_teachers_scheduled || 0) + ' Guru';
+
+        const list = document.getElementById('schedTeacherLoadList');
+        if (!list) return;
+        const teachers = Array.isArray(state.data.teachers) ? state.data.teachers : [];
+        if (teachers.length === 0) {
+            list.innerHTML = '<div style="padding:16px;text-align:center;color:#64748b;font-size:12.5px;">Belum ada guru aktif.</div>';
+            return;
+        }
+        const maxJp = Math.max(18, Math.max.apply(null, teachers.map(function(t) { return Number(t.scheduled_weekly_jp || 0); })));
+
+        list.innerHTML = teachers.map(function(t) {
+            const jp = Number(t.scheduled_weekly_jp || 0);
+            const pct = Math.min(100, Math.round((jp / maxJp) * 100));
+            const isSel = state.viewMode === 'teacher' && state.selectedTeacherId === t.teacher_id;
+            const subLabel = t.scheduled_subjects || t.subject || t.position || 'Guru Mapel';
+            return '<button type="button" class="sched-teacher-load-item' + (isSel ? ' is-selected' : '') + '" data-select-teacher="' + esc(t.teacher_id) + '">' +
+                '<div class="sched-tl-top">' +
+                    '<div class="sched-tl-identity">' +
+                        '<span class="sched-tl-code">' + esc(t.short_code || '-') + '</span>' +
+                        '<span class="sched-tl-name">' + esc(t.name) + '</span>' +
+                    '</div>' +
+                    '<span class="sched-tl-jp">' + jp + ' JP</span>' +
+                '</div>' +
+                '<div class="sched-tl-sub">' + esc(subLabel) + (t.scheduled_classes_count ? ' • ' + t.scheduled_classes_count + ' kelas' : '') + '</div>' +
+                '<div class="sched-tl-bar"><span style="width:' + pct + '%;"></span></div>' +
+            '</button>';
+        }).join('');
+    }
+
+    function renderSlotButtonHtml(slot, dayNum, periodNum, cls) {
+        const admin = isUserAdmin();
+        const viewerTeacherId = state.data && state.data.viewer && state.data.viewer.teacher_id;
+        if (!slot) {
+            return '<button type="button" class="sched-slot-btn is-empty' + (admin ? ' is-editable' : '') + '"' +
+                ' data-slot-day="' + dayNum + '" data-slot-period="' + periodNum + '" data-slot-class="' + esc(cls.class_id) + '"' +
+                (admin ? '' : ' disabled') + '>' +
+                (admin ? '+ Isi Jadwal' : 'Kosong') +
+            '</button>';
+        }
+        const tone = slot.subject_category === 'NON_KBM' ? 'slate' : (slot.color_tone || 'emerald');
+        const isMine = viewerTeacherId && slot.teacher_id === viewerTeacherId;
+        const dimmed = !matchesSearch(slot);
+        const teacherDisplay = slot.subject_category === 'KBM'
+            ? formatTeacherLabel(slot.teacher_name, slot.teacher_short_code)
+            : (slot.subject_code === 'PB' ? 'Pembina Bahasa' : 'Kegiatan Madrasah');
+
+        return '<button type="button" class="sched-slot-btn tone-' + esc(tone) +
+            (admin ? ' is-editable' : '') +
+            (isMine ? ' is-my-slot' : '') +
+            (dimmed ? ' is-search-dimmed' : '') + '"' +
+            ' data-slot-day="' + dayNum + '" data-slot-period="' + periodNum + '" data-slot-class="' + esc(cls.class_id) + '">' +
+            '<div class="sched-slot-top">' +
+                '<span class="sched-slot-subject" title="' + esc(slot.subject_name) + '">' + esc(slot.subject_name) + '</span>' +
+                '<span class="sched-slot-code">' + esc(slot.subject_code) + '</span>' +
+            '</div>' +
+            '<span class="sched-slot-teacher" title="' + esc(teacherDisplay) + '">' + esc(teacherDisplay) + '</span>' +
+        '</button>';
+    }
+
+    function renderTimelineCardsHtml(dayObj, items) {
+        const periods = Array.isArray(state.data.periods) ? state.data.periods : [];
+        const meta = state.data.meta || {};
+        const isToday = Number(dayObj.day_of_week) === Number(meta.today_day_of_week);
+        const admin = isUserAdmin();
+
+        return '<div class="sched-timeline-list">' + periods.map(function(p) {
+            if (p.is_break) {
+                return '<div class="sched-timeline-card is-break">' +
+                    '<strong>' + esc(p.label) + '</strong>' +
+                    '<span class="sched-period-time">' + esc(p.start_time + '–' + p.end_time + ' WIB') + '</span>' +
+                '</div>';
+            }
+            const item = items.find(function(x) { return Number(x.period_number) === Number(p.period_number); });
+            const isLive = isToday && meta.current_period_number && Number(meta.current_period_number) === Number(p.period_number);
+            const slot = item ? item.slot : null;
+            const targetClass = item ? item.cls : null;
+
+            const badgeHtml = isLive
+                ? '<span class="sched-badge sched-badge-live">SEDANG BERLANGSUNG</span>'
+                : (slot ? '<span class="sched-badge sched-badge-muted">' + esc(slot.subject_code) + '</span>' : '');
+
+            const titleText = slot ? slot.subject_name : 'Belum Terjadwal';
+            let subText = '-';
+            if (slot) {
+                if (state.viewMode === 'teacher') {
+                    subText = slot.class_name + (slot.note ? ' • ' + slot.note : '');
+                } else {
+                    subText = slot.subject_category === 'KBM'
+                        ? formatTeacherLabel(slot.teacher_name, slot.teacher_short_code)
+                        : (slot.note || 'Program Wajib Non-KBM');
+                }
+            }
+
+            const actionBtn = (admin && targetClass)
+                ? '<button type="button" class="sched-btn" data-slot-day="' + dayObj.day_of_week + '" data-slot-period="' + p.period_number + '" data-slot-class="' + esc(targetClass.class_id) + '" style="min-height:36px;padding:0 10px;">' + (slot ? 'Ubah' : 'Isi') + '</button>'
+                : '';
+
+            return '<div class="sched-timeline-card' + (isLive ? ' is-live' : '') + (slot && !matchesSearch(slot) ? ' is-search-dimmed' : '') + '">' +
+                '<div class="sched-timeline-time">' +
+                    '<span class="sched-period-num">' + esc(p.label) + '</span>' +
+                    '<span class="sched-period-time">' + esc(p.start_time + '–' + p.end_time) + '</span>' +
+                '</div>' +
+                '<div class="sched-timeline-body">' +
+                    '<div style="display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap;">' +
+                        '<strong style="font-size:13.5px;color:#0f172a;">' + esc(titleText) + '</strong>' +
+                        badgeHtml +
+                    '</div>' +
+                    '<span style="font-size:12px;color:#475569;">' + esc(subText) + '</span>' +
+                '</div>' +
+                (actionBtn ? '<div class="sched-timeline-actions">' + actionBtn + '</div>' : '') +
+            '</div>';
+        }).join('') + '</div>';
+    }
+
+    function renderBoard() {
+        if (!state.data) return;
+        const body = document.getElementById('schedBoardBody');
+        const titleEl = document.getElementById('schedBoardTitle');
+        const subEl = document.getElementById('schedBoardSub');
+        const badgesEl = document.getElementById('schedBoardBadges');
+        if (!body) return;
+
+        const meta = state.data.meta || {};
+        const periods = Array.isArray(state.data.periods) ? state.data.periods : [];
+        const classes = Array.isArray(state.data.classes) ? state.data.classes : [];
+        const slots = Array.isArray(state.data.slots) ? state.data.slots : [];
+        const slotMap = buildSlotMap(slots);
+        const daysAll = getDayList();
+        const activeDay = resolveActiveDaySelection();
+        const daysToRender = activeDay === 'ALL'
+            ? daysAll
+            : daysAll.filter(function(d) { return Number(d.day_of_week) === Number(activeDay); });
+
+        // Top badges
+        if (badgesEl) {
+            const liveBadge = meta.current_period_number
+                ? '<span class="sched-badge sched-badge-live">Live WIB: ' + esc(meta.today_day_label + ' ' + meta.current_period_label) + '</span>'
+                : '<span class="sched-badge sched-badge-info">' + esc(meta.today_day_label + ' • ' + meta.today_time_wib + ' WIB') + '</span>';
+            const roleBadge = isUserAdmin()
+                ? '<span class="sched-badge sched-badge-success">Mode Editor Admin</span>'
+                : '<span class="sched-badge sched-badge-muted">Mode Lihat &amp; Cetak</span>';
+            badgesEl.innerHTML = liveBadge + roleBadge;
+        }
+
+        // Mode 1: Matrix View
+        if (state.viewMode === 'matrix') {
+            if (titleEl) {
+                titleEl.textContent = activeDay === 'ALL'
+                    ? 'Matriks Lengkap Mingguan (Sabtu–Kamis)'
+                    : 'Matriks Jadwal Hari ' + getDayLabel(activeDay);
+            }
+            if (subEl) {
+                subEl.textContent = meta.academic_year_name + ' • Semester ' + (meta.semester === 'GENAP' ? 'Genap' : 'Ganjil') +
+                    (isUserAdmin() ? ' • Klik sel untuk mengisi atau mengubah jadwal' : ' • Klik Cetak Matriks PDF untuk mengunduh versi cetak');
+            }
+
+            if (classes.length === 0) {
+                body.innerHTML = '<div style="padding:32px;text-align:center;color:#64748b;">Belum ada rombel kelas aktif.</div>';
+                return;
+            }
+
+            const html = daysToRender.map(function(dayObj) {
+                const isToday = Number(dayObj.day_of_week) === Number(meta.today_day_of_week);
+                const rowsHtml = periods.map(function(p) {
+                    if (p.is_break) {
+                        return '<tr class="sched-break-row"><td colspan="' + (classes.length + 1) + '">' +
+                            esc(p.label) + ' (' + esc(p.start_time + '–' + p.end_time + ' WIB') + ')</td></tr>';
+                    }
+                    const isLiveRow = isToday && meta.current_period_number && Number(meta.current_period_number) === Number(p.period_number);
+                    const cellsHtml = classes.map(function(c) {
+                        const slot = slotMap.get(dayObj.day_of_week + '|' + p.period_number + '|' + c.class_id) || null;
+                        return '<td>' + renderSlotButtonHtml(slot, dayObj.day_of_week, p.period_number, c) + '</td>';
+                    }).join('');
+                    return '<tr class="' + (isLiveRow ? 'sched-row-live' : '') + '">' +
+                        '<td><div class="sched-period-meta">' +
+                            '<span class="sched-period-num">' + esc(p.label) + (isLiveRow ? ' • LIVE' : '') + '</span>' +
+                            '<span class="sched-period-time">' + esc(p.start_time + '–' + p.end_time) + '</span>' +
+                        '</div></td>' +
+                        cellsHtml +
+                    '</tr>';
+                }).join('');
+
+                return '<div class="sched-day-section">' +
+                    (daysToRender.length > 1
+                        ? '<div class="sched-day-banner"><span>Hari ' + esc(dayObj.label) + (isToday ? ' (Hari Ini)' : '') + '</span><span style="font-size:11.5px;color:#64748b;">10 Jam Pelajaran</span></div>'
+                        : '') +
+                    '<div class="sched-matrix-scroll">' +
+                        '<table class="sched-matrix-table">' +
+                            '<thead><tr>' +
+                                '<th class="sched-col-period">Jam / Waktu</th>' +
+                                classes.map(function(c) { return '<th>' + esc(c.class_name) + '</th>'; }).join('') +
+                            '</tr></thead>' +
+                            '<tbody>' + rowsHtml + '</tbody>' +
+                        '</table>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+
+            body.innerHTML = html;
+            return;
+        }
+
+        // Mode 2: Per Kelas
+        if (state.viewMode === 'class') {
+            const cls = classes.find(function(c) { return c.class_id === state.selectedClassId; }) || classes[0];
+            if (!cls) {
+                body.innerHTML = '<div style="padding:32px;text-align:center;color:#64748b;">Kelas belum tersedia.</div>';
+                return;
+            }
+            if (titleEl) titleEl.textContent = 'Jadwal Pelajaran • ' + cls.class_name;
+            if (subEl) subEl.textContent = (cls.homeroom_teacher_name ? 'Wali Kelas: ' + cls.homeroom_teacher_name + ' • ' : '') +
+                (activeDay === 'ALL' ? 'Tampilan Mingguan 6 Hari' : 'Hari ' + getDayLabel(activeDay));
+
+            if (activeDay !== 'ALL') {
+                const dayObj = daysToRender[0];
+                const items = periods.filter(function(p) { return !p.is_break; }).map(function(p) {
+                    return {
+                        period_number: p.period_number,
+                        slot: slotMap.get(dayObj.day_of_week + '|' + p.period_number + '|' + cls.class_id) || null,
+                        cls: cls
+                    };
+                });
+                body.innerHTML = renderTimelineCardsHtml(dayObj, items);
+            } else {
+                const admin = isUserAdmin();
+                body.innerHTML = '<div class="sched-weekly-grid">' + daysAll.map(function(dayObj) {
+                    const isToday = Number(dayObj.day_of_week) === Number(meta.today_day_of_week);
+                    const inner = periods.filter(function(p) { return !p.is_break; }).map(function(p) {
+                        const slot = slotMap.get(dayObj.day_of_week + '|' + p.period_number + '|' + cls.class_id) || null;
+                        return '<button type="button" class="sched-mini-slot"' +
+                            ' data-slot-day="' + dayObj.day_of_week + '" data-slot-period="' + p.period_number + '" data-slot-class="' + esc(cls.class_id) + '"' +
+                            (admin ? '' : ' disabled') + '>' +
+                            '<span style="color:#64748b;font-weight:700;min-width:34px;">J-' + p.period_number + '</span>' +
+                            '<span style="flex:1;font-weight:700;color:#0f172a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' +
+                                esc(slot ? slot.subject_name : '-') +
+                            '</span>' +
+                            '<span style="font-size:11px;color:#166534;font-weight:700;">' +
+                                esc(slot ? (slot.teacher_short_code || slot.subject_code) : '') +
+                            '</span>' +
+                        '</button>';
+                    }).join('');
+                    return '<div class="sched-week-day-card">' +
+                        '<div class="sched-week-day-head"><span>' + esc(dayObj.label) + '</span>' +
+                        (isToday ? '<span class="sched-badge sched-badge-success">Hari Ini</span>' : '') + '</div>' +
+                        '<div class="sched-week-day-body">' + inner + '</div>' +
+                    '</div>';
+                }).join('') + '</div>';
+            }
+            return;
+        }
+
+        // Mode 3: Per Guru (or Jadwal Saya)
+        const teachers = Array.isArray(state.data.teachers) ? state.data.teachers : [];
+        const teacher = teachers.find(function(t) { return t.teacher_id === state.selectedTeacherId; }) || teachers[0];
+        if (!teacher) {
+            body.innerHTML = '<div style="padding:32px;text-align:center;color:#64748b;">Data guru belum tersedia.</div>';
+            return;
+        }
+        if (titleEl) titleEl.textContent = 'Jadwal Mengajar • ' + formatTeacherLabel(teacher.name, teacher.short_code);
+        if (subEl) subEl.textContent = 'Total beban terjadwal: ' + teacher.scheduled_weekly_jp + ' JP/minggu • ' +
+            (teacher.scheduled_classes_count || 0) + ' kelas • ' + (teacher.scheduled_subjects || teacher.subject || '-');
+
+        const teacherSlots = slots.filter(function(s) { return s.teacher_id === teacher.teacher_id; });
+        if (activeDay !== 'ALL') {
+            const dayObj = daysToRender[0];
+            const items = periods.filter(function(p) { return !p.is_break; }).map(function(p) {
+                const matchedSlot = teacherSlots.find(function(s) {
+                    return Number(s.day_of_week) === Number(dayObj.day_of_week) && Number(s.period_number) === Number(p.period_number);
+                }) || null;
+                return {
+                    period_number: p.period_number,
+                    slot: matchedSlot,
+                    cls: matchedSlot ? { class_id: matchedSlot.class_id, class_name: matchedSlot.class_name } : null
+                };
+            });
+            body.innerHTML = renderTimelineCardsHtml(dayObj, items);
+        } else {
+            body.innerHTML = '<div class="sched-weekly-grid">' + daysAll.map(function(dayObj) {
+                const daySlots = teacherSlots.filter(function(s) { return Number(s.day_of_week) === Number(dayObj.day_of_week); });
+                const inner = daySlots.length === 0
+                    ? '<div style="padding:14px;text-align:center;font-size:12px;color:#94a3b8;">Tidak ada jam mengajar</div>'
+                    : daySlots.map(function(s) {
+                        const pMeta = periods.find(function(p) { return !p.is_break && Number(p.period_number) === Number(s.period_number); });
+                        return '<div class="sched-mini-slot" style="cursor:default;">' +
+                            '<span style="color:#166534;font-weight:700;">Jam ' + s.period_number + '</span>' +
+                            '<span style="flex:1;font-weight:700;color:#0f172a;">' + esc(s.class_name) + ' • ' + esc(s.subject_name) + '</span>' +
+                            '<span style="font-size:11px;color:#64748b;">' + esc(pMeta ? pMeta.start_time : '') + '</span>' +
+                        '</div>';
+                    }).join('');
+                return '<div class="sched-week-day-card">' +
+                    '<div class="sched-week-day-head"><span>' + esc(dayObj.label) + '</span><span style="font-size:11.5px;color:#64748b;">' + daySlots.length + ' JP</span></div>' +
+                    '<div class="sched-week-day-body">' + inner + '</div>' +
+                '</div>';
+            }).join('') + '</div>';
+        }
+    }
+
+    function openSlotEditor(dayNum, periodNum, classId) {
+        if (!isUserAdmin() || !state.data) return;
+        const dlg = document.getElementById('schedSlotDialog');
+        if (!dlg) return;
+
+        const cls = (state.data.classes || []).find(function(c) { return c.class_id === classId; });
+        const slotMap = buildSlotMap(state.data.slots);
+        const existing = slotMap.get(Number(dayNum) + '|' + Number(periodNum) + '|' + classId) || null;
+        state.editingSlot = { dayOfWeek: Number(dayNum), periodNumber: Number(periodNum), classId: classId, existing: existing };
+
+        const banner = document.getElementById('schedSlotContextBanner');
+        if (banner) {
+            banner.innerHTML = '<strong>Hari ' + esc(getDayLabel(dayNum)) + '</strong> &bull; <strong>' + esc(cls ? cls.class_name : classId) + '</strong> &bull; Tahun Ajaran ' + esc(state.academicYearId) + ' (' + esc(state.semester) + ')';
+        }
+
+        // Period checkboxes (Jam ke-1 .. Jam ke-10)
+        const periodsGrid = document.getElementById('schedSlotPeriodsGrid');
+        const teachingPeriods = (state.data.periods || []).filter(function(p) { return !p.is_break && p.period_number; });
+        if (periodsGrid) {
+            periodsGrid.innerHTML = teachingPeriods.map(function(p) {
+                const checked = Number(p.period_number) === Number(periodNum) ? ' checked' : '';
+                return '<label class="sched-period-check-pill">' +
+                    '<input type="checkbox" name="schedEditPeriod" value="' + p.period_number + '"' + checked + '>' +
+                    '<span>Jam ' + p.period_number + '</span>' +
+                '</label>';
+            }).join('');
+        }
+
+        // Subject select
+        const subjSel = document.getElementById('schedSlotSubject');
+        const subjects = state.data.subjects || [];
+        if (subjSel) {
+            const kbmOpts = subjects.filter(function(s) { return s.category === 'KBM'; }).map(function(s) {
+                return '<option value="' + esc(s.subject_id) + '">' + esc(s.name + ' (' + s.code + ')') + '</option>';
+            }).join('');
+            const nonKbmOpts = subjects.filter(function(s) { return s.category !== 'KBM'; }).map(function(s) {
+                return '<option value="' + esc(s.subject_id) + '">' + esc(s.name + ' (' + s.code + ')') + '</option>';
+            }).join('');
+            subjSel.innerHTML = '<option value="">-- Pilih Mapel --</option>' +
+                '<optgroup label="Mata Pelajaran KBM">' + kbmOpts + '</optgroup>' +
+                '<optgroup label="Program Wajib Non-KBM">' + nonKbmOpts + '</optgroup>';
+            subjSel.value = existing ? existing.subject_id : '';
+        }
+
+        // Teacher select
+        const teacherSel = document.getElementById('schedSlotTeacher');
+        const teachers = state.data.teachers || [];
+        if (teacherSel) {
+            teacherSel.innerHTML = '<option value="">-- Pilih Guru Pengampu --</option>' + teachers.map(function(t) {
+                const prefix = t.short_code ? '[' + t.short_code + '] ' : '';
+                return '<option value="' + esc(t.teacher_id) + '">' + esc(prefix + t.name) + '</option>';
+            }).join('');
+            teacherSel.value = existing && existing.teacher_id ? existing.teacher_id : '';
+        }
+
+        const noteEl = document.getElementById('schedSlotNote');
+        if (noteEl) noteEl.value = existing && existing.note ? existing.note : '';
+
+        const clearBtn = document.getElementById('schedSlotClearBtn');
+        if (clearBtn) clearBtn.style.display = existing ? 'inline-flex' : 'none';
+
+        updateSlotEditorValidation();
+        dlg.showModal();
+    }
+
+    function updateSlotEditorValidation() {
+        const subjSel = document.getElementById('schedSlotSubject');
+        const teacherSel = document.getElementById('schedSlotTeacher');
+        const warnBox = document.getElementById('schedSlotConflictWarn');
+        if (!subjSel || !teacherSel || !state.data || !state.editingSlot) return;
+
+        const subj = (state.data.subjects || []).find(function(s) { return s.subject_id === subjSel.value; });
+        const isNonKbm = subj && subj.category !== 'KBM';
+        teacherSel.disabled = Boolean(isNonKbm);
+        if (isNonKbm) teacherSel.value = '';
+
+        const chosenPeriods = Array.from(document.querySelectorAll('input[name="schedEditPeriod"]:checked')).map(function(el) {
+            return Number(el.value);
+        });
+        const teacherId = teacherSel.value;
+
+        if (!teacherId || chosenPeriods.length === 0 || !warnBox) {
+            if (warnBox) warnBox.style.display = 'none';
+            return;
+        }
+
+        const conflicts = (state.data.slots || []).filter(function(s) {
+            return Number(s.day_of_week) === Number(state.editingSlot.dayOfWeek) &&
+                chosenPeriods.includes(Number(s.period_number)) &&
+                s.teacher_id === teacherId &&
+                s.class_id !== state.editingSlot.classId;
+        });
+
+        if (conflicts.length > 0) {
+            const first = conflicts[0];
+            warnBox.textContent = 'Peringatan Bentrok: ' + first.teacher_name + ' sudah terjadwal di ' + first.class_name + ' (' + first.subject_name + ') pada Jam ke-' + first.period_number + '.';
+            warnBox.style.display = 'block';
+        } else {
+            warnBox.style.display = 'none';
+        }
+    }
+
+    function openCopyModal() {
+        if (!state.data) return;
+        const dlg = document.getElementById('schedCopyDialog');
+        const years = (state.data.meta && state.data.meta.academic_years) || [];
+        const fromY = document.getElementById('schedCopyFromYear');
+        const toY = document.getElementById('schedCopyToYear');
+        const opts = years.map(function(y) {
+            return '<option value="' + esc(y.academic_year_id) + '">' + esc(y.name || y.academic_year_id) + '</option>';
+        }).join('');
+        if (fromY) { fromY.innerHTML = opts; fromY.value = state.academicYearId; }
+        if (toY) { toY.innerHTML = opts; toY.value = state.academicYearId; }
+        const fromSem = document.getElementById('schedCopyFromSem');
+        const toSem = document.getElementById('schedCopyToSem');
+        if (fromSem) fromSem.value = state.semester;
+        if (toSem) toSem.value = state.semester === 'GANJIL' ? 'GENAP' : 'GANJIL';
+        if (dlg) dlg.showModal();
+    }
+
+    function renderMasterDialogContents() {
+        if (!state.data) return;
+        // Tab 1: Subjects
+        const subjWrap = document.getElementById('schedMasterSubjectsList');
+        if (subjWrap) {
+            subjWrap.innerHTML = (state.data.subjects || []).map(function(s) {
+                return '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border:1px solid #e2e8f0;border-radius:10px;background:#ffffff;">' +
+                    '<div style="min-width:0;">' +
+                        '<div style="font-size:12.5px;font-weight:700;color:#0f172a;">' + esc(s.code) + ' &bull; ' + esc(s.name) + '</div>' +
+                        '<div style="font-size:11px;color:#64748b;">' + esc(s.category) + '</div>' +
+                    '</div>' +
+                    '<button type="button" class="sched-btn sched-btn-danger" data-del-subject="' + esc(s.subject_id) + '" style="min-height:28px;padding:0 8px;font-size:11px;">Hapus</button>' +
+                '</div>';
+            }).join('');
+        }
+
+        // Tab 2: Periods
+        const periodsWrap = document.getElementById('schedMasterPeriodsList');
+        if (periodsWrap) {
+            periodsWrap.innerHTML = (state.data.periods || []).map(function(p, idx) {
+                return '<div class="sched-master-period-row" data-idx="' + idx + '" data-period-num="' + (p.period_number || '') + '" data-is-break="' + (p.is_break ? '1' : '0') + '" style="display:grid;grid-template-columns:1.2fr 100px 100px;gap:8px;align-items:center;">' +
+                    '<input type="text" class="sched-p-label" value="' + esc(p.label) + '" style="min-height:34px;padding:0 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;font-weight:600;">' +
+                    '<input type="time" class="sched-p-start" value="' + esc(p.start_time) + '" style="min-height:34px;padding:0 8px;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;">' +
+                    '<input type="time" class="sched-p-end" value="' + esc(p.end_time) + '" style="min-height:34px;padding:0 8px;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;">' +
+                '</div>';
+            }).join('');
+        }
+
+        // Tab 3: Teacher Codes
+        const codesWrap = document.getElementById('schedMasterCodesList');
+        if (codesWrap) {
+            codesWrap.innerHTML = (state.data.teachers || []).map(function(t) {
+                return '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border:1px solid #e2e8f0;border-radius:10px;">' +
+                    '<span style="font-size:12px;font-weight:600;color:#0f172a;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(t.name) + '</span>' +
+                    '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">' +
+                        '<input type="text" maxlength="8" value="' + esc(t.short_code || '') + '" data-code-input-for="' + esc(t.teacher_id) + '" style="width:54px;min-height:30px;text-align:center;border:1px solid #cbd5e1;border-radius:7px;font-weight:700;text-transform:uppercase;">' +
+                        '<button type="button" class="sched-btn sched-btn-soft" data-save-teacher-code="' + esc(t.teacher_id) + '" style="min-height:30px;padding:0 8px;font-size:11px;">Simpan</button>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+        }
+    }
+
+    function openMasterModal() {
+        renderMasterDialogContents();
+        const dlg = document.getElementById('schedMasterDialog');
+        if (dlg) dlg.showModal();
+    }
+
+    function parseCsvScheduleText(csvText) {
+        const dayAliases = {
+            'SABTU': 6, 'SAB': 6, '6': 6,
+            'AHAD': 0, 'MINGGU': 0, 'AHD': 0, '0': 0,
+            'SENIN': 1, 'SEN': 1, '1': 1,
+            'SELASA': 2, 'SEL': 2, '2': 2,
+            'RABU': 3, 'RAB': 3, '3': 3,
+            'KAMIS': 4, 'KAM': 4, '4': 4
+        };
+        const lines = String(csvText || '').split(/\r?\n/).map(function(l) { return l.trim(); }).filter(Boolean);
+        const rows = [];
+        for (let i = 0; i < lines.length; i += 1) {
+            const sep = lines[i].includes(';') ? ';' : ',';
+            const cols = lines[i].split(sep).map(function(c) { return c.trim().replace(/^"|"$/g, ''); });
+            if (cols.length < 4) continue;
+            if (i === 0 && /hari/i.test(cols[0])) continue;
+            const dKey = String(cols[0]).toUpperCase();
+            const dayNum = dayAliases[dKey];
+            if (dayNum === undefined) continue;
+            const pNum = parseInt(cols[1], 10);
+            if (isNaN(pNum) || pNum < 1 || pNum > 12) continue;
+            rows.push({
+                day_of_week: dayNum,
+                period_number: pNum,
+                class_name: cols[2],
+                subject_code: cols[3],
+                teacher_code: cols[4] || ''
+            });
+        }
+        return rows;
+    }
+
+    function handlePrintMatrix() {
+        if (!state.data) return;
+        const container = document.getElementById('schedPrintSheet');
+        if (!container) return;
+
+        const meta = state.data.meta || {};
+        const days = getDayList();
+        const periods = Array.isArray(state.data.periods) ? state.data.periods : [];
+        const classes = Array.isArray(state.data.classes) ? state.data.classes : [];
+        const slotMap = buildSlotMap(state.data.slots);
+        const teachers = (state.data.teachers || []).filter(function(t) { return t.scheduled_weekly_jp > 0 || t.short_code; });
+        const subjects = (state.data.subjects || []).filter(function(s) { return s.category === 'KBM'; });
+
+        const rowsHtml = days.map(function(dayObj) {
+            const teachingPeriods = periods.filter(function(p) { return !p.is_break; });
+            return teachingPeriods.map(function(p, idx) {
+                const clsCells = classes.map(function(c) {
+                    const s = slotMap.get(dayObj.day_of_week + '|' + p.period_number + '|' + c.class_id);
+                    if (!s) return '<td></td>';
+                    const cellText = s.teacher_short_code ? (s.subject_code + ' / ' + s.teacher_short_code) : s.subject_code;
+                    return '<td style="' + (s.subject_category === 'NON_KBM' ? 'background:#f1f5f9;font-weight:700;' : 'font-weight:700;') + '">' + esc(cellText) + '</td>';
+                }).join('');
+                const dayCell = idx === 0
+                    ? '<td rowspan="' + teachingPeriods.length + '" style="font-weight:700;background:#f8fafc;">' + esc(dayObj.label.toUpperCase()) + '</td>'
+                    : '';
+                return '<tr>' +
+                    dayCell +
+                    '<td>' + p.period_number + '</td>' +
+                    '<td>' + esc(p.start_time + '–' + p.end_time) + '</td>' +
+                    clsCells +
+                '</tr>';
+            }).join('');
+        }).join('');
+
+        const teacherLegendRows = teachers.map(function(t) {
+            return '<tr><td style="font-weight:700;text-align:center;">' + esc(t.short_code || '-') + '</td><td>' + esc(t.name) + '</td><td>' + esc(t.scheduled_subjects || t.subject || '-') + '</td><td style="text-align:center;">' + t.scheduled_weekly_jp + '</td></tr>';
+        }).join('');
+
+        const subjLegendItems = subjects.map(function(s) {
+            return '<span><strong>' + esc(s.code) + '</strong>: ' + esc(s.name) + '</span>';
+        }).join(' &bull; ');
+
+        container.innerHTML =
+            '<div class="sched-print-head">' +
+                '<h2>JADWAL PELAJARAN MADRASAH ALIYAH AT-TAUJIH SARANG</h2>' +
+                '<p>' + esc(meta.academic_year_name || ('Tahun Ajaran ' + meta.academic_year_id)) + ' &bull; Semester ' + esc(meta.semester === 'GENAP' ? 'Genap' : 'Ganjil') + '</p>' +
+            '</div>' +
+            '<table class="sched-print-grid">' +
+                '<thead><tr>' +
+                    '<th style="width:74px;">HARI</th><th style="width:36px;">JAM</th><th style="width:88px;">WAKTU</th>' +
+                    classes.map(function(c) { return '<th>' + esc(c.class_name.toUpperCase()) + '</th>'; }).join('') +
+                '</tr></thead>' +
+                '<tbody>' + rowsHtml + '</tbody>' +
+            '</table>' +
+            '<div class="sched-print-legends">' +
+                '<div>' +
+                    '<strong>Daftar Kode Guru Pengampu</strong>' +
+                    '<table class="sched-print-grid" style="margin-top:4px;"><thead><tr><th style="width:36px;">Kode</th><th>Nama Guru</th><th>Mapel</th><th style="width:34px;">JP</th></tr></thead><tbody>' + teacherLegendRows + '</tbody></table>' +
+                '</div>' +
+                '<div>' +
+                    '<strong>Keterangan Kode Mata Pelajaran</strong>' +
+                    '<div style="border:1px solid #334155;padding:6px 8px;margin-top:4px;line-height:1.45;">' + subjLegendItems + ' &bull; <strong>PB</strong>: Pembelajaran Bahasa (Pembina Bahasa)</div>' +
+                '</div>' +
+            '</div>' +
+            '<div class="sched-print-sign">' +
+                '<div style="text-align:center;">Sarang, ' + new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) + '<br>Kepala Madrasah / Waka Kurikulum<br><br><br>___________________________</div>' +
+            '</div>';
+
+        document.body.classList.add('simata-printing-schedule');
+        const cleanup = function() {
+            document.body.classList.remove('simata-printing-schedule');
+            window.removeEventListener('afterprint', cleanup);
+        };
+        window.addEventListener('afterprint', cleanup);
+        window.print();
+        setTimeout(cleanup, 1500);
+    }
+
+    function loadSchedulesData(opts) {
+        const reqOpts = opts || {};
+        if (reqOpts.viewMode) {
+            state.viewMode = reqOpts.viewMode;
+            state.mobileDefaultApplied = true;
+        }
+        if (reqOpts.teacherId) state.selectedTeacherId = reqOpts.teacherId;
+        if (reqOpts.classId) state.selectedClassId = reqOpts.classId;
+
+        const queryParams = {};
+        if (state.academicYearId) queryParams.academic_year_id = state.academicYearId;
+        if (state.semester) queryParams.semester = state.semester;
+
+        const body = document.getElementById('schedBoardBody');
+        if (body && !state.data) {
+            body.innerHTML = '<div style="padding:36px;text-align:center;color:#64748b;font-size:13px;">Memuat data jadwal pelajaran...</div>';
+        }
+
+        simataClient
+            .withSuccessHandler(function(res) {
+                if (!res || !res.success || !res.data) {
+                    if (body) body.innerHTML = '<div style="padding:32px;text-align:center;color:#b91c1c;">Gagal memuat jadwal pelajaran.</div>';
+                    return;
+                }
+                state.data = res.data;
+                state.academicYearId = res.data.meta.academic_year_id;
+                state.semester = res.data.meta.semester;
+
+                if (!state.mobileDefaultApplied && isMobileViewport() && !reqOpts.viewMode) {
+                    state.mobileDefaultApplied = true;
+                    if (res.data.viewer && res.data.viewer.teacher_id && !res.data.viewer.is_admin) {
+                        state.viewMode = 'teacher';
+                        state.selectedTeacherId = res.data.viewer.teacher_id;
+                    } else {
+                        state.viewMode = 'class';
+                    }
+                    state.dayFilter = 'TODAY';
+                }
+
+                syncRoleAndHeaderControls();
+                renderFilters();
+                renderBoard();
+                renderAsideSummary();
+            })
+            .withFailureHandler(function(err) {
+                if (body) body.innerHTML = '<div style="padding:32px;text-align:center;color:#b91c1c;">' + esc((err && err.message) || 'Terjadi kesalahan saat memuat jadwal.') + '</div>';
+            })
+            .getScheduleOverview(queryParams);
+    }
+
+    function bindEventsOnce() {
+        if (state.initialized) return;
+        state.initialized = true;
+
+        const yearSel = document.getElementById('schedYearSelect');
+        if (yearSel) {
+            yearSel.addEventListener('change', function() {
+                state.academicYearId = yearSel.value;
+                loadSchedulesData();
+            });
+        }
+
+        const semGroup = document.getElementById('schedSemesterGroup');
+        if (semGroup) {
+            semGroup.addEventListener('click', function(e) {
+                const btn = e.target.closest('[data-semester]');
+                if (!btn) return;
+                state.semester = btn.getAttribute('data-semester');
+                loadSchedulesData();
+            });
+        }
+
+        const modeGroup = document.getElementById('schedModeGroup');
+        if (modeGroup) {
+            modeGroup.addEventListener('click', function(e) {
+                const btn = e.target.closest('[data-mode]');
+                if (!btn) return;
+                state.viewMode = btn.getAttribute('data-mode');
+                state.mobileDefaultApplied = true;
+                if (state.viewMode === 'matrix' && !isMobileViewport() && state.dayFilter === 'TODAY') {
+                    state.dayFilter = 'TODAY';
+                }
+                renderFilters();
+                renderBoard();
+                renderAsideSummary();
+            });
+        }
+
+        const classSel = document.getElementById('schedClassSelect');
+        if (classSel) {
+            classSel.addEventListener('change', function() {
+                state.selectedClassId = classSel.value;
+                renderBoard();
+            });
+        }
+
+        const teacherSel = document.getElementById('schedTeacherSelect');
+        if (teacherSel) {
+            teacherSel.addEventListener('change', function() {
+                state.selectedTeacherId = teacherSel.value;
+                renderBoard();
+                renderAsideSummary();
+            });
+        }
+
+        const dayPills = document.getElementById('schedDayPills');
+        if (dayPills) {
+            dayPills.addEventListener('click', function(e) {
+                const pill = e.target.closest('[data-day]');
+                if (!pill) return;
+                const val = pill.getAttribute('data-day');
+                state.dayFilter = val === 'ALL' ? 'ALL' : Number(val);
+                renderFilters();
+                renderBoard();
+            });
+        }
+
+        const searchInput = document.getElementById('schedSearchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                state.searchQuery = searchInput.value;
+                renderBoard();
+            });
+        }
+
+        // Delegate clicks on schedule board cells & timeline edit buttons
+        const boardBody = document.getElementById('schedBoardBody');
+        if (boardBody) {
+            boardBody.addEventListener('click', function(e) {
+                const trigger = e.target.closest('[data-slot-day]');
+                if (!trigger) return;
+                openSlotEditor(
+                    Number(trigger.getAttribute('data-slot-day')),
+                    Number(trigger.getAttribute('data-slot-period')),
+                    trigger.getAttribute('data-slot-class')
+                );
+            });
+        }
+
+        // Delegate click on aside teacher load items
+        const asideList = document.getElementById('schedTeacherLoadList');
+        if (asideList) {
+            asideList.addEventListener('click', function(e) {
+                const item = e.target.closest('[data-select-teacher]');
+                if (!item) return;
+                state.viewMode = 'teacher';
+                state.selectedTeacherId = item.getAttribute('data-select-teacher');
+                state.mobileDefaultApplied = true;
+                renderFilters();
+                renderBoard();
+                renderAsideSummary();
+            });
+        }
+
+        // Dialog close buttons
+        document.querySelectorAll('[data-close-dialog]').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const dlg = document.getElementById(btn.getAttribute('data-close-dialog'));
+                if (dlg && dlg.open) dlg.close();
+            });
+        });
+
+        // Header toolbar buttons
+        const refreshBtn = document.getElementById('schedRefreshBtn');
+        if (refreshBtn) refreshBtn.addEventListener('click', function() { loadSchedulesData(); });
+
+        const printBtn = document.getElementById('schedPrintBtn');
+        if (printBtn) printBtn.addEventListener('click', handlePrintMatrix);
+
+        const copyBtn = document.getElementById('schedCopyBtn');
+        if (copyBtn) copyBtn.addEventListener('click', openCopyModal);
+
+        const masterBtn = document.getElementById('schedMasterBtn');
+        if (masterBtn) masterBtn.addEventListener('click', openMasterModal);
+
+        const importBtn = document.getElementById('schedImportBtn');
+        if (importBtn) {
+            importBtn.addEventListener('click', function() {
+                const dlg = document.getElementById('schedImportDialog');
+                if (dlg) dlg.showModal();
+            });
+        }
+
+        const seedBtn = document.getElementById('schedSeedBtn');
+        if (seedBtn) {
+            seedBtn.addEventListener('click', function() {
+                seedBtn.disabled = true;
+                simataClient
+                    .withSuccessHandler(function(res) {
+                        seedBtn.disabled = false;
+                        toast('success', 'Seed Berhasil', (res && res.message) || 'Jadwal 2026/2027 Ganjil berhasil dimuat.');
+                        loadSchedulesData();
+                    })
+                    .withFailureHandler(function(err) {
+                        seedBtn.disabled = false;
+                        toast('error', 'Seed Gagal', (err && err.message) || 'Gagal memuat jadwal default.');
+                    })
+                    .seedDefaultSchedule({ academic_year_id: state.academicYearId, semester: state.semester, overwrite: false });
+            });
+        }
+
+        // Slot Editor form live conflict listeners & submit
+        const slotSubj = document.getElementById('schedSlotSubject');
+        const slotTeacher = document.getElementById('schedSlotTeacher');
+        const slotPeriodsGrid = document.getElementById('schedSlotPeriodsGrid');
+        if (slotSubj) slotSubj.addEventListener('change', updateSlotEditorValidation);
+        if (slotTeacher) slotTeacher.addEventListener('change', updateSlotEditorValidation);
+        if (slotPeriodsGrid) slotPeriodsGrid.addEventListener('change', updateSlotEditorValidation);
+
+        const slotForm = document.getElementById('schedSlotForm');
+        if (slotForm) {
+            slotForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                if (!state.editingSlot) return;
+                const chosenPeriods = Array.from(document.querySelectorAll('input[name="schedEditPeriod"]:checked')).map(function(cb) {
+                    return Number(cb.value);
+                });
+                if (chosenPeriods.length === 0) {
+                    toast('error', 'Validasi', 'Pilih minimal 1 jam pelajaran.');
+                    return;
+                }
+                const saveBtn = document.getElementById('schedSlotSaveBtn');
+                if (saveBtn) saveBtn.disabled = true;
+
+                simataClient
+                    .withSuccessHandler(function(res) {
+                        if (saveBtn) saveBtn.disabled = false;
+                        const dlg = document.getElementById('schedSlotDialog');
+                        if (dlg && dlg.open) dlg.close();
+                        toast('success', 'Tersimpan', (res && res.message) || 'Jadwal berhasil diperbarui.');
+                        loadSchedulesData();
+                    })
+                    .withFailureHandler(function(err) {
+                        if (saveBtn) saveBtn.disabled = false;
+                        const warn = document.getElementById('schedSlotConflictWarn');
+                        const msg = (err && err.message) || 'Gagal menyimpan slot jadwal.';
+                        if (warn) { warn.textContent = msg; warn.style.display = 'block'; }
+                        else toast('error', 'Gagal', msg);
+                    })
+                    .upsertScheduleSlot({
+                        academic_year_id: state.academicYearId,
+                        semester: state.semester,
+                        day_of_week: state.editingSlot.dayOfWeek,
+                        period_numbers: chosenPeriods,
+                        class_id: state.editingSlot.classId,
+                        subject_id: slotSubj ? slotSubj.value : '',
+                        teacher_id: slotTeacher && !slotTeacher.disabled && slotTeacher.value ? slotTeacher.value : null,
+                        note: (document.getElementById('schedSlotNote') || {}).value || ''
+                    });
+            });
+        }
+
+        const slotClearBtn = document.getElementById('schedSlotClearBtn');
+        if (slotClearBtn) {
+            slotClearBtn.addEventListener('click', function() {
+                if (!state.editingSlot) return;
+                simataClient
+                    .withSuccessHandler(function() {
+                        const dlg = document.getElementById('schedSlotDialog');
+                        if (dlg && dlg.open) dlg.close();
+                        toast('success', 'Dikosongkan', 'Slot jadwal berhasil dikosongkan.');
+                        loadSchedulesData();
+                    })
+                    .withFailureHandler(function(err) {
+                        toast('error', 'Gagal', (err && err.message) || 'Gagal mengosongkan slot.');
+                    })
+                    .clearScheduleCell({
+                        academic_year_id: state.academicYearId,
+                        semester: state.semester,
+                        day_of_week: state.editingSlot.dayOfWeek,
+                        period_number: state.editingSlot.periodNumber,
+                        class_id: state.editingSlot.classId
+                    });
+            });
+        }
+
+        // Copy schedule form
+        const copyForm = document.getElementById('schedCopyForm');
+        if (copyForm) {
+            copyForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const btn = document.getElementById('schedCopySubmitBtn');
+                if (btn) btn.disabled = true;
+                const dstYear = (document.getElementById('schedCopyToYear') || {}).value;
+                const dstSem = (document.getElementById('schedCopyToSem') || {}).value;
+                simataClient
+                    .withSuccessHandler(function(res) {
+                        if (btn) btn.disabled = false;
+                        const dlg = document.getElementById('schedCopyDialog');
+                        if (dlg && dlg.open) dlg.close();
+                        toast('success', 'Salin Berhasil', (res && res.message) || 'Jadwal berhasil disalin.');
+                        state.academicYearId = dstYear;
+                        state.semester = dstSem;
+                        loadSchedulesData();
+                    })
+                    .withFailureHandler(function(err) {
+                        if (btn) btn.disabled = false;
+                        toast('error', 'Salin Gagal', (err && err.message) || 'Gagal menyalin jadwal.');
+                    })
+                    .copyScheduleSemester({
+                        from_academic_year_id: (document.getElementById('schedCopyFromYear') || {}).value,
+                        from_semester: (document.getElementById('schedCopyFromSem') || {}).value,
+                        to_academic_year_id: dstYear,
+                        to_semester: dstSem,
+                        overwrite: Boolean((document.getElementById('schedCopyOverwrite') || {}).checked)
+                    });
+            });
+        }
+
+        // Master Mapel & Jam Tabs
+        const masterTabs = document.getElementById('schedMasterTabs');
+        if (masterTabs) {
+            masterTabs.addEventListener('click', function(e) {
+                const tabBtn = e.target.closest('[data-master-tab]');
+                if (!tabBtn) return;
+                const tab = tabBtn.getAttribute('data-master-tab');
+                state.masterTab = tab;
+                masterTabs.querySelectorAll('[data-master-tab]').forEach(function(b) {
+                    const active = b.getAttribute('data-master-tab') === tab;
+                    b.classList.toggle('active', active);
+                    b.setAttribute('aria-selected', active ? 'true' : 'false');
+                });
+                const pSubj = document.getElementById('schedMasterPaneSubjects');
+                const pPer = document.getElementById('schedMasterPanePeriods');
+                const pCode = document.getElementById('schedMasterPaneCodes');
+                if (pSubj) pSubj.style.display = tab === 'subjects' ? '' : 'none';
+                if (pPer) pPer.style.display = tab === 'periods' ? '' : 'none';
+                if (pCode) pCode.style.display = tab === 'codes' ? '' : 'none';
+            });
+        }
+
+        // Save / Delete Subject
+        const subjForm = document.getElementById('schedSubjectForm');
+        if (subjForm) {
+            subjForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                simataClient
+                    .withSuccessHandler(function(res) {
+                        toast('success', 'Mapel Tersimpan', (res && res.message) || 'Mata pelajaran disimpan.');
+                        subjForm.reset();
+                        loadSchedulesData();
+                        setTimeout(renderMasterDialogContents, 350);
+                    })
+                    .withFailureHandler(function(err) {
+                        toast('error', 'Gagal', (err && err.message) || 'Gagal menyimpan mapel.');
+                    })
+                    .upsertScheduleSubject({
+                        code: (document.getElementById('schedSubjCode') || {}).value,
+                        name: (document.getElementById('schedSubjName') || {}).value,
+                        category: (document.getElementById('schedSubjCat') || {}).value,
+                        color_tone: (document.getElementById('schedSubjTone') || {}).value
+                    });
+            });
+        }
+
+        const subjList = document.getElementById('schedMasterSubjectsList');
+        if (subjList) {
+            subjList.addEventListener('click', function(e) {
+                const delBtn = e.target.closest('[data-del-subject]');
+                if (!delBtn) return;
+                simataClient
+                    .withSuccessHandler(function(res) {
+                        toast('success', 'Terhapus', (res && res.message) || 'Mapel dihapus.');
+                        loadSchedulesData();
+                        setTimeout(renderMasterDialogContents, 350);
+                    })
+                    .withFailureHandler(function(err) {
+                        toast('error', 'Tidak Dapat Dihapus', (err && err.message) || 'Mapel sedang digunakan.');
+                    })
+                    .deleteScheduleSubject(delBtn.getAttribute('data-del-subject'));
+            });
+        }
+
+        // Save Periods
+        const savePeriodsBtn = document.getElementById('schedSavePeriodsBtn');
+        if (savePeriodsBtn) {
+            savePeriodsBtn.addEventListener('click', function() {
+                const rows = Array.from(document.querySelectorAll('.sched-master-period-row')).map(function(row) {
+                    const isBreak = row.getAttribute('data-is-break') === '1';
+                    const pNumAttr = row.getAttribute('data-period-num');
+                    return {
+                        label: row.querySelector('.sched-p-label').value,
+                        start_time: row.querySelector('.sched-p-start').value,
+                        end_time: row.querySelector('.sched-p-end').value,
+                        is_break: isBreak,
+                        period_number: isBreak ? null : Number(pNumAttr)
+                    };
+                });
+                simataClient
+                    .withSuccessHandler(function(res) {
+                        toast('success', 'Jam Diperbarui', (res && res.message) || 'Jam belajar diperbarui.');
+                        loadSchedulesData();
+                    })
+                    .withFailureHandler(function(err) {
+                        toast('error', 'Gagal', (err && err.message) || 'Format jam tidak valid.');
+                    })
+                    .updateSchedulePeriods({
+                        academic_year_id: state.academicYearId,
+                        semester: state.semester,
+                        periods: rows
+                    });
+            });
+        }
+
+        // Save Teacher Short Codes
+        const codesList = document.getElementById('schedMasterCodesList');
+        if (codesList) {
+            codesList.addEventListener('click', function(e) {
+                const btn = e.target.closest('[data-save-teacher-code]');
+                if (!btn) return;
+                const tid = btn.getAttribute('data-save-teacher-code');
+                const inp = codesList.querySelector('[data-code-input-for="' + tid + '"]');
+                simataClient
+                    .withSuccessHandler(function(res) {
+                        toast('success', 'Kode Guru', (res && res.message) || 'Kode diperbarui.');
+                        loadSchedulesData();
+                    })
+                    .withFailureHandler(function(err) {
+                        toast('error', 'Bentrok Kode', (err && err.message) || 'Kode guru gagal disimpan.');
+                    })
+                    .updateTeacherScheduleCode({
+                        academic_year_id: state.academicYearId,
+                        semester: state.semester,
+                        teacher_id: tid,
+                        short_code: inp ? inp.value : ''
+                    });
+            });
+        }
+
+        // Import CSV file reader & template
+        const fileInp = document.getElementById('schedImportFileInput');
+        const txtArea = document.getElementById('schedImportTextarea');
+        const prevInfo = document.getElementById('schedImportPreviewInfo');
+        const updateCsvPreview = function() {
+            if (!txtArea || !prevInfo) return;
+            const parsed = parseCsvScheduleText(txtArea.value);
+            prevInfo.textContent = parsed.length > 0
+                ? 'Terbaca ' + parsed.length + ' baris jadwal siap diimpor.'
+                : '';
+        };
+        if (fileInp && txtArea) {
+            fileInp.addEventListener('change', function() {
+                const file = fileInp.files && fileInp.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function() {
+                    txtArea.value = String(reader.result || '');
+                    updateCsvPreview();
+                };
+                reader.readAsText(file, 'UTF-8');
+            });
+            txtArea.addEventListener('input', updateCsvPreview);
+        }
+
+        const dlTplBtn = document.getElementById('schedDownloadCsvTplBtn');
+        if (dlTplBtn) {
+            dlTplBtn.addEventListener('click', function() {
+                const csvTpl = 'Hari,Jam,Kelas,Mapel,Guru\nSABTU,1,10,PB,\nSABTU,2,10,PKN,M\nSABTU,2,11,PKWU,H\nSABTU,2,12,PJOK,F\n';
+                const blob = new Blob([csvTpl], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'template_jadwal_simata.csv';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+            });
+        }
+
+        const importForm = document.getElementById('schedImportForm');
+        if (importForm) {
+            importForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const parsed = parseCsvScheduleText(txtArea ? txtArea.value : '');
+                if (parsed.length === 0) {
+                    toast('error', 'Format CSV Kosong', 'Pastikan format CSV memiliki kolom Hari,Jam,Kelas,Mapel,Guru.');
+                    return;
+                }
+                const btn = document.getElementById('schedImportSubmitBtn');
+                if (btn) btn.disabled = true;
+                simataClient
+                    .withSuccessHandler(function(res) {
+                        if (btn) btn.disabled = false;
+                        const dlg = document.getElementById('schedImportDialog');
+                        if (dlg && dlg.open) dlg.close();
+                        toast('success', 'Import Berhasil', (res && res.message) || 'Jadwal berhasil diimpor.');
+                        loadSchedulesData();
+                    })
+                    .withFailureHandler(function(err) {
+                        if (btn) btn.disabled = false;
+                        toast('error', 'Import Gagal', (err && err.message) || 'Terdapat data atau bentrok guru yang tidak valid.');
+                    })
+                    .importScheduleRows({
+                        academic_year_id: state.academicYearId,
+                        semester: state.semester,
+                        rows: parsed,
+                        overwrite: Boolean((document.getElementById('schedImportOverwrite') || {}).checked)
+                    });
+            });
+        }
+    }
+
+    window.__simataInitSchedulesUi = bindEventsOnce;
+    window.__simataLoadSchedules = function(opts) {
+        bindEventsOnce();
+        loadSchedulesData(opts);
     };
 })();
 
@@ -17451,10 +19104,98 @@ function initTeacherAttendanceInResponder() {
                 }
             }
             syncResponderPickerLabel('rg_teacherId');
+            loadResponderScheduleAssist(tId);
         };
     }
 
     initResponderCompactPickers();
+}
+
+function applyResponderScheduleBlock(block) {
+    if (!block) return;
+    const classSel = document.getElementById('rg_classId');
+    if (classSel && block.class_id) {
+        classSel.value = block.class_id;
+        syncResponderPickerLabel('rg_classId');
+    }
+    const subjectEl = document.getElementById('rg_subject');
+    if (subjectEl && block.subject_name) {
+        subjectEl.value = block.subject_name;
+    }
+    const targetPeriods = Array.isArray(block.periods) ? block.periods.map(Number) : [];
+    if (targetPeriods.length > 0) {
+        document.querySelectorAll('input[name="rg_period"], .rg-period-checkbox').forEach(function(cb) {
+            cb.checked = targetPeriods.includes(Number(cb.value));
+        });
+    }
+}
+
+let responderScheduleReqSeq = 0;
+
+function loadResponderScheduleAssist(teacherId) {
+    const banner = document.getElementById('rg_scheduleAssistBanner');
+    const titleEl = document.getElementById('rg_scheduleAssistTitle');
+    const metaEl = document.getElementById('rg_scheduleAssistMeta');
+    const pillsWrap = document.getElementById('rg_scheduleAssistPills');
+    if (!banner || !pillsWrap) return;
+
+    const cleanId = teacherId ? String(teacherId).trim() : '';
+    if (!cleanId) {
+        banner.style.display = 'none';
+        pillsWrap.innerHTML = '';
+        return;
+    }
+
+    const reqSeq = ++responderScheduleReqSeq;
+    simataClient
+        .withSuccessHandler(function(res) {
+            if (reqSeq !== responderScheduleReqSeq) return;
+            if (!res || !res.success || !res.data) {
+                banner.style.display = 'none';
+                return;
+            }
+            const d = res.data;
+            const blocks = Array.isArray(d.today_teacher_blocks) ? d.today_teacher_blocks : [];
+            if (!d.is_school_day || blocks.length === 0) {
+                banner.style.display = 'none';
+                pillsWrap.innerHTML = '';
+                return;
+            }
+
+            if (titleEl) {
+                titleEl.textContent = 'Jadwal Mengajar Hari ' + (d.day_label || 'Ini') + ' (Klik untuk isi cepat):';
+            }
+            if (metaEl) {
+                metaEl.textContent = d.current_period
+                    ? (d.current_period.label + ' • ' + d.time_wib + ' WIB')
+                    : (d.time_wib + ' WIB');
+            }
+
+            pillsWrap.innerHTML = '';
+            blocks.forEach(function(blk) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'rg-sched-pill' + (blk.is_ongoing ? ' is-live' : '');
+                const pText = blk.periods.length > 1
+                    ? 'Jam ' + blk.periods[0] + '–' + blk.periods[blk.periods.length - 1]
+                    : 'Jam ' + blk.periods[0];
+                btn.textContent = pText + ' • ' + blk.subject_name + ' (' + blk.class_name + ')' + (blk.is_ongoing ? ' • LIVE' : '');
+                btn.addEventListener('click', function() {
+                    applyResponderScheduleBlock(blk);
+                });
+                pillsWrap.appendChild(btn);
+            });
+
+            banner.style.display = 'flex';
+
+            if (d.suggested_fill && d.suggested_fill.is_ongoing) {
+                applyResponderScheduleBlock(d.suggested_fill);
+            }
+        })
+        .withFailureHandler(function() {
+            if (reqSeq === responderScheduleReqSeq) banner.style.display = 'none';
+        })
+        .getScheduleActiveNow({ teacher_id: cleanId });
 }
 
 const responderPickerConfigs = {};
@@ -18325,6 +20066,8 @@ function resetTeacherAttendanceForm() {
     currentTeacherPhotoDataUrl = null;
     const preview = document.getElementById('teacherCapturedPreview');
     if (preview) preview.src = "";
+    const schedBanner = document.getElementById('rg_scheduleAssistBanner');
+    if (schedBanner) schedBanner.style.display = "none";
     stopTeacherCameraStream();
     setTeacherCameraMode("idle");
     setTeacherCameraBadge("Siap Presensi", "neutral");
@@ -19050,7 +20793,7 @@ function hideAllViews() {
     stopQrScannerStream();
     const views = [
         'dashboardContent', 'studentsContent', 'teachersContent',
-        'classesContent', 'gradesContent', 'attendanceContent',
+        'classesContent', 'schedulesContent', 'gradesContent', 'attendanceContent',
         'teacherAttendanceContent', 'journalContent', 'reportsContent', 'responderContent',
         'settingsContent', 'financeInvoicesContent', 'financePaymentsContent'
     ];
@@ -19075,6 +20818,10 @@ function showResponderView() {
 
     populateResponderTeachers();
     populateResponderClasses();
+    const selT = document.getElementById('rg_teacherId');
+    if (selT && selT.value) {
+        loadResponderScheduleAssist(selT.value);
+    }
 }
 
 function finishActiveResponderSession() {
@@ -19355,6 +21102,12 @@ function onDashboardLoaded(data) {
 
         const sheetClasses = document.getElementById('sheetMenuClasses');
         if (sheetClasses) sheetClasses.style.display = (isAdmin || isGuru) ? '' : 'none';
+
+        const menuSchedules = document.getElementById('menu-schedules');
+        if (menuSchedules) menuSchedules.style.display = (isAdmin || isGuru) ? '' : 'none';
+
+        const sheetSchedules = document.getElementById('sheetMenuSchedules');
+        if (sheetSchedules) sheetSchedules.style.display = (isAdmin || isGuru) ? '' : 'none';
 
         const homeQuickResp = document.getElementById('homeQuickResponder');
         if (homeQuickResp) homeQuickResp.style.display = (isAdmin || isGuru) ? '' : 'none';
@@ -22609,6 +24362,15 @@ window.addEventListener('beforeunload', function() {
           <span class="more-item-name">Data Kelas</span>
         </button>
 
+        <button type="button" class="more-grid-item" id="sheetMenuSchedules">
+          <div class="more-item-icon icon-schedules">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01"/>
+            </svg>
+          </div>
+          <span class="more-item-name">Jadwal</span>
+        </button>
+
         <button type="button" class="more-grid-item" id="sheetMenuGrades">
           <div class="more-item-icon icon-grades">
             <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -22702,7 +24464,7 @@ window.addEventListener('beforeunload', function() {
     } else if (viewKey === 'journal') {
       const b = document.getElementById('btnBottomJournal');
       if (b) b.classList.add('active');
-    } else if (['students', 'teachers', 'classes', 'settings', 'grades', 'reports', 'teacher-attendance', 'responder'].includes(viewKey)) {
+    } else if (['students', 'teachers', 'classes', 'schedules', 'settings', 'grades', 'reports', 'teacher-attendance', 'responder'].includes(viewKey)) {
       const b = document.getElementById('btnBottomMore');
       if (b) b.classList.add('active');
     }
@@ -22830,6 +24592,9 @@ window.addEventListener('beforeunload', function() {
 
   const smClasses = document.getElementById('sheetMenuClasses');
   if (smClasses) smClasses.addEventListener('click', function() { showClassesView(); });
+
+  const smSchedules = document.getElementById('sheetMenuSchedules');
+  if (smSchedules) smSchedules.addEventListener('click', function() { showSchedulesView(); });
 
   const smGrades = document.getElementById('sheetMenuGrades');
   if (smGrades) smGrades.addEventListener('click', function() { showGradesView(); });
@@ -24353,6 +26118,9 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 </script>
+
+<!-- Dedicated Official Printable Timetable Matrix Container (visible only during print) -->
+<div id="schedPrintSheet" aria-hidden="true"></div>
 
 </body>
 

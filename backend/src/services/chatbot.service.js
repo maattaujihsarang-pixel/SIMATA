@@ -1,5 +1,6 @@
 const { BadRequestError } = require('../errors');
 const dashboardService = require('./dashboard.service');
+const schedulesService = require('./schedules.service');
 
 class ChatbotService {
   async processMessage(userMessage) {
@@ -7,15 +8,42 @@ class ChatbotService {
       throw new BadRequestError('Pesan tidak boleh kosong');
     }
 
-    const cleanMessage = userMessage.trim().substring(0, 500); // Limit input length
+    const cleanMessage = userMessage.trim().substring(0, 500);
     const lower = cleanMessage.toLowerCase();
 
-    // Check for common madrasah queries
-    if (lower.includes('jadwal') || lower.includes('jam')) {
-      return {
-        reply: 'Jam pelajaran di MA At-Taujih Sarang dimulai dari Jam ke-1 (07.00 WIB) sampai Jam ke-10 (14.30 WIB). Pastikan presensi dicatat tepat waktu pada setiap pergantian jam pelajaran.',
-        intent: 'SCHEDULE_INFO'
-      };
+    // Schedule & School Hours query (real-time synced with Jadwal Pelajaran)
+    if (lower.includes('jadwal') || lower.includes('jam') || lower.includes('pelajaran') || lower.includes('istirahat')) {
+      try {
+        const nowData = await schedulesService.getActiveNowForResponder({});
+        const slots = Array.isArray(nowData.active_class_slots) ? nowData.active_class_slots : [];
+        const dayText = nowData.is_school_day
+          ? `Hari ini (${nowData.day_label}, ${nowData.time_wib} WIB)`
+          : `Hari ini (${nowData.day_label}, libur KBM)`;
+
+        let liveSummary = '';
+        if (nowData.is_school_day && nowData.current_period) {
+          if (nowData.current_period.is_break) {
+            liveSummary = ` Saat ini sedang waktu ${nowData.current_period.label} (${nowData.current_period.start_time}–${nowData.current_period.end_time} WIB).`;
+          } else if (slots.length > 0) {
+            const detail = slots
+              .map((s) => `${s.class_name}: ${s.subject_name}${s.teacher_name ? ` (${s.teacher_name})` : ''}`)
+              .join(' | ');
+            liveSummary = ` Sedang berlangsung ${nowData.current_period.label} (${nowData.current_period.start_time}–${nowData.current_period.end_time} WIB) → ${detail}.`;
+          } else {
+            liveSummary = ` ${dayText} mengacu pada ${nowData.current_period.label} (${nowData.current_period.start_time}–${nowData.current_period.end_time} WIB).`;
+          }
+        }
+
+        return {
+          reply: `Jadwal KBM MA At-Taujih Sarang aktif setiap hari Sabtu–Kamis (Jumat libur), mulai Jam ke-1 (07.00 WIB) sampai Jam ke-10 (12.50 WIB), dengan waktu Istirahat pukul 09.40–10.10 WIB.${liveSummary} Lihat tabel lengkapnya di menu Jadwal Pelajaran.`,
+          intent: 'SCHEDULE_INFO'
+        };
+      } catch (_) {
+        return {
+          reply: 'Jadwal KBM MA At-Taujih Sarang aktif hari Sabtu–Kamis (Jumat libur) dari Jam ke-1 (07.00 WIB) sampai Jam ke-10 (12.50 WIB), dengan Istirahat pukul 09.40–10.10 WIB.',
+          intent: 'SCHEDULE_INFO'
+        };
+      }
     }
 
     if (lower.includes('absen') || lower.includes('presensi') || lower.includes('hadir')) {
@@ -28,7 +56,7 @@ class ChatbotService {
 
     if (lower.includes('guru') || lower.includes('pengajar')) {
       return {
-        reply: 'MA At-Taujih Sarang memiliki 19 guru pengampu yang aktif untuk berbagai mata pelajaran keagamaan dan umum.',
+        reply: 'MA At-Taujih Sarang memiliki 19 guru pengampu aktif yang terjadwal pada mata pelajaran keagamaan, umum, dan bahasa.',
         intent: 'TEACHER_INFO'
       };
     }
@@ -41,11 +69,10 @@ class ChatbotService {
     }
 
     return {
-      reply: `Halo! Saya asisten virtual SIMATA (Sistem Informasi MA At-Taujih Sarang). Saya dapat membantu memberikan informasi terkait jadwal madrasah, rekap presensi harian, daftar guru, atau rombel kelas. Ada yang bisa saya bantu?`,
+      reply: `Halo! Saya asisten virtual SIMATA (Sistem Informasi MA At-Taujih Sarang). Saya dapat membantu memberikan informasi terkait jadwal pelajaran, rekap presensi harian, daftar guru, atau rombel kelas. Ada yang bisa saya bantu?`,
       intent: 'GENERAL_ASSISTANCE'
     };
   }
 }
 
 module.exports = new ChatbotService();
-

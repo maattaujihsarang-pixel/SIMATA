@@ -1680,6 +1680,106 @@
         method: 'DELETE'
       });
       return { success: true, message: res.message, data: res.data };
+    },
+
+    // ========================================================
+    // JADWAL PELAJARAN (SCHEDULES & TIMETABLE MANAGEMENT)
+    // ========================================================
+    getScheduleOverview: async function (params = {}) {
+      const qs = new URLSearchParams();
+      if (params && params.academic_year_id) qs.set('academic_year_id', params.academic_year_id);
+      if (params && params.semester) qs.set('semester', params.semester);
+      const qStr = qs.toString();
+      const res = await apiFetch('/schedules/overview' + (qStr ? '?' + qStr : ''));
+      return { success: true, data: res.data };
+    },
+
+    getScheduleActiveNow: async function (params = {}) {
+      const qs = new URLSearchParams();
+      if (params && params.teacher_id) qs.set('teacher_id', params.teacher_id);
+      if (params && params.day_of_week !== undefined && params.day_of_week !== null && params.day_of_week !== '') qs.set('day_of_week', String(params.day_of_week));
+      if (params && params.time_wib) qs.set('time_wib', params.time_wib);
+      const qStr = qs.toString();
+      const res = await apiFetch('/schedules/now' + (qStr ? '?' + qStr : ''));
+      return { success: true, data: res.data };
+    },
+
+    upsertScheduleSlot: async function (payload) {
+      const res = await apiFetch('/schedules/slots/upsert', {
+        method: 'POST',
+        body: JSON.stringify(payload || {})
+      });
+      return { success: true, message: res.message, data: res.data };
+    },
+
+    clearScheduleCell: async function (payload) {
+      const res = await apiFetch('/schedules/slots/clear', {
+        method: 'POST',
+        body: JSON.stringify(payload || {})
+      });
+      return { success: true, message: res.message, data: res.data };
+    },
+
+    deleteScheduleSlot: async function (scheduleId) {
+      const res = await apiFetch('/schedules/slots/' + encodeURIComponent(scheduleId), {
+        method: 'DELETE'
+      });
+      return { success: true, message: res.message, data: res.data };
+    },
+
+    upsertScheduleSubject: async function (payload) {
+      const res = await apiFetch('/schedules/subjects', {
+        method: 'POST',
+        body: JSON.stringify(payload || {})
+      });
+      return { success: true, message: res.message, data: res.data };
+    },
+
+    deleteScheduleSubject: async function (subjectId) {
+      const res = await apiFetch('/schedules/subjects/' + encodeURIComponent(subjectId), {
+        method: 'DELETE'
+      });
+      return { success: true, message: res.message, data: res.data };
+    },
+
+    updateSchedulePeriods: async function (payload) {
+      const res = await apiFetch('/schedules/periods', {
+        method: 'PUT',
+        body: JSON.stringify(payload || {})
+      });
+      return { success: true, message: res.message, data: res.data };
+    },
+
+    updateTeacherScheduleCode: async function (payload) {
+      const res = await apiFetch('/schedules/teacher-codes', {
+        method: 'PUT',
+        body: JSON.stringify(payload || {})
+      });
+      return { success: true, message: res.message, data: res.data };
+    },
+
+    copyScheduleSemester: async function (payload) {
+      const res = await apiFetch('/schedules/copy', {
+        method: 'POST',
+        body: JSON.stringify(payload || {})
+      });
+      return { success: true, message: res.message, data: res.data };
+    },
+
+    importScheduleRows: async function (payload) {
+      const res = await apiFetch('/schedules/import', {
+        method: 'POST',
+        body: JSON.stringify(payload || {})
+      });
+      return { success: true, message: res.message, data: res.data };
+    },
+
+    seedDefaultSchedule: async function (payload) {
+      const res = await apiFetch('/schedules/seed-default', {
+        method: 'POST',
+        body: JSON.stringify(payload || {})
+      });
+      return { success: true, message: res.message, data: res.data };
     }
   };
 
