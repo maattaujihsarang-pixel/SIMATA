@@ -445,6 +445,12 @@ function assertCssAndHtmlIntegrity() {
   assert.ok(css.includes('#reportsContent [hidden]'), 'CSS must enforce display:none for [hidden] elements inside #reportsContent');
   assert.ok(css.includes('dialog.rpt-tazir-dialog[open]'), 'CSS must scope dialog display via [open] state');
   assert.ok(css.includes('dialog.rpt-tazir-dialog:modal'), 'CSS must contain modal overscroll containment');
+  assert.ok(
+    css.includes('#rptAcadExportCsvBtn,\n  #rptAcadPrintBtn {\n    display: none !important;') ||
+    css.includes('#rptAcadExportCsvBtn,\r\n  #rptAcadPrintBtn {\r\n    display: none !important;'),
+    'Mobile CSS must hide #rptAcadExportCsvBtn and #rptAcadPrintBtn'
+  );
+  assert.ok(css.includes('.dashboard-layout #reportsContent .section-heading.rpt-acad-header'), 'Mobile CSS must standardize #reportsContent inline pill header layout');
 
   // 2. HTML UI Structure & Scope Boundaries
   const reportsSectionMatch = html.match(/<section id="reportsContent"[\s\S]*?<\/section>/);

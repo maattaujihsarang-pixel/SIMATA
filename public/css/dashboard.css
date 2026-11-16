@@ -4231,7 +4231,7 @@ body.dashboard-page {
 /* Recent Journal Feed */
 .rpt-acad-journal-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
   gap: 10px;
 }
 
@@ -4468,26 +4468,152 @@ body.dashboard-page {
 }
 
 @media (max-width: 768px) {
-  .rpt-acad-actions {
-    width: 100%;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* Hide desktop export & print actions on mobile, matching secondary action suppression across SIMATA */
+  #rptAcadExportCsvBtn,
+  #rptAcadPrintBtn {
+    display: none !important;
   }
 
-  .rpt-acad-actions .rpt-acad-btn {
-    padding: 0 8px;
-    font-size: 12px;
-    min-height: 42px;
+  /* Neutralize dashboard.html legacy column/flex-basis:300px stretch & match BUG 48/51 inline pill header */
+  .dashboard-layout #reportsContent .section-heading.rpt-acad-header {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    column-gap: 10px !important;
+    row-gap: 4px !important;
+    align-items: center !important;
+    margin-bottom: 12px !important;
+  }
+
+  .dashboard-layout #reportsContent .section-heading > .rpt-acad-title-wrap {
+    display: contents !important;
+    width: auto !important;
+    flex: none !important;
+    min-height: 0 !important;
+    height: auto !important;
+  }
+
+  .dashboard-layout #reportsContent .rpt-acad-title-wrap > .section-label {
+    grid-column: 1;
+    grid-row: 1;
+    display: block !important;
+    margin: 0 !important;
+    font-size: 10.5px;
+    line-height: 1.25;
+  }
+
+  .dashboard-layout #reportsContent .rpt-acad-title-wrap > h2 {
+    grid-column: 1;
+    grid-row: 2;
+    margin: 0 !important;
+    font-size: 17px !important;
+    line-height: 1.25 !important;
+    text-wrap: balance;
+  }
+
+  .dashboard-layout #reportsContent .section-heading > .rpt-acad-actions {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: center;
+    width: auto !important;
+    flex: 0 0 auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 8px;
+  }
+
+  .dashboard-layout #reportsContent .rpt-acad-title-wrap > .rpt-acad-subtitle {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    margin: 3px 0 0 !important;
+    font-size: 12px !important;
+    line-height: 1.4 !important;
+    color: #64748b;
+    text-wrap: pretty;
+  }
+
+  .dashboard-layout #reportsContent .section-heading .rpt-acad-actions button#rptAcadRefreshBtn {
+    position: relative;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: auto !important;
+    min-height: 34px !important;
+    height: 34px !important;
+    padding: 0 13px !important;
+    margin: 0 !important;
+    border-radius: 9999px !important;
+    border: 1px solid #6ee7b7 !important;
+    background: #ecfdf5 !important;
+    color: #047857 !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    line-height: 1 !important;
+    gap: 5px !important;
+    white-space: nowrap !important;
+    box-shadow: 0 1px 2px rgba(4, 120, 87, 0.06) !important;
+  }
+
+  .dashboard-layout #reportsContent .section-heading .rpt-acad-actions button#rptAcadRefreshBtn svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .dashboard-layout #reportsContent .section-heading .rpt-acad-actions button#rptAcadRefreshBtn:hover,
+  .dashboard-layout #reportsContent .section-heading .rpt-acad-actions button#rptAcadRefreshBtn:active {
+    background: #059669 !important;
+    border-color: #059669 !important;
+    color: #ffffff !important;
   }
 
   .rpt-acad-filter-card {
-    padding: 14px;
+    padding: 13px 14px;
+    margin-bottom: 12px;
+    border-radius: 14px;
   }
 
+  .rpt-acad-filter-top {
+    gap: 12px;
+  }
+
+  .rpt-acad-period-wrap,
   .rpt-acad-class-wrap,
   .rpt-acad-toolbar-controls {
     flex: 1 1 100%;
     max-width: 100%;
+    min-width: 0;
+  }
+
+  .rpt-acad-preset-group {
+    flex-wrap: wrap;
+    overflow-x: visible;
+    gap: 6px;
+    padding-bottom: 0;
+  }
+
+  .rpt-acad-preset-btn {
+    flex: 1 1 auto;
+    min-height: 38px;
+    padding: 6px 10px;
+    font-size: 12.5px;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .rpt-acad-tabs-shell {
+    border-radius: 12px;
+    padding: 0 6px;
+    margin-bottom: 12px;
+  }
+
+  .rpt-acad-tab {
+    min-height: 44px;
+    padding: 9px 11px;
+    font-size: 12.5px;
+  }
+
+  .rpt-acad-panel-body {
+    gap: 12px;
   }
 
   .rpt-acad-kpi-card {
@@ -4500,16 +4626,67 @@ body.dashboard-page {
 
   .rpt-acad-card {
     padding: 14px;
+    border-radius: 14px;
+  }
+
+  .rpt-acad-card-head {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .rpt-acad-card-head > div:first-child {
+    min-inline-size: 0;
+    flex: 1 1 200px;
+  }
+
+  .rpt-acad-card-head h3 {
+    text-wrap: balance;
+  }
+
+  .rpt-acad-card-sub {
+    text-wrap: pretty;
+  }
+
+  /* Keep @container stacked cards free of dashboard.html min-width:560px table & nowrap overrides */
+  .dashboard-layout #reportsContent .rpt-acad-table-region {
+    border: none !important;
+    border-radius: 0 !important;
+    margin-top: 0 !important;
+    background: transparent !important;
+  }
+
+  .dashboard-layout #reportsContent table.rpt-acad-table {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .dashboard-layout #reportsContent table.rpt-acad-table th,
+  .dashboard-layout #reportsContent table.rpt-acad-table td {
+    white-space: normal;
   }
 }
 
-@media (max-width: 420px) {
-  .rpt-acad-actions {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+@media (max-width: 768px) and (pointer: coarse) {
+  .dashboard-layout #reportsContent .section-heading .rpt-acad-actions button#rptAcadRefreshBtn::after {
+    content: '';
+    position: absolute;
+    inset: -5px 0;
   }
 
-  #rptAcadPrintBtn {
-    grid-column: 1 / -1;
+  .rpt-acad-preset-btn {
+    min-height: 42px;
+  }
+}
+
+@media (max-width: 639px) {
+  .dashboard-layout #reportsContent .rpt-acad-table-region {
+    overflow-x: visible;
+  }
+}
+
+@media (max-width: 359px) {
+  .rpt-acad-kpi-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
