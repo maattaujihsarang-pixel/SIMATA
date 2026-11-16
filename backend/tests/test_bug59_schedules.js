@@ -291,6 +291,8 @@ function assertSeedDatasetIntegrity() {
   assert.strictEqual(matchedUmi.teacher_id, 'T1');
   const matchedH = matchTeacherRow([{ teacher_id: 'T2', name: 'TSURRAYYA ROCHMANIA, S.E' }], ['TSUROYAH ROCHMANIA']);
   assert.strictEqual(matchedH.teacher_id, 'T2');
+  const matchedG = matchTeacherRow([{ teacher_id: 'T3', name: 'Syamsul Huda S.Ag' }], ['SYAMSUL HUDA, S.Ag', 'SYAMSUL HUDA', 'SAMSUL']);
+  assert.strictEqual(matchedG.teacher_id, 'T3');
   console.log('1. PASS: Official 2026/2027 Ganjil seed (159 KBM JP, 18 PB, 3 Upacara, 0 conflicts, A-S exact counts) verified.');
 }
 

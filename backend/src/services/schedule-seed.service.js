@@ -124,7 +124,7 @@ const TEACHER_CODE_CATALOG_2026 = [
   { code: 'D', names: ['BELLATUL FAUZIYAH, S.Pd', 'BELLATUL FAUZIYAH'], weekly_jp: 8 },
   { code: 'E', names: ['UMI ASROH, S.Pd', 'UMI ASROH'], weekly_jp: 6 },
   { code: 'F', names: ['MUHAMMAD LUTFI, S.Ag', 'MUHAMMAD LUTFI', 'M LUTFI', 'LUTFI'], weekly_jp: 12 },
-  { code: 'G', names: ['SAMSUL'], weekly_jp: 6 },
+  { code: 'G', names: ['SYAMSUL HUDA, S.Ag', 'SYAMSUL HUDA', 'SYAMSUL', 'SAMSUL'], weekly_jp: 6 },
   { code: 'H', names: ['TSURRAYYA ROCHMANIA, S.E', 'TSURRAYYA ROCHMANIA', 'TSUROYAH ROCHMANIA', 'TSURAYYA'], weekly_jp: 16 },
   { code: 'I', names: ['FARIDATUN NI\'MAH, S.Pd', 'FARIDATUN NIMAH', 'FARIDATUN NI MAH'], weekly_jp: 12 },
   { code: 'J', names: ['MOCH. SOHIBUL MAHBUB, S.Ag', 'SOHIBUL MAHBUB'], weekly_jp: 12 },
@@ -226,7 +226,7 @@ function normalizePersonName(raw) {
   if (!raw) return '';
   return String(raw)
     .toUpperCase()
-    .replace(/,?\s*(S\.AG|S\.PD|S\.SOS|S\.E|S\.H|M\.PD|M\.AG|S\.PSI|S\.KOM|S\.SI)\.?/g, '')
+    .replace(/,?\s*(S\.AG|S\.PD|S\.SOS|S\.E|S\.H|S\.FU|M\.PD|M\.AG|S\.PSI|S\.KOM|S\.SI)\.?/g, '')
     .replace(/[^A-Z0-9\s]/g, ' ')
     .replace(/\b(MOCH|MOHAMMAD|MUHAMMAD|M)\b/g, 'M')
     .replace(/\s+/g, ' ')
