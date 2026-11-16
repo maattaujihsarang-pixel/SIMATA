@@ -551,7 +551,7 @@ function assertCssAndHtmlIntegrity() {
   assert.ok(reportsHtml.includes('id="rptAcadUnitGroup"'), '#reportsContent must include Harian/Detail JP unit toggle');
   assert.ok(reportsHtml.includes('data-unit="days"'), '#reportsContent must support daily student-days mode');
   assert.ok(reportsHtml.includes('data-unit="jp"'), '#reportsContent must support JP detail mode');
-  assert.ok(html.includes('/css/dashboard.css?v=bug58a'), 'dashboard.html must bump dashboard.css cache-buster to ?v=bug58a');
+  assert.ok(html.includes('/css/dashboard.css?v=bug58b'), 'dashboard.html must bump dashboard.css cache-buster to ?v=bug58b');
 
   // Grades menu untouched (reserved for external RDM integration later)
   const gradesSectionMatch = html.match(/<section id="gradesContent"[\s\S]*?<\/section>/);

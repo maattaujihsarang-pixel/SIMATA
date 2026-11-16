@@ -3480,33 +3480,36 @@ body.dashboard-page {
 .rpt-acad-filter-top {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 14px;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 14px 22px;
 }
 
 .rpt-acad-filter-label {
   display: block;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  line-height: 1.25;
   color: #475569;
-  margin-bottom: 7px;
+  margin: 0 0 8px;
 }
 
 .rpt-acad-period-wrap {
-  flex: 1 1 320px;
+  flex: 0 0 auto;
   min-width: 0;
 }
 
 .rpt-acad-preset-group {
   display: flex;
   flex-wrap: nowrap;
+  align-items: center;
   gap: 6px;
   overflow-x: auto;
   scrollbar-width: none;
-  padding-bottom: 2px;
+  margin: 0;
+  padding: 0;
 }
 
 .rpt-acad-preset-group::-webkit-scrollbar {
@@ -3515,7 +3518,11 @@ body.dashboard-page {
 
 .rpt-acad-preset-btn {
   flex: none;
-  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  min-height: 40px;
   padding: 0 14px;
   border-radius: 10px;
   border: 1px solid #e2e8f0;
@@ -3523,6 +3530,7 @@ body.dashboard-page {
   color: #334155;
   font-size: 13px;
   font-weight: 600;
+  box-sizing: border-box;
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -3538,20 +3546,37 @@ body.dashboard-page {
   color: #ffffff;
 }
 
-.rpt-acad-class-wrap {
-  flex: 0 1 230px;
-  min-width: 190px;
-}
-
 .rpt-acad-unit-wrap {
   flex: 0 0 auto;
   min-width: 0;
 }
 
-.rpt-acad-select {
+.rpt-acad-class-wrap {
+  flex: 1 1 210px;
+  max-width: 260px;
+  min-width: 190px;
+  margin-left: auto;
+}
+
+.dashboard-layout .content select.rpt-acad-select {
   width: 100%;
-  min-height: 38px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0 32px 0 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.25;
+  box-sizing: border-box;
   margin: 0 !important;
+}
+
+@media (max-width: 1120px) {
+  .rpt-acad-class-wrap {
+    margin-left: 0;
+    flex: 1 1 220px;
+    max-width: 320px;
+  }
 }
 
 .rpt-acad-custom-dates {
@@ -3581,7 +3606,9 @@ body.dashboard-page {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 12px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
 }
 
 .rpt-acad-meta-pill {
@@ -4627,6 +4654,14 @@ body.dashboard-page {
     flex: 1 1 100%;
     max-width: 100%;
     min-width: 0;
+    margin-left: 0;
+  }
+
+  .dashboard-layout .content select.rpt-acad-select {
+    height: auto;
+    min-height: 44px;
+    padding: 10px 34px 10px 14px;
+    font-size: 16px;
   }
 
   .rpt-acad-preset-group {
@@ -4638,6 +4673,7 @@ body.dashboard-page {
 
   .rpt-acad-preset-btn {
     flex: 1 1 auto;
+    height: auto;
     min-height: 38px;
     padding: 6px 10px;
     font-size: 12.5px;
