@@ -812,7 +812,7 @@ html, body {
   }
 }
 </style>
-  <link rel="stylesheet" href="/css/dashboard.css?v=bug57a">
+  <link rel="stylesheet" href="/css/dashboard.css?v=bug58a">
   <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
   <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
@@ -2925,6 +2925,14 @@ html, body {
                   <button type="button" class="rpt-acad-preset-btn active" data-preset="month">Bulan Ini</button>
                   <button type="button" class="rpt-acad-preset-btn" data-preset="semester">Semester</button>
                   <button type="button" class="rpt-acad-preset-btn" data-preset="custom">Kustom</button>
+                </div>
+              </div>
+
+              <div class="rpt-acad-unit-wrap">
+                <span class="rpt-acad-filter-label">Satuan Rekap</span>
+                <div class="rpt-acad-preset-group rpt-acad-unit-group" id="rptAcadUnitGroup" role="group" aria-label="Pilih satuan perhitungan rekap">
+                  <button type="button" class="rpt-acad-preset-btn active" data-unit="days" aria-pressed="true">Harian (Hari)</button>
+                  <button type="button" class="rpt-acad-preset-btn" data-unit="jp" aria-pressed="false">Detail JP</button>
                 </div>
               </div>
 
@@ -10498,6 +10506,7 @@ function showReportsView() {
         reqSeq: 0,
         activeTab: 'overview',
         preset: 'month',
+        unitMode: 'days',
         startDate: '',
         endDate: '',
         classId: '',
@@ -10643,24 +10652,38 @@ function showReportsView() {
 
     function renderOverviewPanel(data) {
         const ov = data.overview || {};
-        const bd = ov.student_breakdown || {};
+        const isDaysMode = (state.unitMode !== 'jp');
+        const bd = isDaysMode ? (ov.student_daily_breakdown || ov.student_breakdown || {}) : (ov.student_breakdown || {});
+        const studentRateVal = isDaysMode ? ov.student_attendance_rate : (ov.student_attendance_rate_jp ?? ov.student_attendance_rate);
+        const studentDeltaVal = isDaysMode ? ov.student_attendance_delta : (ov.student_attendance_delta_jp ?? ov.student_attendance_delta);
+
         const kpiGrid = document.getElementById('rptAcadKpiGrid');
         if (kpiGrid) {
             let deltaHtml = '<span class="rpt-kpi-badge neutral">Periode aktif</span>';
-            if (ov.student_attendance_delta !== null && ov.student_attendance_delta !== undefined) {
-                const d = Number(ov.student_attendance_delta);
+            if (studentDeltaVal !== null && studentDeltaVal !== undefined) {
+                const d = Number(studentDeltaVal);
                 const sign = d > 0 ? '+' : '';
                 const cls = d >= 0 ? 'up' : 'down';
                 const arrow = d >= 0 ? '&#9650;' : '&#9660;';
                 deltaHtml = '<span class="rpt-kpi-badge ' + cls + '" title="Dibanding periode sebelumnya">' + arrow + ' ' + sign + d.toFixed(1).replace(/\.0$/, '') + '%</span>';
             }
 
-            const studentRateDisplay = ov.student_attendance_rate !== null && ov.student_attendance_rate !== undefined
-                ? fmtPct(ov.student_attendance_rate)
+            const studentRateDisplay = studentRateVal !== null && studentRateVal !== undefined
+                ? fmtPct(studentRateVal)
                 : '-';
             const teacherRateDisplay = ov.teacher_execution_rate !== null && ov.teacher_execution_rate !== undefined
                 ? fmtPct(ov.teacher_execution_rate)
                 : '-';
+
+            const unitSuffix = isDaysMode ? ' hr' : ' JP';
+            const bolosNote = isDaysMode && Number(bd.partial_alpa_jp || 0) > 0
+                ? ' &bull; Bolos: ' + fmtNum(bd.partial_alpa_jp) + ' JP'
+                : '';
+            const studentBreakdownHtml =
+                'H: ' + fmtNum(bd.hadir) + unitSuffix +
+                ' &bull; I/S: ' + fmtNum((bd.izin || 0) + (bd.sakit || 0)) + unitSuffix +
+                ' &bull; A: ' + fmtNum(bd.alpa) + unitSuffix +
+                bolosNote;
 
             const harianCnt = Number(ov.harian_tazir_count || 0);
             const jamCnt = Number(ov.jam_tazir_count || 0);
@@ -10671,7 +10694,7 @@ function showReportsView() {
                 '<article class="rpt-acad-kpi-card">' +
                     '<div class="rpt-kpi-top"><span class="rpt-kpi-label">Kehadiran Siswa</span>' + deltaHtml + '</div>' +
                     '<div class="rpt-kpi-val">' + esc(studentRateDisplay) + '</div>' +
-                    '<div class="rpt-kpi-sub">H: ' + fmtNum(bd.hadir) + ' &bull; I/S: ' + fmtNum((bd.izin || 0) + (bd.sakit || 0)) + ' &bull; A: ' + fmtNum(bd.alpa) + '</div>' +
+                    '<div class="rpt-kpi-sub">' + studentBreakdownHtml + '</div>' +
                 '</article>' +
                 '<article class="rpt-acad-kpi-card">' +
                     '<div class="rpt-kpi-top"><span class="rpt-kpi-label">Realisasi Mengajar</span><span class="rpt-kpi-badge emerald">' + fmtNum(ov.teacher_active_count) + '/' + fmtNum(ov.teacher_total_count) + ' guru</span></div>' +
@@ -10708,15 +10731,18 @@ function showReportsView() {
         const inspectEl = document.getElementById('rptAcadTrendInspect');
         if (!wrap) return;
 
+        const isDaysMode = (state.unitMode !== 'jp');
+        const rateField = isDaysMode ? 'student_rate' : 'student_rate_jp';
         const points = Array.isArray(trends.points) ? trends.points : [];
         if (subEl) {
+            const unitText = isDaysMode ? 'satuan hari-siswa' : 'satuan jam pelajaran (JP)';
             subEl.textContent = trends.granularity === 'weekly'
-                ? 'Agregasi mingguan: persentase hadir siswa (%) vs keterlaksanaan mengajar guru (%)'
-                : 'Tren harian: persentase hadir siswa (%) vs keterlaksanaan mengajar guru (%)';
+                ? 'Agregasi mingguan: persentase hadir siswa (' + unitText + ') vs keterlaksanaan mengajar guru (%)'
+                : 'Tren harian: persentase hadir siswa (' + unitText + ') vs keterlaksanaan mengajar guru (%)';
         }
 
         const hasAnyValue = points.some(function(p) {
-            return p.student_rate !== null || p.teacher_rate !== null;
+            return (p[rateField] !== null && p[rateField] !== undefined) || p.teacher_rate !== null;
         });
 
         if (points.length === 0 || !hasAnyValue) {
@@ -10765,7 +10791,7 @@ function showReportsView() {
                 '<text x="' + (padL - 8) + '" y="' + (Number(y) + 4).toFixed(1) + '" text-anchor="end" class="rpt-svg-axis-txt">' + val + '%</text>';
         }).join('');
 
-        const sPaths = buildSegmentedPaths('student_rate').map(function(seg) {
+        const sPaths = buildSegmentedPaths(rateField).map(function(seg) {
             if (seg.length < 2) return '';
             const dLine = seg.map(function(p, i) { return (i === 0 ? 'M' : 'L') + p.x.toFixed(1) + ' ' + p.y.toFixed(1); }).join(' ');
             const dArea = dLine + ' L' + seg[seg.length - 1].x.toFixed(1) + ' ' + (padT + plotH).toFixed(1) +
@@ -10790,8 +10816,9 @@ function showReportsView() {
         const dotsAndHits = points.map(function(pt, idx) {
             const cx = xFor(idx).toFixed(1);
             let circles = '';
-            if (pt.student_rate !== null && pt.student_rate !== undefined) {
-                circles += '<circle cx="' + cx + '" cy="' + yFor(pt.student_rate).toFixed(1) + '" r="4" class="rpt-svg-dot-student"/>';
+            const sRate = pt[rateField];
+            if (sRate !== null && sRate !== undefined) {
+                circles += '<circle cx="' + cx + '" cy="' + yFor(sRate).toFixed(1) + '" r="4" class="rpt-svg-dot-student"/>';
             }
             if (pt.teacher_rate !== null && pt.teacher_rate !== undefined) {
                 circles += '<circle cx="' + cx + '" cy="' + yFor(pt.teacher_rate).toFixed(1) + '" r="3.6" class="rpt-svg-dot-teacher"/>';
@@ -10815,13 +10842,21 @@ function showReportsView() {
             const pt = points[idx];
             if (!pt || !inspectEl) return;
             const titleLabel = pt.range_label || pt.label || pt.key;
-            const sTxt = pt.student_rate !== null ? fmtPct(pt.student_rate) + ' (' + pt.student_hadir + '/' + pt.student_total + ' rec)' : 'Nihil';
-            const tTxt = pt.teacher_rate !== null ? fmtPct(pt.teacher_rate) + ' (' + pt.teacher_hadir + '/' + pt.teacher_total + ' JP)' : 'Nihil';
+            const sRate = isDaysMode ? pt.student_rate : (pt.student_rate_jp ?? pt.student_rate);
+            const sHadirCount = isDaysMode ? (pt.student_hadir_days ?? pt.student_hadir) : pt.student_hadir;
+            const sTotalCount = isDaysMode ? (pt.student_total_days ?? pt.student_total) : pt.student_total;
+            const sUnitLabel = isDaysMode
+                ? (trends.granularity === 'weekly' ? ' hari-siswa' : ' siswa hadir')
+                : ' JP';
+            const sTxt = sRate !== null && sRate !== undefined
+                ? fmtPct(sRate) + ' (' + fmtNum(sHadirCount) + '/' + fmtNum(sTotalCount) + sUnitLabel + ')'
+                : 'Nihil';
+            const tTxt = pt.teacher_rate !== null ? fmtPct(pt.teacher_rate) + ' (' + fmtNum(pt.teacher_hadir) + '/' + fmtNum(pt.teacher_total) + ' JP)' : 'Nihil';
             inspectEl.innerHTML = '<strong>' + esc(titleLabel) + '</strong> &mdash; Siswa: <span>' + esc(sTxt) + '</span> &bull; Guru: <span>' + esc(tTxt) + '</span>';
         }
 
         const latestWithDataIdx = points.reduce(function(acc, pt, idx) {
-            return (pt.student_rate !== null || pt.teacher_rate !== null) ? idx : acc;
+            return ((pt[rateField] !== null && pt[rateField] !== undefined) || pt.teacher_rate !== null) ? idx : acc;
         }, -1);
         if (latestWithDataIdx >= 0) {
             showPointInspect(latestWithDataIdx);
@@ -10842,12 +10877,24 @@ function showReportsView() {
             return;
         }
 
+        const isDaysMode = (state.unitMode !== 'jp');
+        const unitSuffix = isDaysMode ? ' hr' : ' JP';
+
         wrap.innerHTML = perClass.map(function(c) {
-            const pct = c.attendance_pct !== null && c.attendance_pct !== undefined ? Number(c.attendance_pct) : null;
+            const rawPct = isDaysMode ? c.attendance_pct : (c.attendance_pct_jp ?? c.attendance_pct);
+            const pct = rawPct !== null && rawPct !== undefined ? Number(rawPct) : null;
             const barWidth = pct !== null ? Math.max(0, Math.min(100, pct)) : 0;
             const pctTone = pct === null ? 'muted' : (pct >= 90 ? 'good' : (pct >= 80 ? 'warn' : 'bad'));
             const selectedCls = c.is_selected ? ' is-selected-class' : '';
             const waliTxt = c.homeroom_teacher_name ? 'Wali: ' + c.homeroom_teacher_name : 'Wali kelas belum diatur';
+
+            const hadirVal = isDaysMode ? (c.hadir_days ?? c.hadir) : c.hadir;
+            const izinVal = isDaysMode ? (c.izin_days ?? c.izin) : c.izin;
+            const sakitVal = isDaysMode ? (c.sakit_days ?? c.sakit) : c.sakit;
+            const alpaVal = isDaysMode ? (c.alpa_days ?? c.alpa) : c.alpa;
+            const bolosBadge = isDaysMode && Number(c.partial_alpa_jp || 0) > 0
+                ? '<span class="rpt-class-bolos">Bolos: ' + fmtNum(c.partial_alpa_jp) + ' JP</span>'
+                : '';
 
             return '<div class="rpt-class-bar-item' + selectedCls + '">' +
                 '<div class="rpt-class-bar-top">' +
@@ -10858,10 +10905,11 @@ function showReportsView() {
                     '<div class="rpt-class-progress-fill ' + pctTone + '" style="width:' + barWidth.toFixed(1) + '%"></div>' +
                 '</div>' +
                 '<div class="rpt-class-bar-foot">' +
-                    '<span>Hadir: ' + fmtNum(c.hadir) + '</span>' +
-                    '<span>Izin: ' + fmtNum(c.izin) + '</span>' +
-                    '<span>Sakit: ' + fmtNum(c.sakit) + '</span>' +
-                    '<span>Alpa: ' + fmtNum(c.alpa) + '</span>' +
+                    '<span>Hadir: ' + fmtNum(hadirVal) + unitSuffix + '</span>' +
+                    '<span>Izin: ' + fmtNum(izinVal) + unitSuffix + '</span>' +
+                    '<span>Sakit: ' + fmtNum(sakitVal) + unitSuffix + '</span>' +
+                    '<span>Alpa: ' + fmtNum(alpaVal) + unitSuffix + '</span>' +
+                    bolosBadge +
                 '</div>' +
             '</div>';
         }).join('');
@@ -10922,11 +10970,21 @@ function showReportsView() {
             return;
         }
 
+        const isDaysMode = (state.unitMode !== 'jp');
         const bodyHtml = rows.map(function(s) {
             const metaLine = (s.nis ? 'NIS ' + s.nis : 'NIS -') + ' \u2022 ' + (s.class_name || '-');
             const isCrit = (s.alpa_full_days_sem >= 4 || s.alpa_partial_jp_week >= 3 || s.alpa >= 3);
             const isWarn = !isCrit && (s.alpa >= 1 || s.alpa_partial_jp_week >= 1 || s.alpa_full_days_sem >= 1);
             const alpaCls = isCrit ? 'is-crit' : (isWarn ? 'is-warn' : '');
+            const partialJp = Number(s.partial_alpa_jp || 0);
+            const bolosCls = partialJp >= 3 ? 'is-crit' : (partialJp >= 1 ? 'is-warn' : '');
+
+            const hadirVal = isDaysMode ? (s.hadir_days ?? s.hadir) : s.hadir;
+            const izinVal = isDaysMode ? (s.izin_days ?? s.izin) : s.izin;
+            const sakitVal = isDaysMode ? (s.sakit_days ?? s.sakit) : s.sakit;
+            const alpaVal = isDaysMode ? (s.alpa_days ?? s.alpa) : s.alpa;
+            const pctVal = isDaysMode ? s.attendance_pct : (s.attendance_pct_jp ?? s.attendance_pct);
+            const uLabel = isDaysMode ? 'hr' : 'JP';
 
             let statusHtml = '<div class="rpt-status-stack">' +
                 '<span class="rpt-status-chip ' + riskBadgeClass(s.risk_level) + '">' + esc(s.risk_label) + '</span>';
@@ -10948,31 +11006,40 @@ function showReportsView() {
                 tazirBtnHtml = '<button type="button" class="rpt-acad-row-btn js-rpt-open-tazir" data-student-id="' + esc(s.student_id) + '">Riwayat (' + fmtNum(s.tazir_count) + ')</button>';
             }
 
+            const bolosTd = isDaysMode
+                ? '<td data-label="Bolos (JP)" class="num rpt-num-alpa ' + bolosCls + '">' + fmtNum(partialJp) + ' JP</td>'
+                : '';
+
             return '<tr>' +
                 '<th scope="row">' +
                     '<div class="rpt-cell-main">' + esc(s.name) + '</div>' +
                     '<div class="rpt-cell-sub">' + esc(metaLine) + '</div>' +
                 '</th>' +
                 '<td data-label="Kelas &amp; Wali"><div class="rpt-td-stack"><span>' + esc(s.class_name || '-') + '</span><small class="rpt-td-sub">' + esc(s.homeroom_teacher_name || 'Wali belum diset') + '</small></div></td>' +
-                '<td data-label="Hadir" class="num">' + fmtNum(s.hadir) + '</td>' +
-                '<td data-label="Izin" class="num">' + fmtNum(s.izin) + '</td>' +
-                '<td data-label="Sakit" class="num">' + fmtNum(s.sakit) + '</td>' +
-                '<td data-label="Alpa" class="num rpt-num-alpa ' + alpaCls + '">' + fmtNum(s.alpa) + '</td>' +
-                '<td data-label="Kehadiran" class="num">' + esc(s.attendance_pct !== null ? fmtPct(s.attendance_pct) : '-') + '</td>' +
+                '<td data-label="Hadir (' + uLabel + ')" class="num">' + fmtNum(hadirVal) + '</td>' +
+                '<td data-label="Izin (' + uLabel + ')" class="num">' + fmtNum(izinVal) + '</td>' +
+                '<td data-label="Sakit (' + uLabel + ')" class="num">' + fmtNum(sakitVal) + '</td>' +
+                '<td data-label="Alpa (' + uLabel + ')" class="num rpt-num-alpa ' + alpaCls + '">' + fmtNum(alpaVal) + '</td>' +
+                bolosTd +
+                '<td data-label="Kehadiran" class="num">' + esc(pctVal !== null && pctVal !== undefined ? fmtPct(pctVal) : '-') + '</td>' +
                 '<td data-label="Status">' + statusHtml + '</td>' +
                 '<td data-label="Aksi" class="actions"><div class="rpt-row-actions">' + tazirBtnHtml + '<button type="button" class="rpt-acad-row-btn js-rpt-open-student" data-mode="view" data-student-id="' + esc(s.student_id) + '">Detail</button></div></td>' +
             '</tr>';
         }).join('');
+
+        const headUnitLabel = isDaysMode ? 'hr' : 'JP';
+        const bolosTh = isDaysMode ? '<th scope="col" class="num">Bolos (JP)</th>' : '';
 
         wrap.innerHTML =
             '<table class="rpt-acad-table">' +
                 '<thead><tr>' +
                     '<th scope="col">Siswa</th>' +
                     '<th scope="col">Kelas &amp; Wali</th>' +
-                    '<th scope="col" class="num">Hadir</th>' +
-                    '<th scope="col" class="num">Izin</th>' +
-                    '<th scope="col" class="num">Sakit</th>' +
-                    '<th scope="col" class="num">Alpa</th>' +
+                    '<th scope="col" class="num">Hadir (' + headUnitLabel + ')</th>' +
+                    '<th scope="col" class="num">Izin (' + headUnitLabel + ')</th>' +
+                    '<th scope="col" class="num">Sakit (' + headUnitLabel + ')</th>' +
+                    '<th scope="col" class="num">Alpa (' + headUnitLabel + ')</th>' +
+                    bolosTh +
                     '<th scope="col" class="num">Kehadiran</th>' +
                     '<th scope="col">Status</th>' +
                     '<th scope="col" class="actions">Aksi</th>' +
@@ -11199,9 +11266,31 @@ function showReportsView() {
         }
         const meta = state.data.meta || {};
         const suffix = (meta.start_date || 'awal') + '_sd_' + (meta.end_date || 'akhir');
+        const isDaysMode = (state.unitMode !== 'jp');
 
         if (state.activeTab === 'discipline') {
             const rows = getFilteredDisciplineRows().map(function(s) {
+                if (isDaysMode) {
+                    return [
+                        s.nis || '-',
+                        s.nisn || '-',
+                        s.name,
+                        s.class_name,
+                        s.homeroom_teacher_name || '-',
+                        s.hadir_days ?? s.hadir,
+                        s.izin_days ?? s.izin,
+                        s.sakit_days ?? s.sakit,
+                        s.alpa_days ?? s.alpa,
+                        s.partial_alpa_jp || 0,
+                        s.alpa_full_days_sem || 0,
+                        s.alpa_partial_jp_week || 0,
+                        s.attendance_pct !== null ? s.attendance_pct + '%' : '-',
+                        s.risk_label,
+                        s.trigger_reason || '-',
+                        s.tazir_count || 0
+                    ];
+                }
+                const pctJp = s.attendance_pct_jp ?? s.attendance_pct;
                 return [
                     s.nis || '-',
                     s.nisn || '-',
@@ -11214,17 +11303,16 @@ function showReportsView() {
                     s.alpa,
                     s.alpa_full_days_sem || 0,
                     s.alpa_partial_jp_week || 0,
-                    s.attendance_pct !== null ? s.attendance_pct + '%' : '-',
+                    pctJp !== null ? pctJp + '%' : '-',
                     s.risk_label,
                     s.trigger_reason || '-',
                     s.tazir_count || 0
                 ];
             });
-            exportCsvFile(
-                'laporan-disiplin-siswa_' + suffix + '.csv',
-                ['NIS', 'NISN', 'Nama Siswa', 'Kelas', 'Wali Kelas', 'Hadir', 'Izin', 'Sakit', 'Alpa (Periode)', 'Alpa Harian (Smt)', 'Alpa Jam (7 Hr)', 'Kehadiran', 'Status Disiplin', 'Alasan Pemicu', 'Riwayat Ta\u0027zir'],
-                rows
-            );
+            const headers = isDaysMode
+                ? ['NIS', 'NISN', 'Nama Siswa', 'Kelas', 'Wali Kelas', 'Hadir (Hari)', 'Izin (Hari)', 'Sakit (Hari)', 'Alpa (Hari)', 'Bolos (JP)', 'Alpa Harian (Smt)', 'Alpa Jam (7 Hr)', 'Kehadiran (%)', 'Status Disiplin', 'Alasan Pemicu', 'Riwayat Ta\u0027zir']
+                : ['NIS', 'NISN', 'Nama Siswa', 'Kelas', 'Wali Kelas', 'Hadir (JP)', 'Izin (JP)', 'Sakit (JP)', 'Alpa (JP)', 'Alpa Harian (Smt)', 'Alpa Jam (7 Hr)', 'Kehadiran (%)', 'Status Disiplin', 'Alasan Pemicu', 'Riwayat Ta\u0027zir'];
+            exportCsvFile('laporan-disiplin-siswa_' + suffix + '.csv', headers, rows);
             return;
         }
         if (state.activeTab === 'teachers') {
@@ -11242,9 +11330,16 @@ function showReportsView() {
             return;
         }
         const perClassRows = (state.data.per_class || []).map(function(c) {
-            return [c.class_name, c.homeroom_teacher_name || '-', c.active_students, c.hadir, c.izin, c.sakit, c.alpa, c.attendance_pct !== null ? c.attendance_pct + '%' : '-'];
+            if (isDaysMode) {
+                return [c.class_name, c.homeroom_teacher_name || '-', c.active_students, c.hadir_days ?? c.hadir, c.izin_days ?? c.izin, c.sakit_days ?? c.sakit, c.alpa_days ?? c.alpa, c.partial_alpa_jp || 0, c.attendance_pct !== null ? c.attendance_pct + '%' : '-'];
+            }
+            const pctJp = c.attendance_pct_jp ?? c.attendance_pct;
+            return [c.class_name, c.homeroom_teacher_name || '-', c.active_students, c.hadir, c.izin, c.sakit, c.alpa, pctJp !== null ? pctJp + '%' : '-'];
         });
-        exportCsvFile('laporan-ringkasan-akademik_' + suffix + '.csv', ['Kelas', 'Wali Kelas', 'Siswa Aktif', 'Hadir', 'Izin', 'Sakit', 'Alpa', 'Persentase Hadir'], perClassRows);
+        const classCsvHeaders = isDaysMode
+            ? ['Kelas', 'Wali Kelas', 'Siswa Aktif', 'Hadir (Hari)', 'Izin (Hari)', 'Sakit (Hari)', 'Alpa (Hari)', 'Bolos (JP)', 'Persentase Hadir (%)']
+            : ['Kelas', 'Wali Kelas', 'Siswa Aktif', 'Hadir (JP)', 'Izin (JP)', 'Sakit (JP)', 'Alpa (JP)', 'Persentase Hadir (%)'];
+        exportCsvFile('laporan-ringkasan-akademik_' + suffix + '.csv', classCsvHeaders, perClassRows);
     }
 
     function printExecutiveSummary() {
@@ -11259,16 +11354,34 @@ function showReportsView() {
         const d = state.data;
         const ov = d.overview || {};
         const meta = d.meta || {};
+        const isDaysMode = (state.unitMode !== 'jp');
+        const unitDesc = isDaysMode ? 'Rekap Harian (Hari-Siswa)' : 'Detail Jam Pelajaran (JP)';
+        const unitLabel = isDaysMode ? 'Hari' : 'JP';
+        const stuRate = isDaysMode ? ov.student_attendance_rate : (ov.student_attendance_rate_jp ?? ov.student_attendance_rate);
+
         const classRows = (d.per_class || []).map(function(c) {
-            return '<tr><td>' + esc(c.class_name) + '</td><td>' + esc(c.homeroom_teacher_name || '-') + '</td><td class="num">' + fmtNum(c.active_students) + '</td><td class="num">' + fmtNum(c.hadir) + '</td><td class="num">' + fmtNum(c.izin) + '</td><td class="num">' + fmtNum(c.sakit) + '</td><td class="num">' + fmtNum(c.alpa) + '</td><td class="num"><strong>' + esc(fmtPct(c.attendance_pct)) + '</strong></td></tr>';
+            const h = isDaysMode ? (c.hadir_days ?? c.hadir) : c.hadir;
+            const i = isDaysMode ? (c.izin_days ?? c.izin) : c.izin;
+            const s = isDaysMode ? (c.sakit_days ?? c.sakit) : c.sakit;
+            const a = isDaysMode ? (c.alpa_days ?? c.alpa) : c.alpa;
+            const pct = isDaysMode ? c.attendance_pct : (c.attendance_pct_jp ?? c.attendance_pct);
+            const bolosCell = isDaysMode ? '<td class="num">' + fmtNum(c.partial_alpa_jp || 0) + '</td>' : '';
+            return '<tr><td>' + esc(c.class_name) + '</td><td>' + esc(c.homeroom_teacher_name || '-') + '</td><td class="num">' + fmtNum(c.active_students) + '</td><td class="num">' + fmtNum(h) + '</td><td class="num">' + fmtNum(i) + '</td><td class="num">' + fmtNum(s) + '</td><td class="num">' + fmtNum(a) + '</td>' + bolosCell + '<td class="num"><strong>' + esc(fmtPct(pct)) + '</strong></td></tr>';
         }).join('');
         const highRiskRows = (d.discipline && d.discipline.students ? d.discipline.students : [])
             .filter(function(s) { return s.risk_level === 'HIGH' || s.risk_level === 'MEDIUM'; })
             .slice(0, 15)
             .map(function(s) {
                 const statusCell = '<strong>' + esc(s.risk_label) + '</strong>' + (s.trigger_reason ? '<br><small style="color:#64748b">' + esc(s.trigger_reason) + '</small>' : '');
-                return '<tr><td>' + esc(s.name) + '</td><td>' + esc(s.class_name) + '</td><td class="num">' + fmtNum(s.alpa) + '</td><td class="num">' + esc(fmtPct(s.attendance_pct)) + '</td><td>' + statusCell + '</td></tr>';
+                const pct = isDaysMode ? s.attendance_pct : (s.attendance_pct_jp ?? s.attendance_pct);
+                const alpaTxt = isDaysMode
+                    ? fmtNum(s.alpa_days ?? s.alpa) + ' hr / ' + fmtNum(s.partial_alpa_jp || 0) + ' JP'
+                    : fmtNum(s.alpa) + ' JP';
+                return '<tr><td>' + esc(s.name) + '</td><td>' + esc(s.class_name) + '</td><td class="num">' + esc(alpaTxt) + '</td><td class="num">' + esc(fmtPct(pct)) + '</td><td>' + statusCell + '</td></tr>';
             }).join('') || '<tr><td colspan="5">Tidak ada siswa kategori Ta\u0027zir Alpa Harian / Ta\u0027zir Alpa Jam pada periode ini.</td></tr>';
+
+        const bolosHeadCol = isDaysMode ? '<th class="num">Bolos (JP)</th>' : '';
+        const alpaRiskHead = isDaysMode ? 'Alpa / Bolos' : 'Alpa (JP)';
 
         const html = '<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Ringkasan Eksekutif Laporan Akademik - SIMATA</title>' +
             '<style>' +
@@ -11284,17 +11397,17 @@ function showReportsView() {
             '.foot{margin-top:20px;font-size:11px;color:#64748b;display:flex;justify-content:space-between;}' +
             '@media print{.no-print{display:none;}}' +
             '</style></head><body>' +
-            '<div class="kop"><div><h1>MA AT-TAUJIH SARANG &mdash; RINGKASAN LAPORAN AKADEMIK</h1><p>' + esc(meta.academic_year_name || '') + ' &bull; Periode: ' + esc(fmtIsoDateID(meta.start_date)) + ' s.d. ' + esc(fmtIsoDateID(meta.end_date)) + '</p></div><button class="no-print" onclick="window.print()" style="padding:7px 14px;background:#14532d;color:#fff;border:none;border-radius:6px;cursor:pointer;">Cetak</button></div>' +
+            '<div class="kop"><div><h1>MA AT-TAUJIH SARANG &mdash; RINGKASAN LAPORAN AKADEMIK</h1><p>' + esc(meta.academic_year_name || '') + ' &bull; Periode: ' + esc(fmtIsoDateID(meta.start_date)) + ' s.d. ' + esc(fmtIsoDateID(meta.end_date)) + ' &bull; Satuan: ' + esc(unitDesc) + '</p></div><button class="no-print" onclick="window.print()" style="padding:7px 14px;background:#14532d;color:#fff;border:none;border-radius:6px;cursor:pointer;">Cetak</button></div>' +
             '<div class="kpi">' +
-                '<div class="kpi-box"><small>Kehadiran Siswa</small><strong>' + esc(fmtPct(ov.student_attendance_rate)) + '</strong></div>' +
+                '<div class="kpi-box"><small>Kehadiran Siswa</small><strong>' + esc(fmtPct(stuRate)) + '</strong></div>' +
                 '<div class="kpi-box"><small>Keterlaksanaan Mengajar</small><strong>' + esc(fmtPct(ov.teacher_execution_rate)) + '</strong></div>' +
                 '<div class="kpi-box"><small>Siswa Perlu Ta\u0027zir</small><strong>' + fmtNum(ov.attention_students_count) + ' Siswa (' + fmtNum(ov.harian_tazir_count) + 'H/' + fmtNum(ov.jam_tazir_count) + 'J)</strong></div>' +
                 '<div class="kpi-box"><small>Kelengkapan Berkas</small><strong>' + esc(fmtPct(ov.data_readiness_rate)) + '</strong></div>' +
             '</div>' +
             '<h2>1. Rekapitulasi Kehadiran per Kelas</h2>' +
-            '<table><thead><tr><th>Kelas</th><th>Wali Kelas</th><th class="num">Siswa</th><th class="num">Hadir</th><th class="num">Izin</th><th class="num">Sakit</th><th class="num">Alpa</th><th class="num">Persentase</th></tr></thead><tbody>' + classRows + '</tbody></table>' +
+            '<table><thead><tr><th>Kelas</th><th>Wali Kelas</th><th class="num">Siswa</th><th class="num">Hadir (' + unitLabel + ')</th><th class="num">Izin (' + unitLabel + ')</th><th class="num">Sakit (' + unitLabel + ')</th><th class="num">Alpa (' + unitLabel + ')</th>' + bolosHeadCol + '<th class="num">Persentase</th></tr></thead><tbody>' + classRows + '</tbody></table>' +
             '<h2>2. Daftar Prioritas Disiplin Siswa (Maks. 15)</h2>' +
-            '<table><thead><tr><th>Nama Siswa</th><th>Kelas</th><th class="num">Alpa</th><th class="num">Kehadiran</th><th>Status</th></tr></thead><tbody>' + highRiskRows + '</tbody></table>' +
+            '<table><thead><tr><th>Nama Siswa</th><th>Kelas</th><th class="num">' + alpaRiskHead + '</th><th class="num">Kehadiran</th><th>Status</th></tr></thead><tbody>' + highRiskRows + '</tbody></table>' +
             '<div class="foot"><span>Dicetak dari SIMATA &bull; Penilaian akademik mengacu pada RDM Kemenag</span><span>Tanggal cetak: ' + esc(new Date().toLocaleString('id-ID')) + '</span></div>' +
             '<script>setTimeout(function(){ window.print(); }, 250);<' + '/script></body></html>';
 
@@ -11397,6 +11510,23 @@ function showReportsView() {
             classFilter.addEventListener('change', function() {
                 state.classId = classFilter.value || '';
                 loadReportsData();
+            });
+        }
+
+        const unitGroup = document.getElementById('rptAcadUnitGroup');
+        if (unitGroup) {
+            unitGroup.addEventListener('click', function(ev) {
+                const btn = ev.target.closest('[data-unit]');
+                if (!btn) return;
+                const nextUnit = btn.getAttribute('data-unit') === 'jp' ? 'jp' : 'days';
+                if (state.unitMode === nextUnit) return;
+                state.unitMode = nextUnit;
+                unitGroup.querySelectorAll('[data-unit]').forEach(function(b) {
+                    const active = (b === btn);
+                    b.classList.toggle('active', active);
+                    b.setAttribute('aria-pressed', active ? 'true' : 'false');
+                });
+                renderAllPanels();
             });
         }
 

@@ -35,8 +35,8 @@ async function runBug57MobileChatbotTests() {
 
   // 2. Cache-buster updated
   assert.ok(
-    html.includes('/css/dashboard.css?v=bug57a'),
-    'dashboard.html must reference /css/dashboard.css?v=bug57a'
+    /\/css\/dashboard\.css\?v=bug5[789][a-z]*/.test(html),
+    'dashboard.html must reference latest versioned /css/dashboard.css (?v=bug57a+)'
   );
 
   // 3. Stale top-clipping rules removed

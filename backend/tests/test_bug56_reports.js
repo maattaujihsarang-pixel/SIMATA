@@ -20,6 +20,98 @@ async function requestJson(baseUrl, method, urlPath, { token = null, body = unde
   return { status: res.status, json };
 }
 
+function buildMockClassifiedDays(startDate, endDate, classId = null) {
+  const classDayPeriods = new Map();
+  for (const sa of testDbEngine.student_attendance) {
+    if (sa.attendance_date < startDate || sa.attendance_date > endDate) continue;
+    const ck = `${sa.class_id}::${sa.attendance_date}`;
+    if (!classDayPeriods.has(ck)) classDayPeriods.set(ck, new Set());
+    classDayPeriods.get(ck).add(sa.period);
+  }
+
+  const dayMap = new Map();
+  for (const sa of testDbEngine.student_attendance) {
+    if (sa.attendance_date < startDate || sa.attendance_date > endDate) continue;
+    if (classId && sa.class_id !== classId) continue;
+    const sk = `${sa.student_id}::${sa.class_id}::${sa.attendance_date}`;
+    if (!dayMap.has(sk)) {
+      dayMap.set(sk, {
+        student_id: sa.student_id,
+        class_id: sa.class_id,
+        attendance_date: sa.attendance_date,
+        total_jp: 0,
+        hadir_jp: 0,
+        izin_jp: 0,
+        sakit_jp: 0,
+        alpa_jp: 0
+      });
+    }
+    const d = dayMap.get(sk);
+    d.total_jp += 1;
+    if (sa.status === 'Hadir') d.hadir_jp += 1;
+    else if (sa.status === 'Izin') d.izin_jp += 1;
+    else if (sa.status === 'Sakit') d.sakit_jp += 1;
+    else if (sa.status === 'Alpa') d.alpa_jp += 1;
+  }
+
+  return [...dayMap.values()].map((d) => {
+    const pSet = classDayPeriods.get(`${d.class_id}::${d.attendance_date}`);
+    const classPeriodsDay = pSet ? pSet.size : d.total_jp;
+    const isFullAlpaDay = (
+      d.hadir_jp === 0 &&
+      d.izin_jp === 0 &&
+      d.sakit_jp === 0 &&
+      d.alpa_jp > 0 &&
+      classPeriodsDay >= 2 &&
+      d.alpa_jp >= classPeriodsDay
+    );
+    let dayStatus = 'Alpa';
+    if (d.hadir_jp > 0) dayStatus = 'Hadir';
+    else if (d.sakit_jp > 0 && d.sakit_jp >= d.izin_jp && (d.alpa_jp === 0 || d.sakit_jp >= d.alpa_jp)) dayStatus = 'Sakit';
+    else if (d.izin_jp > 0 && d.izin_jp > d.sakit_jp && (d.alpa_jp === 0 || d.izin_jp >= d.alpa_jp)) dayStatus = 'Izin';
+    else if (isFullAlpaDay) dayStatus = 'Alpa';
+    else if (d.sakit_jp > 0 && d.sakit_jp >= d.izin_jp) dayStatus = 'Sakit';
+    else if (d.izin_jp > 0) dayStatus = 'Izin';
+
+    return {
+      ...d,
+      class_periods_day: classPeriodsDay,
+      is_full_alpa_day: isFullAlpaDay,
+      day_status: dayStatus,
+      partial_alpa_jp: isFullAlpaDay ? 0 : d.alpa_jp
+    };
+  });
+}
+
+function summarizeClassifiedDays(days) {
+  return days.reduce((acc, d) => {
+    acc.total_records += d.total_jp;
+    acc.hadir += d.hadir_jp;
+    acc.izin += d.izin_jp;
+    acc.sakit += d.sakit_jp;
+    acc.alpa += d.alpa_jp;
+    acc.total_days += 1;
+    if (d.day_status === 'Hadir') acc.hadir_days += 1;
+    else if (d.day_status === 'Izin') acc.izin_days += 1;
+    else if (d.day_status === 'Sakit') acc.sakit_days += 1;
+    else if (d.day_status === 'Alpa') acc.alpa_days += 1;
+    acc.partial_alpa_jp += d.partial_alpa_jp;
+    return acc;
+  }, {
+    total_records: 0,
+    hadir: 0,
+    izin: 0,
+    sakit: 0,
+    alpa: 0,
+    total_days: 0,
+    hadir_days: 0,
+    izin_days: 0,
+    sakit_days: 0,
+    alpa_days: 0,
+    partial_alpa_jp: 0
+  });
+}
+
 function createReportsMockQueryHandler() {
   return async (text, params = []) => {
     const q = String(text || '');
@@ -50,40 +142,39 @@ function createReportsMockQueryHandler() {
 
     if (q.includes('/* REPORTS: STUDENT_SUMMARY_CURR */') || q.includes('/* REPORTS: STUDENT_SUMMARY_PREV */')) {
       const [startDate, endDate, classId] = params;
-      const filtered = testDbEngine.student_attendance.filter((sa) => {
-        if (sa.attendance_date < startDate || sa.attendance_date > endDate) return false;
-        if (classId && sa.class_id !== classId) return false;
-        return true;
-      });
-      const activeDays = new Set(filtered.map((sa) => sa.attendance_date)).size;
-      const row = {
-        total_records: filtered.length,
-        hadir: filtered.filter((r) => r.status === 'Hadir').length,
-        izin: filtered.filter((r) => r.status === 'Izin').length,
-        sakit: filtered.filter((r) => r.status === 'Sakit').length,
-        alpa: filtered.filter((r) => r.status === 'Alpa').length,
-        active_days: activeDays
-      };
-      return { rows: [row], rowCount: 1 };
+      const days = buildMockClassifiedDays(startDate, endDate, classId);
+      const activeDays = new Set(days.map((d) => d.attendance_date)).size;
+      const sum = summarizeClassifiedDays(days);
+      return { rows: [{ ...sum, active_days: activeDays }], rowCount: 1 };
     }
 
     if (q.includes('/* REPORTS: STUDENT_DAILY */')) {
       const [startDate, endDate, classId] = params;
+      const days = buildMockClassifiedDays(startDate, endDate, classId);
       const byDate = new Map();
-      for (const sa of testDbEngine.student_attendance) {
-        if (sa.attendance_date < startDate || sa.attendance_date > endDate) continue;
-        if (classId && sa.class_id !== classId) continue;
-        if (!byDate.has(sa.attendance_date)) {
-          byDate.set(sa.attendance_date, { date_str: sa.attendance_date, total: 0, hadir: 0, izin: 0, sakit: 0, alpa: 0 });
-        }
-        const entry = byDate.get(sa.attendance_date);
-        entry.total += 1;
-        if (sa.status === 'Hadir') entry.hadir += 1;
-        else if (sa.status === 'Izin') entry.izin += 1;
-        else if (sa.status === 'Sakit') entry.sakit += 1;
-        else if (sa.status === 'Alpa') entry.alpa += 1;
+      for (const d of days) {
+        if (!byDate.has(d.attendance_date)) byDate.set(d.attendance_date, []);
+        byDate.get(d.attendance_date).push(d);
       }
-      const rows = [...byDate.values()].sort((a, b) => a.date_str.localeCompare(b.date_str));
+      const rows = [...byDate.entries()]
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([dateStr, list]) => {
+          const sum = summarizeClassifiedDays(list);
+          return {
+            date_str: dateStr,
+            total: sum.total_records,
+            hadir: sum.hadir,
+            izin: sum.izin,
+            sakit: sum.sakit,
+            alpa: sum.alpa,
+            total_days: sum.total_days,
+            hadir_days: sum.hadir_days,
+            izin_days: sum.izin_days,
+            sakit_days: sum.sakit_days,
+            alpa_days: sum.alpa_days,
+            partial_alpa_jp: sum.partial_alpa_jp
+          };
+        });
       return { rows, rowCount: rows.length };
     }
 
@@ -109,6 +200,7 @@ function createReportsMockQueryHandler() {
 
     if (q.includes('/* REPORTS: CLASS_COMPARISON */')) {
       const [startDate, endDate] = params;
+      const allDays = buildMockClassifiedDays(startDate, endDate, null);
       const rows = testDbEngine.classes
         .filter((c) => c.status === 'Active')
         .sort((a, b) => a.level - b.level || a.class_name.localeCompare(b.class_name))
@@ -116,18 +208,14 @@ function createReportsMockQueryHandler() {
           const ht = testDbEngine.teachers.find((t) => t.teacher_id === c.homeroom_teacher_id);
           const activeStudents = testDbEngine.students.filter((s) => s.class_id === c.class_id && s.status === 'Active');
           const studentIdSet = new Set(activeStudents.map((s) => s.student_id));
-          const logs = testDbEngine.student_attendance.filter((sa) => studentIdSet.has(sa.student_id) && sa.attendance_date >= startDate && sa.attendance_date <= endDate);
+          const sum = summarizeClassifiedDays(allDays.filter((d) => studentIdSet.has(d.student_id)));
           return {
             class_id: c.class_id,
             class_name: c.class_name,
             level: c.level,
             homeroom_teacher_name: ht ? ht.name : null,
             active_students: activeStudents.length,
-            total_records: logs.length,
-            hadir: logs.filter((r) => r.status === 'Hadir').length,
-            izin: logs.filter((r) => r.status === 'Izin').length,
-            sakit: logs.filter((r) => r.status === 'Sakit').length,
-            alpa: logs.filter((r) => r.status === 'Alpa').length
+            ...sum
           };
         });
       return { rows, rowCount: rows.length };
@@ -135,12 +223,13 @@ function createReportsMockQueryHandler() {
 
     if (q.includes('/* REPORTS: STUDENT_DISCIPLINE */')) {
       const [startDate, endDate, classId] = params;
+      const allDays = buildMockClassifiedDays(startDate, endDate, null);
       const rows = testDbEngine.students
         .filter((s) => s.status === 'Active' && (!classId || s.class_id === classId))
         .map((s) => {
           const cls = testDbEngine.classes.find((c) => c.class_id === s.class_id) || {};
           const ht = testDbEngine.teachers.find((t) => t.teacher_id === cls.homeroom_teacher_id);
-          const logs = testDbEngine.student_attendance.filter((sa) => sa.student_id === s.student_id && sa.attendance_date >= startDate && sa.attendance_date <= endDate);
+          const sum = summarizeClassifiedDays(allDays.filter((d) => d.student_id === s.student_id));
           return {
             student_id: s.student_id,
             name: s.name,
@@ -149,11 +238,7 @@ function createReportsMockQueryHandler() {
             class_id: s.class_id,
             class_name: cls.class_name || s.class_id,
             homeroom_teacher_name: ht ? ht.name : null,
-            total_records: logs.length,
-            hadir: logs.filter((r) => r.status === 'Hadir').length,
-            izin: logs.filter((r) => r.status === 'Izin').length,
-            sakit: logs.filter((r) => r.status === 'Sakit').length,
-            alpa: logs.filter((r) => r.status === 'Alpa').length
+            ...sum
           };
         });
       return { rows, rowCount: rows.length };
@@ -463,6 +548,10 @@ function assertCssAndHtmlIntegrity() {
   assert.ok(!/id="rptAcadTazirDialog"[^>]*\brole=["']dialog["']/.test(reportsHtml), 'Native modal <dialog> must not set redundant role="dialog"');
   const tabPanelMatches = reportsHtml.match(/role="tabpanel"/g) || [];
   assert.strictEqual(tabPanelMatches.length, 4, '#reportsContent must contain exactly 4 tab panels');
+  assert.ok(reportsHtml.includes('id="rptAcadUnitGroup"'), '#reportsContent must include Harian/Detail JP unit toggle');
+  assert.ok(reportsHtml.includes('data-unit="days"'), '#reportsContent must support daily student-days mode');
+  assert.ok(reportsHtml.includes('data-unit="jp"'), '#reportsContent must support JP detail mode');
+  assert.ok(html.includes('/css/dashboard.css?v=bug58a'), 'dashboard.html must bump dashboard.css cache-buster to ?v=bug58a');
 
   // Grades menu untouched (reserved for external RDM integration later)
   const gradesSectionMatch = html.match(/<section id="gradesContent"[\s\S]*?<\/section>/);
@@ -821,9 +910,19 @@ async function runBug56ReportsTests() {
     assert.strictEqual(rptRes.status, 200, 'Authorized academic report request must succeed');
     const data = rptRes.json.data;
 
-    // Overview KPI assertions: 19 Hadir out of 39 total = 48.7%, prev = 100.0%, delta = -51.3
-    assert.strictEqual(data.overview.student_attendance_rate, 48.7);
-    assert.strictEqual(data.overview.student_attendance_delta, -51.3);
+    // Overview KPI assertions (BUG 58): Daily student-days primary (12 Hadir / 18 total_days = 66.7%, prev = 100%, delta = -33.3) + JP metrics preserved (19/39 = 48.7%)
+    assert.strictEqual(data.overview.student_attendance_rate, 66.7);
+    assert.strictEqual(data.overview.student_attendance_delta, -33.3);
+    assert.strictEqual(data.overview.student_total_days, 18);
+    assert.deepStrictEqual(data.overview.student_daily_breakdown, {
+      hadir: 12,
+      izin: 0,
+      sakit: 1,
+      alpa: 5,
+      partial_alpa_jp: 6
+    });
+    assert.strictEqual(data.overview.student_attendance_rate_jp, 48.7);
+    assert.strictEqual(data.overview.student_attendance_delta_jp, -51.3);
     assert.strictEqual(data.overview.student_breakdown.alpa, 14);
     assert.strictEqual(data.overview.teacher_execution_rate, 66.7); // (1 Hadir + 1 TugasLuar) / 3
     assert.strictEqual(data.overview.teacher_evidence_verified, 1);
@@ -850,6 +949,9 @@ async function runBug56ReportsTests() {
     // STD-K10001: 4 full days Alpa (8 JP across 4 full days must NOT double-count into partial JP!)
     assert.strictEqual(sK10001.risk_level, 'HIGH');
     assert.strictEqual(sK10001.risk_label, "Ta'zir Alpa Harian");
+    assert.strictEqual(sK10001.hadir_days, 1);
+    assert.strictEqual(sK10001.alpa_days, 4);
+    assert.strictEqual(sK10001.partial_alpa_jp, 0);
     assert.strictEqual(sK10001.alpa_full_days_sem, 4);
     assert.strictEqual(sK10001.alpa_partial_jp_week, 0);
     assert.strictEqual(sK10001.needs_tazir, true);
@@ -859,6 +961,11 @@ async function runBug56ReportsTests() {
     // STD-K11003: Dual Trigger (4 full days in Sept + 3 partial JP in Nov 7d) -> GABUNGAN
     assert.strictEqual(sK11003.risk_level, 'HIGH');
     assert.strictEqual(sK11003.risk_label, "Ta'zir Alpa Harian");
+    assert.strictEqual(sK11003.hadir_days, 3);
+    assert.strictEqual(sK11003.alpa_days, 0);
+    assert.strictEqual(sK11003.partial_alpa_jp, 3);
+    assert.strictEqual(sK11003.attendance_pct, 100);
+    assert.strictEqual(sK11003.attendance_pct_jp, 50);
     assert.strictEqual(sK11003.alpa_full_days_sem, 4);
     assert.strictEqual(sK11003.alpa_partial_jp_week, 3);
     assert.strictEqual(sK11003.dual_trigger, true);
@@ -867,19 +974,38 @@ async function runBug56ReportsTests() {
     // STD-K11001: 3 partial-JP Alpa in 7d (including sparse 1-period day on Nov 12) -> Ta'zir Alpa Jam
     assert.strictEqual(sK11001.risk_level, 'MEDIUM');
     assert.strictEqual(sK11001.risk_label, "Ta'zir Alpa Jam");
+    assert.strictEqual(sK11001.hadir_days, 3);
+    assert.strictEqual(sK11001.alpa_days, 1);
+    assert.strictEqual(sK11001.partial_alpa_jp, 3);
     assert.strictEqual(sK11001.alpa_full_days_sem, 0);
     assert.strictEqual(sK11001.alpa_partial_jp_week, 3);
     assert.strictEqual(sK11001.recommended_tazir_type, 'JAM');
 
-    // STD-K11002: Heavy Izin+Sakit (3+3, 0% hadir) with Alpa=0 -> MUST be WATCH ("Pantauan"), NEVER Ta'zir!
+    // STD-K11002: Heavy Izin+Sakit (3+3 JP on 1 day, 0% hadir) -> 1 Sakit day, Alpa=0 -> MUST remain WATCH ("Pantauan"), NEVER Ta'zir!
     assert.strictEqual(sK11002.risk_level, 'WATCH');
     assert.strictEqual(sK11002.risk_label, 'Pantauan');
+    assert.strictEqual(sK11002.sakit_days + sK11002.izin_days, 1);
+    assert.strictEqual(sK11002.alpa_days, 0);
+    assert.strictEqual(sK11002.partial_alpa_jp, 0);
     assert.strictEqual(sK11002.needs_tazir, false);
-    assert.ok(sK11002.trigger_reason.includes('Alpa 0'), 'Izin/Sakit-only student trigger reason must note Alpa 0');
+    assert.ok(sK11002.trigger_reason.includes('1 hr') && sK11002.trigger_reason.includes('Alpa 0'), 'Izin/Sakit-only student must display daily unit + Alpa 0 note');
 
     // STD-K10002: Clean -> Aman
     assert.strictEqual(sK10002.risk_level, 'SAFE');
     assert.strictEqual(sK10002.risk_label, 'Aman');
+
+    // Per-Class comparison includes both daily student-days + partial_alpa_jp + JP totals
+    const cls10 = data.per_class.find((c) => c.class_id === 'CLS-2627-10');
+    const cls11 = data.per_class.find((c) => c.class_id === 'CLS-2627-11');
+    assert.strictEqual(cls10.hadir_days, 6);
+    assert.strictEqual(cls10.alpa_days, 4);
+    assert.strictEqual(cls10.partial_alpa_jp, 0);
+    assert.strictEqual(cls10.attendance_pct, 60);
+    assert.strictEqual(cls11.hadir_days, 6);
+    assert.strictEqual(cls11.sakit_days, 1);
+    assert.strictEqual(cls11.alpa_days, 1);
+    assert.strictEqual(cls11.partial_alpa_jp, 6);
+    assert.strictEqual(cls11.attendance_pct, 75);
 
     // Teacher latest journal enrichment
     const tch1 = data.teacher_performance.teachers.find((t) => t.teacher_id === 'TCH-0001');

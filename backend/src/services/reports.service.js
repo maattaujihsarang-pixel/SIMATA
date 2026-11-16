@@ -74,13 +74,77 @@ function resolveSemesterStartForDate(endDateIso, activeYear) {
     : fallbackSemesterStart;
 }
 
+/**
+ * Shared PostgreSQL CTE that collapses multi-period attendance logs into 1 row per
+ * (student_id, class_id, attendance_date) with canonical daily status & partial-JP counts.
+ */
+function buildClassifiedStudentDaysCte(saFilterClause = '') {
+  return `
+    WITH class_days AS (
+      SELECT sa2.class_id, sa2.attendance_date, COUNT(DISTINCT sa2.period)::int AS class_periods_day
+      FROM student_attendance sa2
+      WHERE sa2.attendance_date BETWEEN $1 AND $2
+      GROUP BY sa2.class_id, sa2.attendance_date
+    ),
+    student_days AS (
+      SELECT
+        sa.student_id,
+        sa.class_id,
+        sa.attendance_date,
+        COUNT(*)::int AS total_jp,
+        COUNT(*) FILTER (WHERE sa.status = 'Hadir')::int AS hadir_jp,
+        COUNT(*) FILTER (WHERE sa.status = 'Izin')::int AS izin_jp,
+        COUNT(*) FILTER (WHERE sa.status = 'Sakit')::int AS sakit_jp,
+        COUNT(*) FILTER (WHERE sa.status = 'Alpa')::int AS alpa_jp
+      FROM student_attendance sa
+      WHERE sa.attendance_date BETWEEN $1 AND $2
+      ${saFilterClause}
+      GROUP BY sa.student_id, sa.class_id, sa.attendance_date
+    ),
+    classified_days AS (
+      SELECT
+        sd.student_id,
+        sd.class_id,
+        sd.attendance_date,
+        sd.total_jp,
+        sd.hadir_jp,
+        sd.izin_jp,
+        sd.sakit_jp,
+        sd.alpa_jp,
+        COALESCE(cd.class_periods_day, sd.total_jp)::int AS class_periods_day,
+        (
+          sd.hadir_jp = 0 AND sd.izin_jp = 0 AND sd.sakit_jp = 0 AND sd.alpa_jp > 0
+          AND COALESCE(cd.class_periods_day, sd.total_jp) >= 2
+          AND sd.alpa_jp >= COALESCE(cd.class_periods_day, sd.total_jp)
+        ) AS is_full_alpa_day,
+        CASE
+          WHEN sd.hadir_jp > 0 THEN 'Hadir'
+          WHEN sd.sakit_jp > 0 AND sd.sakit_jp >= sd.izin_jp AND (sd.alpa_jp = 0 OR sd.sakit_jp >= sd.alpa_jp) THEN 'Sakit'
+          WHEN sd.izin_jp > 0 AND sd.izin_jp > sd.sakit_jp AND (sd.alpa_jp = 0 OR sd.izin_jp >= sd.alpa_jp) THEN 'Izin'
+          WHEN sd.izin_jp = 0 AND sd.sakit_jp = 0 AND sd.alpa_jp > 0
+            AND COALESCE(cd.class_periods_day, sd.total_jp) >= 2
+            AND sd.alpa_jp >= COALESCE(cd.class_periods_day, sd.total_jp) THEN 'Alpa'
+          WHEN sd.sakit_jp > 0 AND sd.sakit_jp >= sd.izin_jp THEN 'Sakit'
+          WHEN sd.izin_jp > 0 THEN 'Izin'
+          ELSE 'Alpa'
+        END AS day_status
+      FROM student_days sd
+      LEFT JOIN class_days cd
+        ON cd.class_id = sd.class_id
+       AND cd.attendance_date = sd.attendance_date
+    )
+  `;
+}
+
 function classifyStudentRisk({
   alpaFullDaysSem = 0,
   alpaPartialJpWeek = 0,
+  izinDays = 0,
+  sakitDays = 0,
   izin = 0,
   sakit = 0,
   alpaDisplay = 0,
-  totalRecords = 0,
+  totalDays = 0,
   attendancePct = null,
   totalTazirCount = 0
 }) {
@@ -131,7 +195,9 @@ function classifyStudentRisk({
     };
   }
 
-  if (izin + sakit >= 4 || (totalRecords > 0 && attendancePct !== null && attendancePct < 92)) {
+  const isDaysTotal = izinDays + sakitDays;
+  const isJpTotal = izin + sakit;
+  if (isDaysTotal >= 3 || (totalDays > 0 && attendancePct !== null && attendancePct < 92)) {
     return {
       risk_level: 'WATCH',
       risk_label: 'Pantauan',
@@ -139,7 +205,7 @@ function classifyStudentRisk({
       needs_tazir: false,
       dual_trigger: false,
       recommended_tazir_type: null,
-      trigger_reason: `Sakit/Izin: ${izin + sakit} JP (Alpa 0)`
+      trigger_reason: `Sakit/Izin: ${isDaysTotal} hr (${isJpTotal} JP, Alpa 0)`
     };
   }
 
@@ -226,7 +292,10 @@ class ReportsService {
         izin: Number(row.izin || 0),
         sakit: Number(row.sakit || 0),
         alpa: Number(row.alpa || 0),
-        total: Number(row.total || 0)
+        total: Number(row.total || 0),
+        hadirDays: Number(row.hadir_days ?? row.hadir ?? 0),
+        totalDays: Number(row.total_days ?? row.total ?? 0),
+        partialAlpaJp: Number(row.partial_alpa_jp || 0)
       });
     }
 
@@ -260,12 +329,16 @@ class ReportsService {
       return {
         granularity: 'daily',
         points: datesToEmit.map((iso) => {
-          const s = studentByDate.get(iso) || { hadir: 0, izin: 0, sakit: 0, alpa: 0, total: 0 };
+          const s = studentByDate.get(iso) || { hadir: 0, izin: 0, sakit: 0, alpa: 0, total: 0, hadirDays: 0, totalDays: 0, partialAlpaJp: 0 };
           const t = teacherByDate.get(iso) || { hadir: 0, tugas_luar: 0, izin: 0, sakit: 0, total: 0 };
           return {
             key: iso,
             label: formatShortDateID(iso),
-            student_rate: computeRatePct(s.hadir, s.total),
+            student_rate: computeRatePct(s.hadirDays, s.totalDays),
+            student_hadir_days: s.hadirDays,
+            student_total_days: s.totalDays,
+            student_partial_alpa_jp: s.partialAlpaJp,
+            student_rate_jp: computeRatePct(s.hadir, s.total),
             student_total: s.total,
             student_hadir: s.hadir,
             teacher_rate: computeRatePct(t.hadir + t.tugas_luar, t.total),
@@ -292,6 +365,9 @@ class ReportsService {
           range_label: `${formatShortDateID(bucketStart)} - ${formatShortDateID(bucketEnd)}`,
           sHadir: 0,
           sTotal: 0,
+          sHadirDays: 0,
+          sTotalDays: 0,
+          sPartialAlpaJp: 0,
           tExec: 0,
           tTotal: 0
         });
@@ -302,6 +378,9 @@ class ReportsService {
       if (s) {
         b.sHadir += s.hadir;
         b.sTotal += s.total;
+        b.sHadirDays += s.hadirDays;
+        b.sTotalDays += s.totalDays;
+        b.sPartialAlpaJp += s.partialAlpaJp;
       }
       if (t) {
         b.tExec += t.hadir + t.tugas_luar;
@@ -315,7 +394,11 @@ class ReportsService {
         key: b.key,
         label: b.label,
         range_label: b.range_label,
-        student_rate: computeRatePct(b.sHadir, b.sTotal),
+        student_rate: computeRatePct(b.sHadirDays, b.sTotalDays),
+        student_hadir_days: b.sHadirDays,
+        student_total_days: b.sTotalDays,
+        student_partial_alpa_jp: b.sPartialAlpaJp,
+        student_rate_jp: computeRatePct(b.sHadir, b.sTotal),
         student_total: b.sTotal,
         student_hadir: b.sHadir,
         teacher_rate: computeRatePct(b.tExec, b.tTotal),
@@ -394,49 +477,60 @@ class ReportsService {
       studentAuditRes,
       teacherAuditRes
     ] = await Promise.all([
-      // 2. Current Period Student Attendance Totals
+      // 2. Current Period Student Attendance Totals (Daily Student-Days + JP totals)
       db.query(
         `/* REPORTS: STUDENT_SUMMARY_CURR */
+         ${buildClassifiedStudentDaysCte(saClassClause)}
          SELECT
-           COUNT(*)::int AS total_records,
-           COUNT(*) FILTER (WHERE sa.status = 'Hadir')::int AS hadir,
-           COUNT(*) FILTER (WHERE sa.status = 'Izin')::int AS izin,
-           COUNT(*) FILTER (WHERE sa.status = 'Sakit')::int AS sakit,
-           COUNT(*) FILTER (WHERE sa.status = 'Alpa')::int AS alpa,
-           COUNT(DISTINCT sa.attendance_date)::int AS active_days
-         FROM student_attendance sa
-         WHERE sa.attendance_date BETWEEN $1 AND $2
-         ${saClassClause}`,
+           COALESCE(SUM(total_jp), 0)::int AS total_records,
+           COALESCE(SUM(hadir_jp), 0)::int AS hadir,
+           COALESCE(SUM(izin_jp), 0)::int AS izin,
+           COALESCE(SUM(sakit_jp), 0)::int AS sakit,
+           COALESCE(SUM(alpa_jp), 0)::int AS alpa,
+           COUNT(DISTINCT attendance_date)::int AS active_days,
+           COUNT(*)::int AS total_days,
+           COUNT(*) FILTER (WHERE day_status = 'Hadir')::int AS hadir_days,
+           COUNT(*) FILTER (WHERE day_status = 'Izin')::int AS izin_days,
+           COUNT(*) FILTER (WHERE day_status = 'Sakit')::int AS sakit_days,
+           COUNT(*) FILTER (WHERE day_status = 'Alpa')::int AS alpa_days,
+           COALESCE(SUM(CASE WHEN is_full_alpa_day THEN 0 ELSE alpa_jp END), 0)::int AS partial_alpa_jp
+         FROM classified_days`,
         currParams
       ),
 
       // 3. Previous Period Student Attendance Totals (Delta)
       db.query(
         `/* REPORTS: STUDENT_SUMMARY_PREV */
+         ${buildClassifiedStudentDaysCte(saClassClause)}
          SELECT
-           COUNT(*)::int AS total_records,
-           COUNT(*) FILTER (WHERE sa.status = 'Hadir')::int AS hadir
-         FROM student_attendance sa
-         WHERE sa.attendance_date BETWEEN $1 AND $2
-         ${saClassClause}`,
+           COALESCE(SUM(total_jp), 0)::int AS total_records,
+           COALESCE(SUM(hadir_jp), 0)::int AS hadir,
+           COUNT(*)::int AS total_days,
+           COUNT(*) FILTER (WHERE day_status = 'Hadir')::int AS hadir_days
+         FROM classified_days`,
         prevParams
       ),
 
       // 4. Student Daily Breakdown
       db.query(
         `/* REPORTS: STUDENT_DAILY */
+         ${buildClassifiedStudentDaysCte(saClassClause)}
          SELECT
-           sa.attendance_date::text AS date_str,
-           COUNT(*)::int AS total,
-           COUNT(*) FILTER (WHERE sa.status = 'Hadir')::int AS hadir,
-           COUNT(*) FILTER (WHERE sa.status = 'Izin')::int AS izin,
-           COUNT(*) FILTER (WHERE sa.status = 'Sakit')::int AS sakit,
-           COUNT(*) FILTER (WHERE sa.status = 'Alpa')::int AS alpa
-         FROM student_attendance sa
-         WHERE sa.attendance_date BETWEEN $1 AND $2
-         ${saClassClause}
-         GROUP BY sa.attendance_date
-         ORDER BY sa.attendance_date ASC`,
+           attendance_date::text AS date_str,
+           COALESCE(SUM(total_jp), 0)::int AS total,
+           COALESCE(SUM(hadir_jp), 0)::int AS hadir,
+           COALESCE(SUM(izin_jp), 0)::int AS izin,
+           COALESCE(SUM(sakit_jp), 0)::int AS sakit,
+           COALESCE(SUM(alpa_jp), 0)::int AS alpa,
+           COUNT(*)::int AS total_days,
+           COUNT(*) FILTER (WHERE day_status = 'Hadir')::int AS hadir_days,
+           COUNT(*) FILTER (WHERE day_status = 'Izin')::int AS izin_days,
+           COUNT(*) FILTER (WHERE day_status = 'Sakit')::int AS sakit_days,
+           COUNT(*) FILTER (WHERE day_status = 'Alpa')::int AS alpa_days,
+           COALESCE(SUM(CASE WHEN is_full_alpa_day THEN 0 ELSE alpa_jp END), 0)::int AS partial_alpa_jp
+         FROM classified_days
+         GROUP BY attendance_date
+         ORDER BY attendance_date ASC`,
         currParams
       ),
 
@@ -461,23 +555,28 @@ class ReportsService {
       // 6. Per-Class Attendance Comparison (Always show all active classes for comparison bar, marking selected)
       db.query(
         `/* REPORTS: CLASS_COMPARISON */
+         ${buildClassifiedStudentDaysCte('')}
          SELECT
            c.class_id,
            c.class_name,
            c.level,
            ht.name AS homeroom_teacher_name,
            COUNT(DISTINCT s.student_id) FILTER (WHERE s.status = 'Active')::int AS active_students,
-           COUNT(sa.attendance_id)::int AS total_records,
-           COUNT(sa.attendance_id) FILTER (WHERE sa.status = 'Hadir')::int AS hadir,
-           COUNT(sa.attendance_id) FILTER (WHERE sa.status = 'Izin')::int AS izin,
-           COUNT(sa.attendance_id) FILTER (WHERE sa.status = 'Sakit')::int AS sakit,
-           COUNT(sa.attendance_id) FILTER (WHERE sa.status = 'Alpa')::int AS alpa
+           COALESCE(SUM(cd.total_jp), 0)::int AS total_records,
+           COALESCE(SUM(cd.hadir_jp), 0)::int AS hadir,
+           COALESCE(SUM(cd.izin_jp), 0)::int AS izin,
+           COALESCE(SUM(cd.sakit_jp), 0)::int AS sakit,
+           COALESCE(SUM(cd.alpa_jp), 0)::int AS alpa,
+           COUNT(cd.attendance_date)::int AS total_days,
+           COUNT(cd.attendance_date) FILTER (WHERE cd.day_status = 'Hadir')::int AS hadir_days,
+           COUNT(cd.attendance_date) FILTER (WHERE cd.day_status = 'Izin')::int AS izin_days,
+           COUNT(cd.attendance_date) FILTER (WHERE cd.day_status = 'Sakit')::int AS sakit_days,
+           COUNT(cd.attendance_date) FILTER (WHERE cd.day_status = 'Alpa')::int AS alpa_days,
+           COALESCE(SUM(CASE WHEN cd.attendance_date IS NULL OR cd.is_full_alpa_day THEN 0 ELSE cd.alpa_jp END), 0)::int AS partial_alpa_jp
          FROM classes c
          LEFT JOIN teachers ht ON c.homeroom_teacher_id = ht.teacher_id
          LEFT JOIN students s ON s.class_id = c.class_id AND s.status = 'Active'
-         LEFT JOIN student_attendance sa
-           ON sa.student_id = s.student_id
-           AND sa.attendance_date BETWEEN $1 AND $2
+         LEFT JOIN classified_days cd ON cd.student_id = s.student_id
          WHERE c.status = 'Active'
          GROUP BY c.class_id, c.class_name, c.level, ht.name
          ORDER BY c.level ASC, c.class_name ASC`,
@@ -487,6 +586,7 @@ class ReportsService {
       // 7. Student Discipline & Early Warning
       db.query(
         `/* REPORTS: STUDENT_DISCIPLINE */
+         ${buildClassifiedStudentDaysCte('')}
          SELECT
            s.student_id,
            s.name,
@@ -495,17 +595,21 @@ class ReportsService {
            s.class_id,
            c.class_name,
            ht.name AS homeroom_teacher_name,
-           COUNT(sa.attendance_id)::int AS total_records,
-           COUNT(sa.attendance_id) FILTER (WHERE sa.status = 'Hadir')::int AS hadir,
-           COUNT(sa.attendance_id) FILTER (WHERE sa.status = 'Izin')::int AS izin,
-           COUNT(sa.attendance_id) FILTER (WHERE sa.status = 'Sakit')::int AS sakit,
-           COUNT(sa.attendance_id) FILTER (WHERE sa.status = 'Alpa')::int AS alpa
+           COALESCE(SUM(cd.total_jp), 0)::int AS total_records,
+           COALESCE(SUM(cd.hadir_jp), 0)::int AS hadir,
+           COALESCE(SUM(cd.izin_jp), 0)::int AS izin,
+           COALESCE(SUM(cd.sakit_jp), 0)::int AS sakit,
+           COALESCE(SUM(cd.alpa_jp), 0)::int AS alpa,
+           COUNT(cd.attendance_date)::int AS total_days,
+           COUNT(cd.attendance_date) FILTER (WHERE cd.day_status = 'Hadir')::int AS hadir_days,
+           COUNT(cd.attendance_date) FILTER (WHERE cd.day_status = 'Izin')::int AS izin_days,
+           COUNT(cd.attendance_date) FILTER (WHERE cd.day_status = 'Sakit')::int AS sakit_days,
+           COUNT(cd.attendance_date) FILTER (WHERE cd.day_status = 'Alpa')::int AS alpa_days,
+           COALESCE(SUM(CASE WHEN cd.attendance_date IS NULL OR cd.is_full_alpa_day THEN 0 ELSE cd.alpa_jp END), 0)::int AS partial_alpa_jp
          FROM students s
          JOIN classes c ON s.class_id = c.class_id
          LEFT JOIN teachers ht ON c.homeroom_teacher_id = ht.teacher_id
-         LEFT JOIN student_attendance sa
-           ON sa.student_id = s.student_id
-           AND sa.attendance_date BETWEEN $1 AND $2
+         LEFT JOIN classified_days cd ON cd.student_id = s.student_id
          WHERE s.status = 'Active'
          ${studentClassClause}
          GROUP BY s.student_id, s.name, s.nis, s.nisn, s.class_id, c.class_name, ht.name`,
@@ -676,7 +780,7 @@ class ReportsService {
       )
     ]);
 
-    // Aggregate Student KPI & Prev Delta
+    // Aggregate Student KPI & Prev Delta (Daily Student-Days primary + JP preserved)
     const sc = studentSummaryCurrRes.rows[0] || {};
     const sp = studentSummaryPrevRes.rows[0] || {};
     const scTotal = Number(sc.total_records || 0);
@@ -684,10 +788,24 @@ class ReportsService {
     const scIzin = Number(sc.izin || 0);
     const scSakit = Number(sc.sakit || 0);
     const scAlpa = Number(sc.alpa || 0);
-    const studentRate = computeRatePct(scHadir, scTotal);
-    const prevRate = computeRatePct(Number(sp.hadir || 0), Number(sp.total_records || 0));
+
+    const scTotalDays = Number(sc.total_days ?? scTotal);
+    const scHadirDays = Number(sc.hadir_days ?? scHadir);
+    const scIzinDays = Number(sc.izin_days ?? scIzin);
+    const scSakitDays = Number(sc.sakit_days ?? scSakit);
+    const scAlpaDays = Number(sc.alpa_days ?? scAlpa);
+    const scPartialAlpaJp = Number(sc.partial_alpa_jp || 0);
+
+    const studentRate = computeRatePct(scHadirDays, scTotalDays);
+    const prevRate = computeRatePct(Number(sp.hadir_days ?? sp.hadir ?? 0), Number(sp.total_days ?? sp.total_records ?? 0));
     const studentDelta = studentRate !== null && prevRate !== null
       ? roundOneDecimal(studentRate - prevRate)
+      : null;
+
+    const studentRateJp = computeRatePct(scHadir, scTotal);
+    const prevRateJp = computeRatePct(Number(sp.hadir || 0), Number(sp.total_records || 0));
+    const studentDeltaJp = studentRateJp !== null && prevRateJp !== null
+      ? roundOneDecimal(studentRateJp - prevRateJp)
       : null;
 
     // Index settled Ta'zir actions per student
@@ -764,7 +882,15 @@ class ReportsService {
       const sakit = Number(row.sakit || 0);
       const alpa = Number(row.alpa || 0);
       const totalRecords = Number(row.total_records || 0);
-      const pct = computeRatePct(hadir, totalRecords);
+      const totalDays = Number(row.total_days ?? totalRecords);
+      const hadirDays = Number(row.hadir_days ?? hadir);
+      const izinDays = Number(row.izin_days ?? izin);
+      const sakitDays = Number(row.sakit_days ?? sakit);
+      const alpaDays = Number(row.alpa_days ?? alpa);
+      const partialAlpaJp = Number(row.partial_alpa_jp || 0);
+
+      const pctDaily = computeRatePct(hadirDays, totalDays);
+      const pctJp = computeRatePct(hadir, totalRecords);
 
       const alpaStats = alpaStatsByStudent.get(row.student_id) || {
         unsettledFullDaysSem: 0,
@@ -782,11 +908,13 @@ class ReportsService {
       const risk = classifyStudentRisk({
         alpaFullDaysSem: alpaStats.unsettledFullDaysSem,
         alpaPartialJpWeek: alpaStats.unsettledPartialJpWeek,
+        izinDays,
+        sakitDays,
         izin,
         sakit,
         alpaDisplay: alpa,
-        totalRecords,
-        attendancePct: pct,
+        totalDays,
+        attendancePct: pctDaily,
         totalTazirCount: tazirInfo.total_actions
       });
 
@@ -809,12 +937,19 @@ class ReportsService {
         class_id: row.class_id,
         class_name: row.class_name,
         homeroom_teacher_name: row.homeroom_teacher_name || null,
+        total_days: totalDays,
+        hadir_days: hadirDays,
+        izin_days: izinDays,
+        sakit_days: sakitDays,
+        alpa_days: alpaDays,
+        partial_alpa_jp: partialAlpaJp,
+        attendance_pct: pctDaily,
         total_records: totalRecords,
         hadir,
         izin,
         sakit,
         alpa,
-        attendance_pct: pct,
+        attendance_pct_jp: pctJp,
         alpa_full_days_sem: alpaStats.unsettledFullDaysSem,
         alpa_partial_jp_week: alpaStats.unsettledPartialJpWeek,
         total_semester_full_alpa_days: alpaStats.totalFullDaysSem,
@@ -907,22 +1042,36 @@ class ReportsService {
 
     const teacherExecRate = computeRatePct(tTotalExec, tTotalLogs);
 
-    // Per-Class Comparison
+    // Per-Class Comparison (Daily Student-Days + JP totals)
     const perClass = (classPerfRes.rows || []).map((c) => {
       const totalRecords = Number(c.total_records || 0);
       const hadir = Number(c.hadir || 0);
+      const totalDays = Number(c.total_days ?? totalRecords);
+      const hadirDays = Number(c.hadir_days ?? hadir);
+      const izinDays = Number(c.izin_days ?? Number(c.izin || 0));
+      const sakitDays = Number(c.sakit_days ?? Number(c.sakit || 0));
+      const alpaDays = Number(c.alpa_days ?? Number(c.alpa || 0));
+      const partialAlpaJp = Number(c.partial_alpa_jp || 0);
+
       return {
         class_id: c.class_id,
         class_name: c.class_name,
         level: Number(c.level || 0),
         homeroom_teacher_name: c.homeroom_teacher_name || null,
         active_students: Number(c.active_students || 0),
+        total_days: totalDays,
+        hadir_days: hadirDays,
+        izin_days: izinDays,
+        sakit_days: sakitDays,
+        alpa_days: alpaDays,
+        partial_alpa_jp: partialAlpaJp,
+        attendance_pct: computeRatePct(hadirDays, totalDays),
         total_records: totalRecords,
         hadir,
         izin: Number(c.izin || 0),
         sakit: Number(c.sakit || 0),
         alpa: Number(c.alpa || 0),
-        attendance_pct: computeRatePct(hadir, totalRecords),
+        attendance_pct_jp: computeRatePct(hadir, totalRecords),
         is_selected: cleanClassId ? c.class_id === cleanClassId : false
       };
     });
@@ -1054,8 +1203,18 @@ class ReportsService {
       overview: {
         student_attendance_rate: studentRate,
         student_attendance_delta: studentDelta,
+        student_attendance_rate_jp: studentRateJp,
+        student_attendance_delta_jp: studentDeltaJp,
+        student_total_days: scTotalDays,
         student_total_records: scTotal,
         student_active_days: Number(sc.active_days || 0),
+        student_daily_breakdown: {
+          hadir: scHadirDays,
+          izin: scIzinDays,
+          sakit: scSakitDays,
+          alpa: scAlpaDays,
+          partial_alpa_jp: scPartialAlpaJp
+        },
         student_breakdown: {
           hadir: scHadir,
           izin: scIzin,

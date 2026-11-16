@@ -3539,8 +3539,13 @@ body.dashboard-page {
 }
 
 .rpt-acad-class-wrap {
-  flex: 0 1 250px;
-  min-width: 200px;
+  flex: 0 1 230px;
+  min-width: 190px;
+}
+
+.rpt-acad-unit-wrap {
+  flex: 0 0 auto;
+  min-width: 0;
 }
 
 .rpt-acad-select {
@@ -4072,10 +4077,20 @@ body.dashboard-page {
 .rpt-class-bar-foot {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 10px;
   font-size: 11.5px;
   color: #475569;
   font-variant-numeric: tabular-nums;
+}
+
+.rpt-class-bolos {
+  color: #b45309;
+  font-weight: 700;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  border-radius: 6px;
+  padding: 1px 6px;
 }
 
 /* Toolbars, Pills & Search */
@@ -4606,6 +4621,7 @@ body.dashboard-page {
   }
 
   .rpt-acad-period-wrap,
+  .rpt-acad-unit-wrap,
   .rpt-acad-class-wrap,
   .rpt-acad-toolbar-controls {
     flex: 1 1 100%;
