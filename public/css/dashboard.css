@@ -3480,9 +3480,9 @@ body.dashboard-page {
 .rpt-acad-filter-top {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-start;
+  justify-content: space-between;
   align-items: flex-start;
-  gap: 14px 22px;
+  gap: 14px 24px;
 }
 
 .rpt-acad-filter-label {
@@ -3555,7 +3555,6 @@ body.dashboard-page {
   flex: 1 1 210px;
   max-width: 260px;
   min-width: 190px;
-  margin-left: auto;
 }
 
 .dashboard-layout .content select.rpt-acad-select {

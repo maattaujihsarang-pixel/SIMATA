@@ -168,7 +168,7 @@ function classifyStudentRisk({
   if (hitJam) {
     return {
       risk_level: 'MEDIUM',
-      risk_label: "Ta'zir Alpa Jam",
+      risk_label: "Ta'zir Bolos Jam",
       risk_rank: 2,
       needs_tazir: true,
       dual_trigger: false,

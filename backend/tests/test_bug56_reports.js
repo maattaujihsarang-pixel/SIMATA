@@ -551,7 +551,7 @@ function assertCssAndHtmlIntegrity() {
   assert.ok(reportsHtml.includes('id="rptAcadUnitGroup"'), '#reportsContent must include Harian/Detail JP unit toggle');
   assert.ok(reportsHtml.includes('data-unit="days"'), '#reportsContent must support daily student-days mode');
   assert.ok(reportsHtml.includes('data-unit="jp"'), '#reportsContent must support JP detail mode');
-  assert.ok(html.includes('/css/dashboard.css?v=bug58b'), 'dashboard.html must bump dashboard.css cache-buster to ?v=bug58b');
+  assert.ok(html.includes('/css/dashboard.css?v=bug58c'), 'dashboard.html must bump dashboard.css cache-buster to ?v=bug58c');
 
   // Grades menu untouched (reserved for external RDM integration later)
   const gradesSectionMatch = html.match(/<section id="gradesContent"[\s\S]*?<\/section>/);
@@ -971,9 +971,9 @@ async function runBug56ReportsTests() {
     assert.strictEqual(sK11003.dual_trigger, true);
     assert.strictEqual(sK11003.recommended_tazir_type, 'GABUNGAN');
 
-    // STD-K11001: 3 partial-JP Alpa in 7d (including sparse 1-period day on Nov 12) -> Ta'zir Alpa Jam
+    // STD-K11001: 3 partial-JP Alpa in 7d (including sparse 1-period day on Nov 12) -> Ta'zir Bolos Jam
     assert.strictEqual(sK11001.risk_level, 'MEDIUM');
-    assert.strictEqual(sK11001.risk_label, "Ta'zir Alpa Jam");
+    assert.strictEqual(sK11001.risk_label, "Ta'zir Bolos Jam");
     assert.strictEqual(sK11001.hadir_days, 3);
     assert.strictEqual(sK11001.alpa_days, 1);
     assert.strictEqual(sK11001.partial_alpa_jp, 3);
