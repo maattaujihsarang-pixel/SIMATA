@@ -88,7 +88,17 @@ async function runBug61WibTimezoneTests() {
     sandbox.formatDateTimeIndo('2026-11-17T01:01:44.679Z'),
     '17 November 2026 08:01 WIB'
   );
-  console.log('1. PASS: Frontend formatAttendanceTime, getWibTodayISODate & formatDateTimeIndo verified across UTC/+07/PG/legacy formats.');
+  // BUG 62: Indonesian short birth date format dd/mm/yy for Siswa & Guru tables
+  assert.strictEqual(sandbox.formatBirthDateIndoShort('2011-10-26'), '26/10/11');
+  assert.strictEqual(sandbox.formatBirthDateIndoShort('2009-07-03'), '03/07/09');
+  assert.strictEqual(sandbox.formatBirthDateIndoShort('2008-06-08'), '08/06/08');
+  assert.strictEqual(sandbox.formatBirthDateIndoShort('1990-01-05T00:00:00.000Z'), '05/01/90');
+  assert.strictEqual(sandbox.formatBirthDateIndoShort('26/10/2011'), '26/10/11');
+  assert.strictEqual(sandbox.formatBirthDateIndoShort(''), '-');
+  assert.strictEqual(sandbox.formatBirthDateIndoShort(null), '-');
+  assert.ok(html.includes('formatBirthDateIndoShort(s.birthDate || s.birth_date)'));
+  assert.ok(html.includes('formatBirthDateIndoShort(t.birthDate || t.birth_date)'));
+  console.log('1. PASS: Frontend formatAttendanceTime, getWibTodayISODate, formatDateTimeIndo & formatBirthDateIndoShort verified.');
 
   // 3. Verify backend date.util.js & service files enforce WIB (Asia/Jakarta, UTC+7)
   assert.strictEqual(getTodayISODate(new Date('2026-11-16T23:30:00.000Z')), '2026-11-17');

@@ -6539,7 +6539,7 @@ function renderMasterStudentTbody() {
         const name = escapeHtml(s.name || '-');
         const gender = escapeHtml(s.gender || '-');
         const className = escapeHtml((studentClassMap && studentClassMap[s.classId]) || s.classId || '-');
-        const birthDate = escapeHtml(s.birthDate || '-');
+        const birthDate = escapeHtml(formatBirthDateIndoShort(s.birthDate || s.birth_date));
         const status = (s.status || 'Active');
         const isAktif = status.toLowerCase() === 'active' || status.toLowerCase() === 'aktif';
         const statusBadge = isAktif
@@ -6602,7 +6602,7 @@ function renderMasterStudentTbody() {
             { label: 'NISN', value: s.nisn || '-' },
             { label: 'Kelas', value: (studentClassMap && studentClassMap[s.classId]) || s.classId || '-' },
             { label: 'Gender', value: s.gender || '-' },
-            { label: 'Tgl Lahir', value: s.birthDate || '-' },
+            { label: 'Tgl Lahir', value: formatBirthDateIndoShort(s.birthDate || s.birth_date) },
             { label: 'ID Siswa', value: s.studentId || '-' }
         ], actionButtons);
 
@@ -6936,7 +6936,7 @@ function exportMasterStudentData(format) {
             s.name || '',
             s.gender || '-',
             className,
-            s.birthDate || '-',
+            formatBirthDateIndoShort(s.birthDate || s.birth_date),
             isAktif ? 'Aktif' : 'Tidak Aktif'
         ];
     });
@@ -8708,6 +8708,7 @@ const masterTeacherTableState = {
         gender: true,
         position: true,
         subject: true,
+        birthDate: false,
         status: true,
         action: true
     }
@@ -8723,6 +8724,7 @@ const masterTeacherColumnDefs = [
     { key: 'gender', label: 'Jenis Kelamin', defaultVisible: true, sortable: true, width: '105px', align: 'center' },
     { key: 'position', label: 'Jabatan', defaultVisible: true, sortable: true, width: '130px', align: 'center' },
     { key: 'subject', label: 'Mata Pelajaran', defaultVisible: true, sortable: true, width: '150px', align: 'center' },
+    { key: 'birthDate', label: 'Tanggal Lahir', defaultVisible: false, sortable: true, width: '115px', align: 'center' },
     { key: 'status', label: 'Status', defaultVisible: true, sortable: true, width: '95px', align: 'center' },
     { key: 'action', label: 'Aksi', defaultVisible: true, sortable: false, width: '140px', align: 'center' }
 ];
@@ -8868,6 +8870,7 @@ function sortMasterTeacherRecords(records, sortField, sortDirection) {
             case 'gender': valA = a.gender || ''; valB = b.gender || ''; break;
             case 'position': valA = a.position || ''; valB = b.position || ''; break;
             case 'subject': valA = a.subject || ''; valB = b.subject || ''; break;
+            case 'birthDate': valA = a.birthDate || a.birth_date || ''; valB = b.birthDate || b.birth_date || ''; break;
             case 'status':
                 valA = (a.status || 'Active').toLowerCase() === 'active' ? 'Aktif' : 'Tidak Aktif';
                 valB = (b.status || 'Active').toLowerCase() === 'active' ? 'Aktif' : 'Tidak Aktif';
@@ -8992,6 +8995,7 @@ function renderMasterTeacherTbody() {
         }
         const position = escapeHtml(t.position || '-');
         const subject = escapeHtml(t.subject || '-');
+        const birthDate = escapeHtml(formatBirthDateIndoShort(t.birthDate || t.birth_date));
         const status = (t.status || 'Active');
         const isAktif = status.toLowerCase() === 'active' || status.toLowerCase() === 'aktif';
         const statusBadge = isAktif
@@ -9037,6 +9041,9 @@ function renderMasterTeacherTbody() {
         if (masterTeacherTableState.visibleColumns.subject) {
             cells.push('<td class="att-desktop-cell" style="padding:10px 8px;text-align:center;font-size:12.5px;color:#334155;">' + subject + '</td>');
         }
+        if (masterTeacherTableState.visibleColumns.birthDate) {
+            cells.push('<td class="att-desktop-cell" style="padding:10px 8px;text-align:center;font-size:12.5px;color:#334155;">' + birthDate + '</td>');
+        }
         if (masterTeacherTableState.visibleColumns.status) {
             cells.push('<td class="att-desktop-cell" style="padding:10px 8px;text-align:center;">' + statusBadge + '</td>');
         }
@@ -9058,6 +9065,7 @@ function renderMasterTeacherTbody() {
         const detailRowHtml = renderMobileAttendanceDetailRow('masterTeacher', idx, [
             { label: 'Jabatan', value: t.position || '-' },
             { label: 'Mapel', value: t.subject || '-' },
+            { label: 'Tgl Lahir', value: formatBirthDateIndoShort(t.birthDate || t.birth_date) },
             { label: 'Gender', value: genderText || '-' },
             { label: 'NIP', value: t.nip || '-' },
             { label: 'NUPTK', value: t.nuptk || '-' },
@@ -9196,7 +9204,7 @@ function exportMasterTeacherData(format) {
         alert('Tidak ada data guru untuk diekspor.');
         return;
     }
-    const headers = ['No', 'Teacher ID', 'NIK', 'NIP', 'NUPTK', 'Nama Lengkap', 'Jenis Kelamin', 'Jabatan', 'Mata Pelajaran', 'Status'];
+    const headers = ['No', 'Teacher ID', 'NIK', 'NIP', 'NUPTK', 'Nama Lengkap', 'Jenis Kelamin', 'Jabatan', 'Mata Pelajaran', 'Tanggal Lahir', 'Status'];
     const rows = sorted.map(function(t, idx) {
         let genderText = '-';
         if (t.gender) {
@@ -9216,6 +9224,7 @@ function exportMasterTeacherData(format) {
             genderText,
             t.position || '-',
             t.subject || '-',
+            formatBirthDateIndoShort(t.birthDate || t.birth_date),
             isAktif ? 'Aktif' : 'Tidak Aktif'
         ];
     });
@@ -14235,6 +14244,51 @@ function formatWibTimeHHMM(epochMs) {
     const h = String(wib.getUTCHours()).padStart(2, '0');
     const m = String(wib.getUTCMinutes()).padStart(2, '0');
     return h + ':' + m;
+}
+
+function formatBirthDateIndoShort(dateStr) {
+    if (dateStr === null || dateStr === undefined) return '-';
+    const raw = String(dateStr).trim();
+    if (!raw || raw === '-') return '-';
+
+    let y = '', m = '', d = '';
+    if (dateStr instanceof Date && !isNaN(dateStr.getTime())) {
+        const wib = new Date(dateStr.getTime() + SIMATA_WIB_OFFSET_MS);
+        y = String(wib.getUTCFullYear());
+        m = String(wib.getUTCMonth() + 1).padStart(2, '0');
+        d = String(wib.getUTCDate()).padStart(2, '0');
+    } else {
+        const isoMatch = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T\s].*)?$/);
+        if (isoMatch) {
+            if (/^\d{4}-\d{1,2}-\d{1,2}T.*(?:Z|[+-]\d{2}:?\d{2})$/i.test(raw)) {
+                const parsed = new Date(raw);
+                if (!isNaN(parsed.getTime())) {
+                    const wib = new Date(parsed.getTime() + SIMATA_WIB_OFFSET_MS);
+                    y = String(wib.getUTCFullYear());
+                    m = String(wib.getUTCMonth() + 1).padStart(2, '0');
+                    d = String(wib.getUTCDate()).padStart(2, '0');
+                }
+            }
+            if (!y) {
+                y = isoMatch[1];
+                m = String(parseInt(isoMatch[2], 10)).padStart(2, '0');
+                d = String(parseInt(isoMatch[3], 10)).padStart(2, '0');
+            }
+        } else {
+            const slashMatch = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+            if (slashMatch) {
+                d = String(parseInt(slashMatch[1], 10)).padStart(2, '0');
+                m = String(parseInt(slashMatch[2], 10)).padStart(2, '0');
+                y = slashMatch[3];
+            }
+        }
+    }
+
+    if (y && m && d) {
+        const yy = y.length >= 2 ? y.slice(-2) : y.padStart(2, '0');
+        return d + '/' + m + '/' + yy;
+    }
+    return raw;
 }
 
 function formatAttendanceTime(timestampStr) {
