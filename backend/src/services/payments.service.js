@@ -2,6 +2,7 @@ const { query, withTransaction } = require('../config/database');
 const { BadRequestError, NotFoundError, ForbiddenError, ConflictError } = require('../errors');
 const { generateUUID } = require('../utils/id-generator.util');
 const { terbilangRupiah } = require('../utils/terbilang.util');
+const { getTodayISODate } = require('../utils/date.util');
 const financeDocumentStorage = require('../storage/finance-document-storage.provider');
 const masterService = require('./master.service');
 const logger = require('../utils/logger.util');
@@ -57,7 +58,7 @@ class PaymentsService {
     }
 
     const normMethod = this._normalizePaymentMethod(payment_method);
-    const validPaymentDate = this._validateDate(payment_date || new Date().toISOString().slice(0, 10));
+    const validPaymentDate = this._validateDate(payment_date || getTodayISODate());
 
     // Validasi siswa
     const studentRes = await query(

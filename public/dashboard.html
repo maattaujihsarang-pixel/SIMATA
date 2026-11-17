@@ -823,7 +823,7 @@ html, body {
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
   <!-- QRCode.js: QR Code generator library for Student QR Preview & Print -->
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-  <script src="/js/simata-client.js?v=bug56d"></script>
+  <script src="/js/simata-client.js?v=bug61"></script>
   <script src="/js/notifications.js"></script>
 </head>
 
@@ -6940,7 +6940,7 @@ function exportMasterStudentData(format) {
             isAktif ? 'Aktif' : 'Tidak Aktif'
         ];
     });
-    const today = new Date().toISOString().split('T')[0];
+    const today = getWibTodayISODate();
     const filename = 'Daftar_Siswa_' + today + '.csv';
     exportCsvFile(filename, headers, rows);
 }
@@ -9219,7 +9219,7 @@ function exportMasterTeacherData(format) {
             isAktif ? 'Aktif' : 'Tidak Aktif'
         ];
     });
-    const today = new Date().toISOString().split('T')[0];
+    const today = getWibTodayISODate();
     const filename = 'Daftar_Guru_' + today + '.csv';
     exportCsvFile(filename, headers, rows);
 }
@@ -14217,48 +14217,76 @@ function formatAttendanceDate(dateStr) {
     return day + ' ' + month + ' ' + comp.year;
 }
 
+const SIMATA_WIB_OFFSET_MS = 7 * 60 * 60 * 1000;
+
+function getWibTodayISODate(baseDate) {
+    const d = baseDate instanceof Date ? baseDate : new Date();
+    if (isNaN(d.getTime())) return '';
+    const wib = new Date(d.getTime() + SIMATA_WIB_OFFSET_MS);
+    const y = wib.getUTCFullYear();
+    const m = String(wib.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(wib.getUTCDate()).padStart(2, '0');
+    return y + '-' + m + '-' + day;
+}
+
+function formatWibTimeHHMM(epochMs) {
+    if (typeof epochMs !== 'number' || isNaN(epochMs) || !isFinite(epochMs)) return '-';
+    const wib = new Date(epochMs + SIMATA_WIB_OFFSET_MS);
+    const h = String(wib.getUTCHours()).padStart(2, '0');
+    const m = String(wib.getUTCMinutes()).padStart(2, '0');
+    return h + ':' + m;
+}
+
 function formatAttendanceTime(timestampStr) {
     if (timestampStr === null || timestampStr === undefined || timestampStr === '') return '-';
 
-    // Epoch milliseconds (number) — produced by normalizeTimestampValue() for datetime cells
+    // Epoch milliseconds (number) — produced by normalizeTimestampValue() or Date.now()
     if (typeof timestampStr === 'number') {
-        if (isNaN(timestampStr) || !isFinite(timestampStr)) return '-';
-        const d = new Date(timestampStr);
-        if (isNaN(d.getTime())) return '-';
-        return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+        return formatWibTimeHHMM(timestampStr);
     }
 
-    // Native Date object (legacy path, kept for safety)
+    // Native Date object
     if (timestampStr instanceof Date) {
-        if (!isNaN(timestampStr.getTime())) {
-            const h = String(timestampStr.getHours()).padStart(2, '0');
-            const m = String(timestampStr.getMinutes()).padStart(2, '0');
-            return h + ':' + m;
-        }
-        return '-';
+        return formatWibTimeHHMM(timestampStr.getTime());
     }
 
     const str = String(timestampStr).trim();
     if (!str) return '-';
 
-    // ISO strings with T or space separator — extract HH:mm directly without Date parsing
-    const timeMatch = str.match(/(?:[T\s]|^)(\d{1,2}):(\d{2})(?::(\d{2}))?/);
-    if (timeMatch) {
-        const h = parseInt(timeMatch[1], 10);
-        const m = parseInt(timeMatch[2], 10);
+    // 1. ISO-8601 / PostgreSQL timestamps WITH explicit timezone (Z, +HH:MM, +HHMM, +HH, GMT/UTC):
+    //    Parse the instant first and convert to WIB (Asia/Jakarta, UTC+7), never slice raw UTC HH:mm!
+    if (/(?:Z|[+-]\d{2}(?::?\d{2})?|GMT|UTC)\s*$/i.test(str) || /\b(?:GMT|UTC)[+-]\d{2,4}/i.test(str)) {
+        let normalizedIso = str;
+        const pgTextMatch = str.match(/^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?)\s*([+-]\d{2})(?::?(\d{2}))?$/);
+        if (pgTextMatch) {
+            const offMin = pgTextMatch[4] || '00';
+            normalizedIso = pgTextMatch[1] + 'T' + pgTextMatch[2] + pgTextMatch[3] + ':' + offMin;
+        } else if (/^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}/.test(str)) {
+            normalizedIso = str.replace(/\s+/, 'T');
+        }
+        const parsed = new Date(normalizedIso);
+        if (!isNaN(parsed.getTime())) {
+            return formatWibTimeHHMM(parsed.getTime());
+        }
+    }
+
+    // 2. Timezone-less strings already expressed in WIB ("08:01", "08:01:44", "YYYY-MM-DDTHH:mm:ss")
+    const bareOrLocalMatch = str.match(/^(?:\d{4}-\d{2}-\d{2}[T\s])?(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\.\d+)?$/);
+    if (bareOrLocalMatch) {
+        const h = parseInt(bareOrLocalMatch[1], 10);
+        const m = parseInt(bareOrLocalMatch[2], 10);
         if (h >= 0 && h <= 23 && m >= 0 && m <= 59) {
             return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
         }
     }
 
+    // 3. Fallback Date parse -> format in WIB
     try {
         const d = new Date(str);
         if (!isNaN(d.getTime())) {
-            const h = String(d.getHours()).padStart(2, '0');
-            const m = String(d.getMinutes()).padStart(2, '0');
-            return h + ':' + m;
+            return formatWibTimeHHMM(d.getTime());
         }
-    } catch(e) {}
+    } catch (e) {}
 
     return '-';
 }
@@ -14891,7 +14919,7 @@ function exportStudentAttendanceData(format) {
             a.note || ''
         ];
     });
-    const today = new Date().toISOString().split('T')[0];
+    const today = getWibTodayISODate();
     const filename = 'Presensi_Siswa_' + today + '.csv';
     exportCsvFile(filename, headers, rows);
 }
@@ -15062,7 +15090,7 @@ function openAttendanceModal(mode, attendanceId) {
     if (mode === 'create') {
         title.textContent = 'Tambah Presensi Siswa';
         if (idField) idField.value = '';
-        const todayIso = new Date().toISOString().split('T')[0];
+        const todayIso = getWibTodayISODate();
         const dateEl = document.getElementById('a_date'); if (dateEl) { dateEl.value = todayIso; dateEl.disabled = false; }
         const statusEl = document.getElementById('a_status'); if (statusEl) { statusEl.value = 'Hadir'; statusEl.disabled = false; }
         const sEl = document.getElementById('a_studentId'); if (sEl) sEl.disabled = false;
@@ -15814,7 +15842,7 @@ function printStudentAttendanceReport() {
 
             const matrixData = buildStudentAttendanceMatrix(targetStudents, attendances, selectedDate);
             const className = (attendanceClassLookup && attendanceClassLookup[selectedClassId]) || selectedClassId || (targetStudents[0] && targetStudents[0].classId) || 'Semua Kelas';
-            const formattedDate = formatAttendanceIndonesianDate(selectedDate || (attendances[0] && attendances[0].date) || new Date().toISOString().split('T')[0]);
+            const formattedDate = formatAttendanceIndonesianDate(selectedDate || (attendances[0] && attendances[0].date) || getWibTodayISODate());
             const academicYear = selectedYear || (attendances[0] && attendances[0].academicYear) || '-';
 
             const meta = {
@@ -16422,7 +16450,7 @@ function exportTeacherAttendanceData(format) {
             a.note || ''
         ];
     });
-    const today = new Date().toISOString().split('T')[0];
+    const today = getWibTodayISODate();
     const filename = 'Presensi_Guru_' + today + '.csv';
     exportCsvFile(filename, headers, rows);
 }
@@ -22132,7 +22160,10 @@ function openTeacherPhotoModal(attendanceId, teacherName, period, className, tim
 
     if (nameEl) nameEl.textContent = teacherName || '-';
     if (pcEl) pcEl.textContent = formatAttendancePeriod(period) + ' • ' + (className || '-');
-    if (timeEl) timeEl.textContent = timeStr || '-';
+    if (timeEl) {
+        const formattedTime = typeof formatAttendanceTime === 'function' ? formatAttendanceTime(timeStr) : '-';
+        timeEl.textContent = (formattedTime && formattedTime !== '-') ? (formattedTime + ' WIB') : (timeStr || '-');
+    }
     if (statusEl) statusEl.innerHTML = renderAttendanceStatusBadge(status);
     if (smEl) smEl.textContent = (subject || '-') + ' — ' + (materi || '-');
 
@@ -22273,7 +22304,7 @@ function updateLiveClock() {
 
     const time =
         now.toLocaleTimeString("id-ID", {
-
+            timeZone: "Asia/Jakarta",
             hour: "2-digit",
             minute: "2-digit",
             second: "2-digit"
@@ -23099,9 +23130,9 @@ function openRecordPaymentModal() {
     const modal = document.getElementById('recordPaymentModal');
     if (!modal) return;
 
-    // Set tanggal hari ini
+    // Set tanggal hari ini (WIB)
     const dateInput = document.getElementById('pay_date');
-    if (dateInput) dateInput.value = new Date().toISOString().slice(0, 10);
+    if (dateInput) dateInput.value = getWibTodayISODate();
 
     // Populate students dropdown
     populatePaymentStudentsDropdown();
@@ -23635,9 +23666,10 @@ function formatDateTimeIndo(isoStr) {
     if (!isoStr) return '--';
     const d = new Date(isoStr);
     if (isNaN(d.getTime())) return isoStr;
+    const wib = new Date(d.getTime() + SIMATA_WIB_OFFSET_MS);
     const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-    return d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear() + ' ' +
-        String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') + ' WIB';
+    return wib.getUTCDate() + ' ' + months[wib.getUTCMonth()] + ' ' + wib.getUTCFullYear() + ' ' +
+        String(wib.getUTCHours()).padStart(2, '0') + ':' + String(wib.getUTCMinutes()).padStart(2, '0') + ' WIB';
 }
 
 
@@ -24277,9 +24309,12 @@ window.addEventListener('beforeunload', function() {
   }
 
   function formatTimeNow() {
-    const d = new Date();
-    const h = String(d.getHours()).padStart(2, '0');
-    const m = String(d.getMinutes()).padStart(2, '0');
+    if (typeof formatWibTimeHHMM === 'function') {
+      return formatWibTimeHHMM(Date.now());
+    }
+    const d = new Date(Date.now() + 7 * 60 * 60 * 1000);
+    const h = String(d.getUTCHours()).padStart(2, '0');
+    const m = String(d.getUTCMinutes()).padStart(2, '0');
     return h + ':' + m;
   }
 

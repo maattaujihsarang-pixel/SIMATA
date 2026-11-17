@@ -1,20 +1,30 @@
 /**
- * Date utility functions for consistent timezone and format handling
+ * Date utility functions for consistent WIB (Asia/Jakarta, UTC+7) timezone handling
  */
 
-function getTodayISODate() {
-  const d = new Date();
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
+const WIB_OFFSET_MS = 7 * 60 * 60 * 1000;
+
+function toWibShiftedDate(baseDate = new Date()) {
+  const d = baseDate instanceof Date ? baseDate : new Date(baseDate);
+  if (isNaN(d.getTime())) {
+    throw new TypeError('Invalid date provided to date utility');
+  }
+  return new Date(d.getTime() + WIB_OFFSET_MS);
+}
+
+function getTodayISODate(baseDate = new Date()) {
+  const wib = toWibShiftedDate(baseDate);
+  const year = wib.getUTCFullYear();
+  const month = String(wib.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(wib.getUTCDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
 
-function getCurrentISOTime() {
-  const d = new Date();
-  const hours = String(d.getHours()).padStart(2, '0');
-  const minutes = String(d.getMinutes()).padStart(2, '0');
-  const seconds = String(d.getSeconds()).padStart(2, '0');
+function getCurrentISOTime(baseDate = new Date()) {
+  const wib = toWibShiftedDate(baseDate);
+  const hours = String(wib.getUTCHours()).padStart(2, '0');
+  const minutes = String(wib.getUTCMinutes()).padStart(2, '0');
+  const seconds = String(wib.getUTCSeconds()).padStart(2, '0');
   return `${hours}:${minutes}:${seconds}`;
 }
 
@@ -25,6 +35,7 @@ function addHours(date, hours) {
 }
 
 module.exports = {
+  WIB_OFFSET_MS,
   getTodayISODate,
   getCurrentISOTime,
   addHours

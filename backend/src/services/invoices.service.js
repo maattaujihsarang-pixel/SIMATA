@@ -1,5 +1,6 @@
 const { query, withTransaction } = require('../config/database');
 const { BadRequestError, NotFoundError, ForbiddenError, ConflictError } = require('../errors');
+const { getTodayISODate } = require('../utils/date.util');
 const logger = require('../utils/logger.util');
 
 class InvoicesService {
@@ -216,7 +217,7 @@ class InvoicesService {
     return withTransaction(async (client) => {
       const generatedInvoices = [];
       const timestamp = new Date();
-      const datePrefix = timestamp.toISOString().slice(0, 10).replace(/-/g, '');
+      const datePrefix = getTodayISODate(timestamp).replace(/-/g, '');
       const ayClean = academic_year_id.replace('/', '');
 
       for (let i = 0; i < preview.eligible_students.length; i++) {

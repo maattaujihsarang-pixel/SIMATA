@@ -4,14 +4,14 @@ const classRepository = require('../repositories/class.repository');
 const academicYearRepository = require('../repositories/academic-year.repository');
 const { withTransaction } = require('../config/database');
 const { generateUUID } = require('../utils/id-generator.util');
-const { getTodayISODate } = require('../utils/date.util');
+const { getTodayISODate, getCurrentISOTime } = require('../utils/date.util');
 const { BadRequestError, NotFoundError, ConflictError } = require('../errors');
 
 const VALID_STATUSES = ['Hadir', 'Izin', 'Sakit', 'Alpa'];
 
 function generateStudentAttendanceId(attendanceDate, period) {
   const dateCompact = attendanceDate.replace(/-/g, '');
-  const timeCompact = new Date().toTimeString().split(' ')[0].replace(/:/g, '');
+  const timeCompact = getCurrentISOTime().replace(/:/g, '');
   const shortHash = generateUUID().substring(0, 8);
   return `ATT-STD-${dateCompact}-${timeCompact}-P${period}-${shortHash}`;
 }

@@ -101,18 +101,30 @@
     }
   }
 
+  const SIMATA_WIB_OFFSET_MS = 7 * 60 * 60 * 1000;
+
+  function getWibTodayISODate(baseDate) {
+    const d = baseDate instanceof Date ? baseDate : new Date();
+    if (isNaN(d.getTime())) return '';
+    const wib = new Date(d.getTime() + SIMATA_WIB_OFFSET_MS);
+    const y = wib.getUTCFullYear();
+    const m = String(wib.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(wib.getUTCDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
   function normalizeCalendarDate(val) {
     if (!val) return '';
     if (typeof val === 'string') {
       const trimmed = val.trim();
       if (/^\d{4}-\d{2}-\d{2}T/.test(trimmed)) {
-        const d = new Date(trimmed);
-        if (!isNaN(d.getTime())) {
-          const y = d.getFullYear();
-          const m = String(d.getMonth() + 1).padStart(2, '0');
-          const day = String(d.getDate()).padStart(2, '0');
-          return `${y}-${m}-${day}`;
+        if (/(?:Z|[+-]\d{2}:?\d{2})$/i.test(trimmed)) {
+          const d = new Date(trimmed);
+          if (!isNaN(d.getTime())) {
+            return getWibTodayISODate(d);
+          }
         }
+        return trimmed.substring(0, 10);
       }
       if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) {
         return trimmed.substring(0, 10);
@@ -124,10 +136,7 @@
       return trimmed;
     }
     if (val instanceof Date && !isNaN(val.getTime())) {
-      const y = val.getFullYear();
-      const m = String(val.getMonth() + 1).padStart(2, '0');
-      const d = String(val.getDate()).padStart(2, '0');
-      return `${y}-${m}-${d}`;
+      return getWibTodayISODate(val);
     }
     return String(val);
   }
@@ -563,7 +572,7 @@
         seenStudentIds.add(r.student_id);
         return true;
       });
-      const today = new Date().toISOString().split('T')[0];
+      const today = getWibTodayISODate();
       const students = roster.map((r) => ({
         studentId: r.student_id,
         name: r.name,
@@ -785,7 +794,7 @@
     createStudentAttendance: async function (data) {
       const payload = {
         student_id: data.studentId || data.student_id,
-        attendance_date: data.date || data.attendance_date || new Date().toISOString().split('T')[0],
+        attendance_date: data.date || data.attendance_date || getWibTodayISODate(),
         period: parseInt(data.period, 10),
         status: data.status || 'Hadir',
         method: data.method || 'MANUAL',
@@ -895,7 +904,7 @@
       });
       const targetPayload = {
         class_id: payload.class_id || payload.classId,
-        attendance_date: payload.attendance_date || payload.date || new Date().toISOString().split('T')[0],
+        attendance_date: payload.attendance_date || payload.date || getWibTodayISODate(),
         periods: uniquePeriods,
         attendances: Array.from(uniqueAttendancesMap.values()),
         method: payload.method || 'QR_BATCH'

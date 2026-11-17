@@ -16,6 +16,7 @@ const runBug53EvidenceRetentionTests = require('./test_bug53_evidence_retention'
 const runBug56ReportsTests = require('./test_bug56_reports');
 const runBug57MobileChatbotTests = require('./test_bug57_mobile_chatbot');
 const runBug59SchedulesTests = require('./test_bug59_schedules');
+const runBug61WibTimezoneTests = require('./test_bug61_wib_timezone');
 
 async function runAllTests() {
   console.log('===============================================================');
@@ -40,7 +41,8 @@ async function runAllTests() {
     bug53_evidence_retention: false,
     bug56_reports: false,
     bug57_mobile_chatbot: false,
-    bug59_schedules: false
+    bug59_schedules: false,
+    bug61_wib_timezone: false
   };
 
   try {
@@ -62,6 +64,7 @@ async function runAllTests() {
     results.bug56_reports = await runBug56ReportsTests();
     results.bug57_mobile_chatbot = await runBug57MobileChatbotTests();
     results.bug59_schedules = await runBug59SchedulesTests();
+    results.bug61_wib_timezone = await runBug61WibTimezoneTests();
 
     console.log('\n===============================================================');
     console.log('VERIFICATION SUMMARY');

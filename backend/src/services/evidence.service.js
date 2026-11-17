@@ -1,11 +1,12 @@
 const storageProvider = require('../config/storage');
 const attendanceEvidenceRepository = require('../repositories/attendance-evidence.repository');
 const { generateUUID } = require('../utils/id-generator.util');
+const { getTodayISODate, getCurrentISOTime } = require('../utils/date.util');
 const logger = require('../utils/logger.util');
 
 function generateEvidenceId(attendanceDate) {
-  const dateCompact = (attendanceDate || new Date().toISOString().split('T')[0]).replace(/-/g, '');
-  const timeCompact = new Date().toTimeString().split(' ')[0].replace(/:/g, '');
+  const dateCompact = (attendanceDate || getTodayISODate()).replace(/-/g, '');
+  const timeCompact = getCurrentISOTime().replace(/:/g, '');
   const shortHash = generateUUID().substring(0, 8);
   return `EVID-TCH-${dateCompact}_${timeCompact}-${shortHash}`;
 }
