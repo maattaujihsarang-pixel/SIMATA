@@ -88,12 +88,14 @@ async function runBug61WibTimezoneTests() {
     sandbox.formatDateTimeIndo('2026-11-17T01:01:44.679Z'),
     '17 November 2026 08:01 WIB'
   );
-  // BUG 62: Indonesian short birth date format dd/mm/yy for Siswa & Guru tables
-  assert.strictEqual(sandbox.formatBirthDateIndoShort('2011-10-26'), '26/10/11');
-  assert.strictEqual(sandbox.formatBirthDateIndoShort('2009-07-03'), '03/07/09');
-  assert.strictEqual(sandbox.formatBirthDateIndoShort('2008-06-08'), '08/06/08');
-  assert.strictEqual(sandbox.formatBirthDateIndoShort('1990-01-05T00:00:00.000Z'), '05/01/90');
-  assert.strictEqual(sandbox.formatBirthDateIndoShort('26/10/2011'), '26/10/11');
+  // BUG 62: Indonesian birth date format dd/mm/yyyy for Siswa & Guru tables
+  assert.strictEqual(sandbox.formatBirthDateIndoShort('2011-10-26'), '26/10/2011');
+  assert.strictEqual(sandbox.formatBirthDateIndoShort('2010-08-10'), '10/08/2010');
+  assert.strictEqual(sandbox.formatBirthDateIndoShort('2009-07-03'), '03/07/2009');
+  assert.strictEqual(sandbox.formatBirthDateIndoShort('2008-06-08'), '08/06/2008');
+  assert.strictEqual(sandbox.formatBirthDateIndoShort('1990-01-05T00:00:00.000Z'), '05/01/1990');
+  assert.strictEqual(sandbox.formatBirthDateIndoShort('26/10/2011'), '26/10/2011');
+  assert.strictEqual(sandbox.formatBirthDateIndoShort('10/08/10'), '10/08/2010');
   assert.strictEqual(sandbox.formatBirthDateIndoShort(''), '-');
   assert.strictEqual(sandbox.formatBirthDateIndoShort(null), '-');
   assert.ok(html.includes('formatBirthDateIndoShort(s.birthDate || s.birth_date)'));

@@ -14285,8 +14285,8 @@ function formatBirthDateIndoShort(dateStr) {
     }
 
     if (y && m && d) {
-        const yy = y.length >= 2 ? y.slice(-2) : y.padStart(2, '0');
-        return d + '/' + m + '/' + yy;
+        const yyyy = y.length === 2 ? ((parseInt(y, 10) >= 40 ? '19' : '20') + y) : y.padStart(4, '0');
+        return d + '/' + m + '/' + yyyy;
     }
     return raw;
 }
