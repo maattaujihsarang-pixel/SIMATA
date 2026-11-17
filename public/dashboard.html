@@ -812,7 +812,7 @@ html, body {
   }
 }
 </style>
-  <link rel="stylesheet" href="/css/dashboard.css?v=bug60a">
+  <link rel="stylesheet" href="/css/dashboard.css?v=bug60b">
   <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
   <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
@@ -3226,47 +3226,47 @@ html, body {
           </div>
 
           <div id="schedFilterCard" class="sched-filter-card is-mobile-collapsed" role="region" aria-label="Filter Jadwal Pelajaran">
-            <button type="button" class="mobile-filter-toggle-btn" id="schedFilterToggleBtn" aria-expanded="false" aria-controls="schedFilterBody">
-              <div class="mobile-filter-toggle-left">
-                <span class="mobile-filter-icon-wrap" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-                </span>
-                <div class="mobile-filter-title-group">
-                  <span class="mobile-filter-title" id="schedFilterMobileTitle">Tahun Ajaran Aktif</span>
-                  <span class="mobile-filter-subtitle" id="schedFilterMobileSub">Memuat ringkasan jadwal...</span>
+            <div class="sched-mobile-accordion">
+              <button type="button" class="mobile-filter-toggle-btn" id="schedFilterToggleBtn" aria-expanded="false" aria-controls="schedFilterBody">
+                <div class="mobile-filter-toggle-left">
+                  <span class="mobile-filter-icon-wrap" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                  </span>
+                  <div class="mobile-filter-title-group">
+                    <span class="mobile-filter-title" id="schedFilterMobileTitle">Tahun Ajaran Aktif</span>
+                    <span class="mobile-filter-subtitle" id="schedFilterMobileSub">Memuat ringkasan jadwal...</span>
+                  </div>
                 </div>
-              </div>
-              <div class="mobile-filter-toggle-right">
-                <span class="mobile-filter-action-pill">Filter</span>
-                <svg class="mobile-filter-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-              </div>
-            </button>
+                <div class="mobile-filter-toggle-right">
+                  <span class="mobile-filter-action-pill">Filter</span>
+                  <svg class="mobile-filter-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+              </button>
 
-            <div class="sched-filter-body" id="schedFilterBody">
-              <div class="sched-filter-block">
-                <label for="schedYearSelect" class="sched-filter-label">Tahun Ajaran</label>
-                <select id="schedYearSelect" class="sched-select"></select>
-              </div>
-              <div class="sched-filter-block">
-                <span class="sched-filter-label">Semester</span>
-                <div class="sched-seg-group" id="schedSemesterGroup" role="group" aria-label="Pilih Semester">
-                  <button type="button" class="sched-seg-btn active" data-semester="GANJIL">Ganjil</button>
-                  <button type="button" class="sched-seg-btn" data-semester="GENAP">Genap</button>
+              <div class="sched-filter-body" id="schedFilterBody">
+                <div class="sched-filter-block sched-order-year">
+                  <label for="schedYearSelect" class="sched-filter-label">Tahun Ajaran</label>
+                  <select id="schedYearSelect" class="sched-select"></select>
                 </div>
-              </div>
-              <div class="sched-filter-block" style="flex:1 1 220px;">
-                <label for="schedSearchInput" class="sched-filter-label">Pencarian Cepat</label>
-                <search class="sched-search-box">
-                  <svg class="sched-search-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                  <input type="search" id="schedSearchInput" placeholder="Cari mapel atau nama guru..." aria-label="Cari mata pelajaran atau guru">
-                </search>
+                <div class="sched-filter-block sched-order-sem">
+                  <span class="sched-filter-label">Semester</span>
+                  <div class="sched-seg-group" id="schedSemesterGroup" role="group" aria-label="Pilih Semester">
+                    <button type="button" class="sched-seg-btn active" data-semester="GANJIL">Ganjil</button>
+                    <button type="button" class="sched-seg-btn" data-semester="GENAP">Genap</button>
+                  </div>
+                </div>
+                <div class="sched-filter-block sched-search-wrap sched-order-search">
+                  <label for="schedSearchInput" class="sched-filter-label">Pencarian Cepat</label>
+                  <search class="sched-search-box">
+                    <svg class="sched-search-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input type="search" id="schedSearchInput" placeholder="Cari mapel atau nama guru..." aria-label="Cari mata pelajaran atau guru">
+                  </search>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div class="sched-always-controls" role="region" aria-label="Navigasi Tampilan dan Hari">
             <div class="sched-mode-context-row">
-              <div class="sched-filter-block">
+              <div class="sched-filter-block sched-order-mode">
                 <span class="sched-filter-label">Mode Tampilan</span>
                 <div class="sched-seg-group" id="schedModeGroup" role="group" aria-label="Mode Tampilan Jadwal">
                   <button type="button" class="sched-seg-btn sched-desktop-only active" data-mode="matrix">Matriks Kelas</button>
@@ -3275,12 +3275,12 @@ html, body {
                   <button type="button" class="sched-seg-btn sched-mobile-only" data-mode="load" id="schedModeLoadBtn">Beban Guru</button>
                 </div>
               </div>
-              <div class="sched-class-pills" id="schedClassPills" role="group" aria-label="Pilih Kelas Cepat"></div>
-              <div class="sched-filter-block" id="schedClassFilterWrap" style="display:none;">
+              <div class="sched-class-pills sched-order-ctx" id="schedClassPills" role="group" aria-label="Pilih Kelas Cepat"></div>
+              <div class="sched-filter-block sched-order-ctx" id="schedClassFilterWrap" style="display:none;">
                 <label for="schedClassSelect" class="sched-filter-label">Pilih Kelas</label>
                 <select id="schedClassSelect" class="sched-select"></select>
               </div>
-              <div class="sched-filter-block" id="schedTeacherFilterWrap" style="display:none;flex:1 1 220px;">
+              <div class="sched-filter-block sched-order-ctx sched-teacher-select-wrap" id="schedTeacherFilterWrap" style="display:none;">
                 <label for="schedTeacherSelect" class="sched-filter-label">Pilih Guru</label>
                 <select id="schedTeacherSelect" class="sched-select"></select>
               </div>

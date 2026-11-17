@@ -5206,14 +5206,14 @@ dialog.rpt-tazir-dialog::backdrop {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 14px;
+  align-items: center;
+  gap: 12px 16px;
   margin-bottom: 18px;
 }
 
 .sched-title-wrap {
-  min-width: 0;
-  flex: 1 1 280px;
+  min-width: 220px;
+  flex: 1 1 240px;
 }
 
 .sched-subtitle {
@@ -5227,46 +5227,34 @@ dialog.rpt-tazir-dialog::backdrop {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  justify-content: flex-end;
+  gap: 6px;
 }
 
 .sched-admin-bar {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
-.sched-always-controls {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 14px 18px;
-  margin-bottom: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
-}
-
+.sched-mobile-accordion,
 .sched-mode-context-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 14px 20px;
+  display: contents;
 }
 
 .sched-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  min-height: 38px;
-  padding: 0 14px;
+  gap: 5px;
+  min-height: 36px;
+  padding: 0 11px;
   border-radius: 10px;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   font-family: inherit;
+  white-space: nowrap;
   cursor: pointer;
   border: 1px solid #cbd5e1;
   background: #ffffff;
@@ -5330,19 +5318,33 @@ dialog.rpt-tazir-dialog::backdrop {
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 14px;
-  padding: 16px 18px;
+  padding: 14px 18px;
   margin-bottom: 18px;
   display: flex;
-  flex-direction: column;
-  gap: 14px;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 16px;
   box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
 }
 
-.sched-filter-top {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 14px 20px;
+.sched-filter-body {
+  display: contents;
+}
+
+.sched-order-year { order: 1; }
+.sched-order-sem { order: 2; }
+.sched-order-mode { order: 3; }
+.sched-order-ctx { order: 4; }
+.sched-order-search {
+  order: 5;
+  flex: 0 0 220px;
+  width: 220px;
+  margin-left: auto;
+}
+
+.sched-teacher-select-wrap {
+  max-width: 250px;
 }
 
 .sched-filter-block {
@@ -5403,6 +5405,8 @@ dialog.rpt-tazir-dialog::backdrop {
 }
 
 .sched-filter-days-row {
+  order: 10;
+  width: 100%;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -5472,18 +5476,11 @@ dialog.rpt-tazir-dialog::backdrop {
   display: none;
 }
 
-.sched-filter-body {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 14px 20px;
-  width: 100%;
-}
-
 .sched-search-box {
   position: relative;
-  min-width: 220px;
-  flex: 0 1 260px;
+  display: block;
+  width: 100%;
+  flex: none;
 }
 
 .dashboard-layout #schedulesContent .sched-search-box input {
@@ -6412,12 +6409,26 @@ dialog.sched-dialog[open] {
     grid-column: 1 / -1;
   }
 
-  /* Collapsible Mobile Filter Accordion matching SIMATA Student/Teacher Filter Card */
+  /* Collapsible Mobile Filter Accordion + Visible Mode/Class/Day Controls */
   .sched-filter-card {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
     padding: 0 !important;
     margin-bottom: 12px !important;
-    gap: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+  }
+
+  .sched-mobile-accordion {
+    display: block !important;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
     overflow: hidden;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
   }
 
   .sched-filter-card.is-mobile-collapsed .sched-filter-body {
@@ -6426,7 +6437,7 @@ dialog.sched-dialog[open] {
 
   .sched-filter-body {
     padding: 0 14px 14px;
-    display: grid;
+    display: grid !important;
     grid-template-columns: minmax(0, 1fr);
     gap: 10px;
     border-top: 1px solid #f1f5f9;
@@ -6434,6 +6445,23 @@ dialog.sched-dialog[open] {
 
   .sched-filter-body .sched-filter-block:first-child {
     padding-top: 10px;
+  }
+
+  .sched-order-year,
+  .sched-order-sem,
+  .sched-order-mode,
+  .sched-order-ctx,
+  .sched-order-search,
+  .sched-filter-days-row {
+    order: 0;
+  }
+
+  .sched-order-search,
+  .sched-teacher-select-wrap {
+    width: 100%;
+    max-width: none;
+    flex: none;
+    margin-left: 0;
   }
 
   .sched-select {
@@ -6444,7 +6472,7 @@ dialog.sched-dialog[open] {
 
   .sched-search-box {
     width: 100%;
-    flex: 1 1 100%;
+    flex: none;
   }
 
   .dashboard-layout #schedulesContent .sched-search-box input {
@@ -6453,23 +6481,13 @@ dialog.sched-dialog[open] {
     font-size: 13px;
   }
 
-  /* Always-Visible Mobile Controls Strip */
-  .sched-always-controls {
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    padding: 0;
-    margin-bottom: 12px;
-    gap: 10px;
-  }
-
   .sched-mode-context-row {
-    display: grid;
+    display: grid !important;
     grid-template-columns: minmax(0, 1fr);
     gap: 10px;
   }
 
-  .sched-always-controls .sched-filter-label {
+  .sched-mode-context-row .sched-filter-label {
     display: none;
   }
 
@@ -6526,7 +6544,7 @@ dialog.sched-dialog[open] {
     display: none;
   }
 
-  .dashboard-layout #schedulesContent.is-mobile-load-mode .sched-always-controls .sched-filter-days-row,
+  .dashboard-layout #schedulesContent.is-mobile-load-mode .sched-filter-days-row,
   .dashboard-layout #schedulesContent.is-mobile-load-mode #schedClassPills,
   .dashboard-layout #schedulesContent.is-mobile-load-mode #schedTeacherFilterWrap {
     display: none !important;
