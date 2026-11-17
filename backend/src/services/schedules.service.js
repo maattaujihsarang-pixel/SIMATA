@@ -201,16 +201,20 @@ class SchedulesService {
         current_period: null,
         suggested_fill: null,
         today_teacher_blocks: [],
-        active_class_slots: []
+        active_class_slots: [],
+        day_slots: []
       };
     }
 
-    const activeDaySlots = await schedulesRepo.getSlotsForDay(
+    const allDaySlots = await schedulesRepo.getSlotsForDay(
       activeYear.academic_year_id,
       semester,
       wib.dayOfWeek,
-      teacher_id || null
+      null
     );
+    const activeDaySlots = teacher_id
+      ? allDaySlots.filter((s) => s.teacher_id === teacher_id)
+      : allDaySlots;
 
     // Group consecutive periods for the selected teacher (same class + same subject)
     const blocks = [];
@@ -263,8 +267,7 @@ class SchedulesService {
     }
 
     const activeClassSlots = currentPeriod && currentPeriod.period_number
-      ? (await schedulesRepo.getSlotsForDay(activeYear.academic_year_id, semester, wib.dayOfWeek, null))
-          .filter((s) => Number(s.period_number) === Number(currentPeriod.period_number))
+      ? allDaySlots.filter((s) => Number(s.period_number) === Number(currentPeriod.period_number))
       : [];
 
     return {
@@ -277,7 +280,8 @@ class SchedulesService {
       current_period: currentPeriod,
       suggested_fill: suggestedFill,
       today_teacher_blocks: enrichedBlocks,
-      active_class_slots: activeClassSlots
+      active_class_slots: activeClassSlots,
+      day_slots: allDaySlots
     };
   }
 

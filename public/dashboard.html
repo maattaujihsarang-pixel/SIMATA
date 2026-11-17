@@ -812,7 +812,7 @@ html, body {
   }
 }
 </style>
-  <link rel="stylesheet" href="/css/dashboard.css?v=bug60d">
+  <link rel="stylesheet" href="/css/dashboard.css?v=bug64">
   <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
   <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
@@ -1799,6 +1799,7 @@ html, body {
                     </div>
 
                     <div class="responder-col-span-2" style="margin-top:6px;">
+                      <div id="rg_scheduleMatchStatus" class="rg-sched-match-status" style="display:none;" role="status" aria-live="polite"></div>
                       <button id="submitTeacherAttendanceBtn" class="btn-responder-primary" type="button" style="width:100%;min-height:46px;">
                         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                           <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
@@ -1820,6 +1821,28 @@ html, body {
                   <p id="teacherSuccessDetail" class="responder-feedback-desc">--</p>
                   <button id="resetTeacherFormBtn" class="btn-responder-primary" type="button" style="min-height:38px;padding:0 18px;font-size:12px;">Presensi Guru Lainnya</button>
                 </div>
+
+                <!-- SOFT-GUARD DIALOG: Konfirmasi Ketidaksesuaian Jadwal (BUG 64) -->
+                <dialog id="rgScheduleConfirmDialog" class="sched-dialog" closedby="any" aria-labelledby="rgScheduleConfirmTitle">
+                  <div class="sched-dialog-head">
+                    <h3 id="rgScheduleConfirmTitle" class="sched-dialog-title">Konfirmasi Ketidaksesuaian Jadwal</h3>
+                    <button type="button" id="rgScheduleConfirmXBtn" class="sched-dialog-close" aria-label="Tutup">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                  </div>
+                  <div class="sched-dialog-body">
+                    <div id="rgScheduleConfirmSummary" class="rg-sched-confirm-summary"></div>
+                    <div id="rgScheduleConfirmDiffs" class="rg-sched-diff-box"></div>
+                    <label class="rg-sched-sub-check">
+                      <input type="checkbox" id="rgScheduleSubstituteCheck" checked />
+                      <span>Tandai di catatan sebagai <strong>Guru Pengganti / Tukar Jam</strong></span>
+                    </label>
+                  </div>
+                  <div class="sched-dialog-foot">
+                    <button type="button" id="rgScheduleConfirmCancelBtn" class="sched-btn">Periksa Kembali</button>
+                    <button type="button" id="rgScheduleConfirmProceedBtn" class="sched-btn sched-btn-warn">Tetap Simpan</button>
+                  </div>
+                </dialog>
 
               </div>
             </div>
@@ -19430,10 +19453,209 @@ function initTeacherAttendanceInResponder() {
             }
             syncResponderPickerLabel('rg_teacherId');
             loadResponderScheduleAssist(tId);
+            updateResponderScheduleMatchIndicator();
         };
     }
 
+    const classSelGuard = document.getElementById('rg_classId');
+    if (classSelGuard) {
+        classSelGuard.addEventListener('change', function() {
+            updateResponderScheduleMatchIndicator();
+        });
+    }
+
+    const subjectInputGuard = document.getElementById('rg_subject');
+    if (subjectInputGuard) {
+        subjectInputGuard.addEventListener('input', function() {
+            updateResponderScheduleMatchIndicator();
+        });
+    }
+
+    document.querySelectorAll('input[name="rg_period"], .rg-period-checkbox').forEach(function(cb) {
+        cb.addEventListener('change', function() {
+            updateResponderScheduleMatchIndicator();
+        });
+    });
+
     initResponderCompactPickers();
+}
+
+let responderScheduleGuardState = {
+    loaded: false,
+    isSchoolDay: true,
+    dayLabel: '',
+    timeWib: '',
+    teacherId: '',
+    todayTeacherBlocks: [],
+    daySlots: []
+};
+
+function normalizeSchedMatchText(s) {
+    return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function getSelectedResponderPeriods() {
+    const checkedBoxes = Array.from(document.querySelectorAll('input[name="rg_period"]:checked, .rg-period-checkbox:checked'));
+    return Array.from(new Set(checkedBoxes.map(function(cb) { return cb.value.trim(); })))
+        .filter(function(v) { return /^(?:[1-9]|10)$/.test(v); })
+        .sort(function(a, b) { return Number(a) - Number(b); });
+}
+
+function evaluateResponderScheduleMatch() {
+    const teacherSel = document.getElementById('rg_teacherId');
+    const classSel = document.getElementById('rg_classId');
+    const subjectEl = document.getElementById('rg_subject');
+    const teacherId = teacherSel ? teacherSel.value.trim() : '';
+    const classId = classSel ? classSel.value.trim() : '';
+    const subject = subjectEl ? subjectEl.value.trim() : '';
+    const periods = getSelectedResponderPeriods();
+
+    const g = responderScheduleGuardState;
+    if (!g.loaded || !teacherId) {
+        return { status: 'none', warnings: [], teacherBlocksText: '' };
+    }
+    if (!g.isSchoolDay) {
+        return {
+            status: 'holiday',
+            warnings: [],
+            dayLabel: g.dayLabel || 'Libur',
+            teacherBlocksText: ''
+        };
+    }
+    if (!classId || periods.length === 0) {
+        return { status: 'none', warnings: [], teacherBlocksText: '' };
+    }
+
+    const teacherName = (teacherSel && teacherSel.selectedIndex >= 0 && teacherSel.options[teacherSel.selectedIndex])
+        ? (teacherSel.options[teacherSel.selectedIndex].getAttribute('data-title') || teacherSel.options[teacherSel.selectedIndex].textContent)
+        : teacherId;
+    const className = (classSel && classSel.selectedIndex >= 0 && classSel.options[classSel.selectedIndex])
+        ? (classSel.options[classSel.selectedIndex].getAttribute('data-title') || classSel.options[classSel.selectedIndex].textContent)
+        : classId;
+
+    const teacherBlocksText = (g.todayTeacherBlocks || []).map(function(blk) {
+        const pText = blk.periods.length > 1
+            ? 'Jam ' + blk.periods[0] + '–' + blk.periods[blk.periods.length - 1]
+            : 'Jam ' + blk.periods[0];
+        return pText + ' • ' + (blk.subject_name || '-') + ' (' + (blk.class_name || blk.class_id) + ')';
+    }).join(', ');
+
+    const daySlots = Array.isArray(g.daySlots) ? g.daySlots : [];
+    if (daySlots.length === 0) {
+        return { status: 'none', warnings: [], teacherBlocksText: teacherBlocksText };
+    }
+
+    const warnings = [];
+    const normInputSubj = normalizeSchedMatchText(subject);
+
+    periods.forEach(function(pStr) {
+        const pNum = Number(pStr);
+        const classSlot = daySlots.find(function(s) {
+            return s.class_id === classId && Number(s.period_number) === pNum;
+        });
+        const teacherOwnSlot = daySlots.find(function(s) {
+            return s.teacher_id === teacherId && Number(s.period_number) === pNum;
+        });
+
+        if (classSlot && classSlot.teacher_id && classSlot.teacher_id !== teacherId) {
+            warnings.push(
+                'Jam ke-' + pNum + ' di ' + className + ' terjadwal resmi untuk ' +
+                (classSlot.teacher_name || classSlot.teacher_id) + ' (' + (classSlot.subject_name || '-') + ').'
+            );
+            if (teacherOwnSlot && teacherOwnSlot.class_id !== classId) {
+                warnings.push(
+                    'Pada Jam ke-' + pNum + ', ' + teacherName + ' terjadwal di ' +
+                    (teacherOwnSlot.class_name || teacherOwnSlot.class_id) + ' (' + (teacherOwnSlot.subject_name || '-') + ').'
+                );
+            }
+        } else if (!classSlot || !classSlot.teacher_id) {
+            if (teacherOwnSlot && teacherOwnSlot.class_id !== classId) {
+                warnings.push(
+                    'Jam ke-' + pNum + ' guru ini terjadwal di ' + (teacherOwnSlot.class_name || teacherOwnSlot.class_id) +
+                    ' (' + (teacherOwnSlot.subject_name || '-') + '), bukan di ' + className + '.'
+                );
+            } else {
+                const slotTypeHint = classSlot && classSlot.subject_name ? ' (' + classSlot.subject_name + ')' : '';
+                warnings.push(
+                    'Jam ke-' + pNum + ' di ' + className + slotTypeHint + ' tidak termasuk jadwal KBM guru ini pada hari ' + (g.dayLabel || 'ini') + '.'
+                );
+            }
+        } else if (normInputSubj) {
+            const normSlotSubj = normalizeSchedMatchText(classSlot.subject_name);
+            const normSlotCode = normalizeSchedMatchText(classSlot.subject_code);
+            const matchesSubj = (normSlotSubj && (normSlotSubj.includes(normInputSubj) || normInputSubj.includes(normSlotSubj))) ||
+                (normSlotCode && normInputSubj === normSlotCode);
+            if (!matchesSubj) {
+                warnings.push(
+                    'Mapel pada jadwal resmi Jam ke-' + pNum + ' adalah "' + (classSlot.subject_name || '-') +
+                    '" (Anda mengisi "' + subject + '").'
+                );
+            }
+        }
+    });
+
+    if (warnings.length === 0) {
+        return {
+            status: 'match',
+            warnings: [],
+            className: className,
+            teacherName: teacherName,
+            periods: periods,
+            teacherBlocksText: teacherBlocksText
+        };
+    }
+
+    return {
+        status: 'mismatch',
+        warnings: warnings,
+        className: className,
+        teacherName: teacherName,
+        subject: subject,
+        periods: periods,
+        dayLabel: g.dayLabel || 'hari ini',
+        teacherBlocksText: teacherBlocksText
+    };
+}
+
+function updateResponderScheduleMatchIndicator() {
+    const el = document.getElementById('rg_scheduleMatchStatus');
+    if (!el) return;
+    const res = evaluateResponderScheduleMatch();
+
+    if (res.status === 'none') {
+        el.style.display = 'none';
+        el.className = 'rg-sched-match-status';
+        el.innerHTML = '';
+        return;
+    }
+
+    if (res.status === 'holiday') {
+        el.style.display = 'flex';
+        el.className = 'rg-sched-match-status is-info';
+        el.innerHTML =
+            '<svg class="rg-sched-match-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>' +
+            '<div><span class="rg-sched-match-title">Di luar jadwal KBM reguler (' + escapeHtml(res.dayLabel) + ')</span>' +
+            '<span class="rg-sched-match-sub">Presensi tetap dapat dicatat bila ada kegiatan pengganti/tambahan.</span></div>';
+        return;
+    }
+
+    if (res.status === 'match') {
+        el.style.display = 'flex';
+        el.className = 'rg-sched-match-status is-match';
+        el.innerHTML =
+            '<svg class="rg-sched-match-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' +
+            '<div><span class="rg-sched-match-title">Sesuai Jadwal Resmi</span>' +
+            '<span class="rg-sched-match-sub">' + escapeHtml(res.className) + ' • Jam ke-' + escapeHtml(res.periods.join(', ')) + ' cocok dengan jadwal pelajaran aktif.</span></div>';
+        return;
+    }
+
+    el.style.display = 'flex';
+    el.className = 'rg-sched-match-status is-warn';
+    const extraCount = res.warnings.length > 1 ? ' (+' + (res.warnings.length - 1) + ' catatan lain)' : '';
+    el.innerHTML =
+        '<svg class="rg-sched-match-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' +
+        '<div><span class="rg-sched-match-title">Di Luar Jadwal Resmi' + escapeHtml(extraCount) + '</span>' +
+        '<span class="rg-sched-match-sub">' + escapeHtml(res.warnings[0]) + ' Tetap bisa disimpan setelah konfirmasi.</span></div>';
 }
 
 function applyResponderScheduleBlock(block) {
@@ -19453,6 +19675,7 @@ function applyResponderScheduleBlock(block) {
             cb.checked = targetPeriods.includes(Number(cb.value));
         });
     }
+    updateResponderScheduleMatchIndicator();
 }
 
 let responderScheduleReqSeq = 0;
@@ -19468,6 +19691,10 @@ function loadResponderScheduleAssist(teacherId) {
     if (!cleanId) {
         banner.style.display = 'none';
         pillsWrap.innerHTML = '';
+        responderScheduleGuardState = {
+            loaded: false, isSchoolDay: true, dayLabel: '', timeWib: '', teacherId: '', todayTeacherBlocks: [], daySlots: []
+        };
+        updateResponderScheduleMatchIndicator();
         return;
     }
 
@@ -19477,13 +19704,26 @@ function loadResponderScheduleAssist(teacherId) {
             if (reqSeq !== responderScheduleReqSeq) return;
             if (!res || !res.success || !res.data) {
                 banner.style.display = 'none';
+                responderScheduleGuardState.loaded = false;
+                updateResponderScheduleMatchIndicator();
                 return;
             }
             const d = res.data;
             const blocks = Array.isArray(d.today_teacher_blocks) ? d.today_teacher_blocks : [];
+            responderScheduleGuardState = {
+                loaded: true,
+                isSchoolDay: Boolean(d.is_school_day),
+                dayLabel: d.day_label || '',
+                timeWib: d.time_wib || '',
+                teacherId: cleanId,
+                todayTeacherBlocks: blocks,
+                daySlots: Array.isArray(d.day_slots) ? d.day_slots : []
+            };
+
             if (!d.is_school_day || blocks.length === 0) {
                 banner.style.display = 'none';
                 pillsWrap.innerHTML = '';
+                updateResponderScheduleMatchIndicator();
                 return;
             }
 
@@ -19515,10 +19755,16 @@ function loadResponderScheduleAssist(teacherId) {
 
             if (d.suggested_fill && d.suggested_fill.is_ongoing) {
                 applyResponderScheduleBlock(d.suggested_fill);
+            } else {
+                updateResponderScheduleMatchIndicator();
             }
         })
         .withFailureHandler(function() {
-            if (reqSeq === responderScheduleReqSeq) banner.style.display = 'none';
+            if (reqSeq === responderScheduleReqSeq) {
+                banner.style.display = 'none';
+                responderScheduleGuardState.loaded = false;
+                updateResponderScheduleMatchIndicator();
+            }
         })
         .getScheduleActiveNow({ teacher_id: cleanId });
 }
@@ -20047,10 +20293,30 @@ function populateResponderTeachers() {
                 const mapelText = t.subject ? ' (' + escapeHtml(t.subject) + ')' : '';
                 return '<option value="' + escapeAttr(t.teacherId) + '" data-title="' + escapeAttr(t.name) + '" data-subtitle="' + escapeAttr(t.subject || '') + '">' + escapeHtml(t.name) + mapelText + '</option>';
             }).join('');
+
+            // Smart default for Guru login: auto-select own teacher profile & load live schedule assist
+            if (!sel.value && currentResponderUser && String(currentResponderUser.role || '').toLowerCase() === 'guru') {
+                const uTid = currentResponderUser.teacher_id || currentResponderUser.teacherId || '';
+                const uName = String(currentResponderUser.full_name || currentResponderUser.name || '').trim().toLowerCase();
+                const matchedTeacher = res.teachers.find(function(t) {
+                    if (uTid && String(t.teacherId) === String(uTid)) return true;
+                    return uName && String(t.name || '').trim().toLowerCase() === uName;
+                });
+                if (matchedTeacher) {
+                    sel.value = matchedTeacher.teacherId;
+                    const subjEl = document.getElementById('rg_subject');
+                    if (subjEl && !subjEl.value && matchedTeacher.subject) {
+                        subjEl.value = matchedTeacher.subject;
+                    }
+                }
+            }
         } else {
             sel.innerHTML = '<option value="">(Gagal memuat guru)</option>';
         }
         syncResponderPickerLabel('rg_teacherId');
+        if (sel.value && typeof loadResponderScheduleAssist === 'function') {
+            loadResponderScheduleAssist(sel.value);
+        }
     }).withFailureHandler(function() {
         sel.innerHTML = '<option value="">(Gagal memuat guru)</option>';
         syncResponderPickerLabel('rg_teacherId');
@@ -20214,6 +20480,96 @@ function setTeacherCameraBadge(text, type) {
     badge.className = "simata-badge simata-badge-" + (type || "neutral");
 }
 
+let pendingResponderSubmitData = null;
+let isResponderScheduleDialogWired = false;
+
+function ensureResponderScheduleConfirmDialogWired() {
+    if (isResponderScheduleDialogWired) return;
+    isResponderScheduleDialogWired = true;
+    const dlg = document.getElementById('rgScheduleConfirmDialog');
+    const cancelBtn = document.getElementById('rgScheduleConfirmCancelBtn');
+    const closeXBtn = document.getElementById('rgScheduleConfirmXBtn');
+    const proceedBtn = document.getElementById('rgScheduleConfirmProceedBtn');
+
+    function closeConfirmDialog() {
+        pendingResponderSubmitData = null;
+        if (dlg && dlg.open) dlg.close();
+    }
+
+    if (cancelBtn) cancelBtn.addEventListener('click', closeConfirmDialog);
+    if (closeXBtn) closeXBtn.addEventListener('click', closeConfirmDialog);
+    if (dlg) {
+        dlg.addEventListener('cancel', function() {
+            pendingResponderSubmitData = null;
+        });
+    }
+    if (proceedBtn) {
+        proceedBtn.addEventListener('click', function() {
+            const subData = pendingResponderSubmitData;
+            pendingResponderSubmitData = null;
+            if (dlg && dlg.open) dlg.close();
+            if (!subData) return;
+
+            const subCheck = document.getElementById('rgScheduleSubstituteCheck');
+            let finalNote = subData.note || '';
+            if (subCheck && subCheck.checked && !finalNote.toLowerCase().includes('[pengganti')) {
+                finalNote = finalNote ? (finalNote + ' [Pengganti / Di luar jadwal]') : '[Pengganti / Di luar jadwal]';
+            }
+            executeTeacherAttendanceSubmit({
+                teacherId: subData.teacherId,
+                classId: subData.classId,
+                periods: subData.periods,
+                status: subData.status,
+                subject: subData.subject,
+                materi: subData.materi,
+                note: finalNote
+            });
+        });
+    }
+}
+
+function openResponderScheduleConfirmDialog(evalRes, submitData) {
+    ensureResponderScheduleConfirmDialogWired();
+    const dlg = document.getElementById('rgScheduleConfirmDialog');
+    const summaryEl = document.getElementById('rgScheduleConfirmSummary');
+    const diffsEl = document.getElementById('rgScheduleConfirmDiffs');
+    const subCheck = document.getElementById('rgScheduleSubstituteCheck');
+    const cancelBtn = document.getElementById('rgScheduleConfirmCancelBtn');
+
+    if (!dlg || typeof dlg.showModal !== 'function') {
+        executeTeacherAttendanceSubmit(submitData);
+        return;
+    }
+
+    pendingResponderSubmitData = submitData;
+    if (subCheck) subCheck.checked = true;
+
+    if (summaryEl) {
+        summaryEl.innerHTML =
+            '<strong>Input yang akan disimpan:</strong><br>' +
+            escapeHtml(evalRes.teacherName) + ' • ' + escapeHtml(evalRes.className) +
+            ' • Jam ke-' + escapeHtml(evalRes.periods.join(', ')) + ' (' + escapeHtml(evalRes.subject) + ')';
+    }
+
+    if (diffsEl) {
+        const listItems = (evalRes.warnings || []).map(function(w) {
+            return '<li>' + escapeHtml(w) + '</li>';
+        }).join('');
+        const ownSchedHtml = evalRes.teacherBlocksText
+            ? '<div style="margin-top:8px;padding-top:8px;border-top:1px dashed #f59e0b;font-size:12px;"><strong>Jadwal resmi guru ini hari ' + escapeHtml(evalRes.dayLabel) + ':</strong><br>' + escapeHtml(evalRes.teacherBlocksText) + '</div>'
+            : '<div style="margin-top:8px;padding-top:8px;border-top:1px dashed #f59e0b;font-size:12px;"><em>Guru ini tidak memiliki jadwal KBM reguler hari ' + escapeHtml(evalRes.dayLabel) + '.</em></div>';
+        diffsEl.innerHTML =
+            '<strong>Perbedaan dengan Jadwal Pelajaran Resmi:</strong>' +
+            '<ul>' + listItems + '</ul>' +
+            ownSchedHtml;
+    }
+
+    if (!dlg.open) dlg.showModal();
+    if (cancelBtn) {
+        setTimeout(function() { cancelBtn.focus(); }, 30);
+    }
+}
+
 function submitTeacherAttendance() {
     if (!currentResponderSession || !currentResponderSession.sessionId || currentResponderSession.status !== "ACTIVE") {
         alert("Sesi responder aktif diperlukan.");
@@ -20225,11 +20581,7 @@ function submitTeacherAttendance() {
     const classSel = document.getElementById('rg_classId');
     const classId = classSel ? classSel.value.trim() : "";
 
-    // Read all checked period checkboxes (Jam ke-1 sampai Jam ke-10)
-    const checkedBoxes = Array.from(document.querySelectorAll('input[name="rg_period"]:checked, .rg-period-checkbox:checked'));
-    const periods = Array.from(new Set(checkedBoxes.map(function(cb) { return cb.value.trim(); })))
-        .filter(function(v) { return /^(?:[1-9]|10)$/.test(v); })
-        .sort(function(a, b) { return Number(a) - Number(b); });
+    const periods = getSelectedResponderPeriods();
 
     const statusSel = document.getElementById('rg_status');
     const status = statusSel ? statusSel.value : "Hadir";
@@ -20272,6 +20624,19 @@ function submitTeacherAttendance() {
         return;
     }
 
+    const submitData = { teacherId, classId, periods, status, subject, materi, note };
+
+    // 2. Soft-Guard Schedule Verification (BUG 64): warn cleanly if mismatched, allow conscious substitute override
+    const evalRes = evaluateResponderScheduleMatch();
+    if (evalRes.status === 'mismatch') {
+        openResponderScheduleConfirmDialog(evalRes, submitData);
+        return;
+    }
+
+    executeTeacherAttendanceSubmit(submitData);
+}
+
+function executeTeacherAttendanceSubmit({ teacherId, classId, periods, status, subject, materi, note }) {
     const token = sessionStorage.getItem("SIMATA_TOKEN");
     if (!token) {
         alert("Token sesi tidak ditemukan. Silakan login kembali.");
@@ -20393,6 +20758,7 @@ function resetTeacherAttendanceForm() {
     if (preview) preview.src = "";
     const schedBanner = document.getElementById('rg_scheduleAssistBanner');
     if (schedBanner) schedBanner.style.display = "none";
+    updateResponderScheduleMatchIndicator();
     stopTeacherCameraStream();
     setTeacherCameraMode("idle");
     setTeacherCameraBadge("Siap Presensi", "neutral");
