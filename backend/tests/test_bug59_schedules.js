@@ -319,6 +319,8 @@ function assertFrontendSchedulesIntegrity() {
   assert.ok(css.includes('.sched-workspace') && css.includes('.sched-timeline-card'), 'dashboard.css must define desktop matrix & mobile timeline schedule styles');
   assert.ok(css.includes('body.simata-printing-schedule > *:not(#schedPrintSheet)'), 'Print media styles must isolate schedule print sheet');
   assert.ok(css.includes('@page simata-sched-landscape') && css.includes('.sched-print-pair-table') && css.includes('.sched-print-legend-table'), 'Print layout must enforce 1-page A4 landscape paired-day matrix with right-hand teacher legend');
+  assert.ok(html.includes('id="schedFilterToggleBtn"') && html.includes('id="schedClassPills"') && html.includes('id="schedModeLoadBtn"'), 'Mobile BUG 60 schedule UI must provide collapsible filter accordion, class pills & Beban Guru tab');
+  assert.ok(css.includes('#schedPrintBtn') && css.includes('.sched-title-wrap') && css.includes('.sched-filter-card.is-mobile-collapsed .sched-filter-body'), 'Mobile CSS must hide print/import buttons, remove 280px gap & collapse filter card cleanly');
 
   let braceDepth = 0;
   for (const ch of css) {

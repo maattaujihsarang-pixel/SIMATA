@@ -812,7 +812,7 @@ html, body {
   }
 }
 </style>
-  <link rel="stylesheet" href="/css/dashboard.css?v=bug59b">
+  <link rel="stylesheet" href="/css/dashboard.css?v=bug60a">
   <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
   <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
@@ -3187,31 +3187,33 @@ html, body {
           </dialog>
         </section>
 
-        <!-- SCHEDULES CONTENT (BUG 59: JADWAL PELAJARAN DESKTOP + MOBILE) -->
+        <!-- SCHEDULES CONTENT (BUG 59 / BUG 60: JADWAL PELAJARAN DESKTOP + MOBILE) -->
         <section id="schedulesContent" class="content" style="display:none;">
           <div class="section-heading sched-header">
             <div class="sched-title-wrap">
               <span class="section-label">DATA &amp; AKADEMIK</span>
               <h2>Jadwal Pelajaran</h2>
-              <p class="sched-subtitle">Pengaturan jadwal mingguan per Tahun Ajaran &amp; Semester (Sabtu–Kamis), terintegrasi dengan Responder Guru &amp; Laporan Kinerja.</p>
+              <p class="sched-subtitle" id="schedHeaderSub">Pengaturan jadwal mingguan per Tahun Ajaran &amp; Semester (Sabtu–Kamis), terintegrasi dengan Responder Guru &amp; Laporan Kinerja.</p>
             </div>
             <div class="sched-header-actions">
-              <button type="button" class="sched-btn sched-btn-soft" id="schedSeedBtn" style="display:none;">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/></svg>
-                <span>Muat Jadwal 2026/2027</span>
-              </button>
-              <button type="button" class="sched-btn sched-admin-only" id="schedCopyBtn" style="display:none;">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                <span>Salin Tahun/Semester</span>
-              </button>
-              <button type="button" class="sched-btn sched-admin-only" id="schedMasterBtn" style="display:none;">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                <span>Master Mapel &amp; Jam</span>
-              </button>
-              <button type="button" class="sched-btn sched-admin-only" id="schedImportBtn" style="display:none;">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                <span>Import CSV</span>
-              </button>
+              <div class="sched-admin-bar sched-admin-only" id="schedAdminBar" style="display:none;">
+                <button type="button" class="sched-btn sched-btn-soft" id="schedSeedBtn" style="display:none;">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/></svg>
+                  <span>Muat Jadwal 2026/2027</span>
+                </button>
+                <button type="button" class="sched-btn" id="schedCopyBtn">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  <span>Salin Semester</span>
+                </button>
+                <button type="button" class="sched-btn" id="schedMasterBtn">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                  <span>Master Mapel &amp; Jam</span>
+                </button>
+                <button type="button" class="sched-btn" id="schedImportBtn">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  <span>Import CSV</span>
+                </button>
+              </div>
               <button type="button" class="sched-btn" id="schedRefreshBtn">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
                 <span>Muat Ulang</span>
@@ -3223,8 +3225,24 @@ html, body {
             </div>
           </div>
 
-          <div class="sched-filter-card" role="region" aria-label="Filter Jadwal Pelajaran">
-            <div class="sched-filter-top">
+          <div id="schedFilterCard" class="sched-filter-card is-mobile-collapsed" role="region" aria-label="Filter Jadwal Pelajaran">
+            <button type="button" class="mobile-filter-toggle-btn" id="schedFilterToggleBtn" aria-expanded="false" aria-controls="schedFilterBody">
+              <div class="mobile-filter-toggle-left">
+                <span class="mobile-filter-icon-wrap" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                </span>
+                <div class="mobile-filter-title-group">
+                  <span class="mobile-filter-title" id="schedFilterMobileTitle">Tahun Ajaran Aktif</span>
+                  <span class="mobile-filter-subtitle" id="schedFilterMobileSub">Memuat ringkasan jadwal...</span>
+                </div>
+              </div>
+              <div class="mobile-filter-toggle-right">
+                <span class="mobile-filter-action-pill">Filter</span>
+                <svg class="mobile-filter-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+            </button>
+
+            <div class="sched-filter-body" id="schedFilterBody">
               <div class="sched-filter-block">
                 <label for="schedYearSelect" class="sched-filter-label">Tahun Ajaran</label>
                 <select id="schedYearSelect" class="sched-select"></select>
@@ -3236,14 +3254,28 @@ html, body {
                   <button type="button" class="sched-seg-btn" data-semester="GENAP">Genap</button>
                 </div>
               </div>
+              <div class="sched-filter-block" style="flex:1 1 220px;">
+                <label for="schedSearchInput" class="sched-filter-label">Pencarian Cepat</label>
+                <search class="sched-search-box">
+                  <svg class="sched-search-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <input type="search" id="schedSearchInput" placeholder="Cari mapel atau nama guru..." aria-label="Cari mata pelajaran atau guru">
+                </search>
+              </div>
+            </div>
+          </div>
+
+          <div class="sched-always-controls" role="region" aria-label="Navigasi Tampilan dan Hari">
+            <div class="sched-mode-context-row">
               <div class="sched-filter-block">
                 <span class="sched-filter-label">Mode Tampilan</span>
                 <div class="sched-seg-group" id="schedModeGroup" role="group" aria-label="Mode Tampilan Jadwal">
-                  <button type="button" class="sched-seg-btn active" data-mode="matrix">Matriks Kelas</button>
+                  <button type="button" class="sched-seg-btn sched-desktop-only active" data-mode="matrix">Matriks Kelas</button>
                   <button type="button" class="sched-seg-btn" data-mode="class">Per Kelas</button>
                   <button type="button" class="sched-seg-btn" data-mode="teacher" id="schedModeTeacherBtn">Per Guru</button>
+                  <button type="button" class="sched-seg-btn sched-mobile-only" data-mode="load" id="schedModeLoadBtn">Beban Guru</button>
                 </div>
               </div>
+              <div class="sched-class-pills" id="schedClassPills" role="group" aria-label="Pilih Kelas Cepat"></div>
               <div class="sched-filter-block" id="schedClassFilterWrap" style="display:none;">
                 <label for="schedClassSelect" class="sched-filter-label">Pilih Kelas</label>
                 <select id="schedClassSelect" class="sched-select"></select>
@@ -3256,10 +3288,6 @@ html, body {
 
             <div class="sched-filter-days-row">
               <div class="sched-day-pills" id="schedDayPills" role="group" aria-label="Filter Hari Aktif"></div>
-              <search class="sched-search-box">
-                <svg class="sched-search-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                <input type="search" id="schedSearchInput" placeholder="Cari mapel atau nama guru..." aria-label="Cari mata pelajaran atau guru">
-              </search>
             </div>
           </div>
 
@@ -12377,11 +12405,31 @@ function showSchedulesView(opts) {
         return state.dayFilter;
     }
 
+    function enforceResponsiveViewMode() {
+        const mobile = isMobileViewport();
+        if (mobile) {
+            if (state.viewMode === 'matrix') {
+                const viewerTid = state.data && state.data.viewer && state.data.viewer.teacher_id;
+                state.viewMode = (viewerTid && !isUserAdmin()) ? 'teacher' : 'class';
+                if (viewerTid && state.viewMode === 'teacher') state.selectedTeacherId = viewerTid;
+            }
+            if (state.dayFilter === 'ALL') {
+                state.dayFilter = 'TODAY';
+            }
+        } else if (state.viewMode === 'load') {
+            state.viewMode = 'matrix';
+        }
+    }
+
     function syncRoleAndHeaderControls() {
         const admin = isUserAdmin();
         document.querySelectorAll('.sched-admin-only').forEach(function(el) {
-            el.style.display = admin ? 'inline-flex' : 'none';
+            el.style.display = admin ? '' : 'none';
         });
+        const adminBar = document.getElementById('schedAdminBar');
+        if (adminBar) {
+            adminBar.style.display = admin ? '' : 'none';
+        }
         const seedBtn = document.getElementById('schedSeedBtn');
         if (seedBtn) {
             const empty = !state.data || !Array.isArray(state.data.slots) || state.data.slots.length === 0;
@@ -12392,11 +12440,20 @@ function showSchedulesView(opts) {
             const isGuruPersonal = state.data && state.data.viewer && state.data.viewer.teacher_id && !admin;
             tModeBtn.textContent = isGuruPersonal ? 'Jadwal Saya' : 'Per Guru';
         }
+        const subEl = document.getElementById('schedHeaderSub');
+        if (subEl && state.data && state.data.meta) {
+            const semName = state.data.meta.semester === 'GENAP' ? 'Genap' : 'Ganjil';
+            subEl.textContent = isMobileViewport()
+                ? ('TA ' + (state.data.meta.academic_year_id || '2026/2027') + ' • Semester ' + semName)
+                : 'Pengaturan jadwal mingguan per Tahun Ajaran & Semester (Sabtu–Kamis), terintegrasi dengan Responder Guru & Laporan Kinerja.';
+        }
     }
 
     function renderFilters() {
         if (!state.data) return;
+        enforceResponsiveViewMode();
         const meta = state.data.meta || {};
+        const sum = state.data.summary || {};
         const years = Array.isArray(meta.academic_years) ? meta.academic_years : [];
         const yearSel = document.getElementById('schedYearSelect');
         if (yearSel) {
@@ -12408,6 +12465,22 @@ function showSchedulesView(opts) {
         }
 
         state.semester = meta.semester || 'GANJIL';
+        const semLabel = state.semester === 'GENAP' ? 'Genap' : 'Ganjil';
+        const fTitle = document.getElementById('schedFilterMobileTitle');
+        const fSub = document.getElementById('schedFilterMobileSub');
+        if (fTitle) fTitle.textContent = 'TA ' + (meta.academic_year_id || '2026/2027') + ' • ' + semLabel;
+        if (fSub) {
+            const qText = (state.searchQuery || '').trim();
+            fSub.textContent = qText
+                ? ('Pencarian: "' + qText + '"')
+                : ((sum.kbm_jp || 0) + ' KBM JP • ' + (sum.conflict_count || 0) + ' Bentrok');
+        }
+
+        const sectionEl = document.getElementById('schedulesContent');
+        if (sectionEl) {
+            sectionEl.classList.toggle('is-mobile-load-mode', isMobileViewport() && state.viewMode === 'load');
+        }
+
         document.querySelectorAll('#schedSemesterGroup .sched-seg-btn').forEach(function(btn) {
             btn.classList.toggle('active', btn.getAttribute('data-semester') === state.semester);
         });
@@ -12416,18 +12489,26 @@ function showSchedulesView(opts) {
             btn.classList.toggle('active', btn.getAttribute('data-mode') === state.viewMode);
         });
 
-        // Class selector (for Per Kelas)
+        // Class selector (for Per Kelas: select on desktop, quick pill bar on mobile)
         const classes = Array.isArray(state.data.classes) ? state.data.classes : [];
         const classWrap = document.getElementById('schedClassFilterWrap');
         const classSel = document.getElementById('schedClassSelect');
+        const classPillsWrap = document.getElementById('schedClassPills');
+        if (!state.selectedClassId || !classes.some(function(c) { return c.class_id === state.selectedClassId; })) {
+            state.selectedClassId = classes[0] ? classes[0].class_id : '';
+        }
         if (classWrap && classSel) {
             classWrap.style.display = state.viewMode === 'class' ? 'flex' : 'none';
-            if (!state.selectedClassId || !classes.some(function(c) { return c.class_id === state.selectedClassId; })) {
-                state.selectedClassId = classes[0] ? classes[0].class_id : '';
-            }
             classSel.innerHTML = classes.map(function(c) {
                 const sel = c.class_id === state.selectedClassId ? ' selected' : '';
                 return '<option value="' + esc(c.class_id) + '"' + sel + '>' + esc(c.class_name) + '</option>';
+            }).join('');
+        }
+        if (classPillsWrap) {
+            classPillsWrap.classList.toggle('is-visible-class-mode', state.viewMode === 'class');
+            classPillsWrap.innerHTML = classes.map(function(c) {
+                const isSel = c.class_id === state.selectedClassId;
+                return '<button type="button" class="sched-class-pill' + (isSel ? ' active' : '') + '" data-class-pill="' + esc(c.class_id) + '">' + esc(c.class_name) + '</button>';
             }).join('');
         }
 
@@ -12458,8 +12539,9 @@ function showSchedulesView(opts) {
             const todayNum = meta.today_day_of_week;
             const mobile = isMobileViewport();
 
-            let pillsHtml = '<button type="button" class="sched-day-pill' + (activeDay === 'ALL' ? ' active' : '') + '" data-day="ALL">' +
-                (mobile ? 'Minggu' : 'Semua Hari (6 Hari)') + '</button>';
+            let pillsHtml = mobile
+                ? ''
+                : '<button type="button" class="sched-day-pill' + (activeDay === 'ALL' ? ' active' : '') + '" data-day="ALL">Semua Hari (6 Hari)</button>';
 
             days.forEach(function(d) {
                 const isToday = Number(d.day_of_week) === Number(todayNum);
@@ -12584,7 +12666,13 @@ function showSchedulesView(opts) {
                 ? '<button type="button" class="sched-btn" data-slot-day="' + dayObj.day_of_week + '" data-slot-period="' + p.period_number + '" data-slot-class="' + esc(targetClass.class_id) + '" style="min-height:36px;padding:0 10px;">' + (slot ? 'Ubah' : 'Isi') + '</button>'
                 : '';
 
-            return '<div class="sched-timeline-card' + (isLive ? ' is-live' : '') + (slot && !matchesSearch(slot) ? ' is-search-dimmed' : '') + '">' +
+            const tone = slot ? (slot.subject_category !== 'KBM' ? 'slate' : (slot.color_tone || 'emerald')) : 'slate';
+            const isNonKbm = Boolean(slot && slot.subject_category !== 'KBM');
+
+            return '<div class="sched-timeline-card tone-' + esc(tone) +
+                (isNonKbm ? ' is-nonkbm' : '') +
+                (isLive ? ' is-live' : '') +
+                (slot && !matchesSearch(slot) ? ' is-search-dimmed' : '') + '">' +
                 '<div class="sched-timeline-time">' +
                     '<span class="sched-period-num">' + esc(p.label) + '</span>' +
                     '<span class="sched-period-time">' + esc(p.start_time + '–' + p.end_time) + '</span>' +
@@ -12594,7 +12682,7 @@ function showSchedulesView(opts) {
                         '<strong style="font-size:13.5px;color:#0f172a;">' + esc(titleText) + '</strong>' +
                         badgeHtml +
                     '</div>' +
-                    '<span style="font-size:12px;color:#475569;">' + esc(subText) + '</span>' +
+                    '<span style="font-size:12px;color:#475569;line-height:1.35;">' + esc(subText) + '</span>' +
                 '</div>' +
                 (actionBtn ? '<div class="sched-timeline-actions">' + actionBtn + '</div>' : '') +
             '</div>';
@@ -13229,10 +13317,33 @@ function showSchedulesView(opts) {
         if (state.initialized) return;
         state.initialized = true;
 
+        const filterToggleBtn = document.getElementById('schedFilterToggleBtn');
+        if (filterToggleBtn) {
+            filterToggleBtn.addEventListener('click', function() {
+                if (typeof toggleMobileFilterCard === 'function') {
+                    toggleMobileFilterCard('schedFilterCard');
+                }
+            });
+        }
+
+        if (typeof window.matchMedia === 'function') {
+            const mq = window.matchMedia('(max-width: 768px)');
+            const onViewportChange = function() {
+                if (!state.data) return;
+                syncRoleAndHeaderControls();
+                renderFilters();
+                renderBoard();
+                renderAsideSummary();
+            };
+            if (typeof mq.addEventListener === 'function') mq.addEventListener('change', onViewportChange);
+            else if (typeof mq.addListener === 'function') mq.addListener(onViewportChange);
+        }
+
         const yearSel = document.getElementById('schedYearSelect');
         if (yearSel) {
             yearSel.addEventListener('change', function() {
                 state.academicYearId = yearSel.value;
+                if (typeof collapseMobileFilterOnApply === 'function') collapseMobileFilterOnApply('schedFilterCard');
                 loadSchedulesData();
             });
         }
@@ -13243,6 +13354,7 @@ function showSchedulesView(opts) {
                 const btn = e.target.closest('[data-semester]');
                 if (!btn) return;
                 state.semester = btn.getAttribute('data-semester');
+                if (typeof collapseMobileFilterOnApply === 'function') collapseMobileFilterOnApply('schedFilterCard');
                 loadSchedulesData();
             });
         }
@@ -13254,12 +13366,20 @@ function showSchedulesView(opts) {
                 if (!btn) return;
                 state.viewMode = btn.getAttribute('data-mode');
                 state.mobileDefaultApplied = true;
-                if (state.viewMode === 'matrix' && !isMobileViewport() && state.dayFilter === 'TODAY') {
-                    state.dayFilter = 'TODAY';
-                }
+                renderFilters();
+                if (state.viewMode !== 'load') renderBoard();
+                renderAsideSummary();
+            });
+        }
+
+        const classPills = document.getElementById('schedClassPills');
+        if (classPills) {
+            classPills.addEventListener('click', function(e) {
+                const pill = e.target.closest('[data-class-pill]');
+                if (!pill) return;
+                state.selectedClassId = pill.getAttribute('data-class-pill');
                 renderFilters();
                 renderBoard();
-                renderAsideSummary();
             });
         }
 
@@ -13267,6 +13387,7 @@ function showSchedulesView(opts) {
         if (classSel) {
             classSel.addEventListener('change', function() {
                 state.selectedClassId = classSel.value;
+                renderFilters();
                 renderBoard();
             });
         }
@@ -13296,7 +13417,15 @@ function showSchedulesView(opts) {
         if (searchInput) {
             searchInput.addEventListener('input', function() {
                 state.searchQuery = searchInput.value;
-                renderBoard();
+                const fSub = document.getElementById('schedFilterMobileSub');
+                const sum = (state.data && state.data.summary) || {};
+                const qText = (state.searchQuery || '').trim();
+                if (fSub) {
+                    fSub.textContent = qText
+                        ? ('Pencarian: "' + qText + '"')
+                        : ((sum.kbm_jp || 0) + ' KBM JP • ' + (sum.conflict_count || 0) + ' Bentrok');
+                }
+                if (state.viewMode !== 'load') renderBoard();
             });
         }
 

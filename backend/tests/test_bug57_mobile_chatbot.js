@@ -35,7 +35,7 @@ async function runBug57MobileChatbotTests() {
 
   // 2. Cache-buster updated
   assert.ok(
-    /\/css\/dashboard\.css\?v=bug5[789][a-z]*/.test(html),
+    /\/css\/dashboard\.css\?v=bug(?:5[789]|6\d)[a-z]*/.test(html),
     'dashboard.html must reference latest versioned /css/dashboard.css (?v=bug57a+)'
   );
 

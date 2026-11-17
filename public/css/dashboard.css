@@ -5230,6 +5230,32 @@ dialog.rpt-tazir-dialog::backdrop {
   gap: 8px;
 }
 
+.sched-admin-bar {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.sched-always-controls {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+}
+
+.sched-mode-context-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px 20px;
+}
+
 .sched-btn {
   display: inline-flex;
   align-items: center;
@@ -5442,27 +5468,40 @@ dialog.rpt-tazir-dialog::backdrop {
   background: #bbf7d0;
 }
 
+.sched-mobile-only {
+  display: none;
+}
+
+.sched-filter-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px 20px;
+  width: 100%;
+}
+
 .sched-search-box {
   position: relative;
   min-width: 220px;
   flex: 0 1 260px;
 }
 
-.sched-search-box input {
+.dashboard-layout #schedulesContent .sched-search-box input {
   width: 100%;
   min-height: 36px;
-  padding: 0 12px 0 34px;
+  padding: 0 12px 0 38px !important;
   border-radius: 10px;
   border: 1px solid #cbd5e1;
   font-size: 12.5px;
   font-family: inherit;
   color: #0f172a;
+  background: #ffffff;
   box-sizing: border-box;
 }
 
 .sched-search-icon {
   position: absolute;
-  left: 10px;
+  left: 12px;
   top: 50%;
   transform: translateY(-50%);
   width: 15px;
@@ -5867,6 +5906,35 @@ dialog.rpt-tazir-dialog::backdrop {
 }
 
 /* Mobile / Single-Day Timeline Cards */
+.sched-class-pills {
+  display: none;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.sched-class-pill {
+  min-height: 38px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  font-size: 12.5px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sched-class-pill.active {
+  background: #ecfdf5;
+  border-color: #166534;
+  color: #166534;
+}
+
 .sched-timeline-list {
   padding: 14px 16px;
   display: flex;
@@ -5875,19 +5943,46 @@ dialog.rpt-tazir-dialog::backdrop {
 }
 
 .sched-timeline-card {
+  position: relative;
   display: flex;
   align-items: stretch;
   gap: 12px;
-  padding: 12px 14px;
+  padding: 12px 14px 12px 16px;
   border-radius: 12px;
   border: 1px solid #e2e8f0;
   background: #ffffff;
+  overflow: hidden;
+}
+
+.sched-timeline-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 4px;
+  border-radius: 0 4px 4px 0;
+  background: #166534;
+}
+
+.sched-timeline-card.tone-teal::before { background: #0d9488; }
+.sched-timeline-card.tone-indigo::before { background: #4f46e5; }
+.sched-timeline-card.tone-sky::before { background: #0284c7; }
+.sched-timeline-card.tone-amber::before { background: #d97706; }
+.sched-timeline-card.tone-rose::before { background: #e11d48; }
+.sched-timeline-card.tone-violet::before { background: #7c3aed; }
+.sched-timeline-card.tone-slate::before,
+.sched-timeline-card.is-nonkbm::before { background: #94a3b8; }
+
+.sched-timeline-card.is-nonkbm {
+  background: #f8fafc;
+  border-color: #cbd5e1;
 }
 
 .sched-timeline-card.is-live {
   border-color: #166534;
   background: #f0fdf4;
-  box-shadow: 0 4px 14px rgba(22, 101, 52, 0.1);
+  box-shadow: 0 4px 14px rgba(22, 101, 52, 0.12);
 }
 
 .sched-timeline-card.is-break {
@@ -5895,6 +5990,15 @@ dialog.rpt-tazir-dialog::backdrop {
   border-color: #fde68a;
   justify-content: space-between;
   align-items: center;
+  padding: 10px 14px;
+}
+
+.sched-timeline-card.is-break::before {
+  display: none;
+}
+
+.sched-timeline-card.is-search-dimmed {
+  opacity: 0.32;
 }
 
 .sched-timeline-time {
@@ -6201,37 +6305,172 @@ dialog.sched-dialog[open] {
 }
 
 @media (max-width: 768px) {
-  .sched-header {
-    gap: 12px;
+  /* Hide desktop Print, Import CSV & Matrix-only UI on Mobile per SIMATA standard */
+  #schedPrintBtn,
+  #schedImportBtn,
+  .sched-desktop-only {
+    display: none !important;
   }
 
-  .sched-header-actions {
-    width: 100%;
+  .sched-mobile-only {
+    display: inline-flex !important;
+  }
+
+  /* Compact 2-col Mobile Header matching Laporan Akademik (eliminates vertical gap) */
+  .dashboard-layout #schedulesContent .section-heading.sched-header {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    column-gap: 10px !important;
+    row-gap: 4px !important;
+    align-items: center !important;
+    margin-bottom: 12px !important;
+  }
+
+  .dashboard-layout #schedulesContent .section-heading > .sched-title-wrap {
+    display: contents !important;
+    width: auto !important;
+    flex: none !important;
+    min-height: 0 !important;
+    height: auto !important;
+  }
+
+  .dashboard-layout #schedulesContent .sched-title-wrap > .section-label {
+    grid-column: 1;
+    grid-row: 1;
+    display: block !important;
+    margin: 0 !important;
+    font-size: 10.5px;
+    line-height: 1.2;
+  }
+
+  .dashboard-layout #schedulesContent .sched-title-wrap > h2 {
+    grid-column: 1;
+    grid-row: 2;
+    margin: 0 !important;
+    font-size: 17px !important;
+    line-height: 1.25 !important;
+  }
+
+  .dashboard-layout #schedulesContent .sched-title-wrap > .sched-subtitle {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    margin: 2px 0 0 !important;
+    font-size: 12px !important;
+    line-height: 1.4 !important;
+    color: #64748b;
+  }
+
+  .dashboard-layout #schedulesContent .section-heading > .sched-header-actions {
+    display: contents !important;
+  }
+
+  .dashboard-layout #schedulesContent #schedRefreshBtn {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: center;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: auto !important;
+    min-height: 34px !important;
+    height: 34px !important;
+    padding: 0 13px !important;
+    border-radius: 9999px !important;
+    border: 1px solid #6ee7b7 !important;
+    background: #ecfdf5 !important;
+    color: #047857 !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    gap: 5px !important;
+    white-space: nowrap !important;
+  }
+
+  .dashboard-layout #schedulesContent #schedRefreshBtn svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .dashboard-layout #schedulesContent .sched-admin-bar {
+    grid-column: 1 / -1;
+    grid-row: 4;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
+    width: 100%;
+    margin-top: 8px;
   }
 
-  .sched-header-actions .sched-btn {
+  .dashboard-layout #schedulesContent .sched-admin-bar .sched-btn {
     width: 100%;
-    min-height: 44px;
+    min-height: 38px;
     padding: 0 10px;
     font-size: 12px;
+    border-radius: 10px;
   }
 
+  .dashboard-layout #schedulesContent .sched-admin-bar #schedSeedBtn {
+    grid-column: 1 / -1;
+  }
+
+  /* Collapsible Mobile Filter Accordion matching SIMATA Student/Teacher Filter Card */
   .sched-filter-card {
-    padding: 14px;
+    padding: 0 !important;
+    margin-bottom: 12px !important;
+    gap: 0 !important;
+    overflow: hidden;
   }
 
-  .sched-filter-top {
+  .sched-filter-card.is-mobile-collapsed .sched-filter-body {
+    display: none !important;
+  }
+
+  .sched-filter-body {
+    padding: 0 14px 14px;
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: 10px;
+    border-top: 1px solid #f1f5f9;
+  }
+
+  .sched-filter-body .sched-filter-block:first-child {
+    padding-top: 10px;
   }
 
   .sched-select {
     min-height: 44px;
     width: 100%;
+    font-size: 14px;
+  }
+
+  .sched-search-box {
+    width: 100%;
+    flex: 1 1 100%;
+  }
+
+  .dashboard-layout #schedulesContent .sched-search-box input {
+    min-height: 42px;
+    padding: 0 12px 0 38px !important;
+    font-size: 13px;
+  }
+
+  /* Always-Visible Mobile Controls Strip */
+  .sched-always-controls {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    margin-bottom: 12px;
+    gap: 10px;
+  }
+
+  .sched-mode-context-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .sched-always-controls .sched-filter-label {
+    display: none;
   }
 
   .sched-seg-group {
@@ -6244,48 +6483,105 @@ dialog.sched-dialog[open] {
   .sched-seg-btn {
     min-height: 38px;
     padding: 0 6px;
-    font-size: 12px;
+    font-size: 12.5px;
+    justify-content: center;
+  }
+
+  #schedClassFilterWrap {
+    display: none !important;
+  }
+
+  .sched-class-pills.is-visible-class-mode {
+    display: grid;
+  }
+
+  .sched-filter-days-row {
+    padding-top: 0;
+    border-top: none;
+  }
+
+  .sched-day-pills {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 5px;
+    overflow-x: visible;
+    padding-bottom: 0;
   }
 
   .sched-day-pill {
-    min-height: 38px;
-    padding: 0 12px;
+    min-height: 36px;
+    padding: 0 4px;
+    justify-content: center;
+    font-size: 12px;
+    gap: 4px;
   }
 
-  .sched-search-box {
-    width: 100%;
-    flex: 1 1 100%;
+  /* Single-View Switching between Main Schedule Board & Beban Guru Tab */
+  .dashboard-layout #schedulesContent:not(.is-mobile-load-mode) .sched-aside-card {
+    display: none;
   }
 
-  .sched-search-box input {
-    min-height: 42px;
+  .dashboard-layout #schedulesContent.is-mobile-load-mode .sched-main-card {
+    display: none;
   }
 
-  .sched-weekly-grid {
-    grid-template-columns: minmax(0, 1fr);
+  .dashboard-layout #schedulesContent.is-mobile-load-mode .sched-always-controls .sched-filter-days-row,
+  .dashboard-layout #schedulesContent.is-mobile-load-mode #schedClassPills,
+  .dashboard-layout #schedulesContent.is-mobile-load-mode #schedTeacherFilterWrap {
+    display: none !important;
   }
 
+  .sched-card-head {
+    padding: 12px 14px;
+  }
+
+  .sched-timeline-list {
+    padding: 12px 14px;
+    gap: 9px;
+  }
+
+  .sched-timeline-card {
+    padding: 11px 12px 11px 15px;
+    gap: 10px;
+  }
+
+  .sched-timeline-time {
+    width: 68px;
+    padding-right: 8px;
+  }
+
+  .sched-weekly-grid,
   .sched-form-grid,
   .sched-period-check-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .sched-timeline-card {
-    padding: 12px;
-    gap: 10px;
-  }
-
-  .sched-timeline-time {
-    width: 70px;
+  .sched-weekly-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
 @media (pointer: coarse) {
-  .sched-btn,
-  .sched-day-pill,
   .sched-dialog-close,
   .rg-sched-pill {
     min-height: 44px;
+  }
+
+  .sched-day-pill,
+  .sched-class-pill,
+  .sched-admin-bar .sched-btn {
+    min-height: 40px;
+  }
+
+  .dashboard-layout #schedulesContent #schedRefreshBtn {
+    position: relative;
+  }
+
+  .dashboard-layout #schedulesContent #schedRefreshBtn::after {
+    content: '';
+    position: absolute;
+    inset: -5px 0;
   }
 }
 
