@@ -5204,16 +5204,16 @@ dialog.rpt-tazir-dialog::backdrop {
 
 .sched-header {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px 16px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
   margin-bottom: 18px;
 }
 
 .sched-title-wrap {
-  min-width: 220px;
-  flex: 1 1 240px;
+  width: 100%;
+  min-width: 0;
+  flex: none;
 }
 
 .sched-subtitle {
@@ -5227,15 +5227,16 @@ dialog.rpt-tazir-dialog::backdrop {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: flex-end;
-  gap: 6px;
+  justify-content: flex-start;
+  width: 100%;
+  gap: 8px;
 }
 
 .sched-admin-bar {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .sched-mobile-accordion,
@@ -5405,14 +5406,20 @@ dialog.rpt-tazir-dialog::backdrop {
 }
 
 .sched-seg-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   min-height: 32px;
   padding: 0 12px;
+  margin: 0;
   border: none;
   border-radius: 7px;
   background: transparent;
   color: #475569;
   font-size: 12.5px;
   font-weight: 600;
+  line-height: 1.2;
   font-family: inherit;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -6115,40 +6122,65 @@ dialog.sched-dialog[open] {
 }
 
 .sched-dialog-head {
-  padding: 15px 18px;
+  padding: 14px 18px;
   border-bottom: 1px solid #e2e8f0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   background: #f8fafc;
+  flex-shrink: 0;
 }
 
 .sched-dialog-title {
   margin: 0;
+  padding: 0;
   font-size: 16px;
   font-weight: 700;
+  line-height: 1.3;
   color: #0f172a;
+  min-width: 0;
 }
 
 .sched-dialog-close {
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0;
+  margin: 0;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
   background: #ffffff;
   color: #475569;
-  font-size: 20px;
   line-height: 1;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.sched-dialog-close:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+.sched-dialog-close svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+  flex-shrink: 0;
 }
 
 .sched-dialog-body {
   padding: 16px 18px;
   overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  scrollbar-gutter: stable;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -6158,6 +6190,7 @@ dialog.sched-dialog[open] {
   padding: 12px 18px;
   border-top: 1px solid #e2e8f0;
   background: #f8fafc;
+  flex-shrink: 0;
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
@@ -6319,6 +6352,8 @@ dialog.sched-dialog[open] {
 
   .sched-mobile-only {
     display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 
   /* Compact 2-col Mobile Header matching Laporan Akademik (eliminates vertical gap) */
@@ -6515,10 +6550,15 @@ dialog.sched-dialog[open] {
   }
 
   .sched-seg-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     min-height: 38px;
     padding: 0 6px;
+    margin: 0;
     font-size: 12.5px;
-    justify-content: center;
+    line-height: 1.2;
+    text-align: center;
   }
 
   #schedClassFilterWrap {
@@ -6596,10 +6636,21 @@ dialog.sched-dialog[open] {
   .sched-weekly-grid {
     grid-template-columns: minmax(0, 1fr);
   }
+
+  #schedSubjectForm {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
 }
 
 @media (pointer: coarse) {
-  .sched-dialog-close,
+  .sched-dialog-close {
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+  }
+
   .rg-sched-pill {
     min-height: 44px;
   }

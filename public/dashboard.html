@@ -812,7 +812,7 @@ html, body {
   }
 }
 </style>
-  <link rel="stylesheet" href="/css/dashboard.css?v=bug60c">
+  <link rel="stylesheet" href="/css/dashboard.css?v=bug60d">
   <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
   <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
@@ -3333,7 +3333,7 @@ html, body {
           <dialog id="schedSlotDialog" class="sched-dialog" closedby="any" aria-labelledby="schedSlotDialogTitle">
             <div class="sched-dialog-head">
               <h3 id="schedSlotDialogTitle" class="sched-dialog-title">Atur Slot Jadwal</h3>
-              <button type="button" class="sched-dialog-close" data-close-dialog="schedSlotDialog" aria-label="Tutup">&times;</button>
+              <button type="button" class="sched-dialog-close" data-close-dialog="schedSlotDialog" aria-label="Tutup"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
             </div>
             <form id="schedSlotForm" class="sched-dialog-body">
               <div id="schedSlotContextBanner" class="sched-info-alert"></div>
@@ -3370,7 +3370,7 @@ html, body {
           <dialog id="schedCopyDialog" class="sched-dialog" closedby="any" aria-labelledby="schedCopyDialogTitle">
             <div class="sched-dialog-head">
               <h3 id="schedCopyDialogTitle" class="sched-dialog-title">Salin Jadwal Tahun Ajaran / Semester</h3>
-              <button type="button" class="sched-dialog-close" data-close-dialog="schedCopyDialog" aria-label="Tutup">&times;</button>
+              <button type="button" class="sched-dialog-close" data-close-dialog="schedCopyDialog" aria-label="Tutup"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
             </div>
             <form id="schedCopyForm" class="sched-dialog-body">
               <div class="sched-info-alert">Salin pengaturan jam belajar, kode guru, dan seluruh matriks jadwal antar tahun ajaran atau semester tanpa input ulang.</div>
@@ -3415,7 +3415,7 @@ html, body {
           <dialog id="schedMasterDialog" class="sched-dialog sched-dialog-wide" closedby="any" aria-labelledby="schedMasterDialogTitle">
             <div class="sched-dialog-head">
               <h3 id="schedMasterDialogTitle" class="sched-dialog-title">Master Mapel, Jam Pelajaran &amp; Kode Guru</h3>
-              <button type="button" class="sched-dialog-close" data-close-dialog="schedMasterDialog" aria-label="Tutup">&times;</button>
+              <button type="button" class="sched-dialog-close" data-close-dialog="schedMasterDialog" aria-label="Tutup"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
             </div>
             <div class="sched-dialog-body">
               <div class="sched-seg-group" id="schedMasterTabs" role="tablist">
@@ -3456,20 +3456,20 @@ html, body {
                   </div>
                   <button type="submit" class="sched-btn sched-btn-primary">Simpan</button>
                 </form>
-                <div id="schedMasterSubjectsList" style="max-height:300px;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px;"></div>
+                <div id="schedMasterSubjectsList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px;"></div>
               </div>
 
               <div id="schedMasterPanePeriods" style="display:none;">
                 <p style="margin:0 0 10px;font-size:12.5px;color:#475569;">Sesuaikan rentang jam pelajaran &amp; waktu istirahat (WIB) untuk semester ini:</p>
-                <div id="schedMasterPeriodsList" style="display:flex;flex-direction:column;gap:8px;max-height:320px;overflow-y:auto;"></div>
-                <div style="margin-top:12px;display:flex;justify-content:flex-end;">
+                <div id="schedMasterPeriodsList" style="display:flex;flex-direction:column;gap:8px;"></div>
+                <div style="margin-top:14px;display:flex;justify-content:flex-end;">
                   <button type="button" class="sched-btn sched-btn-primary" id="schedSavePeriodsBtn">Simpan Pengaturan Jam</button>
                 </div>
               </div>
 
               <div id="schedMasterPaneCodes" style="display:none;">
                 <p style="margin:0 0 10px;font-size:12.5px;color:#475569;">Kode huruf singkat digunakan pada tampilan PDF cetak matriks &amp; impor CSV.</p>
-                <div id="schedMasterCodesList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;max-height:330px;overflow-y:auto;"></div>
+                <div id="schedMasterCodesList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;"></div>
               </div>
             </div>
             <div class="sched-dialog-foot">
@@ -3481,7 +3481,7 @@ html, body {
           <dialog id="schedImportDialog" class="sched-dialog" closedby="any" aria-labelledby="schedImportDialogTitle">
             <div class="sched-dialog-head">
               <h3 id="schedImportDialogTitle" class="sched-dialog-title">Import Jadwal dari CSV</h3>
-              <button type="button" class="sched-dialog-close" data-close-dialog="schedImportDialog" aria-label="Tutup">&times;</button>
+              <button type="button" class="sched-dialog-close" data-close-dialog="schedImportDialog" aria-label="Tutup"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
             </div>
             <form id="schedImportForm" class="sched-dialog-body">
               <div class="sched-info-alert">
