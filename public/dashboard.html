@@ -20643,7 +20643,7 @@ function openQrScanner() {
     isQrScanning = true;
 
     // Pass parent origin for strictly targeted postMessage return
-    const targetUrl = QR_SCANNER_URL + "?v=bug63b&simataOrigin=" + encodeURIComponent(window.location.origin);
+    const targetUrl = QR_SCANNER_URL + "?v=bug63c&simataOrigin=" + encodeURIComponent(window.location.origin);
 
     // Primary mode on same-origin HTTPS: In-page <dialog> iframe
     if (targetUrl.startsWith(window.location.origin) && typeof HTMLDialogElement === 'function') {

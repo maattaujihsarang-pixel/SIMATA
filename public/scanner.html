@@ -668,6 +668,10 @@
 
     // Auto-start camera on page load
     window.addEventListener('DOMContentLoaded', function() {
+      if (window.self !== window.top) {
+        const innerCloseBtn = document.querySelector('.close-btn');
+        if (innerCloseBtn) innerCloseBtn.style.display = 'none';
+      }
       const fileInput = document.getElementById('qrFileInput');
       if (fileInput) {
         fileInput.addEventListener('change', handleQrFileSelected);

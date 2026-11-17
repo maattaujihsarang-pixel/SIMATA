@@ -31,8 +31,8 @@ async function runBug63QrQuickScanTests() {
     'triggerMobileQuickScan must open QR scanner directly while deferring Responder view until a student QR is scanned'
   );
   assert.ok(
-    dashboardHtml.includes('const targetUrl = QR_SCANNER_URL + "?v=bug63b&simataOrigin="'),
-    'openQrScanner must cache-bust /scanner.html with ?v=bug63b'
+    dashboardHtml.includes('const targetUrl = QR_SCANNER_URL + "?v=bug63c&simataOrigin="'),
+    'openQrScanner must cache-bust /scanner.html with ?v=bug63c'
   );
   assert.ok(
     dashboardHtml.includes("document.getElementById('responderQrPanel')") &&
@@ -45,6 +45,11 @@ async function runBug63QrQuickScanTests() {
     (scannerHtml.match(/onclick="triggerQrFileUpload\(\)"/g) || []).length,
     1,
     'scanner.html must render exactly ONE upload QR button (no duplicate inside error screen)'
+  );
+  assert.ok(
+    scannerHtml.includes('window.self !== window.top') &&
+      scannerHtml.includes("document.querySelector('.close-btn')"),
+    'scanner.html must hide inner close button when embedded inside simataResponderGatewayDialog'
   );
   assert.ok(
     scannerHtml.includes('id="qrFileInput"') && scannerHtml.includes('accept="image/*"'),
