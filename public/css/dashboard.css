@@ -5323,7 +5323,7 @@ dialog.rpt-tazir-dialog::backdrop {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: center;
   gap: 12px 16px;
   box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
 }
@@ -5336,11 +5336,31 @@ dialog.rpt-tazir-dialog::backdrop {
 .sched-order-sem { order: 2; }
 .sched-order-mode { order: 3; }
 .sched-order-ctx { order: 4; }
-.sched-order-search {
+.sched-desktop-divider {
   order: 5;
-  flex: 0 0 220px;
-  width: 220px;
+  flex: 1 0 100%;
+  width: 100%;
+  height: 1px;
+  background: #f1f5f9;
+  margin: 0;
+}
+.sched-filter-days-row {
+  order: 6;
+  flex: 1 1 460px;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.sched-order-search {
+  order: 7;
+  flex: 0 0 240px;
+  width: 240px;
   margin-left: auto;
+}
+.sched-order-search > .sched-filter-label {
+  display: none;
 }
 
 .sched-teacher-select-wrap {
@@ -5402,18 +5422,6 @@ dialog.rpt-tazir-dialog::backdrop {
   background: #166534;
   color: #ffffff;
   box-shadow: 0 1px 4px rgba(22, 101, 52, 0.25);
-}
-
-.sched-filter-days-row {
-  order: 10;
-  width: 100%;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding-top: 12px;
-  border-top: 1px solid #f1f5f9;
 }
 
 .sched-day-pills {
@@ -6447,6 +6455,14 @@ dialog.sched-dialog[open] {
     padding-top: 10px;
   }
 
+  .sched-desktop-divider {
+    display: none !important;
+  }
+
+  .sched-order-search > .sched-filter-label {
+    display: block;
+  }
+
   .sched-order-year,
   .sched-order-sem,
   .sched-order-mode,
@@ -6514,6 +6530,8 @@ dialog.sched-dialog[open] {
   }
 
   .sched-filter-days-row {
+    flex: none;
+    width: 100%;
     padding-top: 0;
     border-top: none;
   }
