@@ -31,8 +31,8 @@ async function runBug63QrQuickScanTests() {
     'triggerMobileQuickScan must open QR scanner directly while deferring Responder view until a student QR is scanned'
   );
   assert.ok(
-    dashboardHtml.includes('const targetUrl = QR_SCANNER_URL + "?v=bug63&simataOrigin="'),
-    'openQrScanner must cache-bust /scanner.html with ?v=bug63'
+    dashboardHtml.includes('const targetUrl = QR_SCANNER_URL + "?v=bug63b&simataOrigin="'),
+    'openQrScanner must cache-bust /scanner.html with ?v=bug63b'
   );
   assert.ok(
     dashboardHtml.includes("document.getElementById('responderQrPanel')") &&
@@ -40,7 +40,12 @@ async function runBug63QrQuickScanTests() {
     'processReceivedQrCode must reveal and scroll responderQrPanel when a student QR arrives'
   );
 
-  // 3. Verify Student QR scanner (scanner.html) supports image/gallery upload cleanly
+  // 3. Verify Student QR scanner (scanner.html) supports single clean image/gallery upload button
+  assert.strictEqual(
+    (scannerHtml.match(/onclick="triggerQrFileUpload\(\)"/g) || []).length,
+    1,
+    'scanner.html must render exactly ONE upload QR button (no duplicate inside error screen)'
+  );
   assert.ok(
     scannerHtml.includes('id="qrFileInput"') && scannerHtml.includes('accept="image/*"'),
     'scanner.html must provide an image file/gallery input for student QR upload'
