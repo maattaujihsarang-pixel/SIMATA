@@ -35,6 +35,10 @@ function assertFrontendKtsIntegrity() {
     'id="ktsPreviewCanvas"',
     'id="ktsQuickEditModal"',
     'id="ktsTemplateModal"',
+    'id="ktsEditLayoutBtn"',
+    'id="ktsLayoutEditorModal"',
+    'id="ktsLayoutCanvas"',
+    'DEFAULT_KTS_LAYOUT',
     'id="ktsTpl_headerTitle"',
     'id="ktsBatchPrintModal"',
     'id="f_birthPlace"',
@@ -260,7 +264,30 @@ async function runBug65KtsTests() {
     assert.strictEqual(putSetJson.data.line5_mode, 'both');
     assert.strictEqual(putSetJson.data.headmaster_name, 'KH. Ahmad Sample');
 
-    console.log('3. PASS: Students KTS fields, Excel Template/Import 2-way sync & Settings RBAC verified.');
+    // Invalid layout_config JSON must be rejected with 400
+    const badLayoutRes = await fetch(`${baseUrl}/api/v1/students/kts/settings`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ layout_config: '{bad-json' })
+    });
+    assert.strictEqual(badLayoutRes.status, 400);
+
+    // Valid layout_config JSON must persist in KTS settings
+    const customLayoutStr = JSON.stringify({
+      front: {
+        student_name: { x: 320, y: 280, fontSize: 36, letterSpacing: 1.5, bold: true }
+      }
+    });
+    const goodLayoutRes = await fetch(`${baseUrl}/api/v1/students/kts/settings`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ layout_config: customLayoutStr })
+    });
+    assert.strictEqual(goodLayoutRes.status, 200);
+    const goodLayoutJson = await goodLayoutRes.json();
+    assert.strictEqual(goodLayoutJson.data.layout_config, customLayoutStr);
+
+    console.log('3. PASS: Students KTS fields, Excel Template/Import 2-way sync, layout_config & Settings RBAC verified.');
     console.log('===============================================================');
     console.log('BUG 65 MENU KTS & STUDENT SYNC: ALL TESTS PASSED (GREEN)');
     console.log('===============================================================');

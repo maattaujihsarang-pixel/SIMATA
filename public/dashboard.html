@@ -3558,6 +3558,10 @@ html, body {
               <p class="sched-subtitle">Kelola pratinjau kartu, kelengkapan biodata, pasfoto, dan pencetakan kartu identitas siswa.</p>
             </div>
             <div class="section-actions kts-header-actions">
+              <button type="button" id="ktsEditLayoutBtn" class="kts-btn-outline">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+                <span>Edit Layout KTS</span>
+              </button>
               <button type="button" id="ktsCustomizeTemplateBtn" class="kts-btn-outline">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
                 <span>Kustomisasi Template</span>
@@ -3808,6 +3812,13 @@ html, body {
               <button type="button" onclick="closeKtsTemplateModal()" class="student-modal-close-btn" aria-label="Tutup">&times;</button>
             </div>
             <div class="student-modal-body">
+              <div class="kts-tpl-layout-banner">
+                <div>
+                  <div style="font-size:12.5px;font-weight:700;color:#14532d;">Atur Posisi, Ukuran Font, Jarak &amp; Tebal Teks</div>
+                  <div style="font-size:11.5px;color:#166534;">Geser langsung elemen kartu secara visual atau atur tipografi setiap baris.</div>
+                </div>
+                <button type="button" id="ktsOpenLayoutFromTplBtn" class="kts-btn-outline" style="background:#ffffff;border-color:#16a34a;color:#166534;">Buka Editor Layout Visual (Geser Posisi &amp; Ukuran Font)</button>
+              </div>
               <div class="student-form-grid">
                 <div class="student-form-group student-col-span-2">
                   <label for="ktsTpl_headerTitle" class="student-form-label">Judul Kartu (Header Baris 1)</label>
@@ -3920,6 +3931,169 @@ html, body {
             <div class="student-modal-footer">
               <button type="button" onclick="closeKtsTemplateModal()" class="login-button student-btn-cancel">Batal</button>
               <button type="button" id="ktsTplSaveBtn" class="login-button student-btn-save">Simpan Template</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- KTS MODAL 2B: EDIT LAYOUT VISUAL KTS (DRAG & DROP + TYPOGRAPHY) -->
+        <div id="ktsLayoutEditorModal" class="student-modal-backdrop" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.55);align-items:center;justify-content:center;z-index:10055;">
+          <div class="student-modal-card kts-layout-modal-card">
+            <div class="student-modal-header">
+              <h3 style="margin:0;">Edit Layout KTS Visual</h3>
+              <button type="button" onclick="closeKtsLayoutModal()" class="student-modal-close-btn" aria-label="Tutup">&times;</button>
+            </div>
+            <div class="student-modal-body">
+              <div class="kts-layout-topbar">
+                <div class="kts-side-toggle" role="tablist" aria-label="Pilih sisi layout kartu">
+                  <button type="button" id="ktsLaySideFrontBtn" class="kts-side-btn active">Sisi Depan</button>
+                  <button type="button" id="ktsLaySideBackBtn" class="kts-side-btn">Sisi Belakang</button>
+                </div>
+                <label class="kts-layout-group-check">
+                  <input type="checkbox" id="ktsLayMoveBioGroup" />
+                  <span>Geser 5 baris biodata sekaligus</span>
+                </label>
+                <span id="ktsLayPreviewStudentLabel" class="kts-layout-preview-student">Pratinjau: Siswa Contoh</span>
+              </div>
+
+              <div class="kts-layout-editor-grid">
+                <div class="kts-layout-stage-wrap">
+                  <canvas id="ktsLayoutCanvas" width="1011" height="638" aria-label="Kanvas Editor Layout KTS"></canvas>
+                  <div class="kts-layout-stage-footer">
+                    <p class="kts-layout-hint">Klik &amp; geser langsung teks/foto/QR pada kartu, atau gunakan panel pengatur di sebelah kanan.</p>
+                    <div class="kts-nudge-group">
+                      <button type="button" id="ktsLayNudgeLeft" class="kts-nudge-btn" title="Geser Kiri (2px)">&#9664;</button>
+                      <button type="button" id="ktsLayNudgeUp" class="kts-nudge-btn" title="Geser Atas (2px)">&#9650;</button>
+                      <button type="button" id="ktsLayNudgeDown" class="kts-nudge-btn" title="Geser Bawah (2px)">&#9660;</button>
+                      <button type="button" id="ktsLayNudgeRight" class="kts-nudge-btn" title="Geser Kanan (2px)">&#9654;</button>
+                      <button type="button" id="ktsLayResetElBtn" class="kts-nudge-btn" style="padding:0 10px;">Reset Elemen</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="kts-layout-inspector-card">
+                  <div class="kts-layout-control-row">
+                    <label for="ktsLayElementSelect">Pilih Elemen Kartu</label>
+                    <select id="ktsLayElementSelect" class="input-box"></select>
+                    <div id="ktsLayElementChips" class="kts-layout-el-chips"></div>
+                  </div>
+
+                  <label class="kts-layout-group-check">
+                    <input type="checkbox" id="ktsLayVisibleToggle" checked />
+                    <span>Tampilkan Elemen pada Kartu</span>
+                  </label>
+
+                  <div class="kts-layout-two-col">
+                    <div class="kts-layout-control-row">
+                      <label for="ktsLayPosX">Posisi X</label>
+                      <div class="kts-layout-slider-pair">
+                        <input type="range" id="ktsLayPosX" min="0" max="1011" step="1" />
+                        <input type="number" id="ktsLayPosXNum" min="0" max="1011" step="1" />
+                      </div>
+                    </div>
+                    <div class="kts-layout-control-row">
+                      <label for="ktsLayPosY">Posisi Y</label>
+                      <div class="kts-layout-slider-pair">
+                        <input type="range" id="ktsLayPosY" min="0" max="638" step="1" />
+                        <input type="number" id="ktsLayPosYNum" min="0" max="638" step="1" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div id="ktsLayTypoGroup" style="display:flex;flex-direction:column;gap:10px;border-top:1px solid #e2e8f0;padding-top:10px;">
+                    <div class="kts-layout-two-col">
+                      <div class="kts-layout-control-row">
+                        <label for="ktsLayFontSize">Ukuran Font (px)</label>
+                        <div class="kts-layout-slider-pair">
+                          <input type="range" id="ktsLayFontSize" min="10" max="68" step="0.5" />
+                          <input type="number" id="ktsLayFontSizeNum" min="10" max="68" step="0.5" />
+                        </div>
+                      </div>
+                      <div class="kts-layout-control-row">
+                        <label for="ktsLayLetterSpacing">Jarak Huruf</label>
+                        <div class="kts-layout-slider-pair">
+                          <input type="range" id="ktsLayLetterSpacing" min="-1" max="20" step="0.5" />
+                          <input type="number" id="ktsLayLetterSpacingNum" min="-1" max="20" step="0.5" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="kts-layout-two-col">
+                      <div class="kts-layout-control-row">
+                        <label for="ktsLayLineGap">Jarak Baris (Line-Height)</label>
+                        <div class="kts-layout-slider-pair">
+                          <input type="range" id="ktsLayLineGap" min="12" max="64" step="1" />
+                          <input type="number" id="ktsLayLineGapNum" min="12" max="64" step="1" />
+                        </div>
+                      </div>
+                      <div class="kts-layout-control-row">
+                        <label for="ktsLayMaxWidth">Lebar Area Teks</label>
+                        <div class="kts-layout-slider-pair">
+                          <input type="range" id="ktsLayMaxWidth" min="120" max="960" step="2" />
+                          <input type="number" id="ktsLayMaxWidthNum" min="120" max="960" step="2" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="kts-layout-control-row">
+                      <label>Gaya Teks &amp; Perataan</label>
+                      <div class="kts-style-btn-group">
+                        <button type="button" id="ktsLayBoldBtn" class="kts-style-toggle-btn" title="Tebalkan (Bold)"><strong>B</strong></button>
+                        <button type="button" id="ktsLayItalicBtn" class="kts-style-toggle-btn" title="Miring (Italic)"><em>I</em></button>
+                        <button type="button" id="ktsLayUpperBtn" class="kts-style-toggle-btn" title="Huruf Kapital Semua">AA</button>
+                        <button type="button" id="ktsLayAlignLeftBtn" class="kts-style-toggle-btn" title="Rata Kiri">Kiri</button>
+                        <button type="button" id="ktsLayAlignCenterBtn" class="kts-style-toggle-btn" title="Rata Tengah">Tengah</button>
+                        <button type="button" id="ktsLayAlignRightBtn" class="kts-style-toggle-btn" title="Rata Kanan">Kanan</button>
+                      </div>
+                    </div>
+
+                    <div id="ktsLayUnderlineWrap" class="kts-layout-control-row" style="display:none;">
+                      <label class="kts-layout-group-check">
+                        <input type="checkbox" id="ktsLayUnderlineToggle" checked />
+                        <span>Tampilkan Garis Aksen Bawah Nama</span>
+                      </label>
+                    </div>
+
+                    <div class="kts-layout-control-row">
+                      <label for="ktsLayColorPicker">Warna Teks</label>
+                      <div class="kts-color-swatch-row">
+                        <input type="color" id="ktsLayColorPicker" value="#0f172a" />
+                        <button type="button" class="kts-color-swatch" data-kts-color="#ffffff" style="background:#ffffff;" title="Putih"></button>
+                        <button type="button" class="kts-color-swatch" data-kts-color="#fde047" style="background:#fde047;" title="Emas"></button>
+                        <button type="button" class="kts-color-swatch" data-kts-color="#dcfce7" style="background:#dcfce7;" title="Hijau Muda"></button>
+                        <button type="button" class="kts-color-swatch" data-kts-color="#0f172a" style="background:#0f172a;" title="Hitam Slate"></button>
+                        <button type="button" class="kts-color-swatch" data-kts-color="#1e293b" style="background:#1e293b;" title="Abu Tua"></button>
+                        <button type="button" class="kts-color-swatch" data-kts-color="#334155" style="background:#334155;" title="Slate"></button>
+                        <button type="button" class="kts-color-swatch" data-kts-color="#15803d" style="background:#15803d;" title="Hijau"></button>
+                        <button type="button" class="kts-color-swatch" data-kts-color="#052e16" style="background:#052e16;" title="Hijau Tua"></button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div id="ktsLayBoxGroup" class="kts-layout-two-col" style="display:none;border-top:1px solid #e2e8f0;padding-top:10px;">
+                    <div class="kts-layout-control-row">
+                      <label for="ktsLayBoxW">Lebar / Ukuran (px)</label>
+                      <div class="kts-layout-slider-pair">
+                        <input type="range" id="ktsLayBoxW" min="40" max="1011" step="2" />
+                        <input type="number" id="ktsLayBoxWNum" min="40" max="1011" step="2" />
+                      </div>
+                    </div>
+                    <div class="kts-layout-control-row">
+                      <label for="ktsLayBoxH">Tinggi (px)</label>
+                      <div class="kts-layout-slider-pair">
+                        <input type="range" id="ktsLayBoxH" min="40" max="638" step="2" />
+                        <input type="number" id="ktsLayBoxHNum" min="40" max="638" step="2" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="student-modal-footer" style="justify-content:space-between;flex-wrap:wrap;gap:8px;">
+              <button type="button" id="ktsLayResetAllBtn" class="login-button student-btn-cancel" style="background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;">Reset Semua ke Default</button>
+              <div style="display:flex;gap:8px;">
+                <button type="button" onclick="closeKtsLayoutModal()" class="login-button student-btn-cancel">Batal</button>
+                <button type="button" id="ktsLaySaveBtn" class="login-button student-btn-save">Simpan Layout KTS</button>
+              </div>
             </div>
           </div>
         </div>
@@ -21604,7 +21778,8 @@ function startOrOpenResponder(options) {
             headmaster_nip: 'NIP. -',
             custom_front_bg: '',
             custom_back_bg: '',
-            signature_img: ''
+            signature_img: '',
+            layout_config: ''
         },
         selectedStudentId: null,
         selectedIds: new Set(),
@@ -21619,8 +21794,66 @@ function startOrOpenResponder(options) {
             custom_front_bg: undefined,
             custom_back_bg: undefined,
             signature_img: undefined
+        },
+        layoutDraft: null,
+        layoutSide: 'front',
+        layoutSelectedEl: 'student_name'
+    };
+
+    const KTS_BIO_KEYS = ['nis_nisn', 'student_name', 'ttl', 'address', 'dormitory'];
+
+    const DEFAULT_KTS_LAYOUT = {
+        front: {
+            header_banner:  { label: 'Banner Header',         kind: 'box',    visible: true, x: 0,   y: 0,   h: 156 },
+            logo:           { label: 'Logo Madrasah',         kind: 'square', visible: true, x: 68,  y: 30,  size: 104 },
+            header_title:   { label: 'Judul Kartu (Baris 1)', kind: 'text',   visible: true, x: 588, y: 30,  fontSize: 15,   letterSpacing: 2.5, lineGap: 20, maxWidth: 750, bold: false, italic: false, uppercase: true,  align: 'center', color: '#fde047' },
+            header_arabic:  { label: 'Yayasan (Baris 2)',     kind: 'text',   visible: true, x: 588, y: 55,  fontSize: 16.5, letterSpacing: 0,   lineGap: 22, maxWidth: 750, bold: false, italic: false, uppercase: false, align: 'center', color: '#f0fdf4' },
+            school_name:    { label: 'Nama Madrasah (Baris 3)',kind: 'text',  visible: true, x: 588, y: 102, fontSize: 38,   letterSpacing: 8,   lineGap: 44, maxWidth: 750, bold: true,  italic: false, uppercase: true,  align: 'center', color: '#ffffff' },
+            school_address: { label: 'Alamat Madrasah (B.4)', kind: 'text',   visible: true, x: 588, y: 132, fontSize: 13.5, letterSpacing: 0,   lineGap: 18, maxWidth: 750, bold: false, italic: false, uppercase: false, align: 'center', color: '#dcfce7' },
+            photo:          { label: 'Pasfoto 3x4',           kind: 'rect',   visible: true, x: 52,  y: 192, w: 220, h: 294 },
+            validity:       { label: 'Masa Berlaku',          kind: 'text',   visible: true, x: 162, y: 514, fontSize: 14,   letterSpacing: 0,   lineGap: 18, maxWidth: 244, bold: false, italic: true,  uppercase: false, align: 'center', color: '#475569' },
+            nis_nisn:       { label: 'NIS / NISN',            kind: 'text',   visible: true, x: 308, y: 224, fontSize: 21,   letterSpacing: 0,   lineGap: 26, maxWidth: 666, bold: false, italic: false, uppercase: false, align: 'left',   color: '#334155' },
+            student_name:   { label: 'Nama Siswa',            kind: 'text',   visible: true, x: 308, y: 270, fontSize: 31,   letterSpacing: 0,   lineGap: 34, maxWidth: 666, bold: true,  italic: false, uppercase: true,  align: 'left',   color: '#0f172a', showUnderline: true },
+            ttl:            { label: 'Tempat, Tgl Lahir',     kind: 'text',   visible: true, x: 308, y: 322, fontSize: 21,   letterSpacing: 0,   lineGap: 26, maxWidth: 666, bold: false, italic: false, uppercase: false, align: 'left',   color: '#1e293b' },
+            address:        { label: 'Alamat Lengkap',        kind: 'text',   visible: true, x: 308, y: 358, fontSize: 20,   letterSpacing: 0,   lineGap: 27, maxWidth: 486, bold: false, italic: false, uppercase: false, align: 'left',   color: '#334155' },
+            dormitory:      { label: 'Pondok / Asrama',       kind: 'text',   visible: true, x: 308, y: 426, fontSize: 21,   letterSpacing: 0,   lineGap: 26, maxWidth: 486, bold: false, italic: false, uppercase: false, align: 'left',   color: '#15803d' },
+            qrcode:         { label: 'QR Code',               kind: 'square', visible: true, x: 818, y: 436, size: 150 }
+        },
+        back: {
+            back_header:    { label: 'Header Belakang',       kind: 'box',    visible: true, x: 0,   y: 0,   h: 68 },
+            back_title:     { label: 'Judul Ketentuan',       kind: 'text',   visible: true, x: 54,  y: 120, fontSize: 23,   letterSpacing: 0,   lineGap: 28, maxWidth: 900, bold: true,  italic: false, uppercase: false, align: 'left',   color: '#052e16' },
+            back_rules:     { label: 'Daftar Ketentuan',      kind: 'text',   visible: true, x: 54,  y: 162, fontSize: 18.5, letterSpacing: 0,   lineGap: 28, maxWidth: 903, bold: false, italic: false, uppercase: false, align: 'left',   color: '#1e293b' },
+            back_holder:    { label: 'Pemegang Kartu',        kind: 'text',   visible: true, x: 54,  y: 434, fontSize: 22,   letterSpacing: 0,   lineGap: 32, maxWidth: 490, bold: true,  italic: false, uppercase: true,  align: 'left',   color: '#0f172a' },
+            back_signature: { label: 'Blok TTD Kepala',       kind: 'text',   visible: true, x: 785, y: 434, fontSize: 17.5, letterSpacing: 0,   lineGap: 24, maxWidth: 320, bold: true,  italic: false, uppercase: false, align: 'center', color: '#0f172a' }
         }
     };
+
+    function cloneKtsLayout(src) {
+        const out = { front: {}, back: {} };
+        ['front', 'back'].forEach(function(sKey) {
+            const baseMap = DEFAULT_KTS_LAYOUT[sKey];
+            const srcMap = (src && src[sKey]) || {};
+            Object.keys(baseMap).forEach(function(elKey) {
+                out[sKey][elKey] = Object.assign({}, baseMap[elKey], srcMap[elKey] || {});
+            });
+        });
+        return out;
+    }
+
+    function getEffectiveKtsLayout(cfg) {
+        if (cfg && cfg._draftLayout) {
+            return cloneKtsLayout(cfg._draftLayout);
+        }
+        const raw = cfg && cfg.layout_config;
+        if (!raw) return cloneKtsLayout(DEFAULT_KTS_LAYOUT);
+        try {
+            const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+            if (parsed && typeof parsed === 'object') {
+                return cloneKtsLayout(parsed);
+            }
+        } catch (_) {}
+        return cloneKtsLayout(DEFAULT_KTS_LAYOUT);
+    }
 
     const ktsPhotoCache = new Map();
     const ktsAssetImageCache = new Map();
@@ -21978,7 +22211,93 @@ function startOrOpenResponder(options) {
         ctx.restore();
     }
 
-    async function renderKtsCardToCanvas(canvas, student, settings, side) {
+    function drawSingleLineWithSpacing(ctx, line, x, y, align, letterSpacing) {
+        const ls = Number(letterSpacing) || 0;
+        if (Math.abs(ls) < 0.05) {
+            ctx.textAlign = align || 'left';
+            ctx.fillText(line, x, y);
+            return ctx.measureText(line).width;
+        }
+        const totalW = measureSpacedTextWidth(ctx, line, ls);
+        let curX = x;
+        if (align === 'center') curX = x - totalW / 2;
+        else if (align === 'right') curX = x - totalW;
+        ctx.textAlign = 'left';
+        for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+            ctx.fillText(ch, curX, y);
+            curX += ctx.measureText(ch).width + ls;
+        }
+        return totalW;
+    }
+
+    function drawKtsLayoutTextBlock(ctx, text, elCfg, family, opts) {
+        const cfg = elCfg || {};
+        const o = opts || {};
+        const fontSize = Math.max(8, Math.min(90, Number(cfg.fontSize) || 18));
+        const letterSpacing = Number(cfg.letterSpacing) || 0;
+        const lineGap = Math.max(10, Number(cfg.lineGap) || Math.round(fontSize * 1.25));
+        const maxWidth = Math.max(60, Number(cfg.maxWidth) || 500);
+        const weight = cfg.bold ? (o.boldWeight || '800') : (o.normalWeight || '400');
+        const fontStyle = cfg.italic ? 'italic ' : '';
+        const align = cfg.align || 'left';
+        const color = cfg.color || '#0f172a';
+        const x = Number(cfg.x) || 0;
+        const y = (Number(cfg.y) || 0) + (Number(o.dyOffset) || 0);
+
+        let raw = String(text || '').trim();
+        if (!raw) raw = o.fallback !== undefined ? o.fallback : '-';
+        if (cfg.uppercase) raw = raw.toUpperCase();
+
+        ctx.save();
+        ctx.font = fontStyle + weight + ' ' + fontSize + 'px ' + family;
+        if (o.withShadow) {
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.38)';
+            ctx.shadowBlur = 8;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 2;
+        }
+        ctx.fillStyle = color;
+
+        const maxLines = Math.max(1, Number(o.maxLines) || 1);
+        const wrapLimit = Math.abs(letterSpacing) > 0.2 ? Math.max(60, maxWidth * 0.88) : maxWidth;
+        let lines = [];
+        if (maxLines > 1) {
+            lines = wrapTextLines(ctx, raw, wrapLimit, maxLines);
+        } else {
+            let out = raw;
+            const measureLine = function(s) {
+                return Math.abs(letterSpacing) >= 0.05 ? measureSpacedTextWidth(ctx, s, letterSpacing) : ctx.measureText(s).width;
+            };
+            while (out.length > 3 && measureLine(out) > maxWidth) {
+                out = out.slice(0, -1);
+            }
+            if (out !== raw) out = out.trim() + '...';
+            lines = [out];
+        }
+
+        let maxRenderedW = 0;
+        lines.forEach(function(line, idx) {
+            const w = drawSingleLineWithSpacing(ctx, line, x, y + idx * lineGap, align, letterSpacing);
+            if (w > maxRenderedW) maxRenderedW = w;
+        });
+        ctx.restore();
+
+        const boxW = Math.max(48, Math.min(maxWidth, maxRenderedW || 60));
+        let boxX = x - 6;
+        if (align === 'center') boxX = x - boxW / 2 - 6;
+        else if (align === 'right') boxX = x - boxW - 6;
+        const boxTop = y - fontSize - 2;
+        const boxH = Math.max(fontSize + 10, (lines.length - 1) * lineGap + fontSize + 10);
+        return {
+            linesCount: lines.length,
+            renderedWidth: maxRenderedW,
+            lastBaselineY: y + (lines.length - 1) * lineGap,
+            box: { x: boxX, y: boxTop, w: boxW + 12, h: boxH }
+        };
+    }
+
+    async function renderKtsCardToCanvas(canvas, student, settings, side, outHitBoxes) {
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         const W = 1011;
@@ -21990,6 +22309,11 @@ function startOrOpenResponder(options) {
         const st = student || {};
         const cardSide = side === 'back' ? 'back' : 'front';
         const fontFamily = '"Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif';
+        const lay = getEffectiveKtsLayout(cfg);
+        const pushBox = function(id, label, box) {
+            if (!Array.isArray(outHitBoxes) || !box) return;
+            outHitBoxes.push({ id: id, side: cardSide, label: label, x: box.x, y: box.y, w: box.w, h: box.h });
+        };
 
         const [logoImg, frontBgImg, backBgImg, sigImg, photoAsset] = await Promise.all([
             loadAssetImage('/assets/logo.png'),
@@ -22005,301 +22329,273 @@ function startOrOpenResponder(options) {
         ctx.clip();
 
         if (cardSide === 'front') {
+            const lf = lay.front;
             if (frontBgImg) {
                 ctx.drawImage(frontBgImg, 0, 0, W, H);
             } else {
                 drawKtsDecorativeBackground(ctx, W, H, 'front');
 
-                // Header emerald banner with gentle curved bottom
-                const headGrad = ctx.createLinearGradient(0, 0, W, 180);
-                headGrad.addColorStop(0, '#0f3f26');
-                headGrad.addColorStop(0.55, '#166534');
-                headGrad.addColorStop(1, '#047857');
-                ctx.fillStyle = headGrad;
-                ctx.beginPath();
-                ctx.moveTo(0, 0);
-                ctx.lineTo(W, 0);
-                ctx.lineTo(W, 148);
-                ctx.quadraticCurveTo(W * 0.55, 188, 0, 156);
-                ctx.closePath();
-                ctx.fill();
+                if (lf.header_banner.visible !== false) {
+                    const bh = Math.max(60, Math.min(240, Number(lf.header_banner.h) || 156));
+                    const rightY = Math.max(48, bh - 8);
+                    const ctrlY = bh + 32;
 
-                // Gold accent ribbon along header curve
-                const goldGrad = ctx.createLinearGradient(0, 0, W, 0);
-                goldGrad.addColorStop(0, '#ca8a04');
-                goldGrad.addColorStop(0.5, '#facc15');
-                goldGrad.addColorStop(1, '#eab308');
-                ctx.strokeStyle = goldGrad;
-                ctx.lineWidth = 7;
-                ctx.beginPath();
-                ctx.moveTo(0, 156);
-                ctx.quadraticCurveTo(W * 0.55, 188, W, 148);
-                ctx.stroke();
+                    const headGrad = ctx.createLinearGradient(0, 0, W, bh + 24);
+                    headGrad.addColorStop(0, '#0f3f26');
+                    headGrad.addColorStop(0.55, '#166534');
+                    headGrad.addColorStop(1, '#047857');
+                    ctx.fillStyle = headGrad;
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(W, 0);
+                    ctx.lineTo(W, rightY);
+                    ctx.quadraticCurveTo(W * 0.55, ctrlY, 0, bh);
+                    ctx.closePath();
+                    ctx.fill();
 
-                // School Logo Emblem
-                if (logoImg) {
+                    const goldGrad = ctx.createLinearGradient(0, 0, W, 0);
+                    goldGrad.addColorStop(0, '#ca8a04');
+                    goldGrad.addColorStop(0.5, '#facc15');
+                    goldGrad.addColorStop(1, '#eab308');
+                    ctx.strokeStyle = goldGrad;
+                    ctx.lineWidth = 7;
+                    ctx.beginPath();
+                    ctx.moveTo(0, bh);
+                    ctx.quadraticCurveTo(W * 0.55, ctrlY, W, rightY);
+                    ctx.stroke();
+
+                    pushBox('header_banner', lf.header_banner.label, { x: 0, y: 0, w: W, h: bh + 18 });
+                }
+
+                if (logoImg && lf.logo.visible !== false) {
+                    const ls = Math.max(40, Math.min(180, Number(lf.logo.size) || 104));
+                    const lx = Number(lf.logo.x) || 68;
+                    const ly = Number(lf.logo.y) || 30;
                     ctx.save();
                     ctx.fillStyle = 'rgba(255,255,255,0.14)';
                     ctx.beginPath();
-                    ctx.arc(120, 82, 58, 0, Math.PI * 2);
+                    ctx.arc(lx + ls / 2, ly + ls / 2, ls * 0.56, 0, Math.PI * 2);
                     ctx.fill();
-                    ctx.drawImage(logoImg, 68, 30, 104, 104);
+                    ctx.drawImage(logoImg, lx, ly, ls, ls);
                     ctx.restore();
+                    pushBox('logo', lf.logo.label, { x: lx, y: ly, w: ls, h: ls });
                 }
 
-                // Official 4-Line Compact Header (Bold ONLY on MA AT-TAUJIH)
-                const headerCx = 588;
-                const headerMaxW = 750;
-
-                // Line 1: KARTU IDENTITAS SISWA
-                drawSpacedCenteredText(
-                    ctx,
-                    (cfg.header_title || 'KARTU IDENTITAS SISWA').toUpperCase(),
-                    headerCx,
-                    30,
-                    headerMaxW,
-                    [15, 14, 13],
-                    [2.5, 2, 1],
-                    '600',
-                    fontFamily,
-                    '#fde047',
-                    false
-                );
-
-                // Line 2: Yayasan Muwajjihul Ulum Asy-Syariyyah
-                drawSmartFittedSingleLine(
-                    ctx,
-                    cfg.header_arabic || 'Yayasan Muwajjihul Ulum Asy-Syariyyah',
-                    headerCx,
-                    55,
-                    headerMaxW,
-                    [16.5, 15.5, 14.5],
-                    '400',
-                    fontFamily,
-                    '#f0fdf4',
-                    'center'
-                );
-
-                // Line 3: MA AT-TAUJIH (Bold & Spaced)
-                drawSpacedCenteredText(
-                    ctx,
-                    (cfg.school_name || 'MA AT-TAUJIH').toUpperCase(),
-                    headerCx,
-                    102,
-                    headerMaxW,
-                    [38, 34, 30, 26],
-                    [8, 5, 2, 0.5],
-                    '800',
-                    fontFamily,
-                    '#ffffff',
-                    true
-                );
-
-                // Line 4: Dk. Pulorejo, Desa Bajingjowo, Kec. Sarang, Kab. Rembang, Jawa Tengah (59274)
-                drawSmartFittedSingleLine(
-                    ctx,
-                    cfg.school_address || 'Dk. Pulorejo, Desa Bajingjowo, Kec. Sarang, Kab. Rembang, Jawa Tengah (59274)',
-                    headerCx,
-                    132,
-                    headerMaxW,
-                    [13.5, 12.5, 11.5],
-                    '400',
-                    fontFamily,
-                    '#dcfce7',
-                    'center'
-                );
+                if (lf.header_title.visible !== false) {
+                    const r1 = drawKtsLayoutTextBlock(ctx, cfg.header_title || 'KARTU IDENTITAS SISWA', lf.header_title, fontFamily, { maxLines: 1, normalWeight: '600', boldWeight: '800' });
+                    pushBox('header_title', lf.header_title.label, r1.box);
+                }
+                if (lf.header_arabic.visible !== false) {
+                    const r2 = drawKtsLayoutTextBlock(ctx, cfg.header_arabic || 'Yayasan Muwajjihul Ulum Asy-Syariyyah', lf.header_arabic, fontFamily, { maxLines: 1, normalWeight: '400', boldWeight: '700' });
+                    pushBox('header_arabic', lf.header_arabic.label, r2.box);
+                }
+                if (lf.school_name.visible !== false) {
+                    const r3 = drawKtsLayoutTextBlock(ctx, cfg.school_name || 'MA AT-TAUJIH', lf.school_name, fontFamily, { maxLines: 1, normalWeight: '600', boldWeight: '800', withShadow: true });
+                    pushBox('school_name', lf.school_name.label, r3.box);
+                }
+                if (lf.school_address.visible !== false) {
+                    const r4 = drawKtsLayoutTextBlock(ctx, cfg.school_address || 'Dk. Pulorejo, Desa Bajingjowo, Kec. Sarang, Kab. Rembang, Jawa Tengah (59274)', lf.school_address, fontFamily, { maxLines: 1, normalWeight: '400', boldWeight: '700' });
+                    pushBox('school_address', lf.school_address.label, r4.box);
+                }
             }
 
-            // 3x4 Student Photo Frame (Clean White Modern Frame)
-            const px = 52, py = 192, pw = 220, ph = 294;
-            ctx.save();
-            ctx.shadowColor = 'rgba(15, 23, 42, 0.12)';
-            ctx.shadowBlur = 12;
-            ctx.shadowOffsetY = 4;
-            ctx.fillStyle = '#ffffff';
-            drawRoundedRectPath(ctx, px - 5, py - 5, pw + 10, ph + 10, 16);
-            ctx.fill();
-            ctx.restore();
+            // 3x4 Student Photo Frame
+            if (lf.photo.visible !== false) {
+                const px = Number(lf.photo.x);
+                const py = Number(lf.photo.y);
+                const pw = Math.max(60, Number(lf.photo.w) || 220);
+                const ph = Math.max(80, Number(lf.photo.h) || 294);
+                ctx.save();
+                ctx.shadowColor = 'rgba(15, 23, 42, 0.12)';
+                ctx.shadowBlur = 12;
+                ctx.shadowOffsetY = 4;
+                ctx.fillStyle = '#ffffff';
+                drawRoundedRectPath(ctx, px - 5, py - 5, pw + 10, ph + 10, 16);
+                ctx.fill();
+                ctx.restore();
 
-            ctx.save();
-            ctx.strokeStyle = '#cbd5e1';
-            ctx.lineWidth = 1.5;
-            drawRoundedRectPath(ctx, px - 5, py - 5, pw + 10, ph + 10, 16);
-            ctx.stroke();
-            ctx.restore();
+                ctx.save();
+                ctx.strokeStyle = '#cbd5e1';
+                ctx.lineWidth = 1.5;
+                drawRoundedRectPath(ctx, px - 5, py - 5, pw + 10, ph + 10, 16);
+                ctx.stroke();
+                ctx.restore();
 
-            drawCroppedPhotoIntoFrame(ctx, photoAsset, px, py, pw, ph);
+                drawCroppedPhotoIntoFrame(ctx, photoAsset, px, py, pw, ph);
+                pushBox('photo', lf.photo.label, { x: px, y: py, w: pw, h: ph });
+            }
 
-            // Plain Italic Validity Caption Below Photo (no pill container)
-            ctx.save();
-            ctx.font = 'italic 400 14px ' + fontFamily;
-            ctx.fillStyle = '#475569';
-            ctx.textAlign = 'center';
-            const valLines = wrapTextLines(ctx, cfg.validity_text || 'Berlaku selama menjadi Siswa MA At-Taujih', pw + 24, 2);
-            valLines.forEach(function(line, idx) {
-                ctx.fillText(line, px + pw / 2, 514 + idx * 18);
-            });
-            ctx.restore();
-
-            // Clean Simple Modern Biodata Block (Bold ONLY on Student Name)
-            const tx = 308;
-            const qrSize = 150;
-            const qrX = 818;
-            const qrY = 436;
-            const maxWTop = 974 - tx;
-            const maxWLower = qrX - 24 - tx;
+            // Validity Caption Below Photo
+            if (lf.validity.visible !== false) {
+                const valRes = drawKtsLayoutTextBlock(ctx, cfg.validity_text || 'Berlaku selama menjadi Siswa MA At-Taujih', lf.validity, fontFamily, { maxLines: 2, normalWeight: '400', boldWeight: '700' });
+                pushBox('validity', lf.validity.label, valRes.box);
+            }
 
             // 1. NIS / NISN
-            const nisText = String(st.nis || '-').trim() || '-';
-            const nisnText = String(st.nisn || '-').trim() || '-';
-            drawSmartFittedSingleLine(
-                ctx,
-                nisText + ' / ' + nisnText,
-                tx,
-                224,
-                maxWTop,
-                [21, 19, 17],
-                '400',
-                fontFamily,
-                '#334155'
-            );
-
-            // 2. NAMA LENGKAP (Bold Primary Identifier)
-            const fullNameUpper = String(st.name || 'NAMA SISWA').trim().toUpperCase();
-            let nameFont = 31;
-            ctx.font = '800 ' + nameFont + 'px ' + fontFamily;
-            let nameLines = wrapTextLines(ctx, fullNameUpper, maxWTop, 2);
-            if (nameLines.length > 1) {
-                nameFont = 27;
-                ctx.font = '800 ' + nameFont + 'px ' + fontFamily;
-                nameLines = wrapTextLines(ctx, fullNameUpper, maxWTop, 2);
+            if (lf.nis_nisn.visible !== false) {
+                const nisText = String(st.nis || '-').trim() || '-';
+                const nisnText = String(st.nisn || '-').trim() || '-';
+                const nisRes = drawKtsLayoutTextBlock(ctx, nisText + ' / ' + nisnText, lf.nis_nisn, fontFamily, { maxLines: 1, normalWeight: '400', boldWeight: '700' });
+                pushBox('nis_nisn', lf.nis_nisn.label, nisRes.box);
             }
-            ctx.fillStyle = '#0f172a';
-            nameLines.forEach(function(line, idx) {
-                ctx.fillText(line, tx, 270 + idx * 34);
-            });
-            let curY = 270 + (nameLines.length * 34) - 18;
 
-            // Thin Emerald-Gold Accent Line Under Student Name
-            ctx.save();
-            const ruleGrad = ctx.createLinearGradient(tx, 0, tx + 220, 0);
-            ruleGrad.addColorStop(0, '#15803d');
-            ruleGrad.addColorStop(0.65, '#eab308');
-            ruleGrad.addColorStop(1, 'rgba(234, 179, 8, 0)');
-            ctx.fillStyle = ruleGrad;
-            ctx.fillRect(tx, curY, 220, 3);
-            ctx.restore();
-            curY += 36;
+            // 2. NAMA LENGKAP + Accent Line
+            let extraBioDy = 0;
+            if (lf.student_name.visible !== false) {
+                const nameRes = drawKtsLayoutTextBlock(ctx, st.name || 'NAMA SISWA', lf.student_name, fontFamily, { maxLines: 2, normalWeight: '600', boldWeight: '800' });
+                if (lf.student_name.showUnderline !== false) {
+                    const ruleY = nameRes.lastBaselineY + 14;
+                    let ruleX = Number(lf.student_name.x) || 308;
+                    if (lf.student_name.align === 'center') ruleX = ruleX - 110;
+                    else if (lf.student_name.align === 'right') ruleX = ruleX - 220;
+                    ctx.save();
+                    const ruleGrad = ctx.createLinearGradient(ruleX, 0, ruleX + 220, 0);
+                    ruleGrad.addColorStop(0, '#15803d');
+                    ruleGrad.addColorStop(0.65, '#eab308');
+                    ruleGrad.addColorStop(1, 'rgba(234, 179, 8, 0)');
+                    ctx.fillStyle = ruleGrad;
+                    ctx.fillRect(ruleX, ruleY, 220, 3);
+                    ctx.restore();
+                }
+                if (nameRes.linesCount > 1 && Math.abs(lf.ttl.y - DEFAULT_KTS_LAYOUT.front.ttl.y) < 0.5) {
+                    extraBioDy = (nameRes.linesCount - 1) * (Number(lf.student_name.lineGap) || 34);
+                }
+                pushBox('student_name', lf.student_name.label, nameRes.box);
+            }
 
             // 3. Tempat, Tanggal Lahir
-            const bPlace = String(st.birthPlace || st.birth_place || '').trim();
-            const bLong = formatKtsBirthDateLong(st.birthDate || st.birth_date);
-            const ttlText = (bPlace && bLong) ? (bPlace + ', ' + bLong) : (bPlace || bLong || '-');
-            drawSmartFittedSingleLine(ctx, ttlText, tx, curY, maxWTop, [21, 19, 17], '400', fontFamily, '#1e293b');
-            curY += 36;
-
-            // 4. Alamat Lengkap (guarded left of QR Code)
-            const addrText = String(st.address || '-').trim() || '-';
-            ctx.font = '400 20px ' + fontFamily;
-            const addrLines = wrapTextLines(ctx, addrText, maxWLower, 2);
-            ctx.fillStyle = '#334155';
-            addrLines.forEach(function(line, idx) {
-                ctx.fillText(line, tx, curY + idx * 27);
-            });
-            curY += (addrLines.length * 27) + 14;
-
-            // 5. Pondok / Asrama (clean green plain text, no box/pill)
-            const dormVal = String(st.dormitory || '').trim();
-            const classVal = String(st.className || ktsState.classMap[st.classId] || st.classId || '').trim();
-            let line5 = '-';
-            if (cfg.line5_mode === 'class') line5 = classVal || '-';
-            else if (cfg.line5_mode === 'both') line5 = [dormVal, classVal].filter(Boolean).join(' • ') || '-';
-            else line5 = dormVal || classVal || '-';
-
-            drawSmartFittedSingleLine(
-                ctx,
-                line5,
-                tx,
-                Math.min(548, curY),
-                maxWLower,
-                [21, 19, 17],
-                '500',
-                fontFamily,
-                '#15803d'
-            );
-
-            // QR Code Box (Clean Minimal White Card Frame)
-            ctx.save();
-            ctx.shadowColor = 'rgba(15, 23, 42, 0.08)';
-            ctx.shadowBlur = 10;
-            ctx.fillStyle = '#ffffff';
-            drawRoundedRectPath(ctx, qrX, qrY, qrSize, qrSize, 14);
-            ctx.fill();
-            ctx.restore();
-
-            ctx.save();
-            ctx.strokeStyle = '#cbd5e1';
-            ctx.lineWidth = 1.5;
-            drawRoundedRectPath(ctx, qrX, qrY, qrSize, qrSize, 14);
-            ctx.stroke();
-
-            const qrSrcCanvas = buildQrCanvasSync(st.qrCodeId || st.studentId || 'SIMATA');
-            if (qrSrcCanvas) {
-                const prevSmoothing = ctx.imageSmoothingEnabled;
-                ctx.imageSmoothingEnabled = false;
-                ctx.drawImage(qrSrcCanvas, qrX + 11, qrY + 11, qrSize - 22, qrSize - 22);
-                ctx.imageSmoothingEnabled = prevSmoothing;
-            } else {
-                ctx.fillStyle = '#94a3b8';
-                ctx.font = '500 15px ' + fontFamily;
-                ctx.textAlign = 'center';
-                ctx.fillText(st.qrCodeId || 'QR', qrX + qrSize / 2, qrY + qrSize / 2);
+            if (lf.ttl.visible !== false) {
+                const bPlace = String(st.birthPlace || st.birth_place || '').trim();
+                const bLong = formatKtsBirthDateLong(st.birthDate || st.birth_date);
+                const ttlText = (bPlace && bLong) ? (bPlace + ', ' + bLong) : (bPlace || bLong || '-');
+                const ttlRes = drawKtsLayoutTextBlock(ctx, ttlText, lf.ttl, fontFamily, { maxLines: 1, normalWeight: '400', boldWeight: '700', dyOffset: extraBioDy });
+                pushBox('ttl', lf.ttl.label, ttlRes.box);
             }
-            ctx.restore();
+
+            // 4. Alamat Lengkap
+            if (lf.address.visible !== false) {
+                const addrText = String(st.address || '-').trim() || '-';
+                const addrRes = drawKtsLayoutTextBlock(ctx, addrText, lf.address, fontFamily, { maxLines: 2, normalWeight: '400', boldWeight: '700', dyOffset: extraBioDy });
+                pushBox('address', lf.address.label, addrRes.box);
+            }
+
+            // 5. Pondok / Asrama
+            if (lf.dormitory.visible !== false) {
+                const dormVal = String(st.dormitory || '').trim();
+                const classVal = String(st.className || ktsState.classMap[st.classId] || st.classId || '').trim();
+                let line5 = '-';
+                if (cfg.line5_mode === 'class') line5 = classVal || '-';
+                else if (cfg.line5_mode === 'both') line5 = [dormVal, classVal].filter(Boolean).join(' • ') || '-';
+                else line5 = dormVal || classVal || '-';
+                const dormRes = drawKtsLayoutTextBlock(ctx, line5, lf.dormitory, fontFamily, { maxLines: 1, normalWeight: '500', boldWeight: '800', dyOffset: extraBioDy });
+                pushBox('dormitory', lf.dormitory.label, dormRes.box);
+            }
+
+            // QR Code Box
+            if (lf.qrcode.visible !== false) {
+                const qrSize = Math.max(60, Math.min(280, Number(lf.qrcode.size) || 150));
+                const qrX = Number(lf.qrcode.x);
+                const qrY = Number(lf.qrcode.y);
+                ctx.save();
+                ctx.shadowColor = 'rgba(15, 23, 42, 0.08)';
+                ctx.shadowBlur = 10;
+                ctx.fillStyle = '#ffffff';
+                drawRoundedRectPath(ctx, qrX, qrY, qrSize, qrSize, 14);
+                ctx.fill();
+                ctx.restore();
+
+                ctx.save();
+                ctx.strokeStyle = '#cbd5e1';
+                ctx.lineWidth = 1.5;
+                drawRoundedRectPath(ctx, qrX, qrY, qrSize, qrSize, 14);
+                ctx.stroke();
+
+                const qrSrcCanvas = buildQrCanvasSync(st.qrCodeId || st.studentId || 'SIMATA');
+                if (qrSrcCanvas) {
+                    const prevSmoothing = ctx.imageSmoothingEnabled;
+                    ctx.imageSmoothingEnabled = false;
+                    ctx.drawImage(qrSrcCanvas, qrX + 11, qrY + 11, qrSize - 22, qrSize - 22);
+                    ctx.imageSmoothingEnabled = prevSmoothing;
+                } else {
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.font = '500 15px ' + fontFamily;
+                    ctx.textAlign = 'center';
+                    ctx.fillText(st.qrCodeId || 'QR', qrX + qrSize / 2, qrY + qrSize / 2);
+                }
+                ctx.restore();
+                pushBox('qrcode', lf.qrcode.label, { x: qrX, y: qrY, w: qrSize, h: qrSize });
+            }
         } else {
-            // BACK SIDE RENDERER (Original Background from BUG 65 Initial Implementation)
+            // BACK SIDE RENDERER
+            const lb = lay.back;
             if (backBgImg) {
                 ctx.drawImage(backBgImg, 0, 0, W, H);
             } else {
                 drawKtsDecorativeBackground(ctx, W, H, 'back');
 
-                // Top header stripe
-                ctx.fillStyle = '#166534';
-                ctx.fillRect(0, 0, W, 68);
-                ctx.fillStyle = '#eab308';
-                ctx.fillRect(0, 68, W, 6);
+                if (lb.back_header.visible !== false) {
+                    const bh = Math.max(40, Math.min(160, Number(lb.back_header.h) || 68));
+                    ctx.fillStyle = '#166534';
+                    ctx.fillRect(0, 0, W, bh);
+                    ctx.fillStyle = '#eab308';
+                    ctx.fillRect(0, bh, W, 6);
 
-                if (logoImg) {
-                    ctx.drawImage(logoImg, 44, 12, 44, 44);
+                    if (logoImg) {
+                        const logoTop = Math.max(4, Math.round((bh - 44) / 2));
+                        ctx.drawImage(logoImg, 44, logoTop, 44, 44);
+                    }
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '700 22px ' + fontFamily;
+                    ctx.fillText((cfg.school_name || 'MA AT-TAUJIH').toUpperCase(), 102, Math.round(bh * 0.5));
+                    ctx.fillStyle = '#dcfce7';
+                    ctx.font = '400 13.5px ' + fontFamily;
+                    ctx.fillText(cfg.header_arabic || 'Yayasan Muwajjihul Ulum Asy-Syariyyah', 102, Math.round(bh * 0.81));
+                    pushBox('back_header', lb.back_header.label, { x: 0, y: 0, w: W, h: bh + 6 });
                 }
-                ctx.fillStyle = '#ffffff';
-                ctx.font = '700 22px ' + fontFamily;
-                ctx.fillText((cfg.school_name || 'MA AT-TAUJIH').toUpperCase(), 102, 34);
-                ctx.fillStyle = '#dcfce7';
-                ctx.font = '400 13.5px ' + fontFamily;
-                ctx.fillText(cfg.header_arabic || 'Yayasan Muwajjihul Ulum Asy-Syariyyah', 102, 55);
             }
 
             // Back Title
-            ctx.fillStyle = '#052e16';
-            ctx.font = '700 23px ' + fontFamily;
-            ctx.fillText(cfg.back_title || 'KETENTUAN KARTU IDENTITAS SISWA', 54, 120);
+            if (lb.back_title.visible !== false) {
+                const btRes = drawKtsLayoutTextBlock(ctx, cfg.back_title || 'KETENTUAN KARTU IDENTITAS SISWA', lb.back_title, fontFamily, { maxLines: 2, normalWeight: '500', boldWeight: '700' });
+                pushBox('back_title', lb.back_title.label, btRes.box);
+            }
 
-            // Numbered Rules (Clean Non-Bold Typography)
-            const rawRules = String(cfg.back_rules || '').split(/\r?\n/).map(function(l) { return l.trim(); }).filter(Boolean);
-            ctx.font = '400 18.5px ' + fontFamily;
-            ctx.fillStyle = '#1e293b';
-            let ry = 162;
-            rawRules.slice(0, 6).forEach(function(ruleLine) {
-                const wrapped = wrapTextLines(ctx, ruleLine, W - 108, 2);
-                wrapped.forEach(function(wLine) {
-                    if (ry < 382) {
-                        ctx.fillText(wLine, 54, ry);
-                        ry += 28;
-                    }
+            // Numbered Rules
+            let dividerY = 398;
+            if (lb.back_rules.visible !== false) {
+                const rawRules = String(cfg.back_rules || '').split(/\r?\n/).map(function(l) { return l.trim(); }).filter(Boolean);
+                const rCfg = lb.back_rules;
+                const rSize = Math.max(10, Math.min(36, Number(rCfg.fontSize) || 18.5));
+                const rLineGap = Math.max(12, Number(rCfg.lineGap) || 28);
+                const rSpace = Number(rCfg.letterSpacing) || 0;
+                const rMaxW = Math.max(120, Number(rCfg.maxWidth) || (W - 108));
+                const rWeight = rCfg.bold ? '700' : '400';
+                const rStyle = rCfg.italic ? 'italic ' : '';
+                const rAlign = rCfg.align || 'left';
+                let ry = Number(rCfg.y) || 162;
+                const startY = ry;
+
+                ctx.save();
+                ctx.font = rStyle + rWeight + ' ' + rSize + 'px ' + fontFamily;
+                ctx.fillStyle = rCfg.color || '#1e293b';
+                const wrapW = Math.abs(rSpace) > 0.2 ? rMaxW * 0.88 : rMaxW;
+                rawRules.slice(0, 6).forEach(function(ruleLine) {
+                    const txt = rCfg.uppercase ? ruleLine.toUpperCase() : ruleLine;
+                    const wrapped = wrapTextLines(ctx, txt, wrapW, 2);
+                    wrapped.forEach(function(wLine) {
+                        if (ry < 388) {
+                            drawSingleLineWithSpacing(ctx, wLine, Number(rCfg.x) || 54, ry, rAlign, rSpace);
+                            ry += rLineGap;
+                        }
+                    });
+                    ry += Math.max(4, Math.round(rLineGap * 0.28));
                 });
-                ry += 8;
-            });
+                ctx.restore();
+
+                const boxX = rAlign === 'center' ? ((Number(rCfg.x) || 54) - rMaxW / 2) : (rAlign === 'right' ? ((Number(rCfg.x) || 54) - rMaxW) : (Number(rCfg.x) || 54));
+                pushBox('back_rules', rCfg.label, { x: boxX, y: startY - rSize, w: rMaxW, h: Math.max(48, ry - startY + rSize) });
+                dividerY = Math.min(410, Math.max(398, ry + 8));
+            }
 
             // Dashed divider
             ctx.save();
@@ -22307,53 +22603,90 @@ function startOrOpenResponder(options) {
             ctx.setLineDash([8, 6]);
             ctx.lineWidth = 1.5;
             ctx.beginPath();
-            ctx.moveTo(54, 398);
-            ctx.lineTo(W - 54, 398);
+            ctx.moveTo(54, dividerY);
+            ctx.lineTo(W - 54, dividerY);
             ctx.stroke();
             ctx.restore();
 
             // Left Bottom: Card Identity Summary
-            ctx.fillStyle = '#15803d';
-            ctx.font = '600 14px ' + fontFamily;
-            ctx.fillText('PEMEGANG KARTU:', 54, 434);
-            drawSmartFittedSingleLine(ctx, String(st.name || '-').toUpperCase(), 54, 466, 490, [22, 20, 18], '700', fontFamily, '#0f172a');
-            ctx.fillStyle = '#334155';
-            ctx.font = '400 17px monospace';
-            ctx.fillText('NIS/NISN : ' + (st.nis || '-') + ' / ' + (st.nisn || '-'), 54, 502);
-            ctx.fillText('QR ID    : ' + (st.qrCodeId || '-'), 54, 530);
-            ctx.fillStyle = '#64748b';
-            ctx.font = 'italic 400 14px ' + fontFamily;
-            ctx.fillText('Terhubung langsung dengan sistem presensi SIMATA.', 54, 574);
+            if (lb.back_holder.visible !== false) {
+                const bhCfg = lb.back_holder;
+                const hx = Number(bhCfg.x) || 54;
+                const hy = Number(bhCfg.y) || 434;
+                const hGap = Math.max(18, Number(bhCfg.lineGap) || 32);
+                const hSpace = Number(bhCfg.letterSpacing) || 0;
+                const hAlign = bhCfg.align || 'left';
 
-            // Right Bottom: Headmaster Signature Block
-            const sigCenterX = 785;
-            ctx.save();
-            ctx.textAlign = 'center';
-            ctx.fillStyle = '#1e293b';
-            ctx.font = '400 16px ' + fontFamily;
-            ctx.fillText(cfg.sign_city_date || 'Sarang, 18 November 2026', sigCenterX, 434);
-            ctx.fillText('Kepala Madrasah,', sigCenterX, 458);
+                ctx.save();
+                ctx.fillStyle = '#15803d';
+                ctx.font = '600 14px ' + fontFamily;
+                drawSingleLineWithSpacing(ctx, 'PEMEGANG KARTU:', hx, hy, hAlign, 0);
 
-            if (sigImg) {
-                const sMaxW = 195;
-                const sMaxH = 82;
-                const ratio = Math.min(sMaxW / (sigImg.naturalWidth || sMaxW), sMaxH / (sigImg.naturalHeight || sMaxH));
-                const sw = (sigImg.naturalWidth || 120) * ratio;
-                const sh = (sigImg.naturalHeight || 60) * ratio;
-                ctx.drawImage(sigImg, sigCenterX - sw / 2, 466 + (sMaxH - sh) / 2, sw, sh);
+                drawKtsLayoutTextBlock(ctx, st.name || '-', Object.assign({}, bhCfg, { y: hy + hGap }), fontFamily, { maxLines: 1, normalWeight: '500', boldWeight: '700' });
+
+                ctx.fillStyle = '#334155';
+                ctx.font = '400 17px monospace';
+                drawSingleLineWithSpacing(ctx, 'NIS/NISN : ' + (st.nis || '-') + ' / ' + (st.nisn || '-'), hx, hy + hGap + 36, hAlign, hSpace);
+                drawSingleLineWithSpacing(ctx, 'QR ID    : ' + (st.qrCodeId || '-'), hx, hy + hGap + 64, hAlign, hSpace);
+
+                ctx.fillStyle = '#64748b';
+                ctx.font = 'italic 400 14px ' + fontFamily;
+                drawSingleLineWithSpacing(ctx, 'Terhubung langsung dengan sistem presensi SIMATA.', hx, hy + hGap + 108, hAlign, 0);
+                ctx.restore();
+
+                const hW = Math.max(200, Number(bhCfg.maxWidth) || 490);
+                const hBoxX = hAlign === 'center' ? (hx - hW / 2) : (hAlign === 'right' ? (hx - hW) : hx);
+                pushBox('back_holder', bhCfg.label, { x: hBoxX, y: hy - 18, w: hW, h: hGap + 132 });
             }
 
-            ctx.font = '700 17.5px ' + fontFamily;
-            ctx.fillStyle = '#0f172a';
-            const hmName = cfg.headmaster_name || 'Kepala Madrasah';
-            ctx.fillText(hmName, sigCenterX, 566);
-            const nw = ctx.measureText(hmName).width;
-            ctx.fillRect(sigCenterX - nw / 2, 570, nw, 1.5);
+            // Right Bottom: Headmaster Signature Block
+            if (lb.back_signature.visible !== false) {
+                const sigCfg = lb.back_signature;
+                const sx = Number(sigCfg.x) || 785;
+                const sy = Number(sigCfg.y) || 434;
+                const sAlign = sigCfg.align || 'center';
+                const sFontSize = Math.max(11, Math.min(34, Number(sigCfg.fontSize) || 17.5));
+                const sLineGap = Math.max(16, Number(sigCfg.lineGap) || 24);
+                const sWeight = sigCfg.bold ? '700' : '400';
+                const sStyle = sigCfg.italic ? 'italic ' : '';
 
-            ctx.font = '400 14.5px ' + fontFamily;
-            ctx.fillStyle = '#475569';
-            ctx.fillText(cfg.headmaster_nip || 'NIP. -', sigCenterX, 594);
-            ctx.restore();
+                ctx.save();
+                ctx.fillStyle = '#1e293b';
+                ctx.font = '400 16px ' + fontFamily;
+                drawSingleLineWithSpacing(ctx, cfg.sign_city_date || 'Sarang, 18 November 2026', sx, sy, sAlign, 0);
+                drawSingleLineWithSpacing(ctx, 'Kepala Madrasah,', sx, sy + sLineGap, sAlign, 0);
+
+                if (sigImg) {
+                    const sMaxW = 195;
+                    const sMaxH = 82;
+                    const ratio = Math.min(sMaxW / (sigImg.naturalWidth || sMaxW), sMaxH / (sigImg.naturalHeight || sMaxH));
+                    const sw = (sigImg.naturalWidth || 120) * ratio;
+                    const sh = (sigImg.naturalHeight || 60) * ratio;
+                    let imgX = sx - sw / 2;
+                    if (sAlign === 'left') imgX = sx;
+                    else if (sAlign === 'right') imgX = sx - sw;
+                    ctx.drawImage(sigImg, imgX, sy + sLineGap + 8 + (sMaxH - sh) / 2, sw, sh);
+                }
+
+                const hmY = sy + sLineGap + 108;
+                ctx.font = sStyle + sWeight + ' ' + sFontSize + 'px ' + fontFamily;
+                ctx.fillStyle = sigCfg.color || '#0f172a';
+                const hmName = sigCfg.uppercase ? String(cfg.headmaster_name || 'Kepala Madrasah').toUpperCase() : (cfg.headmaster_name || 'Kepala Madrasah');
+                const hmW = drawSingleLineWithSpacing(ctx, hmName, sx, hmY, sAlign, Number(sigCfg.letterSpacing) || 0);
+                let uX = sx - hmW / 2;
+                if (sAlign === 'left') uX = sx;
+                else if (sAlign === 'right') uX = sx - hmW;
+                ctx.fillRect(uX, hmY + 4, hmW, 1.5);
+
+                ctx.font = '400 14.5px ' + fontFamily;
+                ctx.fillStyle = '#475569';
+                drawSingleLineWithSpacing(ctx, cfg.headmaster_nip || 'NIP. -', sx, hmY + 28, sAlign, 0);
+                ctx.restore();
+
+                const sW = Math.max(180, Number(sigCfg.maxWidth) || 320);
+                const sBoxX = sAlign === 'center' ? (sx - sW / 2) : (sAlign === 'right' ? (sx - sW) : sx);
+                pushBox('back_signature', sigCfg.label, { x: sBoxX, y: sy - 18, w: sW, h: sLineGap + 158 });
+            }
         }
 
         // Crisp subtle outer hairline border
@@ -22867,7 +23200,8 @@ function startOrOpenResponder(options) {
             headmaster_nip: document.getElementById('ktsTpl_headmasterNip').value.trim(),
             custom_front_bg: ktsState.tplDraftImages.custom_front_bg || '',
             custom_back_bg: ktsState.tplDraftImages.custom_back_bg || '',
-            signature_img: ktsState.tplDraftImages.signature_img || ''
+            signature_img: ktsState.tplDraftImages.signature_img || '',
+            layout_config: ktsState.settings.layout_config || ''
         };
 
         showModalProcessing('ktsTemplateModal', 'Menyimpan Template KTS...', 'Memperbarui tampilan kartu seluruh madrasah...');
@@ -22885,6 +23219,289 @@ function startOrOpenResponder(options) {
         } catch (err) {
             hideModalProcessing('ktsTemplateModal');
             alert('Gagal menyimpan template KTS: ' + (err.message || err));
+        }
+    }
+
+    // ======================================================================
+    // VISUAL KTS LAYOUT EDITOR (DRAG & DROP, FONT, SPACING, BOLD/STYLE)
+    // ======================================================================
+    let ktsLayoutHitBoxes = [];
+    let ktsLayoutRenderSeq = 0;
+    let ktsLayoutRafPending = false;
+    let ktsLayoutDragState = null;
+
+    function getKtsLayoutSideMap() {
+        if (!ktsState.layoutDraft) {
+            ktsState.layoutDraft = cloneKtsLayout(getEffectiveKtsLayout(ktsState.settings));
+        }
+        return ktsState.layoutDraft[ktsState.layoutSide] || {};
+    }
+
+    function getKtsLayoutSelectedObj() {
+        const sideMap = getKtsLayoutSideMap();
+        if (!sideMap[ktsState.layoutSelectedEl]) {
+            const keys = Object.keys(sideMap);
+            ktsState.layoutSelectedEl = keys[0] || 'student_name';
+        }
+        return sideMap[ktsState.layoutSelectedEl] || null;
+    }
+
+    function populateKtsLayoutElementPicker() {
+        const sideMap = getKtsLayoutSideMap();
+        const keys = Object.keys(sideMap);
+        const selEl = document.getElementById('ktsLayElementSelect');
+        const chipsEl = document.getElementById('ktsLayElementChips');
+
+        if (selEl) {
+            selEl.innerHTML = keys.map(function(k) {
+                const item = sideMap[k];
+                const suffix = item.visible === false ? ' (Disembunyikan)' : '';
+                return '<option value="' + k + '">' + escKts(item.label || k) + suffix + '</option>';
+            }).join('');
+            selEl.value = ktsState.layoutSelectedEl;
+        }
+        if (chipsEl) {
+            chipsEl.innerHTML = keys.map(function(k) {
+                const item = sideMap[k];
+                const cls = ['kts-layout-el-chip'];
+                if (k === ktsState.layoutSelectedEl) cls.push('active');
+                if (item.visible === false) cls.push('is-hidden');
+                return '<button type="button" class="' + cls.join(' ') + '" data-kts-el="' + k + '">' + escKts(item.label || k) + '</button>';
+            }).join('');
+        }
+    }
+
+    function syncKtsLayoutInspectorFromState() {
+        const el = getKtsLayoutSelectedObj();
+        populateKtsLayoutElementPicker();
+
+        const frontBtn = document.getElementById('ktsLaySideFrontBtn');
+        const backBtn = document.getElementById('ktsLaySideBackBtn');
+        if (frontBtn) frontBtn.classList.toggle('active', ktsState.layoutSide === 'front');
+        if (backBtn) backBtn.classList.toggle('active', ktsState.layoutSide === 'back');
+
+        const groupChk = document.getElementById('ktsLayMoveBioGroup');
+        if (groupChk && groupChk.parentElement) {
+            groupChk.parentElement.style.display = ktsState.layoutSide === 'front' ? '' : 'none';
+        }
+
+        if (!el) return;
+
+        const visEl = document.getElementById('ktsLayVisibleToggle');
+        if (visEl) visEl.checked = el.visible !== false;
+
+        const setPair = function(rangeId, numId, val, disabled) {
+            const r = document.getElementById(rangeId);
+            const n = document.getElementById(numId);
+            if (r) { r.value = val; r.disabled = Boolean(disabled); }
+            if (n) { n.value = val; n.disabled = Boolean(disabled); }
+        };
+
+        setPair('ktsLayPosX', 'ktsLayPosXNum', Math.round(Number(el.x) || 0), el.kind === 'box');
+        setPair('ktsLayPosY', 'ktsLayPosYNum', Math.round(Number(el.y) || 0), el.kind === 'box');
+
+        const typoGroup = document.getElementById('ktsLayTypoGroup');
+        const boxGroup = document.getElementById('ktsLayBoxGroup');
+        const isText = el.kind === 'text';
+
+        if (typoGroup) typoGroup.style.display = isText ? 'flex' : 'none';
+        if (boxGroup) boxGroup.style.display = isText ? 'none' : 'grid';
+
+        if (isText) {
+            setPair('ktsLayFontSize', 'ktsLayFontSizeNum', Number(el.fontSize) || 18, false);
+            setPair('ktsLayLetterSpacing', 'ktsLayLetterSpacingNum', Number(el.letterSpacing) || 0, false);
+            setPair('ktsLayLineGap', 'ktsLayLineGapNum', Math.round(Number(el.lineGap) || 24), false);
+            setPair('ktsLayMaxWidth', 'ktsLayMaxWidthNum', Math.round(Number(el.maxWidth) || 500), false);
+
+            const bBtn = document.getElementById('ktsLayBoldBtn');
+            const iBtn = document.getElementById('ktsLayItalicBtn');
+            const uBtn = document.getElementById('ktsLayUpperBtn');
+            const aL = document.getElementById('ktsLayAlignLeftBtn');
+            const aC = document.getElementById('ktsLayAlignCenterBtn');
+            const aR = document.getElementById('ktsLayAlignRightBtn');
+            if (bBtn) bBtn.classList.toggle('active', Boolean(el.bold));
+            if (iBtn) iBtn.classList.toggle('active', Boolean(el.italic));
+            if (uBtn) uBtn.classList.toggle('active', Boolean(el.uppercase));
+            const al = el.align || 'left';
+            if (aL) aL.classList.toggle('active', al === 'left');
+            if (aC) aC.classList.toggle('active', al === 'center');
+            if (aR) aR.classList.toggle('active', al === 'right');
+
+            const uWrap = document.getElementById('ktsLayUnderlineWrap');
+            const uChk = document.getElementById('ktsLayUnderlineToggle');
+            if (uWrap) uWrap.style.display = ktsState.layoutSelectedEl === 'student_name' ? '' : 'none';
+            if (uChk) uChk.checked = el.showUnderline !== false;
+
+            const cPick = document.getElementById('ktsLayColorPicker');
+            if (cPick && /^#[0-9a-fA-F]{6}$/.test(el.color || '')) {
+                cPick.value = el.color;
+            }
+        } else {
+            if (el.kind === 'rect') {
+                setPair('ktsLayBoxW', 'ktsLayBoxWNum', Math.round(Number(el.w) || 220), false);
+                setPair('ktsLayBoxH', 'ktsLayBoxHNum', Math.round(Number(el.h) || 294), false);
+            } else if (el.kind === 'square') {
+                const sz = Math.round(Number(el.size) || 120);
+                setPair('ktsLayBoxW', 'ktsLayBoxWNum', sz, false);
+                setPair('ktsLayBoxH', 'ktsLayBoxHNum', sz, true);
+            } else {
+                setPair('ktsLayBoxW', 'ktsLayBoxWNum', 1011, true);
+                setPair('ktsLayBoxH', 'ktsLayBoxHNum', Math.round(Number(el.h) || 120), false);
+            }
+        }
+    }
+
+    function getSampleLayoutStudent() {
+        return getSelectedStudentObj() || {
+            studentId: 'SAMPLE-KTS',
+            name: 'AHMAD ROGHIB AL QUDSY',
+            nis: '131233170020240004',
+            nisn: '0096141472',
+            birthPlace: 'Rembang',
+            birthDate: '2009-07-06',
+            address: 'Desa Kalipang, Kec. Sarang, Kab. Rembang',
+            dormitory: 'PP. At-Taujih Sarang',
+            qrCodeId: 'SQR-10001'
+        };
+    }
+
+    async function renderKtsLayoutEditorCanvas() {
+        const seq = ++ktsLayoutRenderSeq;
+        const canvas = document.getElementById('ktsLayoutCanvas');
+        if (!canvas) return;
+        const st = getSampleLayoutStudent();
+        const lbl = document.getElementById('ktsLayPreviewStudentLabel');
+        if (lbl) lbl.textContent = 'Pratinjau: ' + (st.name || 'Siswa Contoh');
+
+        const boxes = [];
+        const draftSettings = Object.assign({}, ktsState.settings, { _draftLayout: ktsState.layoutDraft });
+        await renderKtsCardToCanvas(canvas, st, draftSettings, ktsState.layoutSide, boxes);
+        if (seq !== ktsLayoutRenderSeq) return;
+
+        ktsLayoutHitBoxes = boxes;
+        const activeBox = boxes.find(function(b) { return b.id === ktsState.layoutSelectedEl; });
+        if (activeBox) {
+            const ctx = canvas.getContext('2d');
+            const bx = Math.max(4, Math.min(1007 - Math.max(24, activeBox.w), activeBox.x));
+            const by = Math.max(4, Math.min(634 - Math.max(20, activeBox.h), activeBox.y));
+            const bw = Math.max(24, Math.min(1003 - bx, activeBox.w));
+            const bh = Math.max(20, Math.min(630 - by, activeBox.h));
+
+            ctx.save();
+            ctx.fillStyle = 'rgba(22, 163, 74, 0.08)';
+            ctx.fillRect(bx, by, bw, bh);
+            ctx.strokeStyle = '#16a34a';
+            ctx.lineWidth = 2.5;
+            ctx.setLineDash([7, 5]);
+            ctx.strokeRect(bx, by, bw, bh);
+            ctx.setLineDash([]);
+
+            // 4 corner anchor handles
+            const hs = 8;
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = '#166534';
+            ctx.lineWidth = 2;
+            [[bx, by], [bx + bw, by], [bx, by + bh], [bx + bw, by + bh]].forEach(function(pt) {
+                ctx.fillRect(pt[0] - hs / 2, pt[1] - hs / 2, hs, hs);
+                ctx.strokeRect(pt[0] - hs / 2, pt[1] - hs / 2, hs, hs);
+            });
+
+            // Floating element tag
+            const tagText = activeBox.label || activeBox.id;
+            ctx.font = '700 12px "Segoe UI", sans-serif';
+            const tagW = ctx.measureText(tagText).width + 14;
+            const tagY = by >= 28 ? by - 22 : by + bh + 4;
+            const tagX = Math.max(6, Math.min(1005 - tagW, bx));
+            ctx.fillStyle = '#166534';
+            drawRoundedRectPath(ctx, tagX, tagY, tagW, 18, 5);
+            ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'left';
+            ctx.fillText(tagText, tagX + 7, tagY + 13);
+            ctx.restore();
+        }
+    }
+
+    function scheduleKtsLayoutEditorRender() {
+        if (ktsLayoutRafPending) return;
+        ktsLayoutRafPending = true;
+        requestAnimationFrame(function() {
+            ktsLayoutRafPending = false;
+            renderKtsLayoutEditorCanvas();
+        });
+    }
+
+    function applyKtsLayoutMoveDelta(dx, dy) {
+        const el = getKtsLayoutSelectedObj();
+        if (!el || el.kind === 'box') return;
+        const sideMap = getKtsLayoutSideMap();
+        const moveBioGroup = ktsState.layoutSide === 'front' &&
+            KTS_BIO_KEYS.indexOf(ktsState.layoutSelectedEl) !== -1 &&
+            Boolean(document.getElementById('ktsLayMoveBioGroup') && document.getElementById('ktsLayMoveBioGroup').checked);
+        const targets = moveBioGroup ? KTS_BIO_KEYS : [ktsState.layoutSelectedEl];
+        targets.forEach(function(key) {
+            const item = sideMap[key];
+            if (!item) return;
+            item.x = Math.max(0, Math.min(1011, Math.round((Number(item.x) || 0) + dx)));
+            item.y = Math.max(0, Math.min(638, Math.round((Number(item.y) || 0) + dy)));
+        });
+        syncKtsLayoutInspectorFromState();
+        scheduleKtsLayoutEditorRender();
+    }
+
+    function resetCurrentKtsLayoutElement() {
+        const sideMap = getKtsLayoutSideMap();
+        const base = (DEFAULT_KTS_LAYOUT[ktsState.layoutSide] || {})[ktsState.layoutSelectedEl];
+        if (!base) return;
+        sideMap[ktsState.layoutSelectedEl] = Object.assign({}, base);
+        syncKtsLayoutInspectorFromState();
+        scheduleKtsLayoutEditorRender();
+    }
+
+    function resetAllKtsLayout() {
+        ktsState.layoutDraft = cloneKtsLayout(DEFAULT_KTS_LAYOUT);
+        syncKtsLayoutInspectorFromState();
+        scheduleKtsLayoutEditorRender();
+    }
+
+    function openKtsLayoutModal() {
+        if (!isCurrentUserAdmin) return;
+        ktsState.layoutSide = ktsState.side === 'back' ? 'back' : 'front';
+        ktsState.layoutDraft = cloneKtsLayout(getEffectiveKtsLayout(ktsState.settings));
+        ktsState.layoutSelectedEl = ktsState.layoutSide === 'back' ? 'back_rules' : 'student_name';
+        syncKtsLayoutInspectorFromState();
+        const m = document.getElementById('ktsLayoutEditorModal');
+        if (m) m.style.display = 'flex';
+        renderKtsLayoutEditorCanvas();
+    }
+
+    window.closeKtsLayoutModal = function() {
+        ktsLayoutDragState = null;
+        const c = document.getElementById('ktsLayoutCanvas');
+        if (c) c.classList.remove('is-dragging');
+        const m = document.getElementById('ktsLayoutEditorModal');
+        if (m) m.style.display = 'none';
+    };
+
+    async function saveKtsLayoutSettings() {
+        if (!ktsState.layoutDraft) return;
+        const payload = {
+            layout_config: JSON.stringify(ktsState.layoutDraft)
+        };
+        showModalProcessing('ktsLayoutEditorModal', 'Menyimpan Layout KTS...', 'Menerapkan tata letak baru ke pratinjau & cetak kartu...');
+        try {
+            const res = await simataClient.updateKtsSettings(payload);
+            if (res && res.data) ktsState.settings = Object.assign({}, ktsState.settings, res.data);
+            else ktsState.settings.layout_config = payload.layout_config;
+            hideModalProcessing('ktsLayoutEditorModal');
+            window.closeKtsLayoutModal();
+            await refreshKtsPreviewCanvas();
+            if (typeof showToast === 'function') {
+                showToast('success', 'Layout KTS Disimpan', 'Posisi, jarak & ukuran font kartu berhasil diperbarui.');
+            }
+        } catch (err) {
+            hideModalProcessing('ktsLayoutEditorModal');
+            alert('Gagal menyimpan layout KTS: ' + (err.message || err));
         }
     }
 
@@ -23058,6 +23675,15 @@ function startOrOpenResponder(options) {
         });
 
         // Header Actions
+        const editLayBtn = document.getElementById('ktsEditLayoutBtn');
+        if (editLayBtn) editLayBtn.addEventListener('click', openKtsLayoutModal);
+
+        const openLayFromTpl = document.getElementById('ktsOpenLayoutFromTplBtn');
+        if (openLayFromTpl) openLayFromTpl.addEventListener('click', function() {
+            window.closeKtsTemplateModal();
+            openKtsLayoutModal();
+        });
+
         const tplBtn = document.getElementById('ktsCustomizeTemplateBtn');
         if (tplBtn) tplBtn.addEventListener('click', openKtsTemplateModal);
 
@@ -23348,6 +23974,264 @@ function startOrOpenResponder(options) {
 
         const tplSaveBtn = document.getElementById('ktsTplSaveBtn');
         if (tplSaveBtn) tplSaveBtn.addEventListener('click', saveKtsTemplateSettings);
+
+        // Visual KTS Layout Editor Handlers (Drag & Drop + Inspector)
+        const layFrontBtn = document.getElementById('ktsLaySideFrontBtn');
+        const layBackBtn = document.getElementById('ktsLaySideBackBtn');
+        if (layFrontBtn) layFrontBtn.addEventListener('click', function() {
+            ktsState.layoutSide = 'front';
+            ktsState.layoutSelectedEl = 'student_name';
+            syncKtsLayoutInspectorFromState();
+            renderKtsLayoutEditorCanvas();
+        });
+        if (layBackBtn) layBackBtn.addEventListener('click', function() {
+            ktsState.layoutSide = 'back';
+            ktsState.layoutSelectedEl = 'back_rules';
+            syncKtsLayoutInspectorFromState();
+            renderKtsLayoutEditorCanvas();
+        });
+
+        const laySel = document.getElementById('ktsLayElementSelect');
+        if (laySel) laySel.addEventListener('change', function() {
+            ktsState.layoutSelectedEl = this.value;
+            syncKtsLayoutInspectorFromState();
+            renderKtsLayoutEditorCanvas();
+        });
+
+        const layChips = document.getElementById('ktsLayElementChips');
+        if (layChips) layChips.addEventListener('click', function(e) {
+            const btn = e.target.closest('.kts-layout-el-chip');
+            if (!btn || !btn.dataset.ktsEl) return;
+            ktsState.layoutSelectedEl = btn.dataset.ktsEl;
+            syncKtsLayoutInspectorFromState();
+            renderKtsLayoutEditorCanvas();
+        });
+
+        const layVis = document.getElementById('ktsLayVisibleToggle');
+        if (layVis) layVis.addEventListener('change', function() {
+            const el = getKtsLayoutSelectedObj();
+            if (!el) return;
+            el.visible = this.checked;
+            populateKtsLayoutElementPicker();
+            scheduleKtsLayoutEditorRender();
+        });
+
+        const bindLayPair = function(rangeId, numId, onValue) {
+            const r = document.getElementById(rangeId);
+            const n = document.getElementById(numId);
+            const handle = function(rawVal, sourceEl) {
+                const v = Number(rawVal);
+                if (!Number.isFinite(v)) return;
+                if (r && sourceEl !== r) r.value = v;
+                if (n && sourceEl !== n) n.value = v;
+                onValue(v);
+                scheduleKtsLayoutEditorRender();
+            };
+            if (r) r.addEventListener('input', function() { handle(this.value, r); });
+            if (n) n.addEventListener('input', function() { handle(this.value, n); });
+        };
+
+        bindLayPair('ktsLayPosX', 'ktsLayPosXNum', function(v) {
+            const el = getKtsLayoutSelectedObj();
+            if (!el || el.kind === 'box') return;
+            const prev = Number(el.x) || 0;
+            applyKtsLayoutMoveDelta(v - prev, 0);
+        });
+        bindLayPair('ktsLayPosY', 'ktsLayPosYNum', function(v) {
+            const el = getKtsLayoutSelectedObj();
+            if (!el || el.kind === 'box') return;
+            const prev = Number(el.y) || 0;
+            applyKtsLayoutMoveDelta(0, v - prev);
+        });
+        bindLayPair('ktsLayFontSize', 'ktsLayFontSizeNum', function(v) {
+            const el = getKtsLayoutSelectedObj();
+            if (el) el.fontSize = Math.max(8, Math.min(90, v));
+        });
+        bindLayPair('ktsLayLetterSpacing', 'ktsLayLetterSpacingNum', function(v) {
+            const el = getKtsLayoutSelectedObj();
+            if (el) el.letterSpacing = Math.max(-2, Math.min(24, v));
+        });
+        bindLayPair('ktsLayLineGap', 'ktsLayLineGapNum', function(v) {
+            const el = getKtsLayoutSelectedObj();
+            if (el) el.lineGap = Math.max(10, Math.min(80, v));
+        });
+        bindLayPair('ktsLayMaxWidth', 'ktsLayMaxWidthNum', function(v) {
+            const el = getKtsLayoutSelectedObj();
+            if (el) el.maxWidth = Math.max(80, Math.min(980, v));
+        });
+        bindLayPair('ktsLayBoxW', 'ktsLayBoxWNum', function(v) {
+            const el = getKtsLayoutSelectedObj();
+            if (!el) return;
+            if (el.kind === 'square') {
+                el.size = Math.max(40, Math.min(400, v));
+                const hR = document.getElementById('ktsLayBoxH');
+                const hN = document.getElementById('ktsLayBoxHNum');
+                if (hR) hR.value = el.size;
+                if (hN) hN.value = el.size;
+            } else if (el.kind === 'rect') {
+                el.w = Math.max(50, Math.min(600, v));
+            }
+        });
+        bindLayPair('ktsLayBoxH', 'ktsLayBoxHNum', function(v) {
+            const el = getKtsLayoutSelectedObj();
+            if (!el) return;
+            if (el.kind === 'rect') el.h = Math.max(50, Math.min(600, v));
+            else if (el.kind === 'box') el.h = Math.max(40, Math.min(260, v));
+        });
+
+        const wireToggleProp = function(btnId, propName) {
+            const btn = document.getElementById(btnId);
+            if (!btn) return;
+            btn.addEventListener('click', function() {
+                const el = getKtsLayoutSelectedObj();
+                if (!el) return;
+                el[propName] = !el[propName];
+                this.classList.toggle('active', Boolean(el[propName]));
+                scheduleKtsLayoutEditorRender();
+            });
+        };
+        wireToggleProp('ktsLayBoldBtn', 'bold');
+        wireToggleProp('ktsLayItalicBtn', 'italic');
+        wireToggleProp('ktsLayUpperBtn', 'uppercase');
+
+        [['ktsLayAlignLeftBtn', 'left'], ['ktsLayAlignCenterBtn', 'center'], ['ktsLayAlignRightBtn', 'right']].forEach(function(pair) {
+            const btn = document.getElementById(pair[0]);
+            if (!btn) return;
+            btn.addEventListener('click', function() {
+                const el = getKtsLayoutSelectedObj();
+                if (!el) return;
+                el.align = pair[1];
+                syncKtsLayoutInspectorFromState();
+                scheduleKtsLayoutEditorRender();
+            });
+        });
+
+        const uLineChk = document.getElementById('ktsLayUnderlineToggle');
+        if (uLineChk) uLineChk.addEventListener('change', function() {
+            const el = getKtsLayoutSelectedObj();
+            if (!el) return;
+            el.showUnderline = this.checked;
+            scheduleKtsLayoutEditorRender();
+        });
+
+        const colPick = document.getElementById('ktsLayColorPicker');
+        if (colPick) colPick.addEventListener('input', function() {
+            const el = getKtsLayoutSelectedObj();
+            if (!el) return;
+            el.color = this.value;
+            scheduleKtsLayoutEditorRender();
+        });
+
+        document.querySelectorAll('#ktsLayoutEditorModal .kts-color-swatch').forEach(function(sw) {
+            sw.addEventListener('click', function() {
+                const c = this.dataset.ktsColor;
+                const el = getKtsLayoutSelectedObj();
+                if (!el || !c) return;
+                el.color = c;
+                if (colPick) colPick.value = c;
+                scheduleKtsLayoutEditorRender();
+            });
+        });
+
+        [['ktsLayNudgeLeft', -2, 0], ['ktsLayNudgeRight', 2, 0], ['ktsLayNudgeUp', 0, -2], ['ktsLayNudgeDown', 0, 2]].forEach(function(n) {
+            const btn = document.getElementById(n[0]);
+            if (btn) btn.addEventListener('click', function() { applyKtsLayoutMoveDelta(n[1], n[2]); });
+        });
+
+        const rstElBtn = document.getElementById('ktsLayResetElBtn');
+        if (rstElBtn) rstElBtn.addEventListener('click', resetCurrentKtsLayoutElement);
+
+        const rstAllBtn = document.getElementById('ktsLayResetAllBtn');
+        if (rstAllBtn) rstAllBtn.addEventListener('click', function() {
+            if (confirm('Kembalikan seluruh posisi, jarak, dan ukuran font KTS ke pengaturan bawaan?')) {
+                resetAllKtsLayout();
+            }
+        });
+
+        const saveLayBtn = document.getElementById('ktsLaySaveBtn');
+        if (saveLayBtn) saveLayBtn.addEventListener('click', saveKtsLayoutSettings);
+
+        const layCanvas = document.getElementById('ktsLayoutCanvas');
+        if (layCanvas) {
+            const getCanvasCoords = function(ev) {
+                const rect = layCanvas.getBoundingClientRect();
+                const scaleX = layCanvas.width / Math.max(1, rect.width);
+                const scaleY = layCanvas.height / Math.max(1, rect.height);
+                return {
+                    x: (ev.clientX - rect.left) * scaleX,
+                    y: (ev.clientY - rect.top) * scaleY
+                };
+            };
+
+            layCanvas.addEventListener('pointerdown', function(ev) {
+                const pt = getCanvasCoords(ev);
+                let picked = null;
+                for (let i = ktsLayoutHitBoxes.length - 1; i >= 0; i--) {
+                    const b = ktsLayoutHitBoxes[i];
+                    if (pt.x >= b.x && pt.x <= b.x + b.w && pt.y >= b.y && pt.y <= b.y + b.h) {
+                        picked = b;
+                        break;
+                    }
+                }
+                if (!picked) return;
+                ktsState.layoutSelectedEl = picked.id;
+                syncKtsLayoutInspectorFromState();
+
+                const sideMap = getKtsLayoutSideMap();
+                const pickedObj = sideMap[picked.id];
+                if (pickedObj && pickedObj.kind !== 'box') {
+                    const moveBioGroup = ktsState.layoutSide === 'front' &&
+                        KTS_BIO_KEYS.indexOf(picked.id) !== -1 &&
+                        Boolean(document.getElementById('ktsLayMoveBioGroup') && document.getElementById('ktsLayMoveBioGroup').checked);
+                    const keys = moveBioGroup ? KTS_BIO_KEYS : [picked.id];
+                    const origins = {};
+                    keys.forEach(function(k) {
+                        if (sideMap[k]) {
+                            origins[k] = { x: Number(sideMap[k].x) || 0, y: Number(sideMap[k].y) || 0 };
+                        }
+                    });
+                    ktsLayoutDragState = {
+                        pointerId: ev.pointerId,
+                        startX: pt.x,
+                        startY: pt.y,
+                        origins: origins
+                    };
+                    layCanvas.classList.add('is-dragging');
+                    if (layCanvas.setPointerCapture) {
+                        try { layCanvas.setPointerCapture(ev.pointerId); } catch (_) {}
+                    }
+                }
+                scheduleKtsLayoutEditorRender();
+            });
+
+            layCanvas.addEventListener('pointermove', function(ev) {
+                if (!ktsLayoutDragState || ev.pointerId !== ktsLayoutDragState.pointerId) return;
+                const pt = getCanvasCoords(ev);
+                const dx = pt.x - ktsLayoutDragState.startX;
+                const dy = pt.y - ktsLayoutDragState.startY;
+                const sideMap = getKtsLayoutSideMap();
+                Object.keys(ktsLayoutDragState.origins).forEach(function(k) {
+                    const orig = ktsLayoutDragState.origins[k];
+                    if (!sideMap[k] || !orig) return;
+                    sideMap[k].x = Math.max(0, Math.min(1011, Math.round(orig.x + dx)));
+                    sideMap[k].y = Math.max(0, Math.min(638, Math.round(orig.y + dy)));
+                });
+                syncKtsLayoutInspectorFromState();
+                scheduleKtsLayoutEditorRender();
+            });
+
+            const endDrag = function(ev) {
+                if (!ktsLayoutDragState) return;
+                if (ev && ev.pointerId !== undefined && layCanvas.releasePointerCapture) {
+                    try { layCanvas.releasePointerCapture(ev.pointerId); } catch (_) {}
+                }
+                ktsLayoutDragState = null;
+                layCanvas.classList.remove('is-dragging');
+                renderKtsLayoutEditorCanvas();
+            };
+            layCanvas.addEventListener('pointerup', endDrag);
+            layCanvas.addEventListener('pointercancel', endDrag);
+        }
 
         // Batch Print Modal Handlers
         const bScope = document.getElementById('ktsBatch_scope');
@@ -23738,6 +24622,9 @@ function onDashboardLoaded(data) {
 
         const sheetKts = document.getElementById('sheetMenuKts');
         if (sheetKts) sheetKts.style.display = (isAdmin || isGuru) ? '' : 'none';
+
+        const ktsEditLayBtn = document.getElementById('ktsEditLayoutBtn');
+        if (ktsEditLayBtn) ktsEditLayBtn.style.display = isAdmin ? '' : 'none';
 
         const ktsTplBtn = document.getElementById('ktsCustomizeTemplateBtn');
         if (ktsTplBtn) ktsTplBtn.style.display = isAdmin ? '' : 'none';

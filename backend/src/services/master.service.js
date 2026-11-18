@@ -29,7 +29,8 @@ const DEFAULT_KTS_SETTINGS = {
   headmaster_nip: 'NIP. -',
   custom_front_bg: '',
   custom_back_bg: '',
-  signature_img: ''
+  signature_img: '',
+  layout_config: ''
 };
 
 function formatStudentDateOnlyISO(val) {
@@ -545,6 +546,17 @@ class MasterService {
         const val = payload[key] === null ? '' : String(payload[key]);
         if (['custom_front_bg', 'custom_back_bg', 'signature_img'].includes(key) && val && !val.startsWith('data:image/')) {
           throw new BadRequestError(`Format gambar tidak valid untuk ${key}`);
+        }
+        if (key === 'layout_config' && val) {
+          let parsedLayout = null;
+          try {
+            parsedLayout = JSON.parse(val);
+          } catch (_) {
+            throw new BadRequestError('Format konfigurasi layout KTS tidak valid');
+          }
+          if (!parsedLayout || typeof parsedLayout !== 'object' || Array.isArray(parsedLayout)) {
+            throw new BadRequestError('Format konfigurasi layout KTS tidak valid');
+          }
         }
         await studentRepository.upsertKtsSetting(key, val);
       }
