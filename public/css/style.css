@@ -5494,7 +5494,7 @@ select.attendance-filter-control {
 }
 
 /* ==========================================================================
-   BUG 65: MENU KTS (KARTU TANDA SISWA / KARTU PELAJAR STUDIO)
+   BUG 65: MENU KTS (KARTU PELAJAR - OPTION 2 SIMPLE MODERN LAYOUT)
    ========================================================================== */
 .kts-header-actions {
   display: flex;
@@ -5545,57 +5545,77 @@ select.attendance-filter-control {
   cursor: not-allowed;
 }
 
+/* Option 2: 4 Modern Stat Cards Row */
 .kts-readiness-bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 14px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .kts-readiness-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 7px 12px;
-  border-radius: 999px;
-  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 13px 16px;
+  border-radius: 14px;
+  border: 1.5px solid #e2e8f0;
   background: #ffffff;
   color: #475569;
-  font-size: 12.5px;
-  font-weight: 600;
+  font-family: inherit;
+  text-align: left;
   cursor: pointer;
-  transition: all 0.15s ease;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.03);
+  transition: all 0.16s ease;
 }
 .kts-readiness-chip:hover {
   border-color: #94a3b8;
   background: #f8fafc;
 }
 .kts-readiness-chip.active {
-  background: #166534;
+  background: #f0fdf4;
   border-color: #166534;
-  color: #ffffff;
+  box-shadow: 0 3px 10px rgba(22, 101, 52, 0.10);
 }
-.kts-chip-count {
+
+.kts-stat-label {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  min-width: 22px;
-  height: 20px;
-  padding: 0 6px;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #475569;
+}
+.kts-readiness-chip.active .kts-stat-label {
+  color: #14532d;
+}
+
+.kts-stat-dot {
+  width: 8px;
+  height: 8px;
   border-radius: 999px;
-  background: #f1f5f9;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.kts-stat-dot.ready { background: #16a34a; }
+.kts-stat-dot.no-photo { background: #eab308; }
+.kts-stat-dot.incomplete { background: #f97316; }
+
+.kts-chip-count {
+  font-size: 26px;
+  line-height: 1.1;
+  font-weight: 800;
   color: #0f172a;
-  font-size: 11px;
-  font-weight: 700;
 }
 .kts-readiness-chip.active .kts-chip-count {
-  background: rgba(255, 255, 255, 0.22);
-  color: #ffffff;
+  color: #14532d;
 }
 
 .kts-studio-grid {
   display: grid;
-  grid-template-columns: minmax(340px, 430px) minmax(0, 1fr);
+  grid-template-columns: minmax(350px, 435px) minmax(0, 1fr);
   gap: 16px;
   align-items: start;
 }
@@ -5622,7 +5642,10 @@ select.attendance-filter-control {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 10px;
+}
+.kts-card-box-title > span {
+  white-space: nowrap;
 }
 
 .kts-preview-stage {
@@ -5630,9 +5653,9 @@ select.attendance-filter-control {
   aspect-ratio: 1011 / 638;
   border-radius: 12px;
   overflow: hidden;
-  background: #f1f5f9;
+  background: #f8fafc;
   border: 1px solid #cbd5e1;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.10);
 }
 
 #ktsPreviewCanvas {
@@ -5641,21 +5664,13 @@ select.attendance-filter-control {
   display: block;
 }
 
-.kts-preview-controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: 12px;
-}
-
 .kts-side-toggle {
   display: inline-flex;
   background: #f1f5f9;
   border-radius: 8px;
   padding: 3px;
   gap: 2px;
+  flex-shrink: 0;
 }
 
 .kts-side-btn {
@@ -5664,9 +5679,10 @@ select.attendance-filter-control {
   color: #475569;
   font-size: 12px;
   font-weight: 600;
-  padding: 6px 10px;
+  padding: 6px 11px;
   border-radius: 6px;
   cursor: pointer;
+  white-space: nowrap;
 }
 .kts-side-btn.active {
   background: #166534;
@@ -5696,6 +5712,7 @@ select.attendance-filter-control {
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
+  white-space: nowrap;
 }
 .kts-mini-btn:hover {
   background: #f8fafc;
@@ -5708,6 +5725,17 @@ select.attendance-filter-control {
 }
 .kts-mini-btn.kts-mini-primary:hover {
   background: #14532d;
+}
+.kts-mini-btn.kts-mini-dashed {
+  border-style: dashed;
+  border-color: #64748b;
+  color: #14532d;
+  background: #f8fafc;
+}
+.kts-mini-btn.kts-mini-dashed.is-open,
+.kts-mini-btn.kts-mini-dashed:hover {
+  border-color: #166534;
+  background: #f0fdf4;
 }
 
 .kts-selected-meta {
@@ -5788,18 +5816,41 @@ select.attendance-filter-control {
   flex: 1;
 }
 
-.kts-right-column .kts-filter-bar {
-  display: grid;
-  grid-template-columns: auto minmax(130px, 1fr) minmax(145px, 1fr);
-  gap: 8px;
-  margin-bottom: 10px;
-  align-items: center;
-}
-
-.kts-search-row {
+/* Single-Row Unified Toolbar & Clean Table on Right */
+.kts-toolbar-row {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
   margin-bottom: 12px;
+}
+.kts-toolbar-row .entries-select-group {
+  flex: 0 0 auto;
+}
+.kts-toolbar-row .kts-filter-select {
+  height: 38px;
+  min-height: 38px;
+  padding: 0 10px;
+  font-size: 13px;
+  flex: 0 1 148px;
+  min-width: 120px;
+}
+.kts-toolbar-row .table-search-group {
+  flex: 1 1 200px;
+  min-width: 170px;
+  max-width: none !important;
+  width: auto !important;
+}
+.kts-toolbar-row .table-search-group .table-search-input {
+  width: 100% !important;
+  height: 38px;
+  box-sizing: border-box;
+}
+
+#ktsContent .attendance-table-wrapper {
+  max-height: none !important;
+  overflow-y: visible !important;
+  overflow-x: auto;
 }
 
 .kts-table-row-selected {
@@ -5955,18 +6006,24 @@ select.attendance-filter-control {
   flex-shrink: 0;
 }
 
-@media (max-width: 1080px) {
+@media (max-width: 1120px) {
   .kts-studio-grid {
     grid-template-columns: 1fr;
   }
 }
 
-@media (max-width: 768px) {
-  .kts-right-column .kts-filter-bar {
-    grid-template-columns: 1fr 1fr;
+@media (max-width: 820px) {
+  .kts-readiness-bar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .kts-right-column .kts-filter-bar .entries-select-group {
-    grid-column: 1 / -1;
+}
+
+@media (max-width: 768px) {
+  .kts-toolbar-row .kts-filter-select {
+    flex: 1 1 130px;
+  }
+  .kts-card-box-title {
+    flex-wrap: wrap;
   }
   .kts-header-actions {
     width: 100%;

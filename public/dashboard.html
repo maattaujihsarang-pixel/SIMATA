@@ -3548,14 +3548,14 @@ html, body {
         </section>
 
         <!-- ==========================================================
-             BUG 65: KTS (KARTU TANDA SISWA / KARTU PELAJAR STUDIO)
+             BUG 65: MENU KTS (KARTU PELAJAR - OPTION 2 SIMPLE MODERN)
         =========================================================== -->
         <section id="ktsContent" class="content" style="display:none;">
           <div class="section-heading">
             <div>
-              <span class="section-label">DATA &amp; AKADEMIK &bull; KTS</span>
-              <h2>KTS</h2>
-              <p class="sched-subtitle">Studio pratinjau otomatis, edit foto langsung, sinkronisasi Excel 2-arah dengan Data Siswa, &amp; cetak PVC CR80 (85.6 &times; 54 mm).</p>
+              <span class="section-label">DATA &amp; AKADEMIK</span>
+              <h2>Kartu Pelajar</h2>
+              <p class="sched-subtitle">Kelola pratinjau kartu, kelengkapan biodata, pasfoto, dan pencetakan kartu identitas siswa.</p>
             </div>
             <div class="section-actions kts-header-actions">
               <button type="button" id="ktsCustomizeTemplateBtn" class="kts-btn-outline">
@@ -3569,44 +3569,44 @@ html, body {
             </div>
           </div>
 
-          <!-- Filter Ringkas Kesiapan KTS -->
-          <div id="ktsReadinessBar" class="kts-readiness-bar" role="group" aria-label="Filter Kesiapan Cetak KTS">
+          <!-- Option 2: 4 Stat Cards Filter Ringkas -->
+          <div id="ktsReadinessBar" class="kts-readiness-bar" role="group" aria-label="Filter Kesiapan Kartu Pelajar">
             <button type="button" class="kts-readiness-chip active" data-kts-filter="all">
-              <span>Semua Siswa</span>
+              <span class="kts-stat-label">Total Siswa Aktif</span>
               <span class="kts-chip-count" id="ktsCountAll">0</span>
             </button>
             <button type="button" class="kts-readiness-chip" data-kts-filter="ready">
-              <span>&#9679; Siap Cetak</span>
+              <span class="kts-stat-label"><span class="kts-stat-dot ready"></span><span>Siap Cetak</span></span>
               <span class="kts-chip-count" id="ktsCountReady">0</span>
             </button>
             <button type="button" class="kts-readiness-chip" data-kts-filter="no_photo">
-              <span>&#9679; Belum Foto</span>
+              <span class="kts-stat-label"><span class="kts-stat-dot no-photo"></span><span>Belum Ada Foto</span></span>
               <span class="kts-chip-count" id="ktsCountNoPhoto">0</span>
             </button>
             <button type="button" class="kts-readiness-chip" data-kts-filter="incomplete_bio">
-              <span>&#9679; Data Kurang</span>
+              <span class="kts-stat-label"><span class="kts-stat-dot incomplete"></span><span>Data Kurang</span></span>
               <span class="kts-chip-count" id="ktsCountIncomplete">0</span>
             </button>
           </div>
 
-          <!-- 2-Column Split Studio -->
+          <!-- 2-Column Split Layout -->
           <div class="kts-studio-grid">
 
-            <!-- LEFT COLUMN: Live Card Preview + Excel Import -->
+            <!-- LEFT COLUMN: Live Card Preview + Collapsible Excel Import -->
             <div class="kts-left-column">
 
-              <!-- Card 1: Live Interactive KTS Preview -->
+              <!-- Card 1: Live Interactive Card Preview -->
               <div class="kts-card-box">
                 <h3 class="kts-card-box-title">
-                  <span>Pratinjau Kartu KTS (CR80 300 DPI)</span>
-                  <div class="kts-side-toggle" role="tablist" aria-label="Pilih sisi kartu KTS">
+                  <span>Pratinjau Kartu Pelajar</span>
+                  <div class="kts-side-toggle" role="tablist" aria-label="Pilih sisi kartu pelajar">
                     <button type="button" id="ktsSideFrontBtn" class="kts-side-btn active">Sisi Depan</button>
                     <button type="button" id="ktsSideBackBtn" class="kts-side-btn">Sisi Belakang</button>
                   </div>
                 </h3>
 
                 <div class="kts-preview-stage">
-                  <canvas id="ktsPreviewCanvas" width="1011" height="638" aria-label="Pratinjau Kartu Tanda Siswa"></canvas>
+                  <canvas id="ktsPreviewCanvas" width="1011" height="638" aria-label="Pratinjau Kartu Pelajar"></canvas>
                 </div>
 
                 <div id="ktsSelectedMetaStrip" class="kts-selected-meta">
@@ -3626,11 +3626,15 @@ html, body {
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                     <span>Edit &amp; Foto</span>
                   </button>
+                  <button type="button" id="ktsToggleImportBtn" class="kts-mini-btn kts-mini-dashed" aria-expanded="false">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <span>Import Data KTS (.xlsx)</span>
+                  </button>
                 </div>
               </div>
 
-              <!-- Card 2: Import & Template Data KTS (Two-Way Sync dengan Menu Siswa) -->
-              <div id="ktsImportBox" class="kts-card-box">
+              <!-- Card 2: Import & Template Data KTS (Expandable on click) -->
+              <div id="ktsImportBox" class="kts-card-box" style="display:none;">
                 <h3 class="kts-card-box-title">
                   <span>Import &amp; Sinkronkan Data KTS</span>
                 </h3>
@@ -3665,9 +3669,9 @@ html, body {
             <div class="kts-right-column">
               <div class="kts-card-box">
 
-                <div class="kts-filter-bar">
+                <div class="kts-toolbar-row">
                   <div class="entries-select-group">
-                    <label for="ktsEntriesSelect">Show</label>
+                    <label for="ktsEntriesSelect">Tampilkan:</label>
                     <select id="ktsEntriesSelect" class="table-entries-select">
                       <option value="10" selected>10</option>
                       <option value="20">20</option>
@@ -3675,21 +3679,18 @@ html, body {
                       <option value="all">Semua</option>
                     </select>
                   </div>
-                  <select id="ktsClassFilter" class="input-box" aria-label="Filter kelas KTS">
+                  <select id="ktsClassFilter" class="input-box kts-filter-select" aria-label="Filter kelas Kartu Pelajar">
                     <option value="">Semua Kelas</option>
                   </select>
-                  <select id="ktsStatusFilter" class="input-box" aria-label="Filter status kelengkapan KTS">
-                    <option value="all">Semua Status KTS</option>
+                  <select id="ktsStatusFilter" class="input-box kts-filter-select" aria-label="Filter status kelengkapan Kartu Pelajar">
+                    <option value="all">Semua Status</option>
                     <option value="ready">Siap Cetak</option>
                     <option value="no_photo">Belum Foto</option>
                     <option value="incomplete_bio">Data Kurang</option>
                   </select>
-                </div>
-
-                <div class="kts-search-row">
-                  <div class="table-search-group" style="flex:1;max-width:none;">
+                  <div class="table-search-group">
                     <svg class="table-search-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                    <input type="text" id="ktsSearchInput" class="table-search-input" placeholder="Cari siswa (Nama, NIS, NISN, Tempat Lahir, Alamat, Pondok)..." autocomplete="off" />
+                    <input type="text" id="ktsSearchInput" class="table-search-input" placeholder="Cari nama, NIS, atau NISN..." autocomplete="off" />
                     <button type="button" id="ktsSearchClearBtn" class="table-search-clear" style="display:none;" title="Hapus pencarian">&times;</button>
                   </div>
                 </div>
@@ -3923,11 +3924,11 @@ html, body {
           </div>
         </div>
 
-        <!-- KTS MODAL 3: CETAK MASSAL A4 PVC -->
+        <!-- KTS MODAL 3: CETAK MASSAL KARTU PELAJAR -->
         <div id="ktsBatchPrintModal" class="student-modal-backdrop" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.5);align-items:center;justify-content:center;z-index:10050;">
           <div class="student-modal-card" style="max-width:520px;">
             <div class="student-modal-header">
-              <h3 style="margin:0;">Cetak Massal Kartu KTS (A4 PVC)</h3>
+              <h3 style="margin:0;">Cetak Massal Kartu Pelajar</h3>
               <button type="button" onclick="closeKtsBatchPrintModal()" class="student-modal-close-btn" aria-label="Tutup">&times;</button>
             </div>
             <div class="student-modal-body">
@@ -3945,7 +3946,7 @@ html, body {
                   <select id="ktsBatch_classSelect" class="input-box"></select>
                 </div>
                 <div class="student-form-group student-col-span-2">
-                  <label for="ktsBatch_sideMode" class="student-form-label">Mode Sisi Cetak (85.6 &times; 54 mm + Crop Marks)</label>
+                  <label for="ktsBatch_sideMode" class="student-form-label">Mode Sisi Cetak</label>
                   <select id="ktsBatch_sideMode" class="input-box">
                     <option value="both">Depan &amp; Belakang (Bersebelahan / Siap Lipat)</option>
                     <option value="front">Sisi Depan Saja (2 kolom &times; 4 baris / halaman A4)</option>
@@ -3963,7 +3964,7 @@ html, body {
             </div>
             <div class="student-modal-footer">
               <button type="button" onclick="closeKtsBatchPrintModal()" class="login-button student-btn-cancel">Tutup</button>
-              <button type="button" id="ktsBatchPrintRunBtn" class="login-button student-btn-save">Render &amp; Cetak A4</button>
+              <button type="button" id="ktsBatchPrintRunBtn" class="login-button student-btn-save">Cetak Kartu</button>
             </div>
           </div>
         </div>
@@ -21908,77 +21909,40 @@ function startOrOpenResponder(options) {
     }
 
     function drawKtsDecorativeBackground(ctx, W, H, side) {
-        // Rich soft ivory-to-mint base gradient
-        const bodyGrad = ctx.createLinearGradient(0, 0, W, H);
-        bodyGrad.addColorStop(0, '#ffffff');
-        bodyGrad.addColorStop(0.5, '#f4fbf7');
-        bodyGrad.addColorStop(1, '#dcfce7');
-        ctx.fillStyle = bodyGrad;
+        // Option 2 Simple Modern: Clean pure white canvas with subtle bottom-right mint geometric triangles
+        ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, W, H);
 
-        // Soft geometric diagonal sheen bands
         ctx.save();
-        ctx.fillStyle = 'rgba(22, 101, 52, 0.045)';
+        // Outer pastel mint corner triangle
+        ctx.fillStyle = '#e6f4ea';
         ctx.beginPath();
-        ctx.moveTo(0, H);
-        ctx.lineTo(360, 170);
-        ctx.lineTo(520, 170);
-        ctx.lineTo(150, H);
+        ctx.moveTo(W - 360, H);
+        ctx.lineTo(W, H - 230);
+        ctx.lineTo(W, H);
         ctx.closePath();
         ctx.fill();
 
-        ctx.fillStyle = 'rgba(234, 179, 8, 0.065)';
+        // Inner overlapping pastel mint corner triangle
+        ctx.fillStyle = '#d1fae5';
         ctx.beginPath();
-        ctx.moveTo(W - 420, H);
-        ctx.lineTo(W, 240);
-        ctx.lineTo(W, 340);
-        ctx.lineTo(W - 280, H);
+        ctx.moveTo(W - 220, H);
+        ctx.lineTo(W, H - 135);
+        ctx.lineTo(W, H);
         ctx.closePath();
         ctx.fill();
-        ctx.restore();
-
-        // Islamic diamond lattice grid across body
-        ctx.save();
-        ctx.strokeStyle = 'rgba(21, 128, 61, 0.055)';
-        ctx.lineWidth = 1.4;
-        const step = 48;
-        const startY = side === 'front' ? 165 : 90;
-        for (let x = 0; x <= W + step; x += step) {
-            for (let y = startY; y <= H - 20; y += step) {
-                ctx.beginPath();
-                ctx.moveTo(x, y - 16);
-                ctx.lineTo(x + 16, y);
-                ctx.lineTo(x, y + 16);
-                ctx.lineTo(x - 16, y);
-                ctx.closePath();
-                ctx.stroke();
-            }
-        }
-        ctx.restore();
 
         if (side === 'front') {
-            // Subtle architectural Madrasah Dome & Minaret silhouette watermark
-            ctx.save();
-            ctx.fillStyle = 'rgba(20, 83, 45, 0.065)';
-            const baseY = H - 30;
-            // Central dome
+            // Subtle top-right geometric facet under header
+            ctx.fillStyle = 'rgba(209, 250, 229, 0.35)';
             ctx.beginPath();
-            ctx.arc(655, baseY - 125, 118, Math.PI, 0);
-            ctx.lineTo(773, baseY);
-            ctx.lineTo(537, baseY);
+            ctx.moveTo(W - 140, 142);
+            ctx.lineTo(W, 142);
+            ctx.lineTo(W, 220);
             ctx.closePath();
             ctx.fill();
-            // Minarets
-            ctx.fillRect(482, baseY - 210, 34, 210);
-            ctx.beginPath();
-            ctx.arc(499, baseY - 210, 17, Math.PI, 0);
-            ctx.fill();
-            ctx.fillRect(792, baseY - 210, 34, 210);
-            ctx.beginPath();
-            ctx.arc(809, baseY - 210, 17, Math.PI, 0);
-            ctx.fill();
-            ctx.restore();
         }
+        ctx.restore();
     }
 
     function drawCroppedPhotoIntoFrame(ctx, photoAsset, px, py, pw, ph) {
@@ -22052,73 +22016,76 @@ function startOrOpenResponder(options) {
             } else {
                 drawKtsDecorativeBackground(ctx, W, H, 'front');
 
-                // Deep Rich Emerald Header Banner (4-line Official Kop)
-                const headGrad = ctx.createLinearGradient(0, 0, W, 185);
-                headGrad.addColorStop(0, '#052e16');
-                headGrad.addColorStop(0.52, '#14532d');
-                headGrad.addColorStop(1, '#15803d');
-                ctx.fillStyle = headGrad;
-                ctx.beginPath();
-                ctx.moveTo(0, 0);
-                ctx.lineTo(W, 0);
-                ctx.lineTo(W, 166);
-                ctx.quadraticCurveTo(W * 0.56, 194, 0, 174);
-                ctx.closePath();
-                ctx.fill();
-
-                // Subtle header radial glow
-                ctx.save();
-                const rad = ctx.createRadialGradient(585, 90, 20, 585, 90, 420);
-                rad.addColorStop(0, 'rgba(255, 255, 255, 0.10)');
-                rad.addColorStop(1, 'rgba(255, 255, 255, 0)');
-                ctx.fillStyle = rad;
-                ctx.fillRect(160, 0, W - 160, 185);
-                ctx.restore();
-
-                // Double Gold & Accent Wave Ribbon
+                // Metallic Gold Gradient (used for Option 2 diagonal cut & compact header border)
                 const goldGrad = ctx.createLinearGradient(0, 0, W, 0);
                 goldGrad.addColorStop(0, '#b45309');
                 goldGrad.addColorStop(0.35, '#fde047');
                 goldGrad.addColorStop(0.7, '#facc15');
                 goldGrad.addColorStop(1, '#ca8a04');
-                ctx.strokeStyle = goldGrad;
-                ctx.lineWidth = 8;
+
+                // Option 2 Compact Emerald Header (142px height) with left geometric diagonal cut
+                const headGrad = ctx.createLinearGradient(204, 0, W, 142);
+                headGrad.addColorStop(0, '#052e16');
+                headGrad.addColorStop(0.52, '#14532d');
+                headGrad.addColorStop(1, '#15803d');
+                ctx.fillStyle = headGrad;
+                ctx.fillRect(0, 0, W, 142);
+
+                // Left Geometric Emerald Wing (diagonal cut x=248 -> x=204 at y=142)
+                const wingGrad = ctx.createLinearGradient(0, 0, 248, 142);
+                wingGrad.addColorStop(0, '#064e3b');
+                wingGrad.addColorStop(1, '#15803d');
+                ctx.fillStyle = wingGrad;
                 ctx.beginPath();
-                ctx.moveTo(0, 174);
-                ctx.quadraticCurveTo(W * 0.56, 194, W, 166);
+                ctx.moveTo(0, 0);
+                ctx.lineTo(248, 0);
+                ctx.lineTo(204, 142);
+                ctx.lineTo(0, 142);
+                ctx.closePath();
+                ctx.fill();
+
+                // Gold Diagonal & Horizontal Accent Border
+                ctx.strokeStyle = goldGrad;
+                ctx.lineWidth = 5;
+                ctx.beginPath();
+                ctx.moveTo(248, 0);
+                ctx.lineTo(204, 142);
                 ctx.stroke();
 
-                // Left Madrasah Emblem with soft gold/white halo
+                ctx.fillStyle = goldGrad;
+                ctx.fillRect(0, 140, W, 5);
+
+                // Left Madrasah Emblem centered inside diagonal wing
                 if (logoImg) {
                     ctx.save();
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.16)';
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.14)';
                     ctx.beginPath();
-                    ctx.arc(106, 90, 64, 0, Math.PI * 2);
+                    ctx.arc(104, 71, 52, 0, Math.PI * 2);
                     ctx.fill();
-                    ctx.strokeStyle = 'rgba(253, 224, 71, 0.72)';
-                    ctx.lineWidth = 3;
+                    ctx.strokeStyle = 'rgba(253, 224, 71, 0.65)';
+                    ctx.lineWidth = 2;
                     ctx.stroke();
-                    ctx.drawImage(logoImg, 46, 30, 120, 120);
+                    ctx.drawImage(logoImg, 56, 23, 96, 96);
                     ctx.restore();
                 }
 
-                // Official 4-Line Header
-                const headerCx = 588;
-                const headerMaxW = 790;
+                // Official 4-Line Compact Header (Bold ONLY on MA AT-TAUJIH)
+                const headerCx = 602;
+                const headerMaxW = 750;
 
                 // Line 1: KARTU IDENTITAS SISWA
                 drawSpacedCenteredText(
                     ctx,
                     (cfg.header_title || 'KARTU IDENTITAS SISWA').toUpperCase(),
                     headerCx,
-                    34,
+                    26,
                     headerMaxW,
-                    [20, 18, 16],
-                    [4.5, 3, 1.5],
-                    '800',
+                    [15, 14, 13],
+                    [2.5, 2, 1],
+                    '600',
                     fontFamily,
                     '#fde047',
-                    true
+                    false
                 );
 
                 // Line 2: Yayasan Muwajjihul Ulum Asy-Syariyyah
@@ -22126,25 +22093,25 @@ function startOrOpenResponder(options) {
                     ctx,
                     cfg.header_arabic || 'Yayasan Muwajjihul Ulum Asy-Syariyyah',
                     headerCx,
-                    65,
+                    49,
                     headerMaxW,
-                    [23, 21, 19, 17],
-                    '700',
+                    [16.5, 15.5, 14.5],
+                    '400',
                     fontFamily,
                     '#f0fdf4',
                     'center'
                 );
 
-                // Line 3: MA AT-TAUJIH (Large, Bold, Wide Letter-Spacing)
+                // Line 3: MA AT-TAUJIH (Bold & Spaced)
                 drawSpacedCenteredText(
                     ctx,
                     (cfg.school_name || 'MA AT-TAUJIH').toUpperCase(),
                     headerCx,
-                    120,
-                    headerMaxW - 10,
-                    [52, 46, 40, 34, 28],
-                    [13, 9, 5, 2, 0.5],
-                    '900',
+                    95,
+                    headerMaxW,
+                    [38, 34, 30, 26],
+                    [8, 5, 2, 0.5],
+                    '800',
                     fontFamily,
                     '#ffffff',
                     true
@@ -22155,137 +22122,115 @@ function startOrOpenResponder(options) {
                     ctx,
                     cfg.school_address || 'Dk. Pulorejo, Desa Bajingjowo, Kec. Sarang, Kab. Rembang, Jawa Tengah (59274)',
                     headerCx,
-                    152,
-                    headerMaxW + 12,
-                    [17, 16, 15, 13.5, 12],
-                    '600',
+                    123,
+                    headerMaxW,
+                    [13.5, 12.5, 11.5],
+                    '400',
                     fontFamily,
                     '#dcfce7',
                     'center'
                 );
-
-                // Bottom Footer Accent Strip
-                ctx.fillStyle = '#0f3f26';
-                ctx.fillRect(0, 606, W, 32);
-                ctx.fillStyle = goldGrad;
-                ctx.fillRect(0, 602, W, 4);
-                ctx.font = '700 13.5px ' + fontFamily;
-                ctx.fillStyle = '#fde047';
-                ctx.fillText('SISTEM INFORMASI MADRASAH • SIMATA', 42, 627);
-                ctx.textAlign = 'right';
-                ctx.fillStyle = '#dcfce7';
-                ctx.font = '600 13.5px monospace';
-                ctx.fillText('ID: ' + (st.studentId || '-'), W - 42, 627);
-                ctx.textAlign = 'left';
             }
 
-            // 3x4 Student Photo Frame (Enlarged + Crisp Gold-Emerald Border)
-            const px = 44, py = 200, pw = 236, ph = 314;
+            // 3x4 Student Photo Frame (Clean White Modern Frame)
+            const px = 52, py = 178, pw = 220, ph = 294;
             ctx.save();
-            ctx.shadowColor = 'rgba(15, 23, 42, 0.18)';
-            ctx.shadowBlur = 14;
-            ctx.shadowOffsetY = 5;
+            ctx.shadowColor = 'rgba(15, 23, 42, 0.12)';
+            ctx.shadowBlur = 12;
+            ctx.shadowOffsetY = 4;
             ctx.fillStyle = '#ffffff';
-            drawRoundedRectPath(ctx, px - 7, py - 7, pw + 14, ph + 14, 18);
+            drawRoundedRectPath(ctx, px - 5, py - 5, pw + 10, ph + 10, 16);
             ctx.fill();
             ctx.restore();
 
             ctx.save();
-            ctx.strokeStyle = '#166534';
-            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 1.5;
             drawRoundedRectPath(ctx, px - 5, py - 5, pw + 10, ph + 10, 16);
             ctx.stroke();
             ctx.restore();
 
             drawCroppedPhotoIntoFrame(ctx, photoAsset, px, py, pw, ph);
 
-            // Validity Pill Below Photo (Bold & Easy to Read)
+            // Plain Italic Validity Caption Below Photo (no pill container)
             ctx.save();
-            drawRoundedRectPath(ctx, px - 6, py + ph + 16, pw + 12, 54, 12);
-            ctx.fillStyle = '#ecfdf5';
-            ctx.fill();
-            ctx.strokeStyle = '#86efac';
-            ctx.lineWidth = 1.5;
-            ctx.stroke();
-
-            ctx.font = '700 16px ' + fontFamily;
-            ctx.fillStyle = '#14532d';
+            ctx.font = 'italic 400 14px ' + fontFamily;
+            ctx.fillStyle = '#475569';
             ctx.textAlign = 'center';
-            const valLines = wrapTextLines(ctx, cfg.validity_text || 'Berlaku selama menjadi Siswa MA At-Taujih', pw, 2);
-            const valStartY = valLines.length > 1 ? (py + ph + 39) : (py + ph + 49);
+            const valLines = wrapTextLines(ctx, cfg.validity_text || 'Berlaku selama menjadi Siswa MA At-Taujih', pw + 24, 2);
             valLines.forEach(function(line, idx) {
-                ctx.fillText(line, px + pw / 2, valStartY + idx * 19);
+                ctx.fillText(line, px + pw / 2, 502 + idx * 18);
             });
             ctx.restore();
 
-            // Enlarged High-Contrast Biodata Block
-            const tx = 306;
-            const qrSize = 166;
-            const qrX = 810;
-            const qrY = 420;
+            // Clean Simple Modern Biodata Block (Bold ONLY on Student Name)
+            const tx = 308;
+            const qrSize = 150;
+            const qrX = 818;
+            const qrY = 436;
             const maxWTop = 974 - tx;
             const maxWLower = qrX - 24 - tx;
 
-            // 1. NIS / NISN (Large Bold)
+            // 1. NIS / NISN
             const nisText = String(st.nis || '-').trim() || '-';
             const nisnText = String(st.nisn || '-').trim() || '-';
             drawSmartFittedSingleLine(
                 ctx,
                 nisText + ' / ' + nisnText,
                 tx,
-                238,
+                216,
                 maxWTop,
-                [27, 25, 22],
-                '800',
+                [21, 19, 17],
+                '400',
                 fontFamily,
-                '#15803d'
+                '#334155'
             );
 
-            // 2. NAMA LENGKAP (Large & Dominant)
+            // 2. NAMA LENGKAP (Bold Primary Identifier)
             const fullNameUpper = String(st.name || 'NAMA SISWA').trim().toUpperCase();
-            let nameFont = 38;
-            ctx.font = '900 ' + nameFont + 'px ' + fontFamily;
+            let nameFont = 31;
+            ctx.font = '800 ' + nameFont + 'px ' + fontFamily;
             let nameLines = wrapTextLines(ctx, fullNameUpper, maxWTop, 2);
             if (nameLines.length > 1) {
-                nameFont = 33;
-                ctx.font = '900 ' + nameFont + 'px ' + fontFamily;
+                nameFont = 27;
+                ctx.font = '800 ' + nameFont + 'px ' + fontFamily;
                 nameLines = wrapTextLines(ctx, fullNameUpper, maxWTop, 2);
             }
-            ctx.fillStyle = '#052e16';
+            ctx.fillStyle = '#0f172a';
             nameLines.forEach(function(line, idx) {
-                ctx.fillText(line, tx, 286 + idx * 40);
+                ctx.fillText(line, tx, 262 + idx * 34);
             });
-            let curY = 286 + (nameLines.length * 40) - 18;
+            let curY = 262 + (nameLines.length * 34) - 18;
 
-            // Accent Rule Under Student Name
+            // Thin Emerald-Gold Accent Line Under Student Name
             ctx.save();
-            const ruleGrad = ctx.createLinearGradient(tx, 0, tx + 240, 0);
-            ruleGrad.addColorStop(0, '#166534');
-            ruleGrad.addColorStop(0.6, '#eab308');
+            const ruleGrad = ctx.createLinearGradient(tx, 0, tx + 220, 0);
+            ruleGrad.addColorStop(0, '#15803d');
+            ruleGrad.addColorStop(0.65, '#eab308');
             ruleGrad.addColorStop(1, 'rgba(234, 179, 8, 0)');
             ctx.fillStyle = ruleGrad;
-            ctx.fillRect(tx, curY, 240, 4);
+            ctx.fillRect(tx, curY, 220, 3);
             ctx.restore();
             curY += 36;
 
-            // 3. Tempat, Tanggal Lahir (Large & Crisp)
+            // 3. Tempat, Tanggal Lahir
             const bPlace = String(st.birthPlace || st.birth_place || '').trim();
             const bLong = formatKtsBirthDateLong(st.birthDate || st.birth_date);
             const ttlText = (bPlace && bLong) ? (bPlace + ', ' + bLong) : (bPlace || bLong || '-');
-            drawSmartFittedSingleLine(ctx, ttlText, tx, curY, maxWTop, [26, 24, 21], '700', fontFamily, '#0f172a');
-            curY += 38;
+            drawSmartFittedSingleLine(ctx, ttlText, tx, curY, maxWTop, [21, 19, 17], '400', fontFamily, '#1e293b');
+            curY += 36;
 
-            // 4. Alamat Lengkap (24px clean, strictly guarded left of QR Code)
+            // 4. Alamat Lengkap (guarded left of QR Code)
             const addrText = String(st.address || '-').trim() || '-';
-            ctx.font = '600 22.5px ' + fontFamily;
+            ctx.font = '400 20px ' + fontFamily;
             const addrLines = wrapTextLines(ctx, addrText, maxWLower, 2);
-            ctx.fillStyle = '#1e293b';
+            ctx.fillStyle = '#334155';
             addrLines.forEach(function(line, idx) {
-                ctx.fillText(line, tx, curY + idx * 30);
+                ctx.fillText(line, tx, curY + idx * 27);
             });
-            curY += (addrLines.length * 30) + 12;
+            curY += (addrLines.length * 27) + 14;
 
-            // 5. Pondok / Asrama / Kelas Highlight Strip
+            // 5. Pondok / Asrama (clean green plain text, no box/pill)
             const dormVal = String(st.dormitory || '').trim();
             const classVal = String(st.className || ktsState.classMap[st.classId] || st.classId || '').trim();
             let line5 = '-';
@@ -22293,111 +22238,94 @@ function startOrOpenResponder(options) {
             else if (cfg.line5_mode === 'both') line5 = [dormVal, classVal].filter(Boolean).join(' • ') || '-';
             else line5 = dormVal || classVal || '-';
 
-            const pillY = Math.min(526, curY);
-            ctx.save();
-            drawRoundedRectPath(ctx, tx, pillY, maxWLower, 48, 10);
-            ctx.fillStyle = '#ecfdf5';
-            ctx.fill();
-            ctx.strokeStyle = '#86efac';
-            ctx.lineWidth = 1.5;
-            ctx.stroke();
-            ctx.fillStyle = '#166534';
-            ctx.fillRect(tx, pillY, 7, 48);
-            ctx.restore();
-
             drawSmartFittedSingleLine(
                 ctx,
-                line5.toUpperCase(),
-                tx + 18,
-                pillY + 33,
-                maxWLower - 28,
-                [24, 22, 19],
-                '800',
+                line5,
+                tx,
+                Math.min(548, curY),
+                maxWLower,
+                [21, 19, 17],
+                '500',
                 fontFamily,
-                '#14532d'
+                '#15803d'
             );
 
-            // QR Code Box (Bottom-Right High-Contrast Pad)
+            // QR Code Box (Clean Minimal White Card Frame)
             ctx.save();
-            ctx.shadowColor = 'rgba(15, 23, 42, 0.14)';
+            ctx.shadowColor = 'rgba(15, 23, 42, 0.08)';
             ctx.shadowBlur = 10;
             ctx.fillStyle = '#ffffff';
-            drawRoundedRectPath(ctx, qrX, qrY, qrSize, qrSize, 16);
+            drawRoundedRectPath(ctx, qrX, qrY, qrSize, qrSize, 14);
             ctx.fill();
             ctx.restore();
 
             ctx.save();
-            ctx.strokeStyle = '#166534';
-            ctx.lineWidth = 2.5;
-            drawRoundedRectPath(ctx, qrX, qrY, qrSize, qrSize, 16);
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 1.5;
+            drawRoundedRectPath(ctx, qrX, qrY, qrSize, qrSize, 14);
             ctx.stroke();
 
             const qrSrcCanvas = buildQrCanvasSync(st.qrCodeId || st.studentId || 'SIMATA');
             if (qrSrcCanvas) {
                 const prevSmoothing = ctx.imageSmoothingEnabled;
                 ctx.imageSmoothingEnabled = false;
-                ctx.drawImage(qrSrcCanvas, qrX + 12, qrY + 12, qrSize - 24, qrSize - 24);
+                ctx.drawImage(qrSrcCanvas, qrX + 11, qrY + 11, qrSize - 22, qrSize - 22);
                 ctx.imageSmoothingEnabled = prevSmoothing;
             } else {
                 ctx.fillStyle = '#94a3b8';
-                ctx.font = '700 16px ' + fontFamily;
+                ctx.font = '500 15px ' + fontFamily;
                 ctx.textAlign = 'center';
                 ctx.fillText(st.qrCodeId || 'QR', qrX + qrSize / 2, qrY + qrSize / 2);
             }
             ctx.restore();
         } else {
-            // BACK SIDE RENDERER (Matching Rich Emerald-Gold Styling & Larger Typography)
+            // BACK SIDE RENDERER (Matching Option 2 Compact Header & Simple Modern Body)
             if (backBgImg) {
                 ctx.drawImage(backBgImg, 0, 0, W, H);
             } else {
                 drawKtsDecorativeBackground(ctx, W, H, 'back');
 
-                const topGrad = ctx.createLinearGradient(0, 0, W, 86);
+                const topGrad = ctx.createLinearGradient(0, 0, W, 72);
                 topGrad.addColorStop(0, '#052e16');
                 topGrad.addColorStop(0.55, '#14532d');
                 topGrad.addColorStop(1, '#15803d');
                 ctx.fillStyle = topGrad;
-                ctx.fillRect(0, 0, W, 80);
+                ctx.fillRect(0, 0, W, 72);
 
                 const bGoldGrad = ctx.createLinearGradient(0, 0, W, 0);
                 bGoldGrad.addColorStop(0, '#b45309');
                 bGoldGrad.addColorStop(0.5, '#fde047');
                 bGoldGrad.addColorStop(1, '#ca8a04');
                 ctx.fillStyle = bGoldGrad;
-                ctx.fillRect(0, 80, W, 6);
+                ctx.fillRect(0, 72, W, 4);
 
                 if (logoImg) {
-                    ctx.drawImage(logoImg, 44, 14, 52, 52);
+                    ctx.drawImage(logoImg, 44, 12, 48, 48);
                 }
                 ctx.fillStyle = '#ffffff';
-                ctx.font = '800 26px ' + fontFamily;
-                ctx.fillText((cfg.school_name || 'MA AT-TAUJIH').toUpperCase(), 112, 42);
+                ctx.font = '700 23px ' + fontFamily;
+                ctx.fillText((cfg.school_name || 'MA AT-TAUJIH').toUpperCase(), 106, 37);
                 ctx.fillStyle = '#dcfce7';
-                ctx.font = '600 15px ' + fontFamily;
-                ctx.fillText(cfg.header_arabic || 'Yayasan Muwajjihul Ulum Asy-Syariyyah', 112, 65);
-
-                ctx.fillStyle = '#0f3f26';
-                ctx.fillRect(0, 610, W, 28);
-                ctx.fillStyle = bGoldGrad;
-                ctx.fillRect(0, 606, W, 4);
+                ctx.font = '400 14px ' + fontFamily;
+                ctx.fillText(cfg.header_arabic || 'Yayasan Muwajjihul Ulum Asy-Syariyyah', 106, 58);
             }
 
             // Back Title
             ctx.fillStyle = '#052e16';
-            ctx.font = '900 26px ' + fontFamily;
-            ctx.fillText(cfg.back_title || 'KETENTUAN KARTU IDENTITAS SISWA', 54, 132);
+            ctx.font = '700 23px ' + fontFamily;
+            ctx.fillText(cfg.back_title || 'KETENTUAN KARTU IDENTITAS SISWA', 54, 120);
 
-            // Numbered Rules (Enlarged)
+            // Numbered Rules (Clean Non-Bold Typography)
             const rawRules = String(cfg.back_rules || '').split(/\r?\n/).map(function(l) { return l.trim(); }).filter(Boolean);
-            ctx.font = '600 20.5px ' + fontFamily;
+            ctx.font = '400 18.5px ' + fontFamily;
             ctx.fillStyle = '#1e293b';
-            let ry = 176;
+            let ry = 162;
             rawRules.slice(0, 6).forEach(function(ruleLine) {
                 const wrapped = wrapTextLines(ctx, ruleLine, W - 108, 2);
                 wrapped.forEach(function(wLine) {
-                    if (ry < 388) {
+                    if (ry < 382) {
                         ctx.fillText(wLine, 54, ry);
-                        ry += 30;
+                        ry += 28;
                     }
                 });
                 ry += 8;
@@ -22405,36 +22333,36 @@ function startOrOpenResponder(options) {
 
             // Dashed divider
             ctx.save();
-            ctx.strokeStyle = '#94a3b8';
+            ctx.strokeStyle = '#cbd5e1';
             ctx.setLineDash([8, 6]);
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 1.5;
             ctx.beginPath();
-            ctx.moveTo(54, 404);
-            ctx.lineTo(W - 54, 404);
+            ctx.moveTo(54, 398);
+            ctx.lineTo(W - 54, 398);
             ctx.stroke();
             ctx.restore();
 
-            // Left Bottom: Card Identity Summary (Larger)
+            // Left Bottom: Card Identity Summary
             ctx.fillStyle = '#15803d';
-            ctx.font = '800 16px ' + fontFamily;
-            ctx.fillText('PEMEGANG KARTU:', 54, 440);
-            drawSmartFittedSingleLine(ctx, String(st.name || '-').toUpperCase(), 54, 474, 490, [25, 22, 19], '800', fontFamily, '#0f172a');
+            ctx.font = '600 14px ' + fontFamily;
+            ctx.fillText('PEMEGANG KARTU:', 54, 434);
+            drawSmartFittedSingleLine(ctx, String(st.name || '-').toUpperCase(), 54, 466, 490, [22, 20, 18], '700', fontFamily, '#0f172a');
             ctx.fillStyle = '#334155';
-            ctx.font = '700 18px monospace';
-            ctx.fillText('NIS/NISN : ' + (st.nis || '-') + ' / ' + (st.nisn || '-'), 54, 510);
-            ctx.fillText('QR ID    : ' + (st.qrCodeId || '-'), 54, 538);
-            ctx.fillStyle = '#475569';
-            ctx.font = '600 15px ' + fontFamily;
-            ctx.fillText('Terhubung langsung dengan sistem presensi SIMATA.', 54, 578);
+            ctx.font = '400 17px monospace';
+            ctx.fillText('NIS/NISN : ' + (st.nis || '-') + ' / ' + (st.nisn || '-'), 54, 502);
+            ctx.fillText('QR ID    : ' + (st.qrCodeId || '-'), 54, 530);
+            ctx.fillStyle = '#64748b';
+            ctx.font = 'italic 400 14px ' + fontFamily;
+            ctx.fillText('Terhubung langsung dengan sistem presensi SIMATA.', 54, 574);
 
-            // Right Bottom: Headmaster Signature Block (Larger)
+            // Right Bottom: Headmaster Signature Block
             const sigCenterX = 785;
             ctx.save();
             ctx.textAlign = 'center';
             ctx.fillStyle = '#1e293b';
-            ctx.font = '600 17.5px ' + fontFamily;
-            ctx.fillText(cfg.sign_city_date || 'Sarang, 18 November 2026', sigCenterX, 438);
-            ctx.fillText('Kepala Madrasah,', sigCenterX, 464);
+            ctx.font = '400 16px ' + fontFamily;
+            ctx.fillText(cfg.sign_city_date || 'Sarang, 18 November 2026', sigCenterX, 434);
+            ctx.fillText('Kepala Madrasah,', sigCenterX, 458);
 
             if (sigImg) {
                 const sMaxW = 195;
@@ -22442,19 +22370,19 @@ function startOrOpenResponder(options) {
                 const ratio = Math.min(sMaxW / (sigImg.naturalWidth || sMaxW), sMaxH / (sigImg.naturalHeight || sMaxH));
                 const sw = (sigImg.naturalWidth || 120) * ratio;
                 const sh = (sigImg.naturalHeight || 60) * ratio;
-                ctx.drawImage(sigImg, sigCenterX - sw / 2, 470 + (sMaxH - sh) / 2, sw, sh);
+                ctx.drawImage(sigImg, sigCenterX - sw / 2, 466 + (sMaxH - sh) / 2, sw, sh);
             }
 
-            ctx.font = '800 18.5px ' + fontFamily;
+            ctx.font = '700 17.5px ' + fontFamily;
             ctx.fillStyle = '#0f172a';
             const hmName = cfg.headmaster_name || 'Kepala Madrasah';
-            ctx.fillText(hmName, sigCenterX, 572);
+            ctx.fillText(hmName, sigCenterX, 566);
             const nw = ctx.measureText(hmName).width;
-            ctx.fillRect(sigCenterX - nw / 2, 576, nw, 1.5);
+            ctx.fillRect(sigCenterX - nw / 2, 570, nw, 1.5);
 
-            ctx.font = '600 15px ' + fontFamily;
+            ctx.font = '400 14.5px ' + fontFamily;
             ctx.fillStyle = '#475569';
-            ctx.fillText(cfg.headmaster_nip || 'NIP. -', sigCenterX, 598);
+            ctx.fillText(cfg.headmaster_nip || 'NIP. -', sigCenterX, 594);
             ctx.restore();
         }
 
@@ -23036,7 +22964,7 @@ function startOrOpenResponder(options) {
             return '<div class="kts-cr80-slot"><img src="' + src + '" alt="KTS ' + escKts(item.name) + '"/></div>';
         }).join('');
 
-        const docHtml = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Cetak KTS SIMATA (CR80 A4)</title>' +
+        const docHtml = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Cetak Kartu Pelajar SIMATA</title>' +
             '<style>' +
             '@page { size: A4 portrait; margin: 8mm; }' +
             'body { margin: 0; padding: 0; font-family: Arial, sans-serif; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }' +
@@ -23074,7 +23002,7 @@ function startOrOpenResponder(options) {
         const box = document.getElementById('ktsBatch_summaryBox');
         if (box) {
             box.textContent = list.length > 0
-                ? ('Siap mencetak ' + list.length + ' Kartu Tanda Siswa ukuran standar ATM/PVC (85.6 × 54 mm).')
+                ? ('Siap mencetak ' + list.length + ' Kartu Pelajar.')
                 : 'Belum ada siswa yang dipilih. Centang siswa di tabel atau ubah cakupan ke "Filter Saat Ini" / "Satu Kelas Penuh".';
         }
         const runBtn = document.getElementById('ktsBatchPrintRunBtn');
@@ -23165,6 +23093,18 @@ function startOrOpenResponder(options) {
 
         const batchBtn = document.getElementById('ktsBatchPrintOpenBtn');
         if (batchBtn) batchBtn.addEventListener('click', openKtsBatchPrintModal);
+
+        // Collapsible Excel Import Drawer
+        const toggleImpBtn = document.getElementById('ktsToggleImportBtn');
+        const impBoxEl = document.getElementById('ktsImportBox');
+        if (toggleImpBtn && impBoxEl) {
+            toggleImpBtn.addEventListener('click', function() {
+                const isOpening = impBoxEl.style.display === 'none';
+                impBoxEl.style.display = isOpening ? '' : 'none';
+                toggleImpBtn.classList.toggle('is-open', isOpening);
+                toggleImpBtn.setAttribute('aria-expanded', isOpening ? 'true' : 'false');
+            });
+        }
 
         // Excel Download Template & Two-Way Import
         const dlTplLink = document.getElementById('ktsDownloadTemplateLink');
@@ -23479,7 +23419,7 @@ function startOrOpenResponder(options) {
         const menu = document.getElementById('menu-kts');
         if (menu) menu.classList.add('active');
         if (typeof updatePageContext === 'function') {
-            updatePageContext('kts', 'DATA & AKADEMIK', 'KTS');
+            updatePageContext('kts', 'DATA & AKADEMIK', 'Kartu Pelajar');
         }
         const preferId = (opts && opts.studentId) ? opts.studentId : null;
         loadKtsStudioData(preferId);
@@ -23832,8 +23772,17 @@ function onDashboardLoaded(data) {
         const ktsTplBtn = document.getElementById('ktsCustomizeTemplateBtn');
         if (ktsTplBtn) ktsTplBtn.style.display = isAdmin ? '' : 'none';
 
+        const ktsToggleImpBtn = document.getElementById('ktsToggleImportBtn');
+        if (ktsToggleImpBtn) ktsToggleImpBtn.style.display = isAdmin ? '' : 'none';
+
         const ktsImpBox = document.getElementById('ktsImportBox');
-        if (ktsImpBox) ktsImpBox.style.display = isAdmin ? '' : 'none';
+        if (ktsImpBox) {
+            ktsImpBox.style.display = 'none';
+            if (ktsToggleImpBtn) {
+                ktsToggleImpBtn.classList.remove('is-open');
+                ktsToggleImpBtn.setAttribute('aria-expanded', 'false');
+            }
+        }
 
         const ktsQuickCurBtn = document.getElementById('ktsQuickEditCurrentBtn');
         if (ktsQuickCurBtn) ktsQuickCurBtn.style.display = isAdmin ? '' : 'none';
