@@ -29,15 +29,21 @@ function assertFrontendKtsIntegrity() {
   // HTML structure & Menu Siswa + KTS Studio elements
   for (const requiredToken of [
     'id="menu-kts"',
+    '<span class="menu-text">KTS</span>',
     'id="sheetMenuKts"',
     'id="ktsContent"',
     'id="ktsPreviewCanvas"',
     'id="ktsQuickEditModal"',
     'id="ktsTemplateModal"',
+    'id="ktsTpl_headerTitle"',
     'id="ktsBatchPrintModal"',
     'id="f_birthPlace"',
     'id="f_address"',
     'id="f_dormitory"',
+    'KARTU IDENTITAS SISWA',
+    'Yayasan Muwajjihul Ulum Asy-Syariyyah',
+    'MA AT-TAUJIH',
+    'Dk. Pulorejo, Desa Bajingjowo, Kec. Sarang, Kab. Rembang, Jawa Tengah (59274)',
     '/js/simata-client.js?v=bug61'
   ]) {
     assert.ok(html.includes(requiredToken), `public/dashboard.html missing required KTS token: ${requiredToken}`);
@@ -224,6 +230,14 @@ async function runBug65KtsTests() {
       headers: { Authorization: `Bearer ${guruToken}` }
     });
     assert.strictEqual(getSetGuru.status, 200);
+    const getSetJson = await getSetGuru.json();
+    assert.strictEqual(getSetJson.data.header_title, 'KARTU IDENTITAS SISWA');
+    assert.strictEqual(getSetJson.data.header_arabic, 'Yayasan Muwajjihul Ulum Asy-Syariyyah');
+    assert.strictEqual(getSetJson.data.school_name, 'MA AT-TAUJIH');
+    assert.strictEqual(
+      getSetJson.data.school_address,
+      'Dk. Pulorejo, Desa Bajingjowo, Kec. Sarang, Kab. Rembang, Jawa Tengah (59274)'
+    );
 
     const putSetGuru = await fetch(`${baseUrl}/api/v1/students/kts/settings`, {
       method: 'PUT',

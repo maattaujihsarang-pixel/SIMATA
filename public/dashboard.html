@@ -1025,7 +1025,7 @@ html, body {
                 <line x1="14" y1="16" x2="17" y2="16"/>
               </svg>
             </span>
-            <span class="menu-text">KTS (Kartu Pelajar)</span>
+            <span class="menu-text">KTS</span>
           </li>
 
         </ul>
@@ -3553,8 +3553,8 @@ html, body {
         <section id="ktsContent" class="content" style="display:none;">
           <div class="section-heading">
             <div>
-              <span class="section-label">DATA &amp; AKADEMIK &bull; KARTU PELAJAR</span>
-              <h2>KTS Siswa (Kartu Tanda Siswa)</h2>
+              <span class="section-label">DATA &amp; AKADEMIK &bull; KTS</span>
+              <h2>KTS</h2>
               <p class="sched-subtitle">Studio pratinjau otomatis, edit foto langsung, sinkronisasi Excel 2-arah dengan Data Siswa, &amp; cetak PVC CR80 (85.6 &times; 54 mm).</p>
             </div>
             <div class="section-actions kts-header-actions">
@@ -3808,25 +3808,29 @@ html, body {
             </div>
             <div class="student-modal-body">
               <div class="student-form-grid">
-                <div class="student-form-group">
-                  <label for="ktsTpl_headerArabic" class="student-form-label">Kalimat Pembuka (Arab)</label>
-                  <input id="ktsTpl_headerArabic" class="input-box" />
+                <div class="student-form-group student-col-span-2">
+                  <label for="ktsTpl_headerTitle" class="student-form-label">Judul Kartu (Header Baris 1)</label>
+                  <input id="ktsTpl_headerTitle" class="input-box" placeholder="KARTU IDENTITAS SISWA" />
+                </div>
+                <div class="student-form-group student-col-span-2">
+                  <label for="ktsTpl_headerArabic" class="student-form-label">Nama Yayasan / Naungan (Header Baris 2)</label>
+                  <input id="ktsTpl_headerArabic" class="input-box" placeholder="Yayasan Muwajjihul Ulum Asy-Syariyyah" />
                 </div>
                 <div class="student-form-group">
-                  <label for="ktsTpl_schoolName" class="student-form-label">Nama Madrasah / Lembaga</label>
-                  <input id="ktsTpl_schoolName" class="input-box" />
+                  <label for="ktsTpl_schoolName" class="student-form-label">Nama Madrasah (Header Baris 3)</label>
+                  <input id="ktsTpl_schoolName" class="input-box" placeholder="MA AT-TAUJIH" />
                 </div>
                 <div class="student-form-group">
-                  <label for="ktsTpl_schoolAddress" class="student-form-label">Subjudul / Alamat Lembaga</label>
-                  <input id="ktsTpl_schoolAddress" class="input-box" />
-                </div>
-                <div class="student-form-group">
-                  <label for="ktsTpl_line5Mode" class="student-form-label">Isi Baris Ke-5 KTS</label>
+                  <label for="ktsTpl_line5Mode" class="student-form-label">Isi Baris Ke-5 Biodata</label>
                   <select id="ktsTpl_line5Mode" class="input-box">
                     <option value="dormitory">Pondok / Asrama</option>
                     <option value="class">Kelas Siswa</option>
                     <option value="both">Pondok + Kelas</option>
                   </select>
+                </div>
+                <div class="student-form-group student-col-span-2">
+                  <label for="ktsTpl_schoolAddress" class="student-form-label">Alamat Lengkap Madrasah (Header Baris 4)</label>
+                  <input id="ktsTpl_schoolAddress" class="input-box" placeholder="Dk. Pulorejo, Desa Bajingjowo, Kec. Sarang, Kab. Rembang, Jawa Tengah (59274)" />
                 </div>
                 <div class="student-form-group student-col-span-2">
                   <label for="ktsTpl_validityText" class="student-form-label">Keterangan Masa Berlaku (Bawah Foto)</label>
@@ -21586,13 +21590,14 @@ function startOrOpenResponder(options) {
         classes: [],
         classMap: {},
         settings: {
-            header_arabic: 'بسم الله الرحمن الرحيم',
-            school_name: 'MA AT-TAUJIH SARANG',
-            school_address: 'Sarang, Rembang - Jawa Tengah',
-            validity_text: 'Berlaku selama menjadi Siswa MA At-Taujih Sarang',
+            header_title: 'KARTU IDENTITAS SISWA',
+            header_arabic: 'Yayasan Muwajjihul Ulum Asy-Syariyyah',
+            school_name: 'MA AT-TAUJIH',
+            school_address: 'Dk. Pulorejo, Desa Bajingjowo, Kec. Sarang, Kab. Rembang, Jawa Tengah (59274)',
+            validity_text: 'Berlaku selama menjadi Siswa MA At-Taujih',
             line5_mode: 'dormitory',
-            back_title: 'KETENTUAN KARTU TANDA SISWA',
-            back_rules: '1. Kartu ini adalah identitas resmi siswa aktif MA At-Taujih Sarang.\n2. Wajib dibawa setiap hari untuk presensi QR Code SIMATA.\n3. Dilarang meminjamkan atau memindahtangankan kartu ini kepada orang lain.\n4. Jika menemukan kartu ini, mohon kembalikan ke Kantor MA At-Taujih Sarang.',
+            back_title: 'KETENTUAN KARTU IDENTITAS SISWA',
+            back_rules: '1. Kartu ini adalah identitas resmi siswa aktif MA At-Taujih Sarang.\n2. Wajib dibawa setiap hari untuk presensi QR Code SIMATA.\n3. Dilarang meminjamkan atau memindahtangankan kartu ini kepada orang lain.\n4. Jika menemukan kartu ini, mohon kembalikan ke MA At-Taujih Sarang.',
             sign_city_date: 'Sarang, 18 November 2026',
             headmaster_name: 'Kepala Madrasah MA At-Taujih',
             headmaster_nip: 'NIP. -',
@@ -21830,7 +21835,7 @@ function startOrOpenResponder(options) {
         return lines;
     }
 
-    function drawSmartFittedSingleLine(ctx, text, x, y, maxWidth, fontSizes, weight, family, color) {
+    function drawSmartFittedSingleLine(ctx, text, x, y, maxWidth, fontSizes, weight, family, color, textAlign) {
         const str = String(text || '-').trim() || '-';
         let chosenSize = fontSizes[fontSizes.length - 1];
         for (let i = 0; i < fontSizes.length; i++) {
@@ -21846,9 +21851,134 @@ function startOrOpenResponder(options) {
             out = out.slice(0, -1);
         }
         if (out !== str) out = out.trim() + '...';
+        ctx.save();
+        if (textAlign) ctx.textAlign = textAlign;
         ctx.fillStyle = color;
         ctx.fillText(out, x, y);
+        ctx.restore();
         return chosenSize;
+    }
+
+    function measureSpacedTextWidth(ctx, str, letterSpacing) {
+        if (!str) return 0;
+        let total = 0;
+        for (let i = 0; i < str.length; i++) {
+            total += ctx.measureText(str[i]).width;
+            if (i < str.length - 1) total += letterSpacing;
+        }
+        return total;
+    }
+
+    function drawSpacedCenteredText(ctx, text, centerX, y, maxWidth, fontSizes, preferredSpacings, weight, family, color, withShadow) {
+        const str = String(text || '').trim();
+        if (!str) return;
+        let chosenSize = fontSizes[fontSizes.length - 1];
+        let chosenSpace = preferredSpacings[preferredSpacings.length - 1] || 0;
+
+        outer:
+        for (let si = 0; si < fontSizes.length; si++) {
+            ctx.font = weight + ' ' + fontSizes[si] + 'px ' + family;
+            for (let li = 0; li < preferredSpacings.length; li++) {
+                if (measureSpacedTextWidth(ctx, str, preferredSpacings[li]) <= maxWidth) {
+                    chosenSize = fontSizes[si];
+                    chosenSpace = preferredSpacings[li];
+                    break outer;
+                }
+            }
+        }
+
+        ctx.save();
+        ctx.font = weight + ' ' + chosenSize + 'px ' + family;
+        const totalW = measureSpacedTextWidth(ctx, str, chosenSpace);
+        let curX = centerX - totalW / 2;
+        ctx.textAlign = 'left';
+        if (withShadow) {
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.38)';
+            ctx.shadowBlur = 8;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 2;
+        }
+        ctx.fillStyle = color;
+        for (let i = 0; i < str.length; i++) {
+            const ch = str[i];
+            ctx.fillText(ch, curX, y);
+            curX += ctx.measureText(ch).width + chosenSpace;
+        }
+        ctx.restore();
+    }
+
+    function drawKtsDecorativeBackground(ctx, W, H, side) {
+        // Rich soft ivory-to-mint base gradient
+        const bodyGrad = ctx.createLinearGradient(0, 0, W, H);
+        bodyGrad.addColorStop(0, '#ffffff');
+        bodyGrad.addColorStop(0.5, '#f4fbf7');
+        bodyGrad.addColorStop(1, '#dcfce7');
+        ctx.fillStyle = bodyGrad;
+        ctx.fillRect(0, 0, W, H);
+
+        // Soft geometric diagonal sheen bands
+        ctx.save();
+        ctx.fillStyle = 'rgba(22, 101, 52, 0.045)';
+        ctx.beginPath();
+        ctx.moveTo(0, H);
+        ctx.lineTo(360, 170);
+        ctx.lineTo(520, 170);
+        ctx.lineTo(150, H);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = 'rgba(234, 179, 8, 0.065)';
+        ctx.beginPath();
+        ctx.moveTo(W - 420, H);
+        ctx.lineTo(W, 240);
+        ctx.lineTo(W, 340);
+        ctx.lineTo(W - 280, H);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+
+        // Islamic diamond lattice grid across body
+        ctx.save();
+        ctx.strokeStyle = 'rgba(21, 128, 61, 0.055)';
+        ctx.lineWidth = 1.4;
+        const step = 48;
+        const startY = side === 'front' ? 165 : 90;
+        for (let x = 0; x <= W + step; x += step) {
+            for (let y = startY; y <= H - 20; y += step) {
+                ctx.beginPath();
+                ctx.moveTo(x, y - 16);
+                ctx.lineTo(x + 16, y);
+                ctx.lineTo(x, y + 16);
+                ctx.lineTo(x - 16, y);
+                ctx.closePath();
+                ctx.stroke();
+            }
+        }
+        ctx.restore();
+
+        if (side === 'front') {
+            // Subtle architectural Madrasah Dome & Minaret silhouette watermark
+            ctx.save();
+            ctx.fillStyle = 'rgba(20, 83, 45, 0.065)';
+            const baseY = H - 30;
+            // Central dome
+            ctx.beginPath();
+            ctx.arc(655, baseY - 125, 118, Math.PI, 0);
+            ctx.lineTo(773, baseY);
+            ctx.lineTo(537, baseY);
+            ctx.closePath();
+            ctx.fill();
+            // Minarets
+            ctx.fillRect(482, baseY - 210, 34, 210);
+            ctx.beginPath();
+            ctx.arc(499, baseY - 210, 17, Math.PI, 0);
+            ctx.fill();
+            ctx.fillRect(792, baseY - 210, 34, 210);
+            ctx.beginPath();
+            ctx.arc(809, baseY - 210, 17, Math.PI, 0);
+            ctx.fill();
+            ctx.restore();
+        }
     }
 
     function drawCroppedPhotoIntoFrame(ctx, photoAsset, px, py, pw, ph) {
@@ -21859,7 +21989,6 @@ function startOrOpenResponder(options) {
         if (!photoAsset || !photoAsset.img) {
             ctx.fillStyle = '#e2e8f0';
             ctx.fillRect(px, py, pw, ph);
-            // Clean neutral silhouette
             ctx.fillStyle = '#94a3b8';
             ctx.beginPath();
             ctx.arc(px + pw / 2, py + ph * 0.36, pw * 0.22, 0, Math.PI * 2);
@@ -21921,186 +22050,242 @@ function startOrOpenResponder(options) {
             if (frontBgImg) {
                 ctx.drawImage(frontBgImg, 0, 0, W, H);
             } else {
-                // Default Official MA At-Taujih Sarang Background
-                const bodyGrad = ctx.createLinearGradient(0, 0, W, H);
-                bodyGrad.addColorStop(0, '#ffffff');
-                bodyGrad.addColorStop(0.55, '#f8fafc');
-                bodyGrad.addColorStop(1, '#ecfdf5');
-                ctx.fillStyle = bodyGrad;
-                ctx.fillRect(0, 0, W, H);
+                drawKtsDecorativeBackground(ctx, W, H, 'front');
 
-                // Subtle bottom-right watermark motif
-                ctx.save();
-                ctx.globalAlpha = 0.055;
-                ctx.fillStyle = '#166534';
-                ctx.beginPath();
-                ctx.arc(820, 480, 210, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(710, 560, 150, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.restore();
-
-                // Header emerald banner with gentle curved bottom
-                const headGrad = ctx.createLinearGradient(0, 0, W, 180);
-                headGrad.addColorStop(0, '#0f3f26');
-                headGrad.addColorStop(0.55, '#166534');
-                headGrad.addColorStop(1, '#047857');
+                // Deep Rich Emerald Header Banner (4-line Official Kop)
+                const headGrad = ctx.createLinearGradient(0, 0, W, 185);
+                headGrad.addColorStop(0, '#052e16');
+                headGrad.addColorStop(0.52, '#14532d');
+                headGrad.addColorStop(1, '#15803d');
                 ctx.fillStyle = headGrad;
                 ctx.beginPath();
                 ctx.moveTo(0, 0);
                 ctx.lineTo(W, 0);
-                ctx.lineTo(W, 148);
-                ctx.quadraticCurveTo(W * 0.55, 188, 0, 156);
+                ctx.lineTo(W, 166);
+                ctx.quadraticCurveTo(W * 0.56, 194, 0, 174);
                 ctx.closePath();
                 ctx.fill();
 
-                // Gold accent ribbon along header curve
+                // Subtle header radial glow
+                ctx.save();
+                const rad = ctx.createRadialGradient(585, 90, 20, 585, 90, 420);
+                rad.addColorStop(0, 'rgba(255, 255, 255, 0.10)');
+                rad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                ctx.fillStyle = rad;
+                ctx.fillRect(160, 0, W - 160, 185);
+                ctx.restore();
+
+                // Double Gold & Accent Wave Ribbon
                 const goldGrad = ctx.createLinearGradient(0, 0, W, 0);
-                goldGrad.addColorStop(0, '#ca8a04');
-                goldGrad.addColorStop(0.5, '#facc15');
-                goldGrad.addColorStop(1, '#eab308');
+                goldGrad.addColorStop(0, '#b45309');
+                goldGrad.addColorStop(0.35, '#fde047');
+                goldGrad.addColorStop(0.7, '#facc15');
+                goldGrad.addColorStop(1, '#ca8a04');
                 ctx.strokeStyle = goldGrad;
-                ctx.lineWidth = 7;
+                ctx.lineWidth = 8;
                 ctx.beginPath();
-                ctx.moveTo(0, 156);
-                ctx.quadraticCurveTo(W * 0.55, 188, W, 148);
+                ctx.moveTo(0, 174);
+                ctx.quadraticCurveTo(W * 0.56, 194, W, 166);
                 ctx.stroke();
 
-                // School Logo Emblem
+                // Left Madrasah Emblem with soft gold/white halo
                 if (logoImg) {
                     ctx.save();
-                    ctx.fillStyle = 'rgba(255,255,255,0.14)';
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.16)';
                     ctx.beginPath();
-                    ctx.arc(120, 82, 58, 0, Math.PI * 2);
+                    ctx.arc(106, 90, 64, 0, Math.PI * 2);
                     ctx.fill();
-                    ctx.drawImage(logoImg, 68, 30, 104, 104);
+                    ctx.strokeStyle = 'rgba(253, 224, 71, 0.72)';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                    ctx.drawImage(logoImg, 46, 30, 120, 120);
                     ctx.restore();
                 }
 
-                // Header Texts
-                ctx.textAlign = 'center';
-                ctx.fillStyle = '#fde68a';
-                ctx.font = '600 26px "Traditional Arabic", "Amiri", "Segoe UI", serif';
-                ctx.fillText(cfg.header_arabic || 'بسم الله الرحمن الرحيم', 580, 44);
+                // Official 4-Line Header
+                const headerCx = 588;
+                const headerMaxW = 790;
 
-                drawSmartFittedSingleLine(
+                // Line 1: KARTU IDENTITAS SISWA
+                drawSpacedCenteredText(
                     ctx,
-                    (cfg.school_name || 'MA AT-TAUJIH SARANG').toUpperCase(),
-                    580,
-                    92,
-                    660,
-                    [36, 32, 28, 24],
+                    (cfg.header_title || 'KARTU IDENTITAS SISWA').toUpperCase(),
+                    headerCx,
+                    34,
+                    headerMaxW,
+                    [20, 18, 16],
+                    [4.5, 3, 1.5],
                     '800',
                     fontFamily,
-                    '#ffffff'
+                    '#fde047',
+                    true
                 );
 
+                // Line 2: Yayasan Muwajjihul Ulum Asy-Syariyyah
                 drawSmartFittedSingleLine(
                     ctx,
-                    cfg.school_address || 'Sarang, Rembang - Jawa Tengah',
-                    580,
-                    126,
-                    640,
-                    [19, 17, 15],
-                    '500',
+                    cfg.header_arabic || 'Yayasan Muwajjihul Ulum Asy-Syariyyah',
+                    headerCx,
+                    65,
+                    headerMaxW,
+                    [23, 21, 19, 17],
+                    '700',
                     fontFamily,
-                    '#dcfce7'
+                    '#f0fdf4',
+                    'center'
                 );
+
+                // Line 3: MA AT-TAUJIH (Large, Bold, Wide Letter-Spacing)
+                drawSpacedCenteredText(
+                    ctx,
+                    (cfg.school_name || 'MA AT-TAUJIH').toUpperCase(),
+                    headerCx,
+                    120,
+                    headerMaxW - 10,
+                    [52, 46, 40, 34, 28],
+                    [13, 9, 5, 2, 0.5],
+                    '900',
+                    fontFamily,
+                    '#ffffff',
+                    true
+                );
+
+                // Line 4: Dk. Pulorejo, Desa Bajingjowo, Kec. Sarang, Kab. Rembang, Jawa Tengah (59274)
+                drawSmartFittedSingleLine(
+                    ctx,
+                    cfg.school_address || 'Dk. Pulorejo, Desa Bajingjowo, Kec. Sarang, Kab. Rembang, Jawa Tengah (59274)',
+                    headerCx,
+                    152,
+                    headerMaxW + 12,
+                    [17, 16, 15, 13.5, 12],
+                    '600',
+                    fontFamily,
+                    '#dcfce7',
+                    'center'
+                );
+
+                // Bottom Footer Accent Strip
+                ctx.fillStyle = '#0f3f26';
+                ctx.fillRect(0, 606, W, 32);
+                ctx.fillStyle = goldGrad;
+                ctx.fillRect(0, 602, W, 4);
+                ctx.font = '700 13.5px ' + fontFamily;
+                ctx.fillStyle = '#fde047';
+                ctx.fillText('SISTEM INFORMASI MADRASAH • SIMATA', 42, 627);
+                ctx.textAlign = 'right';
+                ctx.fillStyle = '#dcfce7';
+                ctx.font = '600 13.5px monospace';
+                ctx.fillText('ID: ' + (st.studentId || '-'), W - 42, 627);
                 ctx.textAlign = 'left';
             }
 
-            // 3x4 Student Photo Frame (left column)
-            const px = 52, py = 200, pw = 224, ph = 298;
+            // 3x4 Student Photo Frame (Enlarged + Crisp Gold-Emerald Border)
+            const px = 44, py = 200, pw = 236, ph = 314;
             ctx.save();
+            ctx.shadowColor = 'rgba(15, 23, 42, 0.18)';
+            ctx.shadowBlur = 14;
+            ctx.shadowOffsetY = 5;
             ctx.fillStyle = '#ffffff';
-            drawRoundedRectPath(ctx, px - 6, py - 6, pw + 12, ph + 12, 18);
+            drawRoundedRectPath(ctx, px - 7, py - 7, pw + 14, ph + 14, 18);
             ctx.fill();
-            ctx.strokeStyle = '#cbd5e1';
-            ctx.lineWidth = 2;
+            ctx.restore();
+
+            ctx.save();
+            ctx.strokeStyle = '#166534';
+            ctx.lineWidth = 3;
+            drawRoundedRectPath(ctx, px - 5, py - 5, pw + 10, ph + 10, 16);
             ctx.stroke();
             ctx.restore();
 
             drawCroppedPhotoIntoFrame(ctx, photoAsset, px, py, pw, ph);
 
-            // Validity caption below photo
+            // Validity Pill Below Photo (Bold & Easy to Read)
             ctx.save();
-            ctx.font = 'italic 600 15px ' + fontFamily;
-            ctx.fillStyle = '#334155';
+            drawRoundedRectPath(ctx, px - 6, py + ph + 16, pw + 12, 54, 12);
+            ctx.fillStyle = '#ecfdf5';
+            ctx.fill();
+            ctx.strokeStyle = '#86efac';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            ctx.font = '700 16px ' + fontFamily;
+            ctx.fillStyle = '#14532d';
             ctx.textAlign = 'center';
-            const valLines = wrapTextLines(ctx, cfg.validity_text || 'Berlaku selama menjadi Siswa MA At-Taujih Sarang', 240, 2);
+            const valLines = wrapTextLines(ctx, cfg.validity_text || 'Berlaku selama menjadi Siswa MA At-Taujih', pw, 2);
+            const valStartY = valLines.length > 1 ? (py + ph + 39) : (py + ph + 49);
             valLines.forEach(function(line, idx) {
-                ctx.fillText(line, px + pw / 2, py + ph + 32 + idx * 20);
+                ctx.fillText(line, px + pw / 2, valStartY + idx * 19);
             });
             ctx.restore();
 
-            // Biodata Column (center/right with QR anti-collision)
-            const tx = 316;
-            const qrSize = 152;
-            const qrX = 815;
-            const qrY = 442;
-            const maxWTop = 965 - tx;
+            // Enlarged High-Contrast Biodata Block
+            const tx = 306;
+            const qrSize = 166;
+            const qrX = 810;
+            const qrY = 420;
+            const maxWTop = 974 - tx;
             const maxWLower = qrX - 24 - tx;
 
-            // Badge title "KARTU TANDA SISWA"
-            ctx.save();
-            drawRoundedRectPath(ctx, tx, 198, 208, 30, 8);
-            ctx.fillStyle = '#dcfce7';
-            ctx.fill();
-            ctx.fillStyle = '#166534';
-            ctx.font = '700 14px ' + fontFamily;
-            ctx.fillText('KARTU TANDA SISWA', tx + 14, 218);
-            ctx.restore();
-
-            // 1. NIS / NISN
+            // 1. NIS / NISN (Large Bold)
             const nisText = String(st.nis || '-').trim() || '-';
             const nisnText = String(st.nisn || '-').trim() || '-';
             drawSmartFittedSingleLine(
                 ctx,
                 nisText + ' / ' + nisnText,
                 tx,
-                262,
+                238,
                 maxWTop,
-                [22, 20, 18],
-                '700',
+                [27, 25, 22],
+                '800',
                 fontFamily,
-                '#334155'
+                '#15803d'
             );
 
-            // 2. Nama Lengkap (Smart wrap up to 2 lines cleanly)
+            // 2. NAMA LENGKAP (Large & Dominant)
             const fullNameUpper = String(st.name || 'NAMA SISWA').trim().toUpperCase();
-            let nameFont = 30;
-            ctx.font = '800 ' + nameFont + 'px ' + fontFamily;
+            let nameFont = 38;
+            ctx.font = '900 ' + nameFont + 'px ' + fontFamily;
             let nameLines = wrapTextLines(ctx, fullNameUpper, maxWTop, 2);
             if (nameLines.length > 1) {
-                nameFont = 26;
-                ctx.font = '800 ' + nameFont + 'px ' + fontFamily;
+                nameFont = 33;
+                ctx.font = '900 ' + nameFont + 'px ' + fontFamily;
                 nameLines = wrapTextLines(ctx, fullNameUpper, maxWTop, 2);
             }
-            ctx.fillStyle = '#064e3b';
+            ctx.fillStyle = '#052e16';
             nameLines.forEach(function(line, idx) {
-                ctx.fillText(line, tx, 306 + idx * 32);
+                ctx.fillText(line, tx, 286 + idx * 40);
             });
-            let curY = 306 + (nameLines.length * 32) + 10;
+            let curY = 286 + (nameLines.length * 40) - 18;
 
-            // 3. Tempat, Tanggal Lahir
+            // Accent Rule Under Student Name
+            ctx.save();
+            const ruleGrad = ctx.createLinearGradient(tx, 0, tx + 240, 0);
+            ruleGrad.addColorStop(0, '#166534');
+            ruleGrad.addColorStop(0.6, '#eab308');
+            ruleGrad.addColorStop(1, 'rgba(234, 179, 8, 0)');
+            ctx.fillStyle = ruleGrad;
+            ctx.fillRect(tx, curY, 240, 4);
+            ctx.restore();
+            curY += 36;
+
+            // 3. Tempat, Tanggal Lahir (Large & Crisp)
             const bPlace = String(st.birthPlace || st.birth_place || '').trim();
             const bLong = formatKtsBirthDateLong(st.birthDate || st.birth_date);
             const ttlText = (bPlace && bLong) ? (bPlace + ', ' + bLong) : (bPlace || bLong || '-');
-            drawSmartFittedSingleLine(ctx, ttlText, tx, curY, maxWTop, [21, 19, 17], '600', fontFamily, '#1e293b');
-            curY += 36;
+            drawSmartFittedSingleLine(ctx, ttlText, tx, curY, maxWTop, [26, 24, 21], '700', fontFamily, '#0f172a');
+            curY += 38;
 
-            // 4. Alamat Lengkap (Constrained away from QR zone!)
+            // 4. Alamat Lengkap (24px clean, strictly guarded left of QR Code)
             const addrText = String(st.address || '-').trim() || '-';
-            ctx.font = '500 19px ' + fontFamily;
+            ctx.font = '600 22.5px ' + fontFamily;
             const addrLines = wrapTextLines(ctx, addrText, maxWLower, 2);
-            ctx.fillStyle = '#334155';
+            ctx.fillStyle = '#1e293b';
             addrLines.forEach(function(line, idx) {
-                ctx.fillText(line, tx, curY + idx * 25);
+                ctx.fillText(line, tx, curY + idx * 30);
             });
-            curY += (addrLines.length * 25) + 14;
+            curY += (addrLines.length * 30) + 12;
 
-            // 5. Pondok / Asrama / Kelas
+            // 5. Pondok / Asrama / Kelas Highlight Strip
             const dormVal = String(st.dormitory || '').trim();
             const classVal = String(st.className || ktsState.classMap[st.classId] || st.classId || '').trim();
             let line5 = '-';
@@ -22108,30 +22293,43 @@ function startOrOpenResponder(options) {
             else if (cfg.line5_mode === 'both') line5 = [dormVal, classVal].filter(Boolean).join(' • ') || '-';
             else line5 = dormVal || classVal || '-';
 
+            const pillY = Math.min(526, curY);
+            ctx.save();
+            drawRoundedRectPath(ctx, tx, pillY, maxWLower, 48, 10);
+            ctx.fillStyle = '#ecfdf5';
+            ctx.fill();
+            ctx.strokeStyle = '#86efac';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            ctx.fillStyle = '#166534';
+            ctx.fillRect(tx, pillY, 7, 48);
+            ctx.restore();
+
             drawSmartFittedSingleLine(
                 ctx,
                 line5.toUpperCase(),
-                tx,
-                Math.min(542, curY),
-                maxWLower,
-                [21, 19, 17],
-                '700',
+                tx + 18,
+                pillY + 33,
+                maxWLower - 28,
+                [24, 22, 19],
+                '800',
                 fontFamily,
-                '#166534'
+                '#14532d'
             );
 
-            // Subtle Student ID footer left of QR
-            ctx.fillStyle = '#64748b';
-            ctx.font = '600 13px monospace';
-            ctx.fillText('ID: ' + (st.studentId || '-'), tx, 594);
-
-            // QR Code Box (Bottom-Right with clean white quiet zone)
+            // QR Code Box (Bottom-Right High-Contrast Pad)
             ctx.save();
+            ctx.shadowColor = 'rgba(15, 23, 42, 0.14)';
+            ctx.shadowBlur = 10;
             ctx.fillStyle = '#ffffff';
-            drawRoundedRectPath(ctx, qrX, qrY, qrSize, qrSize, 14);
+            drawRoundedRectPath(ctx, qrX, qrY, qrSize, qrSize, 16);
             ctx.fill();
-            ctx.strokeStyle = '#cbd5e1';
-            ctx.lineWidth = 2;
+            ctx.restore();
+
+            ctx.save();
+            ctx.strokeStyle = '#166534';
+            ctx.lineWidth = 2.5;
+            drawRoundedRectPath(ctx, qrX, qrY, qrSize, qrSize, 16);
             ctx.stroke();
 
             const qrSrcCanvas = buildQrCanvasSync(st.qrCodeId || st.studentId || 'SIMATA');
@@ -22142,52 +22340,64 @@ function startOrOpenResponder(options) {
                 ctx.imageSmoothingEnabled = prevSmoothing;
             } else {
                 ctx.fillStyle = '#94a3b8';
-                ctx.font = '700 14px ' + fontFamily;
+                ctx.font = '700 16px ' + fontFamily;
                 ctx.textAlign = 'center';
                 ctx.fillText(st.qrCodeId || 'QR', qrX + qrSize / 2, qrY + qrSize / 2);
             }
             ctx.restore();
         } else {
-            // BACK SIDE RENDERER
+            // BACK SIDE RENDERER (Matching Rich Emerald-Gold Styling & Larger Typography)
             if (backBgImg) {
                 ctx.drawImage(backBgImg, 0, 0, W, H);
             } else {
-                const bgGrad = ctx.createLinearGradient(0, 0, W, H);
-                bgGrad.addColorStop(0, '#ffffff');
-                bgGrad.addColorStop(1, '#f0fdf4');
-                ctx.fillStyle = bgGrad;
-                ctx.fillRect(0, 0, W, H);
+                drawKtsDecorativeBackground(ctx, W, H, 'back');
 
-                // Top header stripe
-                ctx.fillStyle = '#166534';
-                ctx.fillRect(0, 0, W, 68);
-                ctx.fillStyle = '#eab308';
-                ctx.fillRect(0, 68, W, 6);
+                const topGrad = ctx.createLinearGradient(0, 0, W, 86);
+                topGrad.addColorStop(0, '#052e16');
+                topGrad.addColorStop(0.55, '#14532d');
+                topGrad.addColorStop(1, '#15803d');
+                ctx.fillStyle = topGrad;
+                ctx.fillRect(0, 0, W, 80);
+
+                const bGoldGrad = ctx.createLinearGradient(0, 0, W, 0);
+                bGoldGrad.addColorStop(0, '#b45309');
+                bGoldGrad.addColorStop(0.5, '#fde047');
+                bGoldGrad.addColorStop(1, '#ca8a04');
+                ctx.fillStyle = bGoldGrad;
+                ctx.fillRect(0, 80, W, 6);
 
                 if (logoImg) {
-                    ctx.drawImage(logoImg, 44, 12, 44, 44);
+                    ctx.drawImage(logoImg, 44, 14, 52, 52);
                 }
                 ctx.fillStyle = '#ffffff';
-                ctx.font = '700 22px ' + fontFamily;
-                ctx.fillText((cfg.school_name || 'MA AT-TAUJIH SARANG').toUpperCase(), 102, 43);
+                ctx.font = '800 26px ' + fontFamily;
+                ctx.fillText((cfg.school_name || 'MA AT-TAUJIH').toUpperCase(), 112, 42);
+                ctx.fillStyle = '#dcfce7';
+                ctx.font = '600 15px ' + fontFamily;
+                ctx.fillText(cfg.header_arabic || 'Yayasan Muwajjihul Ulum Asy-Syariyyah', 112, 65);
+
+                ctx.fillStyle = '#0f3f26';
+                ctx.fillRect(0, 610, W, 28);
+                ctx.fillStyle = bGoldGrad;
+                ctx.fillRect(0, 606, W, 4);
             }
 
             // Back Title
-            ctx.fillStyle = '#064e3b';
-            ctx.font = '800 23px ' + fontFamily;
-            ctx.fillText(cfg.back_title || 'KETENTUAN KARTU TANDA SISWA', 56, 122);
+            ctx.fillStyle = '#052e16';
+            ctx.font = '900 26px ' + fontFamily;
+            ctx.fillText(cfg.back_title || 'KETENTUAN KARTU IDENTITAS SISWA', 54, 132);
 
-            // Numbered Rules
+            // Numbered Rules (Enlarged)
             const rawRules = String(cfg.back_rules || '').split(/\r?\n/).map(function(l) { return l.trim(); }).filter(Boolean);
-            ctx.font = '500 18px ' + fontFamily;
+            ctx.font = '600 20.5px ' + fontFamily;
             ctx.fillStyle = '#1e293b';
-            let ry = 164;
+            let ry = 176;
             rawRules.slice(0, 6).forEach(function(ruleLine) {
-                const wrapped = wrapTextLines(ctx, ruleLine, W - 112, 2);
+                const wrapped = wrapTextLines(ctx, ruleLine, W - 108, 2);
                 wrapped.forEach(function(wLine) {
-                    if (ry < 375) {
-                        ctx.fillText(wLine, 56, ry);
-                        ry += 28;
+                    if (ry < 388) {
+                        ctx.fillText(wLine, 54, ry);
+                        ry += 30;
                     }
                 });
                 ry += 8;
@@ -22195,56 +22405,56 @@ function startOrOpenResponder(options) {
 
             // Dashed divider
             ctx.save();
-            ctx.strokeStyle = '#cbd5e1';
+            ctx.strokeStyle = '#94a3b8';
             ctx.setLineDash([8, 6]);
             ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.moveTo(56, 398);
-            ctx.lineTo(W - 56, 398);
+            ctx.moveTo(54, 404);
+            ctx.lineTo(W - 54, 404);
             ctx.stroke();
             ctx.restore();
 
-            // Left Bottom: Card Identity Summary
-            ctx.fillStyle = '#475569';
-            ctx.font = '700 15px ' + fontFamily;
-            ctx.fillText('PEMEGANG KARTU:', 56, 436);
-            drawSmartFittedSingleLine(ctx, String(st.name || '-').toUpperCase(), 56, 466, 470, [21, 18], '800', fontFamily, '#0f172a');
+            // Left Bottom: Card Identity Summary (Larger)
+            ctx.fillStyle = '#15803d';
+            ctx.font = '800 16px ' + fontFamily;
+            ctx.fillText('PEMEGANG KARTU:', 54, 440);
+            drawSmartFittedSingleLine(ctx, String(st.name || '-').toUpperCase(), 54, 474, 490, [25, 22, 19], '800', fontFamily, '#0f172a');
             ctx.fillStyle = '#334155';
-            ctx.font = '600 16px monospace';
-            ctx.fillText('NIS/NISN : ' + (st.nis || '-') + ' / ' + (st.nisn || '-'), 56, 498);
-            ctx.fillText('QR ID    : ' + (st.qrCodeId || '-'), 56, 526);
-            ctx.fillStyle = '#64748b';
-            ctx.font = '500 14px ' + fontFamily;
-            ctx.fillText('Terhubung langsung dengan sistem presensi SIMATA.', 56, 566);
+            ctx.font = '700 18px monospace';
+            ctx.fillText('NIS/NISN : ' + (st.nis || '-') + ' / ' + (st.nisn || '-'), 54, 510);
+            ctx.fillText('QR ID    : ' + (st.qrCodeId || '-'), 54, 538);
+            ctx.fillStyle = '#475569';
+            ctx.font = '600 15px ' + fontFamily;
+            ctx.fillText('Terhubung langsung dengan sistem presensi SIMATA.', 54, 578);
 
-            // Right Bottom: Headmaster Signature Block
+            // Right Bottom: Headmaster Signature Block (Larger)
             const sigCenterX = 785;
             ctx.save();
             ctx.textAlign = 'center';
             ctx.fillStyle = '#1e293b';
-            ctx.font = '600 16px ' + fontFamily;
-            ctx.fillText(cfg.sign_city_date || 'Sarang, 18 November 2026', sigCenterX, 434);
-            ctx.fillText('Kepala Madrasah,', sigCenterX, 458);
+            ctx.font = '600 17.5px ' + fontFamily;
+            ctx.fillText(cfg.sign_city_date || 'Sarang, 18 November 2026', sigCenterX, 438);
+            ctx.fillText('Kepala Madrasah,', sigCenterX, 464);
 
             if (sigImg) {
-                const sMaxW = 190;
+                const sMaxW = 195;
                 const sMaxH = 82;
                 const ratio = Math.min(sMaxW / (sigImg.naturalWidth || sMaxW), sMaxH / (sigImg.naturalHeight || sMaxH));
                 const sw = (sigImg.naturalWidth || 120) * ratio;
                 const sh = (sigImg.naturalHeight || 60) * ratio;
-                ctx.drawImage(sigImg, sigCenterX - sw / 2, 468 + (sMaxH - sh) / 2, sw, sh);
+                ctx.drawImage(sigImg, sigCenterX - sw / 2, 470 + (sMaxH - sh) / 2, sw, sh);
             }
 
-            ctx.font = '700 17px ' + fontFamily;
+            ctx.font = '800 18.5px ' + fontFamily;
             ctx.fillStyle = '#0f172a';
             const hmName = cfg.headmaster_name || 'Kepala Madrasah';
-            ctx.fillText(hmName, sigCenterX, 570);
+            ctx.fillText(hmName, sigCenterX, 572);
             const nw = ctx.measureText(hmName).width;
-            ctx.fillRect(sigCenterX - nw / 2, 574, nw, 1.5);
+            ctx.fillRect(sigCenterX - nw / 2, 576, nw, 1.5);
 
-            ctx.font = '500 14px ' + fontFamily;
+            ctx.font = '600 15px ' + fontFamily;
             ctx.fillStyle = '#475569';
-            ctx.fillText(cfg.headmaster_nip || 'NIP. -', sigCenterX, 596);
+            ctx.fillText(cfg.headmaster_nip || 'NIP. -', sigCenterX, 598);
             ctx.restore();
         }
 
@@ -22705,6 +22915,8 @@ function startOrOpenResponder(options) {
     function openKtsTemplateModal() {
         if (!isCurrentUserAdmin) return;
         const s = ktsState.settings;
+        const hTitleEl = document.getElementById('ktsTpl_headerTitle');
+        if (hTitleEl) hTitleEl.value = s.header_title || '';
         document.getElementById('ktsTpl_headerArabic').value = s.header_arabic || '';
         document.getElementById('ktsTpl_schoolName').value = s.school_name || '';
         document.getElementById('ktsTpl_schoolAddress').value = s.school_address || '';
@@ -22742,7 +22954,9 @@ function startOrOpenResponder(options) {
     };
 
     async function saveKtsTemplateSettings() {
+        const hTitleEl = document.getElementById('ktsTpl_headerTitle');
         const payload = {
+            header_title: hTitleEl ? hTitleEl.value.trim() : '',
             header_arabic: document.getElementById('ktsTpl_headerArabic').value.trim(),
             school_name: document.getElementById('ktsTpl_schoolName').value.trim(),
             school_address: document.getElementById('ktsTpl_schoolAddress').value.trim(),
@@ -23265,7 +23479,7 @@ function startOrOpenResponder(options) {
         const menu = document.getElementById('menu-kts');
         if (menu) menu.classList.add('active');
         if (typeof updatePageContext === 'function') {
-            updatePageContext('kts', 'DATA & AKADEMIK', 'KTS (Kartu Pelajar)');
+            updatePageContext('kts', 'DATA & AKADEMIK', 'KTS');
         }
         const preferId = (opts && opts.studentId) ? opts.studentId : null;
         loadKtsStudioData(preferId);
@@ -26908,7 +27122,7 @@ window.addEventListener('beforeunload', function() {
               <rect x="2" y="4" width="20" height="16" rx="2"/><circle cx="8" cy="11" r="2.2"/><line x1="13" y1="9" x2="19" y2="9"/><line x1="13" y1="13" x2="19" y2="13"/>
             </svg>
           </div>
-          <span class="more-item-name">KTS Siswa</span>
+          <span class="more-item-name">KTS</span>
         </button>
       </div>
 

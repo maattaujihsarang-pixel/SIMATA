@@ -11,17 +11,18 @@ const xlsxUtil = require('../utils/xlsx.util');
 const { NotFoundError, BadRequestError, ConflictError } = require('../errors');
 
 const DEFAULT_KTS_SETTINGS = {
-  header_arabic: 'بسم الله الرحمن الرحيم',
-  school_name: 'MA AT-TAUJIH SARANG',
-  school_address: 'Sarang, Rembang - Jawa Tengah',
-  validity_text: 'Berlaku selama menjadi Siswa MA At-Taujih Sarang',
+  header_title: 'KARTU IDENTITAS SISWA',
+  header_arabic: 'Yayasan Muwajjihul Ulum Asy-Syariyyah',
+  school_name: 'MA AT-TAUJIH',
+  school_address: 'Dk. Pulorejo, Desa Bajingjowo, Kec. Sarang, Kab. Rembang, Jawa Tengah (59274)',
+  validity_text: 'Berlaku selama menjadi Siswa MA At-Taujih',
   line5_mode: 'dormitory',
-  back_title: 'KETENTUAN KARTU TANDA SISWA',
+  back_title: 'KETENTUAN KARTU IDENTITAS SISWA',
   back_rules: [
     '1. Kartu ini adalah identitas resmi siswa aktif MA At-Taujih Sarang.',
     '2. Wajib dibawa setiap hari untuk presensi QR Code SIMATA.',
     '3. Dilarang meminjamkan atau memindahtangankan kartu ini kepada orang lain.',
-    '4. Jika menemukan kartu ini, mohon kembalikan ke Kantor MA At-Taujih Sarang.'
+    '4. Jika menemukan kartu ini, mohon kembalikan ke MA At-Taujih Sarang.'
   ].join('\n'),
   sign_city_date: 'Sarang, 18 November 2026',
   headmaster_name: 'Kepala Madrasah MA At-Taujih',
