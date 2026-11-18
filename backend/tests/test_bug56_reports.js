@@ -116,7 +116,6 @@ function createReportsMockQueryHandler() {
   return async (text, params = []) => {
     const q = String(text || '');
     const photos = testDbEngine.profile_photos || [];
-    const docs = testDbEngine.student_documents || [];
 
     if (q.includes('/* REPORTS: ACTIVE_YEAR */')) {
       const ay = testDbEngine.academic_years.find((a) => a.is_active) || testDbEngine.academic_years[0];
@@ -320,8 +319,7 @@ function createReportsMockQueryHandler() {
             nis: s.nis,
             nisn: s.nisn,
             gender: s.gender,
-            has_photo: photos.some((p) => p.student_id === s.student_id),
-            has_kartu_pelajar: docs.some((d) => d.student_id === s.student_id && d.document_type === 'KARTU_PELAJAR')
+            has_photo: photos.some((p) => p.student_id === s.student_id)
           };
         });
       return { rows, rowCount: rows.length };
@@ -661,11 +659,6 @@ async function runBug56ReportsTests() {
       { photo_id: 'PHT-1', student_id: 'STD-K10002', teacher_id: null },
       { photo_id: 'PHT-2', student_id: null, teacher_id: 'TCH-0001' }
     );
-    testDbEngine.student_documents.push({
-      document_id: 'DOC-1',
-      student_id: 'STD-K10002',
-      document_type: 'KARTU_PELAJAR'
-    });
 
     // Previous period (2026-10-17 .. 2026-10-31): 4 Hadir out of 4 = 100%
     for (let p = 1; p <= 4; p += 1) {
@@ -1015,7 +1008,6 @@ async function runBug56ReportsTests() {
     // Data Audit completeness & privacy check (no raw NIK/NUPTK leaked)
     assert.strictEqual(data.data_audit.summary.complete_students, 1);
     assert.strictEqual(data.data_audit.summary.student_photo_count, 1);
-    assert.strictEqual(data.data_audit.summary.student_kartu_count, 1);
     const serializedAudit = JSON.stringify(data.data_audit);
     assert.ok(!serializedAudit.includes('3317010101700001'), 'Raw teacher NIK must NOT be serialized into report audit JSON');
     assert.ok(!serializedAudit.includes('197001012000031001'), 'Raw teacher NIP must NOT be serialized into report audit JSON');

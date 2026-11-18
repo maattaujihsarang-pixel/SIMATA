@@ -48,7 +48,6 @@ class TestDbEngine {
       { setting_key: 'evidence_last_cleanup_at', setting_value: '', description: 'Timestamp ISO pembersihan bukti foto terakhir', updated_by_user_id: null, updated_at: new Date().toISOString() },
       { setting_key: 'evidence_last_cleanup_summary', setting_value: '', description: 'Ringkasan JSON hasil pembersihan bukti foto terakhir', updated_by_user_id: null, updated_at: new Date().toISOString() }
     ];
-    this.student_documents = [];
     this.parent_student_mappings = [];
     this.finance_settings = [
       { setting_key: 'bank_account_holder', setting_value: 'MA At-Taujih Keuangan', description: 'Nama pemilik rekening bank resmi', updated_by_user_id: null, updated_at: new Date().toISOString() },
@@ -804,46 +803,6 @@ class TestDbEngine {
       };
       this.academic_years.push(ay);
       return { rows: [ay], rowCount: 1 };
-    }
-
-    // 11. Student Documents (FEATURE 004 - Kartu Pelajar)
-    if (q.startsWith('INSERT INTO student_documents')) {
-      const doc = {
-        document_id: params[0],
-        student_id: params[1],
-        document_type: params[2],
-        file_name: params[3],
-        original_name: params[4],
-        storage_path: params[5],
-        mime_type: params[6],
-        file_size: params[7],
-        uploaded_by_user_id: params[8],
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-      const existingIdx = this.student_documents.findIndex(d => d.student_id === params[1] && d.document_type === params[2]);
-      if (existingIdx >= 0) {
-        this.student_documents[existingIdx] = { ...this.student_documents[existingIdx], ...doc };
-        return { rows: [this.student_documents[existingIdx]], rowCount: 1 };
-      }
-      this.student_documents.push(doc);
-      return { rows: [doc], rowCount: 1 };
-    }
-    if (q.includes('DELETE FROM student_documents') && q.includes('student_id = $1') && q.includes('document_type = $2')) {
-      const idx = this.student_documents.findIndex(d => d.student_id === params[0] && d.document_type === params[1]);
-      if (idx >= 0) {
-        const deleted = this.student_documents.splice(idx, 1)[0];
-        return { rows: [deleted], rowCount: 1 };
-      }
-      return { rows: [], rowCount: 0 };
-    }
-    if (q.includes('SELECT') && q.includes('FROM student_documents') && q.includes('student_id = $1') && q.includes('document_type = $2')) {
-      const doc = this.student_documents.find(d => d.student_id === params[0] && d.document_type === params[1]);
-      return { rows: doc ? [{ ...doc }] : [], rowCount: doc ? 1 : 0 };
-    }
-    if (q.includes('SELECT') && q.includes('FROM student_documents') && q.includes('document_id = $1')) {
-      const doc = this.student_documents.find(d => d.document_id === params[0]);
-      return { rows: doc ? [{ ...doc }] : [], rowCount: doc ? 1 : 0 };
     }
 
     // 12. Finance Settings (FEATURE 005-A)

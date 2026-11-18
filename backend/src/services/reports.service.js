@@ -748,14 +748,10 @@ class ReportsService {
            s.nis,
            s.nisn,
            s.gender,
-           (pp.photo_id IS NOT NULL) AS has_photo,
-           (sd.document_id IS NOT NULL) AS has_kartu_pelajar
+           (pp.photo_id IS NOT NULL) AS has_photo
          FROM students s
          JOIN classes c ON s.class_id = c.class_id
          LEFT JOIN profile_photos pp ON pp.student_id = s.student_id
-         LEFT JOIN student_documents sd
-           ON sd.student_id = s.student_id
-           AND sd.document_type = 'KARTU_PELAJAR'
          WHERE s.status = 'Active'
          ${auditStudentClassClause}
          ORDER BY c.level ASC, c.class_name ASC, s.name ASC`,
@@ -1121,14 +1117,12 @@ class ReportsService {
       const hasNisn = Boolean(s.nisn && String(s.nisn).trim());
       const hasGender = Boolean(s.gender && String(s.gender).trim());
       const hasPhoto = Boolean(s.has_photo);
-      const hasKartu = Boolean(s.has_kartu_pelajar);
 
       const missing = [];
       if (!hasNis) missing.push('NIS');
       if (!hasNisn) missing.push('NISN');
       if (!hasGender) missing.push('Gender');
       if (!hasPhoto) missing.push('Pasfoto');
-      if (!hasKartu) missing.push('Kartu Pelajar');
 
       const isComplete = missing.length === 0;
 
@@ -1139,8 +1133,7 @@ class ReportsService {
           total_students: 0,
           complete_students: 0,
           nisn_count: 0,
-          photo_count: 0,
-          kartu_count: 0
+          photo_count: 0
         });
       }
       const ca = classAuditMap.get(s.class_id);
@@ -1148,7 +1141,6 @@ class ReportsService {
       if (isComplete) ca.complete_students += 1;
       if (hasNisn) ca.nisn_count += 1;
       if (hasPhoto) ca.photo_count += 1;
-      if (hasKartu) ca.kartu_count += 1;
 
       return {
         entity_type: 'STUDENT',
@@ -1162,7 +1154,6 @@ class ReportsService {
         has_nisn: hasNisn,
         has_gender: hasGender,
         has_photo: hasPhoto,
-        has_kartu_pelajar: hasKartu,
         is_complete: isComplete,
         missing_items: missing
       };
@@ -1195,7 +1186,6 @@ class ReportsService {
 
     const studentCompleteCount = auditStudentRows.filter((r) => r.is_complete).length;
     const studentPhotoCount = auditStudentRows.filter((r) => r.has_photo).length;
-    const studentKartuCount = auditStudentRows.filter((r) => r.has_kartu_pelajar).length;
     const studentNisnCount = auditStudentRows.filter((r) => r.has_nisn).length;
 
     const teacherCompleteCount = auditTeacherRows.filter((r) => r.is_complete).length;
@@ -1315,7 +1305,6 @@ class ReportsService {
           total_students: auditStudentRows.length,
           complete_students: studentCompleteCount,
           student_photo_count: studentPhotoCount,
-          student_kartu_count: studentKartuCount,
           student_nisn_count: studentNisnCount,
           total_teachers: auditTeacherRows.length,
           complete_teachers: teacherCompleteCount,

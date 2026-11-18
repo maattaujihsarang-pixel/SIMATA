@@ -3128,7 +3128,7 @@ html, body {
                 </div>
                 <div>
                   <strong>Catatan Penilaian Akademik (RDM Madrasah Kemenag)</strong>
-                  <p>Pengelolaan nilai &amp; rapor akademik akan diarahkan langsung ke <strong>RDM Kemenag</strong> pada tahap integrasi berikutnya. Fokus panel ini menjaga kesiapan data induk NIS/NISN, pasfoto, dan arsip Kartu Pelajar.</p>
+                  <p>Pengelolaan nilai &amp; rapor akademik akan diarahkan langsung ke <strong>RDM Kemenag</strong> pada tahap integrasi berikutnya. Fokus panel ini menjaga kesiapan data induk NIS/NISN dan pasfoto.</p>
                 </div>
               </div>
 
@@ -3136,7 +3136,7 @@ html, body {
                 <div class="rpt-acad-card-head">
                   <div>
                     <h3>Kesiapan Berkas per Rombel</h3>
-                    <p class="rpt-acad-card-sub">Persentase siswa dengan data lengkap (NIS, NISN, Gender, Pasfoto, dan Kartu Pelajar)</p>
+                    <p class="rpt-acad-card-sub">Persentase siswa dengan data lengkap (NIS, NISN, Gender, dan Pasfoto)</p>
                   </div>
                 </div>
                 <div id="rptAcadAuditClassGrid" class="rpt-acad-audit-class-grid"></div>
@@ -3815,138 +3815,12 @@ html, body {
                 </div>
               </div>
 
-              <!-- Section 4: DOKUMEN (FEATURE 004 - Kartu Pelajar) -->
-              <div class="student-form-section" id="student_documents_section">
-                <div class="student-section-title">
-                  <span>Dokumen</span>
-                </div>
-                
-                <div class="student-document-card" id="student_card_doc_card">
-                  <!-- Header row: Title + Badge -->
-                  <div class="document-header-row">
-                    <div class="document-title-wrap">
-                      <div class="document-icon-badge">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <rect x="2" y="5" width="20" height="14" rx="2"></rect>
-                          <line x1="2" y1="10" x2="22" y2="10"></line>
-                        </svg>
-                      </div>
-                      <div>
-                        <h4 class="document-type-title">Kartu Pelajar</h4>
-                      </div>
-                    </div>
-                    <span id="student_card_status_badge" class="document-status-badge badge-unavailable">
-                      <span id="student_card_status_dot" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#94a3b8;"></span>
-                      <span id="student_card_status_text">Belum Tersedia</span>
-                    </span>
-                  </div>
-
-                  <!-- Metadata info box (visible when card exists) -->
-                  <div id="student_card_meta_box" class="document-meta-info" style="display:none;">
-                    <div class="document-meta-filename" id="student_card_filename">-</div>
-                    <div class="document-meta-sub" id="student_card_filesize">-</div>
-                  </div>
-
-                  <!-- Empty notice (visible when card not available) -->
-                  <div id="student_card_empty_notice" class="document-empty-notice">
-                    Dokumen kartu pelajar belum diunggah.
-                  </div>
-
-                  <!-- Pending file box (when a new file is chosen in Edit/Create mode) -->
-                  <div id="student_card_pending_box" class="student-doc-pending-box" style="display:none;">
-                    <div style="display:flex;align-items:center;gap:6px;overflow:hidden;">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-                      <span style="font-weight:600;">File Baru:</span>
-                      <span id="student_card_pending_name" style="text-overflow:ellipsis;overflow:hidden;white-space:nowrap;"></span>
-                      <span id="student_card_pending_size" style="opacity:0.85;flex-shrink:0;"></span>
-                    </div>
-                    <button type="button" onclick="cancelPendingStudentCard()" style="background:none;border:none;color:#ef4444;font-size:12px;font-weight:700;cursor:pointer;padding:2px 6px;" title="Batalkan pilihan file">&times; Batal</button>
-                  </div>
-
-                  <!-- Action Buttons Row for DETAIL Mode (Read-Only) -->
-                  <div id="student_card_detail_actions" class="document-actions-row" style="display:none;">
-                    <button type="button" id="student_card_preview_btn" class="student-doc-btn btn-doc-preview" onclick="previewCurrentStudentKartuPelajar()">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                      <span>Pratinjau</span>
-                    </button>
-                    <button type="button" id="student_card_download_btn" class="student-doc-btn btn-doc-download" onclick="downloadCurrentStudentKartuPelajar()">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                      <span>Unduh</span>
-                    </button>
-                  </div>
-
-                  <!-- Action Controls Row for EDIT / CREATE Mode -->
-                  <div id="student_card_edit_actions" class="document-actions-row" style="display:none;">
-                    <input type="file" id="student_card_file_input" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" style="display:none;" onchange="handleStudentCardFileSelect(this)" />
-                    <button type="button" id="student_card_upload_trigger_btn" class="student-doc-btn btn-doc-upload" onclick="document.getElementById('student_card_file_input').click()">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                      <span id="student_card_upload_btn_text">Unggah Kartu Pelajar</span>
-                    </button>
-                    <button type="button" id="student_card_delete_btn" class="student-doc-btn btn-doc-delete" style="display:none;" onclick="handleDeleteStudentKartuPelajar()">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                      <span>Hapus Kartu</span>
-                    </button>
-                    <!-- Preview and download are also available in edit mode for saved doc -->
-                    <button type="button" id="student_card_edit_preview_btn" class="student-doc-btn btn-doc-preview" style="display:none;" onclick="previewCurrentStudentKartuPelajar()">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                      <span>Pratinjau</span>
-                    </button>
-                    <button type="button" id="student_card_edit_download_btn" class="student-doc-btn btn-doc-download" style="display:none;" onclick="downloadCurrentStudentKartuPelajar()">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                      <span>Unduh</span>
-                    </button>
-                  </div>
-                  
-                  <div class="student-doc-hint" id="student_card_format_hint">
-                    Format yang didukung: JPG, JPEG, PNG, PDF (Maks. 5 MB).
-                  </div>
-                </div>
-              </div>
-
             </div>
 
             <!-- Modal Footer -->
             <div class="student-modal-footer">
               <button type="button" id="studentCancelBtn" class="login-button student-btn-cancel">Batal</button>
               <button type="button" id="studentSaveBtn" class="login-button student-btn-save">Simpan</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- DOCUMENT PREVIEW MODAL (FEATURE 004) -->
-        <div id="documentPreviewModal" class="student-modal-backdrop" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.65);backdrop-filter:blur(2px);align-items:center;justify-content:center;z-index:10005;padding:16px;box-sizing:border-box;">
-          <div class="document-preview-card">
-            <!-- Modal Header -->
-            <div class="student-modal-header" style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #e2e8f0;background:#ffffff;flex-shrink:0;">
-              <div>
-                <h3 id="docPreviewTitle" style="font-size:16px;font-weight:700;color:#0f172a;margin:0;">Pratinjau Dokumen</h3>
-                <div id="docPreviewSubtitle" style="font-size:12px;color:#64748b;margin-top:2px;"></div>
-              </div>
-              <button type="button" onclick="closeDocumentPreviewModal()" class="student-modal-close-btn" aria-label="Tutup">&times;</button>
-            </div>
-
-            <!-- Modal Viewport -->
-            <div id="docPreviewViewport" class="document-preview-viewport">
-              <div id="docPreviewLoading" style="display:none;padding:48px 0;text-align:center;color:#94a3b8;">
-                <div class="table-loading-spinner" style="margin:0 auto 12px auto;"></div>
-                <span>Memuat pratinjau dokumen...</span>
-              </div>
-              <img id="docPreviewImg" src="" alt="Pratinjau Dokumen" style="display:none;max-width:100%;max-height:68vh;object-fit:contain;margin:auto;" />
-              <iframe id="docPreviewIframe" src="" style="display:none;width:100%;height:68vh;border:none;border-radius:6px;background:#fff;" title="Pratinjau Dokumen"></iframe>
-              <div id="docPreviewError" style="display:none;padding:48px 24px;text-align:center;color:#fca5a5;">
-                <p style="font-size:14px;font-weight:600;margin-bottom:8px;">Gagal menampilkan pratinjau dokumen.</p>
-                <p style="font-size:12px;color:#cbd5e1;margin-bottom:16px;">Browser Anda mungkin tidak mendukung pratinjau file ini secara langsung.</p>
-                <button type="button" class="login-button" onclick="downloadCurrentStudentKartuPelajar()" style="height:36px;padding:0 16px;background:#2563eb;font-size:12.5px;">Unduh Berkas Saja</button>
-              </div>
-            </div>
-
-            <!-- Modal Footer -->
-            <div class="student-modal-footer" style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-top:1px solid #e2e8f0;background:#ffffff;flex-shrink:0;">
-              <button type="button" id="docPreviewDownloadBtn" onclick="downloadCurrentStudentKartuPelajar()" class="student-doc-btn btn-doc-download" style="height:38px;padding:0 16px;font-size:13px;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                <span>Unduh Dokumen</span>
-              </button>
-              <button type="button" onclick="closeDocumentPreviewModal()" class="login-button student-btn-cancel" style="height:38px;padding:0 16px;">Tutup</button>
             </div>
           </div>
         </div>
@@ -7765,308 +7639,6 @@ function handleStudentPhotoDownload() {
     simataClient.downloadStudentPhoto(currentStudentModalId, currentStudentModalName || 'siswa');
 }
 
-// ============================================================
-// FEATURE 004: KARTU PELAJAR SISWA (STUDENT DOCUMENTS)
-// ============================================================
-let currentStudentKartuPelajarMeta = null;
-let pendingStudentCardFile = null;
-let currentDocPreviewObjectUrl = null;
-
-function formatDocumentFileSize(bytes) {
-    if (!bytes || isNaN(bytes)) return '0 B';
-    const b = parseInt(bytes, 10);
-    if (b < 1024) return b + ' B';
-    if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
-    return (b / (1024 * 1024)).toFixed(2) + ' MB';
-}
-
-function resetStudentCardUI() {
-    pendingStudentCardFile = null;
-    const fileInput = document.getElementById('student_card_file_input');
-    if (fileInput) fileInput.value = '';
-
-    const pendingBox = document.getElementById('student_card_pending_box');
-    if (pendingBox) pendingBox.style.display = 'none';
-
-    currentStudentKartuPelajarMeta = null;
-
-    const card = document.getElementById('student_card_doc_card');
-    if (card) card.classList.remove('has-doc');
-
-    const badge = document.getElementById('student_card_status_badge');
-    if (badge) badge.className = 'document-status-badge badge-unavailable';
-
-    const dot = document.getElementById('student_card_status_dot');
-    if (dot) dot.style.background = '#94a3b8';
-
-    const text = document.getElementById('student_card_status_text');
-    if (text) text.textContent = 'Belum Tersedia';
-
-    const metaBox = document.getElementById('student_card_meta_box');
-    if (metaBox) metaBox.style.display = 'none';
-
-    const emptyNotice = document.getElementById('student_card_empty_notice');
-    if (emptyNotice) emptyNotice.style.display = 'block';
-
-    const detailActions = document.getElementById('student_card_detail_actions');
-    if (detailActions) detailActions.style.display = 'none';
-
-    const editActions = document.getElementById('student_card_edit_actions');
-    if (editActions) editActions.style.display = 'none';
-
-    const deleteBtn = document.getElementById('student_card_delete_btn');
-    if (deleteBtn) deleteBtn.style.display = 'none';
-
-    const editPrevBtn = document.getElementById('student_card_edit_preview_btn');
-    if (editPrevBtn) editPrevBtn.style.display = 'none';
-
-    const editDownBtn = document.getElementById('student_card_edit_download_btn');
-    if (editDownBtn) editDownBtn.style.display = 'none';
-
-    const uploadBtnText = document.getElementById('student_card_upload_btn_text');
-    if (uploadBtnText) uploadBtnText.textContent = 'Unggah Kartu Pelajar';
-
-    const formatHint = document.getElementById('student_card_format_hint');
-    if (formatHint) formatHint.style.display = 'block';
-}
-
-async function loadStudentKartuPelajarInModal(studentId, isView) {
-    resetStudentCardUI();
-    const card = document.getElementById('student_card_doc_card');
-    const badge = document.getElementById('student_card_status_badge');
-    const dot = document.getElementById('student_card_status_dot');
-    const text = document.getElementById('student_card_status_text');
-    const metaBox = document.getElementById('student_card_meta_box');
-    const filenameEl = document.getElementById('student_card_filename');
-    const filesizeEl = document.getElementById('student_card_filesize');
-    const emptyNotice = document.getElementById('student_card_empty_notice');
-    const detailActions = document.getElementById('student_card_detail_actions');
-    const editActions = document.getElementById('student_card_edit_actions');
-    const uploadBtnText = document.getElementById('student_card_upload_btn_text');
-    const deleteBtn = document.getElementById('student_card_delete_btn');
-    const editPrevBtn = document.getElementById('student_card_edit_preview_btn');
-    const editDownBtn = document.getElementById('student_card_edit_download_btn');
-    const formatHint = document.getElementById('student_card_format_hint');
-
-    try {
-        const res = await simataClient.getStudentKartuPelajarMeta(studentId);
-        const doc = (res && res.success && res.data && res.data.available) ? res.data : null;
-        currentStudentKartuPelajarMeta = doc;
-
-        if (doc) {
-            if (card) card.classList.add('has-doc');
-            if (badge) badge.className = 'document-status-badge badge-available';
-            if (dot) dot.style.background = '#15803d';
-            if (text) text.textContent = 'Tersedia';
-            if (filenameEl) filenameEl.textContent = doc.file_name || 'Kartu_Pelajar.pdf';
-            if (filesizeEl) filesizeEl.textContent = 'Ukuran: ' + formatDocumentFileSize(doc.file_size) + ' • Diperbarui: ' + (doc.updated_at ? new Date(doc.updated_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-');
-            if (metaBox) metaBox.style.display = 'flex';
-            if (emptyNotice) emptyNotice.style.display = 'none';
-
-            if (isView) {
-                // MODE DETAIL: READ-ONLY (LIHAT, PRATINJAU, UNDUH)
-                // DILARANG MENAMPILKAN TOMBOL UPLOAD, GANTI, HAPUS!
-                if (detailActions) detailActions.style.display = 'flex';
-                if (editActions) editActions.style.display = 'none';
-                if (formatHint) formatHint.style.display = 'none';
-            } else {
-                // MODE EDIT: PENGELOLAAN DOKUMEN (GANTI, HAPUS, PRATINJAU, UNDUH)
-                if (detailActions) detailActions.style.display = 'none';
-                if (editActions) editActions.style.display = 'flex';
-                if (uploadBtnText) uploadBtnText.textContent = 'Ganti Kartu Pelajar';
-                if (deleteBtn) deleteBtn.style.display = 'inline-flex';
-                if (editPrevBtn) editPrevBtn.style.display = 'inline-flex';
-                if (editDownBtn) editDownBtn.style.display = 'inline-flex';
-                if (formatHint) formatHint.style.display = 'block';
-            }
-        } else {
-            // Belum tersedia
-            if (card) card.classList.remove('has-doc');
-            if (badge) badge.className = 'document-status-badge badge-unavailable';
-            if (dot) dot.style.background = '#94a3b8';
-            if (text) text.textContent = 'Belum Tersedia';
-            if (metaBox) metaBox.style.display = 'none';
-            if (emptyNotice) emptyNotice.style.display = 'block';
-
-            if (isView) {
-                // MODE DETAIL: READ-ONLY (Hanya tampilkan keterangan belum tersedia)
-                if (detailActions) detailActions.style.display = 'none';
-                if (editActions) editActions.style.display = 'none';
-                if (formatHint) formatHint.style.display = 'none';
-            } else {
-                // MODE EDIT: UPLOAD TERSEDIA
-                if (detailActions) detailActions.style.display = 'none';
-                if (editActions) editActions.style.display = 'flex';
-                if (uploadBtnText) uploadBtnText.textContent = 'Unggah Kartu Pelajar';
-                if (deleteBtn) deleteBtn.style.display = 'none';
-                if (editPrevBtn) editPrevBtn.style.display = 'none';
-                if (editDownBtn) editDownBtn.style.display = 'none';
-                if (formatHint) formatHint.style.display = 'block';
-            }
-        }
-    } catch (err) {
-        console.warn('[KartuPelajar] Gagal memuat metadata:', err);
-    }
-}
-
-function handleStudentCardFileSelect(inputEl) {
-    const file = inputEl.files && inputEl.files[0];
-    if (!file) return;
-
-    if (file.size > 5 * 1024 * 1024) {
-        alert('Ukuran berkas melebihi batas maksimal 5 MB.');
-        inputEl.value = '';
-        return;
-    }
-
-    const validExtensions = ['.jpg', '.jpeg', '.png', '.pdf'];
-    const fileNameLower = file.name.toLowerCase();
-    const hasValidExt = validExtensions.some(ext => fileNameLower.endsWith(ext));
-    const validMimeTypes = ['image/jpeg', 'image/png', 'application/pdf', 'image/jpg'];
-    const hasValidMime = validMimeTypes.includes(file.type.toLowerCase()) || file.type === '';
-
-    if (!hasValidExt && !hasValidMime) {
-        alert('Format file tidak didukung. Harap pilih berkas dengan format JPG, JPEG, PNG, atau PDF.');
-        inputEl.value = '';
-        return;
-    }
-
-    pendingStudentCardFile = file;
-
-    const pendingBox = document.getElementById('student_card_pending_box');
-    const pendingName = document.getElementById('student_card_pending_name');
-    const pendingSize = document.getElementById('student_card_pending_size');
-
-    if (pendingName) pendingName.textContent = file.name;
-    if (pendingSize) pendingSize.textContent = '(' + formatDocumentFileSize(file.size) + ')';
-    if (pendingBox) pendingBox.style.display = 'flex';
-}
-
-function cancelPendingStudentCard() {
-    pendingStudentCardFile = null;
-    const fileInput = document.getElementById('student_card_file_input');
-    if (fileInput) fileInput.value = '';
-    const pendingBox = document.getElementById('student_card_pending_box');
-    if (pendingBox) pendingBox.style.display = 'none';
-}
-
-async function handleDeleteStudentKartuPelajar() {
-    if (!currentStudentModalId) return;
-    const fileName = (currentStudentKartuPelajarMeta && currentStudentKartuPelajarMeta.file_name) || 'Kartu Pelajar';
-    const confirmMsg = "Apakah Anda yakin ingin menghapus dokumen Kartu Pelajar '" + fileName + "'?\nTindakan ini tidak dapat dibatalkan.";
-    if (typeof window.simataConfirm === 'function') {
-        if (!await window.simataConfirm(confirmMsg)) return;
-    } else {
-        if (!confirm(confirmMsg)) return;
-    }
-
-    showModalProcessing('studentModal', 'Menghapus Kartu Pelajar...', 'Mohon tunggu sebentar...');
-    try {
-        const res = await simataClient.deleteStudentKartuPelajar(currentStudentModalId);
-        hideModalProcessing('studentModal');
-        if (res && res.success) {
-            showToast('success', 'Berhasil', 'Kartu Pelajar berhasil dihapus.');
-            await loadStudentKartuPelajarInModal(currentStudentModalId, false);
-        } else {
-            showToast('error', 'Gagal', (res && res.message) || 'Gagal menghapus Kartu Pelajar.');
-        }
-    } catch (err) {
-        hideModalProcessing('studentModal');
-        showToast('error', 'Kesalahan', 'Gagal menghapus Kartu Pelajar: ' + (err.message || err));
-    }
-}
-
-async function previewCurrentStudentKartuPelajar() {
-    if (!currentStudentModalId) return;
-
-    const modal = document.getElementById('documentPreviewModal');
-    if (!modal) return;
-
-    const titleEl = document.getElementById('docPreviewTitle');
-    const subtitleEl = document.getElementById('docPreviewSubtitle');
-    const loadingEl = document.getElementById('docPreviewLoading');
-    const imgEl = document.getElementById('docPreviewImg');
-    const iframeEl = document.getElementById('docPreviewIframe');
-    const errorEl = document.getElementById('docPreviewError');
-
-    if (titleEl) titleEl.textContent = 'Pratinjau Dokumen — Kartu Pelajar';
-    if (subtitleEl) subtitleEl.textContent = 'Siswa: ' + (currentStudentModalName || currentStudentModalId);
-
-    // Reset preview view
-    if (imgEl) { imgEl.style.display = 'none'; imgEl.src = ''; }
-    if (iframeEl) { iframeEl.style.display = 'none'; iframeEl.src = ''; }
-    if (errorEl) errorEl.style.display = 'none';
-    if (loadingEl) loadingEl.style.display = 'block';
-
-    if (currentDocPreviewObjectUrl) {
-        URL.revokeObjectURL(currentDocPreviewObjectUrl);
-        currentDocPreviewObjectUrl = null;
-    }
-
-    modal.style.display = 'flex';
-
-    try {
-        const result = await simataClient.getStudentKartuPelajarBlob(currentStudentModalId);
-        if (!result || !result.blob) {
-            if (loadingEl) loadingEl.style.display = 'none';
-            if (errorEl) errorEl.style.display = 'block';
-            return;
-        }
-
-        const blob = result.blob;
-        const contentType = result.contentType || blob.type || 'application/pdf';
-        currentDocPreviewObjectUrl = URL.createObjectURL(blob);
-
-        if (loadingEl) loadingEl.style.display = 'none';
-
-        if (contentType.startsWith('image/')) {
-            if (imgEl) {
-                imgEl.src = currentDocPreviewObjectUrl;
-                imgEl.style.display = 'block';
-            }
-        } else {
-            // PDF or other document
-            if (iframeEl) {
-                iframeEl.src = currentDocPreviewObjectUrl + '#toolbar=1';
-                iframeEl.style.display = 'block';
-            }
-        }
-    } catch (err) {
-        console.error('[DocumentPreview] Error fetching document blob:', err);
-        if (loadingEl) loadingEl.style.display = 'none';
-        if (errorEl) errorEl.style.display = 'block';
-    }
-}
-
-function closeDocumentPreviewModal() {
-    const modal = document.getElementById('documentPreviewModal');
-    if (modal) modal.style.display = 'none';
-
-    const imgEl = document.getElementById('docPreviewImg');
-    if (imgEl) { imgEl.src = ''; imgEl.style.display = 'none'; }
-
-    const iframeEl = document.getElementById('docPreviewIframe');
-    if (iframeEl) {
-        iframeEl.removeAttribute('src');
-        iframeEl.src = 'about:blank';
-        iframeEl.style.display = 'none';
-    }
-
-    if (currentDocPreviewObjectUrl) {
-        URL.revokeObjectURL(currentDocPreviewObjectUrl);
-        currentDocPreviewObjectUrl = null;
-    }
-}
-
-async function downloadCurrentStudentKartuPelajar() {
-    if (!currentStudentModalId) return;
-    try {
-        await simataClient.downloadStudentKartuPelajar(currentStudentModalId, currentStudentModalName);
-    } catch (err) {
-        alert('Gagal mengunduh Kartu Pelajar: ' + (err.message || err));
-    }
-}
-
 function openStudentModal(mode, studentId) {
     const modal = document.getElementById('studentModal');
     if (!modal) return;
@@ -8110,9 +7682,6 @@ function openStudentModal(mode, studentId) {
         if (hint) { hint.textContent = ''; hint.style.display = 'none'; }
         const cropBtn = document.getElementById('student_photo_crop_btn');
         if (cropBtn) cropBtn.style.display = 'none';
-        resetStudentCardUI();
-        const editActions = document.getElementById('student_card_edit_actions');
-        if (editActions) editActions.style.display = 'flex';
         modal.style.display = 'flex';
         return;
     }
@@ -8173,9 +7742,6 @@ function openStudentModal(mode, studentId) {
 
         // Load photo asynchronously using authenticated blob request
         loadStudentPhotoInModal(s.studentId, isView);
-
-        // Load Kartu Pelajar (FEATURE 004)
-        loadStudentKartuPelajarInModal(s.studentId, isView);
     }).withFailureHandler(function(){
         if (modalSeq !== studentModalReqSeq) return;
         alert('Gagal memuat data siswa.');
@@ -8189,7 +7755,6 @@ function closeStudentModal() {
     currentStudentModalId = null;
     currentStudentModalName = '';
     resetStudentPhotoUI();
-    resetStudentCardUI();
     if (m) m.style.display = 'none';
 }
 
@@ -8231,14 +7796,6 @@ function saveStudentFromModal() {
                         alert('Data siswa tersimpan, namun foto gagal diunggah: ' + (photoErr.message || photoErr));
                     }
                 }
-                if (pendingStudentCardFile) {
-                    try {
-                        await simataClient.uploadStudentKartuPelajar(id, pendingStudentCardFile);
-                    } catch (cardErr) {
-                        console.error('Gagal mengunggah Kartu Pelajar:', cardErr);
-                        alert('Data siswa berhasil disimpan, namun Kartu Pelajar gagal diunggah: ' + (cardErr.message || cardErr) + '. Silakan coba upload kembali melalui Edit Siswa.');
-                    }
-                }
                 hideModalProcessing('studentModal');
                 setButtonLoading(saveBtn, false, '', 'Simpan');
                 closeStudentModal();
@@ -8256,17 +7813,8 @@ function saveStudentFromModal() {
         }).updateStudent(token, id, payload);
     } else {
         // create -> server generates studentId & qrCodeId
-        simataClient.withSuccessHandler(async function(cRes){
+        simataClient.withSuccessHandler(function(cRes){
             if (cRes && cRes.success) {
-                const newStudentId = (cRes.data && cRes.data.student_id) || (cRes.student && cRes.student.studentId);
-                if (newStudentId && pendingStudentCardFile) {
-                    try {
-                        await simataClient.uploadStudentKartuPelajar(newStudentId, pendingStudentCardFile);
-                    } catch (cardErr) {
-                        console.error('Gagal mengunggah Kartu Pelajar pada siswa baru:', cardErr);
-                        alert('Siswa berhasil ditambahkan, namun Kartu Pelajar gagal diunggah: ' + (cardErr.message || cardErr) + '. Silakan coba upload kembali melalui Edit Siswa.');
-                    }
-                }
                 hideModalProcessing('studentModal');
                 setButtonLoading(saveBtn, false, '', 'Simpan');
                 closeStudentModal(); loadStudents();
@@ -11100,7 +10648,7 @@ function showReportsView() {
                 '<article class="rpt-acad-kpi-card rpt-kpi-clickable js-rpt-switch-tab" data-target-tab="audit" role="button" tabindex="0">' +
                     '<div class="rpt-kpi-top"><span class="rpt-kpi-label">Kelengkapan Berkas</span><span class="rpt-kpi-badge emerald">Data Induk</span></div>' +
                     '<div class="rpt-kpi-val">' + esc(fmtPct(ov.data_readiness_rate)) + '</div>' +
-                    '<div class="rpt-kpi-sub">Pasfoto, NIS/NISN &amp; Kartu Pelajar</div>' +
+                    '<div class="rpt-kpi-sub">Pasfoto, NIS &amp; NISN</div>' +
                 '</article>';
         }
 
@@ -11568,7 +11116,6 @@ function showReportsView() {
                         '<div class="rpt-audit-class-meta">' +
                             '<span>Lengkap: ' + fmtNum(ca.complete_students) + '/' + fmtNum(ca.total_students) + '</span>' +
                             '<span>Foto: ' + fmtNum(ca.photo_count) + '</span>' +
-                            '<span>Kartu: ' + fmtNum(ca.kartu_count) + '</span>' +
                         '</div>' +
                     '</div>';
                 }).join('');
@@ -11585,7 +11132,7 @@ function showReportsView() {
         if (rows.length === 0) {
             wrap.innerHTML = '<div class="rpt-acad-empty-chart">' +
                 (state.auditFilter === 'incomplete'
-                    ? 'Seluruh data induk, pasfoto, dan Kartu Pelajar siswa/guru aktif sudah lengkap.'
+                    ? 'Seluruh data induk dan pasfoto siswa/guru aktif sudah lengkap.'
                     : 'Tidak ada data yang sesuai dengan pencarian.') +
                 '</div>';
             return;
@@ -11598,8 +11145,7 @@ function showReportsView() {
                 ? [
                     { label: 'NIS', ok: item.has_nis },
                     { label: 'NISN', ok: item.has_nisn },
-                    { label: 'Pasfoto', ok: item.has_photo },
-                    { label: 'Kartu Pelajar', ok: item.has_kartu_pelajar }
+                    { label: 'Pasfoto', ok: item.has_photo }
                 ]
                 : [
                     { label: 'NUPTK/NIP', ok: item.has_nuptk || item.has_nip },
