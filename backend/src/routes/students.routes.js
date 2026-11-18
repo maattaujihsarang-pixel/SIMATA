@@ -20,6 +20,12 @@ router.post('/:id/photo', requireAdmin, upload.single('photo'), (req, res, next)
 router.patch('/:id/photo/framing', requireAdmin, (req, res, next) => profilePhotoController.updateStudentFraming(req, res, next));
 router.delete('/:id/photo', requireAdmin, (req, res, next) => profilePhotoController.deleteStudentPhoto(req, res, next));
 
+// KTS Studio & Excel Two-Way Sync endpoints (MUST stay before '/:id')
+router.get('/kts/template', requireGuruOrAdmin, (req, res, next) => studentsController.downloadKtsTemplate(req, res, next));
+router.get('/kts/settings', requireGuruOrAdmin, (req, res, next) => studentsController.getKtsSettings(req, res, next));
+router.put('/kts/settings', requireAdmin, (req, res, next) => studentsController.updateKtsSettings(req, res, next));
+router.post('/kts/import', requireAdmin, upload.single('file'), (req, res, next) => studentsController.importKtsData(req, res, next));
+
 // Read endpoints
 router.get('/', requireGuruOrAdmin, (req, res, next) => studentsController.list(req, res, next));
 router.get('/qr/:qr_code_id', requireGuruOrAdmin, (req, res, next) => studentsController.getByQr(req, res, next));

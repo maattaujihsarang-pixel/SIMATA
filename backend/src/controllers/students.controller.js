@@ -89,6 +89,63 @@ class StudentsController {
       next(error);
     }
   }
+
+  async downloadKtsTemplate(req, res, next) {
+    try {
+      const { class_id, status } = req.query;
+      const xlsxBuffer = await masterService.generateKtsTemplateBuffer({
+        classId: class_id || null,
+        status: status || 'Active'
+      });
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename="Template_Data_KTS_SIMATA.xlsx"');
+      return res.status(200).send(xlsxBuffer);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async importKtsData(req, res, next) {
+    try {
+      const result = await masterService.importKtsData({
+        buffer: req.file ? req.file.buffer : null,
+        filename: req.file ? req.file.originalname : '',
+        rows: Array.isArray(req.body && req.body.rows) ? req.body.rows : null
+      });
+      return res.status(200).json({
+        status: 'success',
+        message: `${result.updated_count} data siswa berhasil disinkronkan ke Menu Siswa & KTS.`,
+        data: result
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getKtsSettings(req, res, next) {
+    try {
+      const settings = await masterService.getKtsSettings();
+      return res.status(200).json({
+        status: 'success',
+        data: settings
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateKtsSettings(req, res, next) {
+    try {
+      const settings = await masterService.updateKtsSettings(req.body || {});
+      return res.status(200).json({
+        status: 'success',
+        message: 'Pengaturan template KTS berhasil disimpan',
+        data: settings
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new StudentsController();

@@ -18,6 +18,7 @@ const runBug59SchedulesTests = require('./test_bug59_schedules');
 const runBug61WibTimezoneTests = require('./test_bug61_wib_timezone');
 const runBug63QrQuickScanTests = require('./test_bug63_qr_quickscan');
 const runBug64ResponderScheduleGuardTests = require('./test_bug64_responder_schedule_guard');
+const runBug65KtsTests = require('./test_bug65_kts');
 
 async function runAllTests() {
   console.log('===============================================================');
@@ -44,7 +45,8 @@ async function runAllTests() {
     bug59_schedules: false,
     bug61_wib_timezone: false,
     bug63_qr_quickscan: false,
-    bug64_responder_schedule_guard: false
+    bug64_responder_schedule_guard: false,
+    bug65_kts: false
   };
 
   try {
@@ -68,6 +70,7 @@ async function runAllTests() {
     results.bug61_wib_timezone = await runBug61WibTimezoneTests();
     results.bug63_qr_quickscan = await runBug63QrQuickScanTests();
     results.bug64_responder_schedule_guard = await runBug64ResponderScheduleGuardTests();
+    results.bug65_kts = await runBug65KtsTests();
 
     console.log('\n===============================================================');
     console.log('VERIFICATION SUMMARY');

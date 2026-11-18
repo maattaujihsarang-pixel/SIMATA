@@ -67,6 +67,7 @@ class TestDbEngine {
       { fee_category_id: 'FEE-KEGIATAN', name: 'Iuran Kegiatan Tahunan', description: 'Biaya kegiatan kesiswaan tahunan', default_amount: 250000.00, billing_cycle: 'ANNUAL', is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
     ];
     this.student_invoices = [];
+    this.kts_settings = {};
   }
 
   get tables() {
@@ -351,21 +352,100 @@ class TestDbEngine {
     }
 
     // 5. Students queries
+    const enrichStudent = (st) => {
+      if (!st) return null;
+      const cls = this.classes.find(c => c.class_id === st.class_id) || {};
+      const hasPhoto = Array.isArray(this.profile_photos) && this.profile_photos.some(p => p.student_id === st.student_id);
+      return {
+        birth_place: null,
+        address: null,
+        dormitory: null,
+        ...st,
+        class_name: st.class_name || cls.class_name || null,
+        has_photo: Boolean(hasPhoto)
+      };
+    };
+
     if (q.includes('FROM students') && q.includes('qr_code_id = $1')) {
       const s = this.students.find(s => s.qr_code_id === params[0]);
-      return { rows: s ? [{ ...s }] : [], rowCount: s ? 1 : 0 };
+      return { rows: s ? [enrichStudent(s)] : [], rowCount: s ? 1 : 0 };
     }
     if (q.includes('FROM students') && q.includes('student_id = $1')) {
       const s = this.students.find(s => s.student_id === params[0]);
-      return { rows: s ? [{ ...s }] : [], rowCount: s ? 1 : 0 };
+      return { rows: s ? [enrichStudent(s)] : [], rowCount: s ? 1 : 0 };
+    }
+    if (q.includes('FROM students') && q.includes('student_id LIKE $1')) {
+      const prefix = String(params[0] || '').replace(/%/g, '');
+      const matched = this.students
+        .filter(s => String(s.student_id || '').startsWith(prefix))
+        .sort((a, b) => String(b.student_id).localeCompare(String(a.student_id)));
+      return { rows: matched.slice(0, 1).map(enrichStudent), rowCount: matched.length ? 1 : 0 };
     }
     if (q.includes('FROM students')) {
-      return { rows: [...this.students], rowCount: this.students.length };
+      let filtered = [...this.students];
+      let pIdx = 0;
+      if (q.includes('s.class_id = $')) {
+        const cid = params[pIdx++];
+        if (cid) filtered = filtered.filter(s => s.class_id === cid);
+      }
+      if (q.includes('s.status = $')) {
+        const stFilter = params[pIdx++];
+        if (stFilter) filtered = filtered.filter(s => s.status === stFilter);
+      }
+      if (q.includes('ILIKE $')) {
+        const term = String(params[pIdx++] || '').replace(/%/g, '').toLowerCase();
+        if (term) {
+          filtered = filtered.filter(s =>
+            [s.name, s.nis, s.nisn, s.qr_code_id, s.birth_place, s.address, s.dormitory]
+              .some(v => String(v || '').toLowerCase().includes(term))
+          );
+        }
+      }
+      filtered.sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+      return { rows: filtered.map(enrichStudent), rowCount: filtered.length };
     }
     if (q.startsWith('INSERT INTO students')) {
-      const s = { student_id: params[0], class_id: params[1], name: params[2], qr_code_id: params[7], status: params[8] || 'Active' };
+      const s = {
+        student_id: params[0],
+        class_id: params[1],
+        name: params[2],
+        gender: params[3] || null,
+        nis: params[4] || null,
+        nisn: params[5] || null,
+        birth_date: params[6] || null,
+        qr_code_id: params[7],
+        status: params[8] || 'Active',
+        birth_place: params[9] ?? null,
+        address: params[10] ?? null,
+        dormitory: params[11] ?? null
+      };
       this.students.push(s);
-      return { rows: [s], rowCount: 1 };
+      return { rows: [enrichStudent(s)], rowCount: 1 };
+    }
+    if (q.startsWith('UPDATE students') && q.includes('SET status = $2')) {
+      const s = this.students.find(st => st.student_id === params[0]);
+      if (s) s.status = params[1];
+      return { rows: s ? [enrichStudent(s)] : [], rowCount: s ? 1 : 0 };
+    }
+    if (q.startsWith('UPDATE students')) {
+      const s = this.students.find(st => st.student_id === params[0]);
+      if (s) {
+        if (params[1] !== null && params[1] !== undefined) s.class_id = params[1];
+        if (params[2] !== null && params[2] !== undefined) s.name = params[2];
+        s.gender = params[3];
+        s.nis = params[4];
+        s.nisn = params[5];
+        s.birth_date = params[6];
+        if (params[7] !== null && params[7] !== undefined) s.qr_code_id = params[7];
+        if (params[8] !== null && params[8] !== undefined) s.status = params[8];
+        if (params.length > 9) {
+          s.birth_place = params[9];
+          s.address = params[10];
+          s.dormitory = params[11];
+        }
+        s.updated_at = new Date().toISOString();
+      }
+      return { rows: s ? [enrichStudent(s)] : [], rowCount: s ? 1 : 0 };
     }
 
     // 6. Student Attendance queries
@@ -1091,6 +1171,20 @@ class TestDbEngine {
         };
       });
       return { rows, rowCount: rows.length };
+    }
+
+    // KTS Settings queries (BUG 65)
+    if (q.includes('FROM kts_settings')) {
+      const rows = Object.keys(this.kts_settings || {}).sort().map(k => ({
+        setting_key: k,
+        setting_value: this.kts_settings[k]
+      }));
+      return { rows, rowCount: rows.length };
+    }
+    if (q.startsWith('INSERT INTO kts_settings')) {
+      if (!this.kts_settings) this.kts_settings = {};
+      this.kts_settings[params[0]] = params[1];
+      return { rows: [{ setting_key: params[0], setting_value: params[1] }], rowCount: 1 };
     }
 
     // Default empty result

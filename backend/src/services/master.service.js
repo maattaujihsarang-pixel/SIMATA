@@ -7,7 +7,77 @@ const authSessionRepository = require('../repositories/auth-session.repository')
 const { hashPassword } = require('../utils/password.util');
 const { generateTeacherId, generateStudentId } = require('../utils/id-generator.util');
 const { getTodayISODate } = require('../utils/date.util');
+const xlsxUtil = require('../utils/xlsx.util');
 const { NotFoundError, BadRequestError, ConflictError } = require('../errors');
+
+const DEFAULT_KTS_SETTINGS = {
+  header_arabic: 'بسم الله الرحمن الرحيم',
+  school_name: 'MA AT-TAUJIH SARANG',
+  school_address: 'Sarang, Rembang - Jawa Tengah',
+  validity_text: 'Berlaku selama menjadi Siswa MA At-Taujih Sarang',
+  line5_mode: 'dormitory',
+  back_title: 'KETENTUAN KARTU TANDA SISWA',
+  back_rules: [
+    '1. Kartu ini adalah identitas resmi siswa aktif MA At-Taujih Sarang.',
+    '2. Wajib dibawa setiap hari untuk presensi QR Code SIMATA.',
+    '3. Dilarang meminjamkan atau memindahtangankan kartu ini kepada orang lain.',
+    '4. Jika menemukan kartu ini, mohon kembalikan ke Kantor MA At-Taujih Sarang.'
+  ].join('\n'),
+  sign_city_date: 'Sarang, 18 November 2026',
+  headmaster_name: 'Kepala Madrasah MA At-Taujih',
+  headmaster_nip: 'NIP. -',
+  custom_front_bg: '',
+  custom_back_bg: '',
+  signature_img: ''
+};
+
+function formatStudentDateOnlyISO(val) {
+  if (!val) return '';
+  if (val instanceof Date && !Number.isNaN(val.getTime())) {
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Jakarta',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).format(val);
+  }
+  const s = String(val).trim();
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? `${m[1]}-${m[2]}-${m[3]}` : '';
+}
+
+function formatIsoToIndoSlash(val) {
+  const iso = formatStudentDateOnlyISO(val);
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function normalizeBirthDateInput(raw) {
+  if (raw === undefined || raw === null) return undefined;
+  const s = String(raw).trim();
+  if (!s) return undefined;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const slashMatch = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (slashMatch) {
+    const dd = slashMatch[1].padStart(2, '0');
+    const mm = slashMatch[2].padStart(2, '0');
+    const yyyy = slashMatch[3];
+    const mo = parseInt(mm, 10);
+    const dy = parseInt(dd, 10);
+    if (mo >= 1 && mo <= 12 && dy >= 1 && dy <= 31) {
+      return `${yyyy}-${mm}-${dd}`;
+    }
+  }
+  if (/^\d+(\.\d+)?$/.test(s)) {
+    const serial = parseFloat(s);
+    if (serial > 10000 && serial < 80000) {
+      const utcMs = Date.UTC(1899, 11, 30) + Math.round(serial) * 86400000;
+      return new Date(utcMs).toISOString().slice(0, 10);
+    }
+  }
+  return undefined;
+}
 
 class MasterService {
   // ==========================================
@@ -276,25 +346,46 @@ class MasterService {
 
     return studentRepository.create({
       ...data,
-      student_id: studentId
+      student_id: studentId,
+      birth_place: data.birth_place !== undefined ? (data.birth_place || null) : (data.birthPlace || null),
+      address: data.address !== undefined ? (data.address || null) : null,
+      dormitory: data.dormitory !== undefined ? (data.dormitory || null) : null
     });
   }
 
   async updateStudent(studentId, data) {
-    await this.getStudentById(studentId);
+    const existing = await this.getStudentById(studentId);
 
-    if (data.class_id) {
-      await this.getClassById(data.class_id);
+    const nextClassId = data.class_id || data.classId || existing.class_id;
+    if (nextClassId && nextClassId !== existing.class_id) {
+      await this.getClassById(nextClassId);
     }
 
-    if (data.qr_code_id) {
-      const existingQr = await studentRepository.findByQrCodeId(data.qr_code_id);
+    const nextQr = data.qr_code_id || data.qrCodeId || existing.qr_code_id;
+    if (nextQr && nextQr !== existing.qr_code_id) {
+      const existingQr = await studentRepository.findByQrCodeId(nextQr);
       if (existingQr && existingQr.student_id !== studentId) {
-        throw new ConflictError(`QR Code '${data.qr_code_id}' sudah digunakan oleh siswa lain`);
+        throw new ConflictError(`QR Code '${nextQr}' sudah digunakan oleh siswa lain`);
       }
     }
 
-    return studentRepository.update(studentId, data);
+    const resolveField = (val, fallback) => (val === undefined ? fallback : (val === '' ? null : val));
+    const rawBirthDate = data.birth_date !== undefined ? data.birth_date : data.birthDate;
+    const rawBirthPlace = data.birth_place !== undefined ? data.birth_place : data.birthPlace;
+
+    return studentRepository.update(studentId, {
+      class_id: nextClassId,
+      name: data.name ? String(data.name).trim() : existing.name,
+      gender: resolveField(data.gender, existing.gender),
+      nis: resolveField(data.nis, existing.nis),
+      nisn: resolveField(data.nisn, existing.nisn),
+      birth_date: resolveField(rawBirthDate, existing.birth_date),
+      birth_place: resolveField(rawBirthPlace, existing.birth_place),
+      address: resolveField(data.address, existing.address),
+      dormitory: resolveField(data.dormitory, existing.dormitory),
+      qr_code_id: nextQr,
+      status: data.status || existing.status || 'Active'
+    });
   }
 
   async setStudentStatus(studentId, status) {
@@ -308,6 +399,156 @@ class MasterService {
   async deleteStudent(studentId) {
     await this.getStudentById(studentId);
     return studentRepository.delete(studentId);
+  }
+
+  async generateKtsTemplateBuffer({ classId = null, status = 'Active' } = {}) {
+    const resolvedStatus = status === 'all' ? null : (status || 'Active');
+    const students = await studentRepository.findAll({
+      classId: classId || null,
+      status: resolvedStatus
+    });
+
+    const headers = [
+      'ID Siswa',
+      'NIS',
+      'NISN',
+      'Nama Lengkap',
+      'Kelas',
+      'Tanggal Lahir (DD/MM/YYYY)',
+      'Tempat Lahir',
+      'Alamat Lengkap',
+      'Pondok / Asrama'
+    ];
+
+    const sorted = [...students].sort((a, b) => {
+      const clsCmp = String(a.class_name || a.class_id || '').localeCompare(String(b.class_name || b.class_id || ''));
+      if (clsCmp !== 0) return clsCmp;
+      return String(a.name || '').localeCompare(String(b.name || ''));
+    });
+
+    const rows = sorted.map(s => [
+      s.student_id || '',
+      s.nis || '',
+      s.nisn || '',
+      s.name || '',
+      s.class_name || s.class_id || '',
+      formatIsoToIndoSlash(s.birth_date),
+      s.birth_place || '',
+      s.address || '',
+      s.dormitory || ''
+    ]);
+
+    return xlsxUtil.buildXlsxBuffer(headers, rows, 'Data KTS Siswa');
+  }
+
+  async importKtsData({ buffer = null, filename = '', rows = null } = {}) {
+    let parsedRows = Array.isArray(rows) ? rows : null;
+    if (!parsedRows) {
+      if (!buffer) {
+        throw new BadRequestError('File Excel (.xlsx / .csv) wajib diunggah.');
+      }
+      const parsed = xlsxUtil.parseXlsxOrCsvBuffer(buffer, filename);
+      parsedRows = parsed.rows || [];
+    }
+
+    if (!parsedRows.length) {
+      throw new BadRequestError('Tidak ada baris data siswa di dalam berkas yang diunggah.');
+    }
+
+    const allStudents = await studentRepository.findAll({});
+    const byId = new Map();
+    const byNis = new Map();
+    const byNisn = new Map();
+    for (const s of allStudents) {
+      if (s.student_id) byId.set(String(s.student_id).trim(), s);
+      if (s.nis) byNis.set(String(s.nis).trim(), s);
+      if (s.nisn) byNisn.set(String(s.nisn).trim(), s);
+    }
+
+    const pickVal = (obj, keys) => {
+      for (const k of keys) {
+        if (obj[k] !== undefined && obj[k] !== null && String(obj[k]).trim() !== '') {
+          return String(obj[k]).trim();
+        }
+      }
+      return '';
+    };
+
+    const updatedIds = [];
+    let skippedCount = 0;
+
+    for (const row of parsedRows) {
+      if (!row || typeof row !== 'object') {
+        skippedCount++;
+        continue;
+      }
+
+      const sid = pickVal(row, ['id_siswa', 'student_id', 'ID Siswa', 'id']);
+      const rowNis = pickVal(row, ['nis', 'NIS']);
+      const rowNisn = pickVal(row, ['nisn', 'NISN']);
+
+      const matched =
+        (sid && byId.get(sid)) ||
+        (rowNis && byNis.get(rowNis)) ||
+        (rowNisn && byNisn.get(rowNisn)) ||
+        null;
+
+      if (!matched) {
+        skippedCount++;
+        continue;
+      }
+
+      const birthPlace = pickVal(row, ['tempat_lahir', 'birth_place', 'Tempat Lahir']);
+      const address = pickVal(row, ['alamat_lengkap', 'alamat', 'address', 'Alamat Lengkap', 'Alamat']);
+      const dormitory = pickVal(row, ['pondok_asrama', 'pondok', 'asrama', 'dormitory', 'Pondok / Asrama', 'Pondok']);
+      const rawBirthDate = pickVal(row, ['tanggal_lahir', 'tgl_lahir', 'birth_date', 'Tanggal Lahir (DD/MM/YYYY)', 'Tanggal Lahir']);
+      const normalizedBirthDate = rawBirthDate ? normalizeBirthDateInput(rawBirthDate) : undefined;
+
+      const updatePayload = {};
+      if (birthPlace) updatePayload.birth_place = birthPlace;
+      if (address) updatePayload.address = address;
+      if (dormitory) updatePayload.dormitory = dormitory;
+      if (normalizedBirthDate) updatePayload.birth_date = normalizedBirthDate;
+      if (rowNis) updatePayload.nis = rowNis;
+      if (rowNisn) updatePayload.nisn = rowNisn;
+
+      if (Object.keys(updatePayload).length === 0) {
+        skippedCount++;
+        continue;
+      }
+
+      await this.updateStudent(matched.student_id, updatePayload);
+      updatedIds.push(matched.student_id);
+    }
+
+    return {
+      total_rows: parsedRows.length,
+      updated_count: updatedIds.length,
+      skipped_count: skippedCount,
+      updated_ids: updatedIds
+    };
+  }
+
+  async getKtsSettings() {
+    const stored = await studentRepository.getKtsSettings();
+    return {
+      ...DEFAULT_KTS_SETTINGS,
+      ...stored
+    };
+  }
+
+  async updateKtsSettings(payload = {}) {
+    const allowedKeys = Object.keys(DEFAULT_KTS_SETTINGS);
+    for (const key of allowedKeys) {
+      if (key in payload && payload[key] !== undefined) {
+        const val = payload[key] === null ? '' : String(payload[key]);
+        if (['custom_front_bg', 'custom_back_bg', 'signature_img'].includes(key) && val && !val.startsWith('data:image/')) {
+          throw new BadRequestError(`Format gambar tidak valid untuk ${key}`);
+        }
+        await studentRepository.upsertKtsSetting(key, val);
+      }
+    }
+    return this.getKtsSettings();
   }
 
   // ==========================================

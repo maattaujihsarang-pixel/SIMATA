@@ -609,18 +609,33 @@
         if (qs) q = `?${qs}`;
       }
       const res = await apiFetch(`/students${q}`);
-      const students = (res.data || []).map((s) => ({
-        studentId: s.student_id,
-        name: s.name,
-        nis: s.nis,
-        nisn: s.nisn,
-        gender: s.gender,
-        classId: s.class_id,
-        status: s.status,
-        qrCodeId: s.qr_code_id,
-        birthDate: s.birth_date,
-        ...s
-      }));
+      const students = (res.data || []).map((s) => {
+        const cleanBirthDate = s.birth_date ? normalizeCalendarDate(s.birth_date) : (s.birthDate ? normalizeCalendarDate(s.birthDate) : '');
+        const cleanBirthPlace = s.birth_place || s.birthPlace || '';
+        const cleanAddress = s.address || '';
+        const cleanDormitory = s.dormitory || '';
+        const cleanHasPhoto = Boolean(s.has_photo || s.hasPhoto);
+        return {
+          ...s,
+          studentId: s.student_id,
+          name: s.name,
+          nis: s.nis,
+          nisn: s.nisn,
+          gender: s.gender,
+          classId: s.class_id,
+          className: s.class_name || '',
+          status: s.status,
+          qrCodeId: s.qr_code_id,
+          birthDate: cleanBirthDate,
+          birth_date: cleanBirthDate,
+          birthPlace: cleanBirthPlace,
+          birth_place: cleanBirthPlace,
+          address: cleanAddress,
+          dormitory: cleanDormitory,
+          hasPhoto: cleanHasPhoto,
+          has_photo: cleanHasPhoto
+        };
+      });
       return { success: true, students: students };
     },
 
@@ -628,17 +643,30 @@
     getStudentById: async function (studentId) {
       const res = await apiFetch(`/students/${encodeURIComponent(studentId)}`);
       const s = res.data;
+      const cleanBirthDate = s.birth_date ? normalizeCalendarDate(s.birth_date) : (s.birthDate ? normalizeCalendarDate(s.birthDate) : '');
+      const cleanBirthPlace = s.birth_place || s.birthPlace || '';
+      const cleanAddress = s.address || '';
+      const cleanDormitory = s.dormitory || '';
+      const cleanHasPhoto = Boolean(s.has_photo || s.hasPhoto);
       const studentObj = {
+        ...s,
         studentId: s.student_id,
         name: s.name,
         nis: s.nis,
         nisn: s.nisn,
         gender: s.gender,
         classId: s.class_id,
+        className: s.class_name || '',
         status: s.status,
         qrCodeId: s.qr_code_id,
-        birthDate: s.birth_date,
-        ...s
+        birthDate: cleanBirthDate,
+        birth_date: cleanBirthDate,
+        birthPlace: cleanBirthPlace,
+        birth_place: cleanBirthPlace,
+        address: cleanAddress,
+        dormitory: cleanDormitory,
+        hasPhoto: cleanHasPhoto,
+        has_photo: cleanHasPhoto
       };
       return { success: true, student: studentObj };
     },
@@ -647,6 +675,7 @@
     createStudent: async function (...args) {
       const data = args.find((a) => a && typeof a === 'object') || {};
       const sId = data.studentId || data.student_id;
+      const rawBirthPlace = data.birthPlace !== undefined ? data.birthPlace : data.birth_place;
       const payload = {
         student_id: sId,
         name: data.name,
@@ -656,7 +685,10 @@
         class_id: data.classId || data.class_id,
         qr_code_id: data.qrCodeId || data.qr_code_id || (sId ? `SQR-${sId}` : (data.nis ? `SQR-${data.nis}` : `SQR-${Date.now()}`)),
         status: data.status || 'Active',
-        birth_date: data.birthDate || data.birth_date || null
+        birth_date: data.birthDate || data.birth_date || null,
+        birth_place: rawBirthPlace ? String(rawBirthPlace).trim() : null,
+        address: data.address ? String(data.address).trim() : null,
+        dormitory: data.dormitory ? String(data.dormitory).trim() : null
       };
       const res = await apiFetch('/students', {
         method: 'POST',
@@ -684,14 +716,18 @@
         data = args[0];
         id = data.studentId || data.student_id || data.id;
       }
+      const rawBirthPlace = data.birthPlace !== undefined ? data.birthPlace : data.birth_place;
       const payload = {
         name: data.name,
-        nis: data.nis || null,
-        nisn: data.nisn || null,
+        nis: data.nis !== undefined ? (data.nis || null) : undefined,
+        nisn: data.nisn !== undefined ? (data.nisn || null) : undefined,
         gender: data.gender || undefined,
-        class_id: data.classId || data.class_id,
-        status: data.status || 'Active',
-        birth_date: data.birthDate || data.birth_date || null
+        class_id: data.classId || data.class_id || undefined,
+        status: data.status || undefined,
+        birth_date: (data.birthDate !== undefined || data.birth_date !== undefined) ? (data.birthDate || data.birth_date || null) : undefined,
+        birth_place: rawBirthPlace !== undefined ? (rawBirthPlace ? String(rawBirthPlace).trim() : null) : undefined,
+        address: data.address !== undefined ? (data.address ? String(data.address).trim() : null) : undefined,
+        dormitory: data.dormitory !== undefined ? (data.dormitory ? String(data.dormitory).trim() : null) : undefined
       };
       const res = await apiFetch(`/students/${encodeURIComponent(id)}`, {
         method: 'PUT',
@@ -1720,6 +1756,76 @@
         body: JSON.stringify(payload || {})
       });
       return { success: true, message: res.message, data: res.data };
+    },
+
+    // KTS (Kartu Tanda Siswa / Kartu Pelajar) Studio & Two-Way Excel Sync (BUG 65)
+    downloadKtsTemplate: async function (classId) {
+      const token = getStoredToken();
+      const headers = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const qs = classId ? `?class_id=${encodeURIComponent(classId)}` : '';
+      const res = await window.fetch(`${API_BASE}/students/kts/template${qs}`, {
+        method: 'GET',
+        headers
+      });
+      if (!res.ok) {
+        let msg = `Gagal mengunduh template KTS (HTTP ${res.status})`;
+        try {
+          const errJson = await res.json();
+          if (errJson && errJson.message) msg = errJson.message;
+        } catch (_) {}
+        throw new Error(msg);
+      }
+      const disposition = res.headers.get('content-disposition') || '';
+      let filename = 'Template_Data_KTS_SIMATA.xlsx';
+      const match = disposition.match(/filename="?([^";]+)"?/);
+      if (match && match[1]) filename = match[1];
+      const blob = await res.blob();
+      const objUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(objUrl);
+      }, 350);
+      return { success: true, filename };
+    },
+
+    importKtsExcel: async function (fileOrRows) {
+      const isBlob = typeof Blob !== 'undefined' && fileOrRows instanceof Blob;
+      if (isBlob) {
+        const formData = new FormData();
+        formData.append('file', fileOrRows, fileOrRows.name || 'data_kts.xlsx');
+        const res = await apiFetch('/students/kts/import', {
+          method: 'POST',
+          body: formData
+        });
+        return { success: true, message: res.message, data: res.data };
+      }
+      const rowsPayload = Array.isArray(fileOrRows)
+        ? { rows: fileOrRows }
+        : { rows: (fileOrRows && Array.isArray(fileOrRows.rows)) ? fileOrRows.rows : [] };
+      const res = await apiFetch('/students/kts/import', {
+        method: 'POST',
+        body: JSON.stringify(rowsPayload)
+      });
+      return { success: true, message: res.message, data: res.data };
+    },
+
+    getKtsSettings: async function () {
+      const res = await apiFetch('/students/kts/settings');
+      return { success: true, data: res.data || {} };
+    },
+
+    updateKtsSettings: async function (settings) {
+      const res = await apiFetch('/students/kts/settings', {
+        method: 'PUT',
+        body: JSON.stringify(settings || {})
+      });
+      return { success: true, message: res.message, data: res.data || {} };
     }
   };
 
