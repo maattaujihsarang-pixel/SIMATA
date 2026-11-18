@@ -21909,39 +21909,33 @@ function startOrOpenResponder(options) {
     }
 
     function drawKtsDecorativeBackground(ctx, W, H, side) {
-        // Option 2 Simple Modern: Clean pure white canvas with subtle bottom-right mint geometric triangles
-        ctx.fillStyle = '#ffffff';
+        if (side === 'back') {
+            const bgGrad = ctx.createLinearGradient(0, 0, W, H);
+            bgGrad.addColorStop(0, '#ffffff');
+            bgGrad.addColorStop(1, '#f0fdf4');
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, W, H);
+            return;
+        }
+
+        // Default Official MA At-Taujih Sarang Background
+        const bodyGrad = ctx.createLinearGradient(0, 0, W, H);
+        bodyGrad.addColorStop(0, '#ffffff');
+        bodyGrad.addColorStop(0.55, '#f8fafc');
+        bodyGrad.addColorStop(1, '#ecfdf5');
+        ctx.fillStyle = bodyGrad;
         ctx.fillRect(0, 0, W, H);
 
+        // Subtle bottom-right circular watermark motif
         ctx.save();
-        // Outer pastel mint corner triangle
-        ctx.fillStyle = '#e6f4ea';
+        ctx.globalAlpha = 0.055;
+        ctx.fillStyle = '#166534';
         ctx.beginPath();
-        ctx.moveTo(W - 360, H);
-        ctx.lineTo(W, H - 230);
-        ctx.lineTo(W, H);
-        ctx.closePath();
+        ctx.arc(820, 480, 210, 0, Math.PI * 2);
         ctx.fill();
-
-        // Inner overlapping pastel mint corner triangle
-        ctx.fillStyle = '#d1fae5';
         ctx.beginPath();
-        ctx.moveTo(W - 220, H);
-        ctx.lineTo(W, H - 135);
-        ctx.lineTo(W, H);
-        ctx.closePath();
+        ctx.arc(710, 560, 150, 0, Math.PI * 2);
         ctx.fill();
-
-        if (side === 'front') {
-            // Subtle top-right geometric facet under header
-            ctx.fillStyle = 'rgba(209, 250, 229, 0.35)';
-            ctx.beginPath();
-            ctx.moveTo(W - 140, 142);
-            ctx.lineTo(W, 142);
-            ctx.lineTo(W, 220);
-            ctx.closePath();
-            ctx.fill();
-        }
         ctx.restore();
     }
 
@@ -22016,61 +22010,45 @@ function startOrOpenResponder(options) {
             } else {
                 drawKtsDecorativeBackground(ctx, W, H, 'front');
 
-                // Metallic Gold Gradient (used for Option 2 diagonal cut & compact header border)
-                const goldGrad = ctx.createLinearGradient(0, 0, W, 0);
-                goldGrad.addColorStop(0, '#b45309');
-                goldGrad.addColorStop(0.35, '#fde047');
-                goldGrad.addColorStop(0.7, '#facc15');
-                goldGrad.addColorStop(1, '#ca8a04');
-
-                // Option 2 Compact Emerald Header (142px height) with left geometric diagonal cut
-                const headGrad = ctx.createLinearGradient(204, 0, W, 142);
-                headGrad.addColorStop(0, '#052e16');
-                headGrad.addColorStop(0.52, '#14532d');
-                headGrad.addColorStop(1, '#15803d');
+                // Header emerald banner with gentle curved bottom
+                const headGrad = ctx.createLinearGradient(0, 0, W, 180);
+                headGrad.addColorStop(0, '#0f3f26');
+                headGrad.addColorStop(0.55, '#166534');
+                headGrad.addColorStop(1, '#047857');
                 ctx.fillStyle = headGrad;
-                ctx.fillRect(0, 0, W, 142);
-
-                // Left Geometric Emerald Wing (diagonal cut x=248 -> x=204 at y=142)
-                const wingGrad = ctx.createLinearGradient(0, 0, 248, 142);
-                wingGrad.addColorStop(0, '#064e3b');
-                wingGrad.addColorStop(1, '#15803d');
-                ctx.fillStyle = wingGrad;
                 ctx.beginPath();
                 ctx.moveTo(0, 0);
-                ctx.lineTo(248, 0);
-                ctx.lineTo(204, 142);
-                ctx.lineTo(0, 142);
+                ctx.lineTo(W, 0);
+                ctx.lineTo(W, 148);
+                ctx.quadraticCurveTo(W * 0.55, 188, 0, 156);
                 ctx.closePath();
                 ctx.fill();
 
-                // Gold Diagonal & Horizontal Accent Border
+                // Gold accent ribbon along header curve
+                const goldGrad = ctx.createLinearGradient(0, 0, W, 0);
+                goldGrad.addColorStop(0, '#ca8a04');
+                goldGrad.addColorStop(0.5, '#facc15');
+                goldGrad.addColorStop(1, '#eab308');
                 ctx.strokeStyle = goldGrad;
-                ctx.lineWidth = 5;
+                ctx.lineWidth = 7;
                 ctx.beginPath();
-                ctx.moveTo(248, 0);
-                ctx.lineTo(204, 142);
+                ctx.moveTo(0, 156);
+                ctx.quadraticCurveTo(W * 0.55, 188, W, 148);
                 ctx.stroke();
 
-                ctx.fillStyle = goldGrad;
-                ctx.fillRect(0, 140, W, 5);
-
-                // Left Madrasah Emblem centered inside diagonal wing
+                // School Logo Emblem
                 if (logoImg) {
                     ctx.save();
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.14)';
+                    ctx.fillStyle = 'rgba(255,255,255,0.14)';
                     ctx.beginPath();
-                    ctx.arc(104, 71, 52, 0, Math.PI * 2);
+                    ctx.arc(120, 82, 58, 0, Math.PI * 2);
                     ctx.fill();
-                    ctx.strokeStyle = 'rgba(253, 224, 71, 0.65)';
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-                    ctx.drawImage(logoImg, 56, 23, 96, 96);
+                    ctx.drawImage(logoImg, 68, 30, 104, 104);
                     ctx.restore();
                 }
 
                 // Official 4-Line Compact Header (Bold ONLY on MA AT-TAUJIH)
-                const headerCx = 602;
+                const headerCx = 588;
                 const headerMaxW = 750;
 
                 // Line 1: KARTU IDENTITAS SISWA
@@ -22078,7 +22056,7 @@ function startOrOpenResponder(options) {
                     ctx,
                     (cfg.header_title || 'KARTU IDENTITAS SISWA').toUpperCase(),
                     headerCx,
-                    26,
+                    30,
                     headerMaxW,
                     [15, 14, 13],
                     [2.5, 2, 1],
@@ -22093,7 +22071,7 @@ function startOrOpenResponder(options) {
                     ctx,
                     cfg.header_arabic || 'Yayasan Muwajjihul Ulum Asy-Syariyyah',
                     headerCx,
-                    49,
+                    55,
                     headerMaxW,
                     [16.5, 15.5, 14.5],
                     '400',
@@ -22107,7 +22085,7 @@ function startOrOpenResponder(options) {
                     ctx,
                     (cfg.school_name || 'MA AT-TAUJIH').toUpperCase(),
                     headerCx,
-                    95,
+                    102,
                     headerMaxW,
                     [38, 34, 30, 26],
                     [8, 5, 2, 0.5],
@@ -22122,7 +22100,7 @@ function startOrOpenResponder(options) {
                     ctx,
                     cfg.school_address || 'Dk. Pulorejo, Desa Bajingjowo, Kec. Sarang, Kab. Rembang, Jawa Tengah (59274)',
                     headerCx,
-                    123,
+                    132,
                     headerMaxW,
                     [13.5, 12.5, 11.5],
                     '400',
@@ -22133,7 +22111,7 @@ function startOrOpenResponder(options) {
             }
 
             // 3x4 Student Photo Frame (Clean White Modern Frame)
-            const px = 52, py = 178, pw = 220, ph = 294;
+            const px = 52, py = 192, pw = 220, ph = 294;
             ctx.save();
             ctx.shadowColor = 'rgba(15, 23, 42, 0.12)';
             ctx.shadowBlur = 12;
@@ -22159,7 +22137,7 @@ function startOrOpenResponder(options) {
             ctx.textAlign = 'center';
             const valLines = wrapTextLines(ctx, cfg.validity_text || 'Berlaku selama menjadi Siswa MA At-Taujih', pw + 24, 2);
             valLines.forEach(function(line, idx) {
-                ctx.fillText(line, px + pw / 2, 502 + idx * 18);
+                ctx.fillText(line, px + pw / 2, 514 + idx * 18);
             });
             ctx.restore();
 
@@ -22178,7 +22156,7 @@ function startOrOpenResponder(options) {
                 ctx,
                 nisText + ' / ' + nisnText,
                 tx,
-                216,
+                224,
                 maxWTop,
                 [21, 19, 17],
                 '400',
@@ -22198,9 +22176,9 @@ function startOrOpenResponder(options) {
             }
             ctx.fillStyle = '#0f172a';
             nameLines.forEach(function(line, idx) {
-                ctx.fillText(line, tx, 262 + idx * 34);
+                ctx.fillText(line, tx, 270 + idx * 34);
             });
-            let curY = 262 + (nameLines.length * 34) - 18;
+            let curY = 270 + (nameLines.length * 34) - 18;
 
             // Thin Emerald-Gold Accent Line Under Student Name
             ctx.save();
@@ -22279,35 +22257,27 @@ function startOrOpenResponder(options) {
             }
             ctx.restore();
         } else {
-            // BACK SIDE RENDERER (Matching Option 2 Compact Header & Simple Modern Body)
+            // BACK SIDE RENDERER (Original Background from BUG 65 Initial Implementation)
             if (backBgImg) {
                 ctx.drawImage(backBgImg, 0, 0, W, H);
             } else {
                 drawKtsDecorativeBackground(ctx, W, H, 'back');
 
-                const topGrad = ctx.createLinearGradient(0, 0, W, 72);
-                topGrad.addColorStop(0, '#052e16');
-                topGrad.addColorStop(0.55, '#14532d');
-                topGrad.addColorStop(1, '#15803d');
-                ctx.fillStyle = topGrad;
-                ctx.fillRect(0, 0, W, 72);
-
-                const bGoldGrad = ctx.createLinearGradient(0, 0, W, 0);
-                bGoldGrad.addColorStop(0, '#b45309');
-                bGoldGrad.addColorStop(0.5, '#fde047');
-                bGoldGrad.addColorStop(1, '#ca8a04');
-                ctx.fillStyle = bGoldGrad;
-                ctx.fillRect(0, 72, W, 4);
+                // Top header stripe
+                ctx.fillStyle = '#166534';
+                ctx.fillRect(0, 0, W, 68);
+                ctx.fillStyle = '#eab308';
+                ctx.fillRect(0, 68, W, 6);
 
                 if (logoImg) {
-                    ctx.drawImage(logoImg, 44, 12, 48, 48);
+                    ctx.drawImage(logoImg, 44, 12, 44, 44);
                 }
                 ctx.fillStyle = '#ffffff';
-                ctx.font = '700 23px ' + fontFamily;
-                ctx.fillText((cfg.school_name || 'MA AT-TAUJIH').toUpperCase(), 106, 37);
+                ctx.font = '700 22px ' + fontFamily;
+                ctx.fillText((cfg.school_name || 'MA AT-TAUJIH').toUpperCase(), 102, 34);
                 ctx.fillStyle = '#dcfce7';
-                ctx.font = '400 14px ' + fontFamily;
-                ctx.fillText(cfg.header_arabic || 'Yayasan Muwajjihul Ulum Asy-Syariyyah', 106, 58);
+                ctx.font = '400 13.5px ' + fontFamily;
+                ctx.fillText(cfg.header_arabic || 'Yayasan Muwajjihul Ulum Asy-Syariyyah', 102, 55);
             }
 
             // Back Title
