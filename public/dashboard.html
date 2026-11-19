@@ -18,9 +18,9 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=bug65_layoutfix">
-  <link rel="stylesheet" href="/css/notifications.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100..900;1,100..900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css?v=bug65_layoutfix2">
+  <link rel="stylesheet" href="/css/notifications.css?v=bug65_2">
   <link rel="stylesheet" href="/css/finance.css">
   <style>
 /**
@@ -827,7 +827,7 @@ html, body {
   <!-- QRCode.js: QR Code generator library for Student QR Preview & Print -->
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <script src="/js/simata-client.js?v=bug61"></script>
-  <script src="/js/notifications.js"></script>
+  <script src="/js/notifications.js?v=bug65_2"></script>
 </head>
 
 
@@ -3983,7 +3983,6 @@ html, body {
                     <button type="button" id="ktsLayNudgeRight" class="kts-nudge-btn" title="Geser Kanan (2px)">&#9654;</button>
                     <button type="button" id="ktsLayResetElBtn" class="kts-nudge-btn" style="padding:0 10px;">Reset Elemen</button>
                   </div>
-                  <p class="kts-layout-hint">Tarik di area kosong atau <strong>Shift+Klik</strong> untuk blok banyak elemen &bull; Seret dengan Smart Guides (tahan <strong>Alt</strong> bebas) &bull; <strong>Ctrl+Z / Ctrl+Shift+Z</strong></p>
                 </div>
               </div>
 
@@ -4064,6 +4063,34 @@ html, body {
                 <div id="ktsLayTypoGroup" class="kts-insp-section">
                   <div class="kts-insp-section-header">
                     <span class="kts-insp-section-title">Tipografi &amp; Warna</span>
+                  </div>
+
+                  <div class="kts-layout-two-col">
+                    <div class="kts-layout-control-row">
+                      <label for="ktsLayFontFamily">Jenis Font</label>
+                      <select id="ktsLayFontFamily" class="kts-layout-select">
+                        <option value="Montserrat">Montserrat</option>
+                        <option value="Plus Jakarta Sans">Plus Jakarta Sans</option>
+                        <option value="Poppins">Poppins</option>
+                        <option value="Inter">Inter</option>
+                        <option value="Playfair Display">Playfair Display</option>
+                        <option value="Roboto Mono">Roboto Mono</option>
+                      </select>
+                    </div>
+                    <div class="kts-layout-control-row">
+                      <label for="ktsLayFontWeight">Ketebalan Font</label>
+                      <select id="ktsLayFontWeight" class="kts-layout-select">
+                        <option value="100">Thin (100)</option>
+                        <option value="200">ExtraLight (200)</option>
+                        <option value="300">Light (300)</option>
+                        <option value="400">Regular (400)</option>
+                        <option value="500">Medium (500)</option>
+                        <option value="600">SemiBold (600)</option>
+                        <option value="700">Bold (700)</option>
+                        <option value="800">ExtraBold (800)</option>
+                        <option value="900">Black (900)</option>
+                      </select>
+                    </div>
                   </div>
 
                   <div class="kts-layout-control-row">
@@ -21872,28 +21899,28 @@ function startOrOpenResponder(options) {
         front: {
             header_banner:  { label: 'Banner Header',         kind: 'box',    visible: true, x: 0,   y: 0,   h: 174 },
             logo:           { label: 'Logo Madrasah',         kind: 'square', visible: true, x: 56,  y: 28,  size: 114 },
-            header_title:   { label: 'Judul Kartu (Baris 1)', kind: 'text',   visible: true, x: 583, y: 37,  fontSize: 17.5, letterSpacing: 6,   lineGap: 22, maxWidth: 770, bold: true,  italic: false, uppercase: true,  align: 'center', color: '#fde047' },
-            header_arabic:  { label: 'Yayasan (Baris 2)',     kind: 'text',   visible: true, x: 583, y: 67,  fontSize: 21,   letterSpacing: 0.6, lineGap: 24, maxWidth: 770, bold: false, italic: false, uppercase: false, align: 'center', color: '#f0fdf4' },
-            school_name:    { label: 'Nama Madrasah (Baris 3)',kind: 'text',  visible: true, x: 583, y: 121, fontSize: 47,   letterSpacing: 11,  lineGap: 52, maxWidth: 770, bold: true,  italic: false, uppercase: true,  align: 'center', color: '#ffffff' },
-            school_address: { label: 'Alamat Madrasah (B.4)', kind: 'text',   visible: true, x: 583, y: 152, fontSize: 16,   letterSpacing: 0.2, lineGap: 20, maxWidth: 775, bold: false, italic: false, uppercase: false, align: 'center', color: '#dcfce7' },
+            header_title:   { label: 'Judul Kartu (Baris 1)', kind: 'text',   visible: true, x: 583, y: 37,  fontFamily: 'Montserrat', fontWeight: 800, fontSize: 17.5, letterSpacing: 6,   lineGap: 22, maxWidth: 770, bold: true,  italic: false, uppercase: true,  align: 'center', color: '#fde047' },
+            header_arabic:  { label: 'Yayasan (Baris 2)',     kind: 'text',   visible: true, x: 583, y: 67,  fontFamily: 'Montserrat', fontWeight: 500, fontSize: 21,   letterSpacing: 0.6, lineGap: 24, maxWidth: 770, bold: false, italic: false, uppercase: false, align: 'center', color: '#f0fdf4' },
+            school_name:    { label: 'Nama Madrasah (Baris 3)',kind: 'text',  visible: true, x: 583, y: 121, fontFamily: 'Montserrat', fontWeight: 800, fontSize: 47,   letterSpacing: 11,  lineGap: 52, maxWidth: 770, bold: true,  italic: false, uppercase: true,  align: 'center', color: '#ffffff' },
+            school_address: { label: 'Alamat Madrasah (B.4)', kind: 'text',   visible: true, x: 583, y: 152, fontFamily: 'Montserrat', fontWeight: 500, fontSize: 16,   letterSpacing: 0.2, lineGap: 20, maxWidth: 775, bold: false, italic: false, uppercase: false, align: 'center', color: '#dcfce7' },
             photo:          { label: 'Pasfoto 3x4',           kind: 'rect',   visible: true, x: 52,  y: 196, w: 220, h: 294 },
-            validity:       { label: 'Masa Berlaku',          kind: 'text',   visible: true, x: 162, y: 518, fontSize: 14,   letterSpacing: 0,   lineGap: 18, maxWidth: 244, bold: false, italic: true,  uppercase: false, align: 'center', color: '#475569' },
-            nis_nisn:       { label: 'NIS / NISN',            kind: 'text',   visible: true, x: 308, y: 224, fontSize: 21,   letterSpacing: 0,   lineGap: 26, maxWidth: 666, bold: false, italic: false, uppercase: false, align: 'left',   color: '#334155' },
-            student_name:   { label: 'Nama Siswa',            kind: 'text',   visible: true, x: 308, y: 270, fontSize: 31,   letterSpacing: 0,   lineGap: 34, maxWidth: 666, bold: true,  italic: false, uppercase: true,  align: 'left',   color: '#0f172a', showUnderline: true },
-            ttl:            { label: 'Tempat, Tgl Lahir',     kind: 'text',   visible: true, x: 308, y: 322, fontSize: 21,   letterSpacing: 0,   lineGap: 26, maxWidth: 666, bold: false, italic: false, uppercase: false, align: 'left',   color: '#1e293b' },
-            address:        { label: 'Alamat Lengkap',        kind: 'text',   visible: true, x: 308, y: 358, fontSize: 20,   letterSpacing: 0,   lineGap: 27, maxWidth: 486, bold: false, italic: false, uppercase: false, align: 'left',   color: '#334155' },
-            dormitory:      { label: 'Pondok / Asrama',       kind: 'text',   visible: true, x: 308, y: 426, fontSize: 21,   letterSpacing: 0,   lineGap: 26, maxWidth: 486, bold: false, italic: false, uppercase: false, align: 'left',   color: '#15803d' },
+            validity:       { label: 'Masa Berlaku',          kind: 'text',   visible: true, x: 162, y: 518, fontFamily: 'Montserrat', fontWeight: 400, fontSize: 14,   letterSpacing: 0,   lineGap: 18, maxWidth: 244, bold: false, italic: true,  uppercase: false, align: 'center', color: '#475569' },
+            nis_nisn:       { label: 'NIS / NISN',            kind: 'text',   visible: true, x: 308, y: 224, fontFamily: 'Montserrat', fontWeight: 400, fontSize: 21,   letterSpacing: 0,   lineGap: 26, maxWidth: 666, bold: false, italic: false, uppercase: false, align: 'left',   color: '#334155' },
+            student_name:   { label: 'Nama Siswa',            kind: 'text',   visible: true, x: 308, y: 270, fontFamily: 'Montserrat', fontWeight: 800, fontSize: 31,   letterSpacing: 0,   lineGap: 34, maxWidth: 666, bold: true,  italic: false, uppercase: true,  align: 'left',   color: '#0f172a', showUnderline: true },
+            ttl:            { label: 'Tempat, Tgl Lahir',     kind: 'text',   visible: true, x: 308, y: 322, fontFamily: 'Montserrat', fontWeight: 400, fontSize: 21,   letterSpacing: 0,   lineGap: 26, maxWidth: 666, bold: false, italic: false, uppercase: false, align: 'left',   color: '#1e293b' },
+            address:        { label: 'Alamat Lengkap',        kind: 'text',   visible: true, x: 308, y: 358, fontFamily: 'Montserrat', fontWeight: 400, fontSize: 20,   letterSpacing: 0,   lineGap: 27, maxWidth: 486, bold: false, italic: false, uppercase: false, align: 'left',   color: '#334155' },
+            dormitory:      { label: 'Pondok / Asrama',       kind: 'text',   visible: true, x: 308, y: 426, fontFamily: 'Montserrat', fontWeight: 500, fontSize: 21,   letterSpacing: 0,   lineGap: 26, maxWidth: 486, bold: false, italic: false, uppercase: false, align: 'left',   color: '#15803d' },
             qrcode:         { label: 'QR Code',               kind: 'square', visible: true, x: 818, y: 436, size: 150 }
         },
         back: {
             back_header:      { label: 'Banner Header Belakang', kind: 'box',    visible: true, x: 0,   y: 0,   h: 104 },
             back_logo:        { label: 'Logo Belakang',          kind: 'square', visible: true, x: 46,  y: 20,  size: 64 },
-            back_school_name: { label: 'Nama Madrasah (Belakang)', kind: 'text', visible: true, x: 132, y: 49,  fontSize: 28,   letterSpacing: 2.5, lineGap: 32, maxWidth: 830, bold: true,  italic: false, uppercase: true,  align: 'left', color: '#ffffff' },
-            back_yayasan:     { label: 'Yayasan (Belakang)',     kind: 'text',   visible: true, x: 132, y: 80,  fontSize: 16,   letterSpacing: 0.3, lineGap: 20, maxWidth: 830, bold: false, italic: false, uppercase: false, align: 'left', color: '#dcfce7' },
-            back_title:       { label: 'Judul Ketentuan',        kind: 'text',   visible: true, x: 54,  y: 152, fontSize: 23,   letterSpacing: 0,   lineGap: 28, maxWidth: 900, bold: true,  italic: false, uppercase: false, align: 'left', color: '#052e16' },
-            back_rules:       { label: 'Daftar Ketentuan',       kind: 'text',   visible: true, x: 54,  y: 192, fontSize: 18.5, letterSpacing: 0,   lineGap: 28, maxWidth: 903, bold: false, italic: false, uppercase: false, align: 'left', color: '#1e293b' },
-            back_holder:      { label: 'Pemegang Kartu',         kind: 'text',   visible: true, x: 54,  y: 434, fontSize: 22,   letterSpacing: 0,   lineGap: 32, maxWidth: 490, bold: true,  italic: false, uppercase: true,  align: 'left', color: '#0f172a' },
-            back_signature:   { label: 'Blok TTD Kepala',        kind: 'text',   visible: true, x: 785, y: 434, fontSize: 17.5, letterSpacing: 0,   lineGap: 24, maxWidth: 320, bold: true,  italic: false, uppercase: false, align: 'center', color: '#0f172a' }
+            back_school_name: { label: 'Nama Madrasah (Belakang)', kind: 'text', visible: true, x: 132, y: 49,  fontFamily: 'Montserrat', fontWeight: 800, fontSize: 28,   letterSpacing: 2.5, lineGap: 32, maxWidth: 830, bold: true,  italic: false, uppercase: true,  align: 'left', color: '#ffffff' },
+            back_yayasan:     { label: 'Yayasan (Belakang)',     kind: 'text',   visible: true, x: 132, y: 80,  fontFamily: 'Montserrat', fontWeight: 500, fontSize: 16,   letterSpacing: 0.3, lineGap: 20, maxWidth: 830, bold: false, italic: false, uppercase: false, align: 'left', color: '#dcfce7' },
+            back_title:       { label: 'Judul Ketentuan',        kind: 'text',   visible: true, x: 54,  y: 152, fontFamily: 'Montserrat', fontWeight: 700, fontSize: 23,   letterSpacing: 0,   lineGap: 28, maxWidth: 900, bold: true,  italic: false, uppercase: false, align: 'left', color: '#052e16' },
+            back_rules:       { label: 'Daftar Ketentuan',       kind: 'text',   visible: true, x: 54,  y: 192, fontFamily: 'Montserrat', fontWeight: 400, fontSize: 18.5, letterSpacing: 0,   lineGap: 28, maxWidth: 903, bold: false, italic: false, uppercase: false, align: 'left', color: '#1e293b' },
+            back_holder:      { label: 'Pemegang Kartu',         kind: 'text',   visible: true, x: 54,  y: 434, fontFamily: 'Montserrat', fontWeight: 700, fontSize: 22,   letterSpacing: 0,   lineGap: 32, maxWidth: 490, bold: true,  italic: false, uppercase: true,  align: 'left', color: '#0f172a' },
+            back_signature:   { label: 'Blok TTD Kepala',        kind: 'text',   visible: true, x: 785, y: 434, fontFamily: 'Montserrat', fontWeight: 700, fontSize: 17.5, letterSpacing: 0,   lineGap: 24, maxWidth: 320, bold: true,  italic: false, uppercase: false, align: 'center', color: '#0f172a' }
         }
     };
 
@@ -21903,9 +21930,14 @@ function startOrOpenResponder(options) {
             const baseMap = DEFAULT_KTS_LAYOUT[sKey];
             const srcMap = (src && src[sKey]) || {};
             Object.keys(baseMap).forEach(function(elKey) {
-                out[sKey][elKey] = Object.assign({}, baseMap[elKey], srcMap[elKey] || {});
+                const srcEl = srcMap[elKey] || {};
+                const merged = Object.assign({}, baseMap[elKey], srcEl);
+                if (baseMap[elKey].kind === 'text' && srcEl.fontWeight === undefined && typeof srcEl.bold === 'boolean' && srcEl.bold !== Boolean(baseMap[elKey].bold)) {
+                    merged.fontWeight = srcEl.bold ? 700 : 400;
+                }
                 // Always adopt updated clean labels from schema
-                out[sKey][elKey].label = baseMap[elKey].label;
+                merged.label = baseMap[elKey].label;
+                out[sKey][elKey] = merged;
             });
         });
         return out;
@@ -22268,9 +22300,59 @@ function startOrOpenResponder(options) {
         if (side === 'back') {
             const bgGrad = ctx.createLinearGradient(0, 0, W, H);
             bgGrad.addColorStop(0, '#ffffff');
-            bgGrad.addColorStop(1, '#f0fdf4');
+            bgGrad.addColorStop(0.52, '#f8fafc');
+            bgGrad.addColorStop(1, '#ecfdf5');
             ctx.fillStyle = bgGrad;
             ctx.fillRect(0, 0, W, H);
+
+            ctx.save();
+            // Flowing translucent emerald abstract wave along right margin
+            ctx.fillStyle = 'rgba(22, 163, 74, 0.055)';
+            ctx.beginPath();
+            ctx.moveTo(695, 96);
+            ctx.bezierCurveTo(795, 205, 675, 335, 835, 435);
+            ctx.quadraticCurveTo(935, 498, W, 565);
+            ctx.lineTo(W, 96);
+            ctx.closePath();
+            ctx.fill();
+
+            // Overlapping deeper emerald wave layer
+            ctx.fillStyle = 'rgba(15, 81, 50, 0.045)';
+            ctx.beginPath();
+            ctx.moveTo(795, 96);
+            ctx.bezierCurveTo(880, 215, 770, 345, W, 475);
+            ctx.lineTo(W, 96);
+            ctx.closePath();
+            ctx.fill();
+
+            // Delicate translucent gold hairline wave accent
+            ctx.strokeStyle = 'rgba(234, 179, 8, 0.17)';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(738, 108);
+            ctx.bezierCurveTo(832, 212, 725, 332, W, 408);
+            ctx.stroke();
+
+            // Subtle upper-right geometric circular watermark rings
+            ctx.fillStyle = 'rgba(22, 101, 52, 0.04)';
+            ctx.beginPath();
+            ctx.arc(912, 236, 132, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(22, 163, 74, 0.065)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(912, 236, 162, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Soft bottom-left wave corner fill
+            ctx.fillStyle = 'rgba(22, 163, 74, 0.042)';
+            ctx.beginPath();
+            ctx.moveTo(0, 560);
+            ctx.quadraticCurveTo(210, 622, 470, H);
+            ctx.lineTo(0, H);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
             return;
         }
 
@@ -22354,25 +22436,78 @@ function startOrOpenResponder(options) {
         return totalW;
     }
 
-    let ktsFontLoadPromise = null;
-    function ensureKtsFontsLoaded() {
-        if (ktsFontLoadPromise) return ktsFontLoadPromise;
-        if (!document.fonts || typeof document.fonts.load !== 'function') {
-            ktsFontLoadPromise = Promise.resolve();
-            return ktsFontLoadPromise;
+    const KTS_FONT_STACKS = {
+        'Montserrat': '"Montserrat", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif',
+        'Plus Jakarta Sans': '"Plus Jakarta Sans", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif',
+        'Poppins': '"Poppins", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif',
+        'Inter': '"Inter", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif',
+        'Playfair Display': '"Playfair Display", Georgia, "Times New Roman", serif',
+        'Roboto Mono': '"Roboto Mono", Consolas, monospace'
+    };
+
+    function resolveKtsFontFamily(elCfg, fallbackFamily) {
+        const key = elCfg && elCfg.fontFamily ? String(elCfg.fontFamily).trim() : '';
+        if (key && KTS_FONT_STACKS[key]) return KTS_FONT_STACKS[key];
+        return fallbackFamily || KTS_FONT_STACKS['Montserrat'];
+    }
+
+    function resolveKtsFontWeight(elCfg, opts) {
+        const cfg = elCfg || {};
+        const o = opts || {};
+        const rawW = Number(cfg.fontWeight);
+        if (Number.isFinite(rawW) && rawW >= 100 && rawW <= 900) {
+            return String(Math.max(100, Math.min(900, Math.round(rawW / 100) * 100)));
         }
-        ktsFontLoadPromise = Promise.race([
-            Promise.all([
-                document.fonts.load('400 16px Montserrat'),
-                document.fonts.load('500 16px Montserrat'),
-                document.fonts.load('600 16px Montserrat'),
-                document.fonts.load('700 16px Montserrat'),
-                document.fonts.load('800 32px Montserrat'),
-                document.fonts.load('italic 400 14px Montserrat')
-            ]).catch(function() { return []; }),
-            new Promise(function(resolve) { setTimeout(resolve, 1200); })
-        ]);
-        return ktsFontLoadPromise;
+        return cfg.bold ? (o.boldWeight || '700') : (o.normalWeight || '400');
+    }
+
+    let ktsFontLoadPromise = null;
+    const ktsLoadedFontKeys = new Set();
+    function ensureKtsFontsLoaded(extraSpecs) {
+        if (!document.fonts || typeof document.fonts.load !== 'function') {
+            return Promise.resolve();
+        }
+        if (!ktsFontLoadPromise) {
+            ktsFontLoadPromise = Promise.race([
+                Promise.all([
+                    document.fonts.load('100 16px Montserrat'),
+                    document.fonts.load('200 16px Montserrat'),
+                    document.fonts.load('300 16px Montserrat'),
+                    document.fonts.load('400 16px Montserrat'),
+                    document.fonts.load('500 16px Montserrat'),
+                    document.fonts.load('600 16px Montserrat'),
+                    document.fonts.load('700 16px Montserrat'),
+                    document.fonts.load('800 32px Montserrat'),
+                    document.fonts.load('900 32px Montserrat'),
+                    document.fonts.load('italic 400 14px Montserrat'),
+                    document.fonts.load('italic 700 14px Montserrat')
+                ]).catch(function() { return []; }),
+                new Promise(function(resolve) { setTimeout(resolve, 1200); })
+            ]);
+        }
+        const tasks = [ktsFontLoadPromise];
+        if (Array.isArray(extraSpecs) && extraSpecs.length) {
+            const extraLoads = [];
+            extraSpecs.forEach(function(sp) {
+                if (!sp || !sp.family) return;
+                const fam = String(sp.family).trim();
+                const w = sp.weight ? String(sp.weight) : '400';
+                const sty = sp.italic ? 'italic ' : '';
+                const key = sty + w + '|' + fam;
+                if (ktsLoadedFontKeys.has(key)) return;
+                ktsLoadedFontKeys.add(key);
+                extraLoads.push(
+                    document.fonts.load(sty + w + ' 20px "' + fam + '"').catch(function() { return []; })
+                );
+            });
+            if (extraLoads.length) {
+                tasks.push(Promise.race([
+                    Promise.all(extraLoads),
+                    new Promise(function(resolve) { setTimeout(resolve, 1200); })
+                ]));
+            }
+        }
+        return Promise.all(tasks);
     }
 
     function drawKtsLayoutTextBlock(ctx, text, elCfg, family, opts) {
@@ -22382,7 +22517,8 @@ function startOrOpenResponder(options) {
         const letterSpacing = Number(cfg.letterSpacing) || 0;
         const lineGap = Math.max(10, Number(cfg.lineGap) || Math.round(fontSize * 1.25));
         const maxWidth = Math.max(60, Number(cfg.maxWidth) || 500);
-        const weight = cfg.bold ? (o.boldWeight || '800') : (o.normalWeight || '400');
+        const weight = resolveKtsFontWeight(cfg, o);
+        const activeFamily = resolveKtsFontFamily(cfg, family);
         const fontStyle = cfg.italic ? 'italic ' : '';
         const align = cfg.align || 'left';
         const color = cfg.color || '#0f172a';
@@ -22396,7 +22532,7 @@ function startOrOpenResponder(options) {
         ctx.save();
         let activeFontSize = fontSize;
         let activeLetterSpacing = letterSpacing;
-        ctx.font = fontStyle + weight + ' ' + activeFontSize + 'px ' + family;
+        ctx.font = fontStyle + weight + ' ' + activeFontSize + 'px ' + activeFamily;
         if (o.withShadow) {
             ctx.shadowColor = 'rgba(0, 0, 0, 0.38)';
             ctx.shadowBlur = 8;
@@ -22430,7 +22566,7 @@ function startOrOpenResponder(options) {
                 }
                 while (activeFontSize > 10 && measureLineWith(raw, activeLetterSpacing) > maxWidth) {
                     activeFontSize = Math.max(10, Math.round((activeFontSize - 0.5) * 2) / 2);
-                    ctx.font = fontStyle + weight + ' ' + activeFontSize + 'px ' + family;
+                    ctx.font = fontStyle + weight + ' ' + activeFontSize + 'px ' + activeFamily;
                 }
             }
             let out = raw;
@@ -22473,12 +22609,22 @@ function startOrOpenResponder(options) {
         const cfg = settings || ktsState.settings;
         const st = student || {};
         const cardSide = side === 'back' ? 'back' : 'front';
-        const fontFamily = '"Montserrat", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif';
+        const fontFamily = KTS_FONT_STACKS['Montserrat'];
         const lay = getEffectiveKtsLayout(cfg);
         const pushBox = function(id, label, box) {
             if (!Array.isArray(outHitBoxes) || !box) return;
             outHitBoxes.push({ id: id, side: cardSide, label: label, x: box.x, y: box.y, w: box.w, h: box.h });
         };
+
+        const activeFontSpecs = Object.values(lay[cardSide] || {})
+            .filter(function(el) { return el && el.kind === 'text'; })
+            .map(function(el) {
+                return {
+                    family: el.fontFamily || 'Montserrat',
+                    weight: resolveKtsFontWeight(el, { normalWeight: '400', boldWeight: '700' }),
+                    italic: Boolean(el.italic)
+                };
+            });
 
         const [logoImg, frontBgImg, backBgImg, sigImg, photoAsset] = await Promise.all([
             loadAssetImage('/assets/logo.png'),
@@ -22486,7 +22632,7 @@ function startOrOpenResponder(options) {
             cfg.custom_back_bg ? loadAssetImage(cfg.custom_back_bg) : Promise.resolve(null),
             cfg.signature_img ? loadAssetImage(cfg.signature_img) : Promise.resolve(null),
             cardSide === 'front' ? getKtsStudentPhotoAsset(st) : Promise.resolve(null),
-            ensureKtsFontsLoaded()
+            ensureKtsFontsLoaded(activeFontSpecs)
         ]);
 
         ctx.clearRect(0, 0, W, H);
@@ -22757,14 +22903,15 @@ function startOrOpenResponder(options) {
                 const rLineGap = Math.max(12, Number(rCfg.lineGap) || 28);
                 const rSpace = Number(rCfg.letterSpacing) || 0;
                 const rMaxW = Math.max(120, Number(rCfg.maxWidth) || (W - 108));
-                const rWeight = rCfg.bold ? '700' : '400';
+                const rWeight = resolveKtsFontWeight(rCfg, { normalWeight: '400', boldWeight: '700' });
+                const rFamily = resolveKtsFontFamily(rCfg, fontFamily);
                 const rStyle = rCfg.italic ? 'italic ' : '';
                 const rAlign = rCfg.align || 'left';
                 let ry = Number(rCfg.y) || 162;
                 const startY = ry;
 
                 ctx.save();
-                ctx.font = rStyle + rWeight + ' ' + rSize + 'px ' + fontFamily;
+                ctx.font = rStyle + rWeight + ' ' + rSize + 'px ' + rFamily;
                 ctx.fillStyle = rCfg.color || '#1e293b';
                 const wrapW = Math.abs(rSpace) > 0.2 ? rMaxW * 0.88 : rMaxW;
                 rawRules.slice(0, 6).forEach(function(ruleLine) {
@@ -22835,7 +22982,8 @@ function startOrOpenResponder(options) {
                 const sAlign = sigCfg.align || 'center';
                 const sFontSize = Math.max(11, Math.min(34, Number(sigCfg.fontSize) || 17.5));
                 const sLineGap = Math.max(16, Number(sigCfg.lineGap) || 24);
-                const sWeight = sigCfg.bold ? '700' : '400';
+                const sWeight = resolveKtsFontWeight(sigCfg, { normalWeight: '400', boldWeight: '700' });
+                const sFamily = resolveKtsFontFamily(sigCfg, fontFamily);
                 const sStyle = sigCfg.italic ? 'italic ' : '';
 
                 ctx.save();
@@ -22857,7 +23005,7 @@ function startOrOpenResponder(options) {
                 }
 
                 const hmY = sy + sLineGap + 108;
-                ctx.font = sStyle + sWeight + ' ' + sFontSize + 'px ' + fontFamily;
+                ctx.font = sStyle + sWeight + ' ' + sFontSize + 'px ' + sFamily;
                 ctx.fillStyle = sigCfg.color || '#0f172a';
                 const hmName = sigCfg.uppercase ? String(cfg.headmaster_name || 'Kepala Madrasah').toUpperCase() : (cfg.headmaster_name || 'Kepala Madrasah');
                 const hmW = drawSingleLineWithSpacing(ctx, hmName, sx, hmY, sAlign, Number(sigCfg.letterSpacing) || 0);
@@ -23715,6 +23863,12 @@ function startOrOpenResponder(options) {
         if (boxGroup) boxGroup.style.display = (selKeys.length === 1 && el.kind !== 'text') ? 'flex' : 'none';
 
         if (hasText && textRef) {
+            const ffSel = document.getElementById('ktsLayFontFamily');
+            const fwSel = document.getElementById('ktsLayFontWeight');
+            const resolvedWeight = resolveKtsFontWeight(textRef, { normalWeight: '400', boldWeight: '700' });
+            if (ffSel) ffSel.value = KTS_FONT_STACKS[textRef.fontFamily] ? textRef.fontFamily : 'Montserrat';
+            if (fwSel) fwSel.value = resolvedWeight;
+
             setPair('ktsLayFontSize', 'ktsLayFontSizeNum', Number(textRef.fontSize) || 18, false);
             setPair('ktsLayLetterSpacing', 'ktsLayLetterSpacingNum', Number(textRef.letterSpacing) || 0, false);
             setPair('ktsLayLineGap', 'ktsLayLineGapNum', Math.round(Number(textRef.lineGap) || 24), false);
@@ -23726,7 +23880,7 @@ function startOrOpenResponder(options) {
             const aL = document.getElementById('ktsLayAlignLeftBtn');
             const aC = document.getElementById('ktsLayAlignCenterBtn');
             const aR = document.getElementById('ktsLayAlignRightBtn');
-            if (bBtn) bBtn.classList.toggle('active', Boolean(textRef.bold));
+            if (bBtn) bBtn.classList.toggle('active', Number(resolvedWeight) >= 700);
             if (iBtn) iBtn.classList.toggle('active', Boolean(textRef.italic));
             if (uBtn) uBtn.classList.toggle('active', Boolean(textRef.uppercase));
             const al = textRef.align || 'left';
@@ -24939,6 +25093,66 @@ function startOrOpenResponder(options) {
             });
         });
 
+        const ffSel = document.getElementById('ktsLayFontFamily');
+        if (ffSel) ffSel.addEventListener('change', function() {
+            const val = this.value;
+            const texts = getKtsSelectedTextObjs();
+            if (!texts.length || !KTS_FONT_STACKS[val]) return;
+            texts.forEach(function(obj) { obj.fontFamily = val; });
+            commitKtsLayoutHistory();
+            syncKtsLayoutInspectorFromState();
+            const specs = texts.map(function(obj) {
+                return {
+                    family: val,
+                    weight: resolveKtsFontWeight(obj, { normalWeight: '400', boldWeight: '700' }),
+                    italic: Boolean(obj.italic)
+                };
+            });
+            ensureKtsFontsLoaded(specs).then(function() {
+                scheduleKtsLayoutEditorRender();
+            });
+        });
+
+        const fwSel = document.getElementById('ktsLayFontWeight');
+        if (fwSel) fwSel.addEventListener('change', function() {
+            const w = Math.max(100, Math.min(900, Math.round((Number(this.value) || 400) / 100) * 100));
+            const texts = getKtsSelectedTextObjs();
+            if (!texts.length) return;
+            texts.forEach(function(obj) {
+                obj.fontWeight = w;
+                obj.bold = w >= 700;
+            });
+            commitKtsLayoutHistory();
+            syncKtsLayoutInspectorFromState();
+            const specs = texts.map(function(obj) {
+                return {
+                    family: obj.fontFamily || 'Montserrat',
+                    weight: String(w),
+                    italic: Boolean(obj.italic)
+                };
+            });
+            ensureKtsFontsLoaded(specs).then(function() {
+                scheduleKtsLayoutEditorRender();
+            });
+        });
+
+        const boldBtn = document.getElementById('ktsLayBoldBtn');
+        if (boldBtn) boldBtn.addEventListener('click', function() {
+            const texts = getKtsSelectedTextObjs();
+            if (!texts.length) return;
+            const ref = getKtsLayoutSelectedObj();
+            const activeObj = (ref && ref.kind === 'text') ? ref : texts[0];
+            const curWeight = Number(resolveKtsFontWeight(activeObj, { normalWeight: '400', boldWeight: '700' }));
+            const nextBold = curWeight < 700;
+            texts.forEach(function(obj) {
+                obj.bold = nextBold;
+                obj.fontWeight = nextBold ? 700 : 400;
+            });
+            commitKtsLayoutHistory();
+            syncKtsLayoutInspectorFromState();
+            scheduleKtsLayoutEditorRender();
+        });
+
         const wireToggleProp = function(btnId, propName) {
             const btn = document.getElementById(btnId);
             if (!btn) return;
@@ -24953,7 +25167,6 @@ function startOrOpenResponder(options) {
                 scheduleKtsLayoutEditorRender();
             });
         };
-        wireToggleProp('ktsLayBoldBtn', 'bold');
         wireToggleProp('ktsLayItalicBtn', 'italic');
         wireToggleProp('ktsLayUpperBtn', 'uppercase');
 
@@ -25008,24 +25221,30 @@ function startOrOpenResponder(options) {
         if (rstElBtn) rstElBtn.addEventListener('click', resetCurrentKtsLayoutElement);
 
         const rstAllBtn = document.getElementById('ktsLayResetAllBtn');
-        if (rstAllBtn) rstAllBtn.addEventListener('click', function() {
-            if (confirm('Kembalikan seluruh posisi, jarak, dan ukuran font KTS ke pengaturan default?')) {
-                resetAllKtsLayout();
-            }
+        if (rstAllBtn) rstAllBtn.addEventListener('click', async function() {
+            const ok = await window.simataConfirm(
+                'Kembalikan seluruh posisi, jarak, dan ukuran font KTS ke pengaturan default?',
+                { title: 'Reset ke Default', confirmText: 'Ya, Reset' }
+            );
+            if (ok) resetAllKtsLayout();
         });
 
         const setDefaultBtn = document.getElementById('ktsLaySetDefaultBtn');
-        if (setDefaultBtn) setDefaultBtn.addEventListener('click', function() {
-            if (confirm('Jadikan posisi, jarak & ukuran font saat ini sebagai pengaturan default KTS madrasah?')) {
-                setCurrentLayoutAsDefault();
-            }
+        if (setDefaultBtn) setDefaultBtn.addEventListener('click', async function() {
+            const ok = await window.simataConfirm(
+                'Jadikan posisi, jarak & ukuran font saat ini sebagai pengaturan default KTS madrasah?',
+                { title: 'Jadikan Default Madrasah', confirmText: 'Ya, Jadikan Default' }
+            );
+            if (ok) setCurrentLayoutAsDefault();
         });
 
         const resetFactoryBtn = document.getElementById('ktsLayResetFactoryBtn');
-        if (resetFactoryBtn) resetFactoryBtn.addEventListener('click', function() {
-            if (confirm('Kembalikan default madrasah ke tata letak awal aplikasi (pabrik)?')) {
-                resetFactoryKtsLayout();
-            }
+        if (resetFactoryBtn) resetFactoryBtn.addEventListener('click', async function() {
+            const ok = await window.simataConfirm(
+                'Kembalikan default madrasah ke tata letak awal aplikasi (pabrik)?',
+                { title: 'Reset Tata Letak Pabrik', confirmText: 'Ya, Reset Pabrik', danger: true }
+            );
+            if (ok) resetFactoryKtsLayout();
         });
 
         const saveLayBtn = document.getElementById('ktsLaySaveBtn');
@@ -27163,9 +27382,14 @@ function closeInvoiceDetailModal() {
     currentViewingInvoiceId = null;
 }
 
-function triggerCancelInvoice() {
+async function triggerCancelInvoice() {
     if (!currentViewingInvoiceId) return;
-    const reason = prompt('Masukkan alasan pembatalan tagihan ini:');
+    const reason = await window.simataPrompt('Masukkan alasan pembatalan tagihan ini:', {
+        title: 'Batalkan Tagihan',
+        placeholder: 'Tulis alasan pembatalan...',
+        confirmText: 'Batalkan Tagihan',
+        danger: true
+    });
     if (reason === null) return;
     if (!reason.trim()) {
         alert('Alasan pembatalan wajib diisi.');
@@ -27839,7 +28063,7 @@ function closeVoidPaymentModal() {
     if (modal) modal.style.display = 'none';
 }
 
-function submitVoidPayment(e) {
+async function submitVoidPayment(e) {
     if (e) e.preventDefault();
     const paymentId = document.getElementById('void_payment_id')?.value;
     const reason = (document.getElementById('void_reason')?.value || '').trim();
@@ -27849,7 +28073,11 @@ function submitVoidPayment(e) {
         return;
     }
 
-    if (!confirm('Apakah Anda yakin ingin membatalkan (VOID) transaksi pembayaran ini? Aksi ini bersifat terminal dan tidak dapat diaktifkan kembali.')) {
+    const okVoid = await window.simataConfirm(
+        'Apakah Anda yakin ingin membatalkan (VOID) transaksi pembayaran ini? Aksi ini bersifat terminal dan tidak dapat diaktifkan kembali.',
+        { title: 'Konfirmasi VOID Pembayaran', confirmText: 'Ya, Batalkan (VOID)', danger: true }
+    );
+    if (!okVoid) {
         return;
     }
 
@@ -30654,8 +30882,12 @@ function submitLinkParentStudent(e) {
     });
 }
 
-function unlinkStudentFromParent(userId, studentId) {
-    if (!confirm('Lepaskan hubungan siswa ini dari akun orang tua?')) return;
+async function unlinkStudentFromParent(userId, studentId) {
+    const okUnlink = await window.simataConfirm(
+        'Lepaskan hubungan siswa ini dari akun orang tua?',
+        { title: 'Lepaskan Relasi Siswa', confirmText: 'Ya, Lepaskan', danger: true }
+    );
+    if (!okUnlink) return;
 
     simataClient.unlinkParentStudent(userId, studentId)
         .then(function(res) {

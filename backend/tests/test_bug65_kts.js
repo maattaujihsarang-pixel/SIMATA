@@ -13,18 +13,23 @@ function assertFrontendKtsIntegrity() {
   const rootDir = path.resolve(__dirname, '../..');
   const html = fs.readFileSync(path.join(rootDir, 'public/dashboard.html'), 'utf8');
   const css = fs.readFileSync(path.join(rootDir, 'public/css/style.css'), 'utf8');
+  const notifCss = fs.readFileSync(path.join(rootDir, 'public/css/notifications.css'), 'utf8');
+  const notifJs = fs.readFileSync(path.join(rootDir, 'public/js/notifications.js'), 'utf8');
   const clientJs = fs.readFileSync(path.join(rootDir, 'public/js/simata-client.js'), 'utf8');
 
   // CSS balanced braces + KTS classes
-  let openBraces = 0;
-  for (const ch of css) {
-    if (ch === '{') openBraces++;
-    else if (ch === '}') openBraces--;
-    assert.ok(openBraces >= 0, 'style.css has unexpected closing brace');
+  for (const [cssName, cssContent] of [['style.css', css], ['notifications.css', notifCss]]) {
+    let openBraces = 0;
+    for (const ch of cssContent) {
+      if (ch === '{') openBraces++;
+      else if (ch === '}') openBraces--;
+      assert.ok(openBraces >= 0, `${cssName} has unexpected closing brace`);
+    }
+    assert.strictEqual(openBraces, 0, `${cssName} must have balanced curly braces`);
   }
-  assert.strictEqual(openBraces, 0, 'style.css must have balanced curly braces');
   assert.ok(css.includes('.kts-studio-grid'), 'style.css must define .kts-studio-grid');
   assert.ok(css.includes('#ktsPreviewCanvas'), 'style.css must style #ktsPreviewCanvas');
+  assert.ok(css.includes('.kts-layout-select'), 'style.css must style .kts-layout-select');
 
   // HTML structure & Menu Siswa + KTS Studio elements
   for (const requiredToken of [
@@ -52,6 +57,11 @@ function assertFrontendKtsIntegrity() {
     'back_logo',
     'id="ktsLaySetDefaultBtn"',
     'id="ktsLayResetFactoryBtn"',
+    'id="ktsLayFontFamily"',
+    'id="ktsLayFontWeight"',
+    'resolveKtsFontWeight',
+    'simataConfirm',
+    'simataPrompt',
     'id="ktsTpl_headerTitle"',
     'id="ktsBatchPrintModal"',
     'id="f_birthPlace"',
@@ -65,8 +75,10 @@ function assertFrontendKtsIntegrity() {
   ]) {
     assert.ok(html.includes(requiredToken), `public/dashboard.html missing required KTS token: ${requiredToken}`);
   }
+  assert.ok(!html.includes('<p class="kts-layout-hint">'), 'public/dashboard.html must not contain removed kts-layout-hint paragraph');
+  assert.ok(!/\b(?:window\.)?(?:confirm|prompt)\s*\(/.test(html), 'public/dashboard.html must use simataConfirm/simataPrompt instead of native confirm/prompt');
 
-  // Inline JS + simata-client.js compilation check
+  // Inline JS + simata-client.js + notifications.js compilation check
   const scriptRegex = /<script\b(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi;
   let match;
   let scriptCount = 0;
@@ -78,6 +90,9 @@ function assertFrontendKtsIntegrity() {
   }
   assert.ok(scriptCount >= 2, 'dashboard.html inline scripts must compile cleanly');
   new vm.Script(clientJs, { filename: 'simata-client.js' });
+  new vm.Script(notifJs, { filename: 'notifications.js' });
+  assert.ok(notifJs.includes('window.simataConfirm'), 'notifications.js must expose window.simataConfirm');
+  assert.ok(notifJs.includes('window.simataPrompt'), 'notifications.js must expose window.simataPrompt');
   for (const methodName of ['downloadKtsTemplate', 'importKtsExcel', 'getKtsSettings', 'updateKtsSettings']) {
     assert.ok(clientJs.includes(methodName), `simata-client.js must expose ${methodName}`);
   }

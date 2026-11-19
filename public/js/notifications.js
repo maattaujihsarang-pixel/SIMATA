@@ -58,7 +58,8 @@
     renderNotice(notice);
   };
 
-  window.simataConfirm = function(message) {
+  window.simataConfirm = function(message, options) {
+    const opts = options && typeof options === 'object' ? options : {};
     let dialog = document.getElementById('simataConfirmDialog');
     if (!dialog) {
       dialog = document.createElement('dialog');
@@ -75,7 +76,23 @@
       });
     }
 
+    if (dialog.open) {
+      dialog.close('cancel');
+    }
+
+    const markEl = dialog.querySelector('.simata-confirm-dialog__mark');
+    const titleEl = dialog.querySelector('#simataConfirmTitle');
+    const cancelBtn = dialog.querySelector('[data-confirm-cancel]');
+    const acceptBtn = dialog.querySelector('[data-confirm-accept]');
+    const isDanger = Boolean(opts.danger);
+
+    dialog.classList.toggle('is-danger', isDanger);
+    if (markEl) markEl.textContent = isDanger ? '!' : '?';
+    if (titleEl) titleEl.textContent = opts.title || 'Konfirmasi Tindakan';
+    if (cancelBtn) cancelBtn.textContent = opts.cancelText || 'Batal';
+    if (acceptBtn) acceptBtn.textContent = opts.confirmText || 'Ya, Lanjutkan';
     dialog.querySelector('p').textContent = String(message == null ? '' : message);
+
     return new Promise(function(resolve) {
       dialog.addEventListener('close', function() {
         dialog.classList.remove('is-visible');
@@ -86,6 +103,61 @@
         dialog.classList.add('is-visible');
       });
       dialog.querySelector('[data-confirm-cancel]').focus();
+    });
+  };
+
+  window.simataPrompt = function(message, options) {
+    const opts = options && typeof options === 'object' ? options : {};
+    let dialog = document.getElementById('simataPromptDialog');
+    if (!dialog) {
+      dialog = document.createElement('dialog');
+      dialog.id = 'simataPromptDialog';
+      dialog.className = 'simata-confirm-dialog';
+      dialog.setAttribute('aria-labelledby', 'simataPromptTitle');
+      dialog.innerHTML = '<form method="dialog"><div class="simata-confirm-dialog__mark" aria-hidden="true">✎</div><h2 id="simataPromptTitle">Masukkan Informasi</h2><p></p><input type="text" class="simata-prompt-input" /><div class="simata-confirm-dialog__actions"><button type="button" data-confirm-cancel>Batal</button><button type="submit" value="confirm" data-confirm-accept>Lanjutkan</button></div></form>';
+      document.body.appendChild(dialog);
+      dialog.querySelector('form').addEventListener('submit', function(ev) {
+        ev.preventDefault();
+        dialog.close('confirm');
+      });
+      dialog.querySelector('[data-confirm-cancel]').addEventListener('click', function() {
+        dialog.close('cancel');
+      });
+    }
+
+    if (dialog.open) {
+      dialog.close('cancel');
+    }
+
+    const markEl = dialog.querySelector('.simata-confirm-dialog__mark');
+    const titleEl = dialog.querySelector('#simataPromptTitle');
+    const inputEl = dialog.querySelector('.simata-prompt-input');
+    const cancelBtn = dialog.querySelector('[data-confirm-cancel]');
+    const acceptBtn = dialog.querySelector('[data-confirm-accept]');
+    const isDanger = Boolean(opts.danger);
+
+    dialog.classList.toggle('is-danger', isDanger);
+    if (markEl) markEl.textContent = isDanger ? '!' : '✎';
+    if (titleEl) titleEl.textContent = opts.title || 'Masukkan Informasi';
+    if (cancelBtn) cancelBtn.textContent = opts.cancelText || 'Batal';
+    if (acceptBtn) acceptBtn.textContent = opts.confirmText || 'Lanjutkan';
+    dialog.querySelector('p').textContent = String(message == null ? '' : message);
+
+    inputEl.placeholder = opts.placeholder || '';
+    inputEl.value = opts.defaultValue != null ? String(opts.defaultValue) : '';
+    dialog.returnValue = '';
+
+    return new Promise(function(resolve) {
+      dialog.addEventListener('close', function() {
+        dialog.classList.remove('is-visible');
+        resolve(dialog.returnValue === 'confirm' ? inputEl.value : null);
+      }, { once: true });
+      dialog.showModal();
+      requestAnimationFrame(function() {
+        dialog.classList.add('is-visible');
+      });
+      inputEl.focus();
+      inputEl.select();
     });
   };
 })(window, document);
