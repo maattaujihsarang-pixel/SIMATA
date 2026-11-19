@@ -30,7 +30,8 @@ const DEFAULT_KTS_SETTINGS = {
   custom_front_bg: '',
   custom_back_bg: '',
   signature_img: '',
-  layout_config: ''
+  layout_config: '',
+  layout_default_config: ''
 };
 
 function formatStudentDateOnlyISO(val) {
@@ -547,7 +548,7 @@ class MasterService {
         if (['custom_front_bg', 'custom_back_bg', 'signature_img'].includes(key) && val && !val.startsWith('data:image/')) {
           throw new BadRequestError(`Format gambar tidak valid untuk ${key}`);
         }
-        if (key === 'layout_config' && val) {
+        if (['layout_config', 'layout_default_config'].includes(key) && val) {
           let parsedLayout = null;
           try {
             parsedLayout = JSON.parse(val);

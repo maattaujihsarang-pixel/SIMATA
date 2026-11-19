@@ -47,6 +47,11 @@ function assertFrontendKtsIntegrity() {
     'computeKtsSmartGuides',
     'undoKtsLayout',
     'redoKtsLayout',
+    'back_school_name',
+    'back_yayasan',
+    'back_logo',
+    'id="ktsLaySetDefaultBtn"',
+    'id="ktsLayResetFactoryBtn"',
     'id="ktsTpl_headerTitle"',
     'id="ktsBatchPrintModal"',
     'id="f_birthPlace"',
@@ -289,11 +294,20 @@ async function runBug65KtsTests() {
     const goodLayoutRes = await fetch(`${baseUrl}/api/v1/students/kts/settings`, {
       method: 'PUT',
       headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ layout_config: customLayoutStr })
+      body: JSON.stringify({ layout_config: customLayoutStr, layout_default_config: customLayoutStr })
     });
     assert.strictEqual(goodLayoutRes.status, 200);
     const goodLayoutJson = await goodLayoutRes.json();
     assert.strictEqual(goodLayoutJson.data.layout_config, customLayoutStr);
+    assert.strictEqual(goodLayoutJson.data.layout_default_config, customLayoutStr);
+
+    // Invalid layout_default_config JSON must also be rejected with 400
+    const badDefaultRes = await fetch(`${baseUrl}/api/v1/students/kts/settings`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ layout_default_config: '[]' })
+    });
+    assert.strictEqual(badDefaultRes.status, 400);
 
     console.log('3. PASS: Students KTS fields, Excel Template/Import 2-way sync, layout_config & Settings RBAC verified.');
     console.log('===============================================================');

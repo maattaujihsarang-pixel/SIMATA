@@ -3938,172 +3938,112 @@ html, body {
           </div>
         </div>
 
-        <!-- KTS MODAL 2B: EDIT LAYOUT VISUAL KTS (DRAG & DROP + TYPOGRAPHY) -->
-        <div id="ktsLayoutEditorModal" class="student-modal-backdrop" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.55);align-items:center;justify-content:center;z-index:10055;">
+        <!-- KTS MODAL 2B: EDIT LAYOUT VISUAL KTS (REDESIGN STUDIO) -->
+        <div id="ktsLayoutEditorModal" class="student-modal-backdrop" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.58);align-items:center;justify-content:center;z-index:10055;">
           <div class="student-modal-card kts-layout-modal-card">
-            <div class="student-modal-header">
-              <h3 style="margin:0;">Edit Layout KTS Visual</h3>
-              <button type="button" onclick="closeKtsLayoutModal()" class="student-modal-close-btn" aria-label="Tutup">&times;</button>
-            </div>
-            <div class="student-modal-body">
-              <div class="kts-layout-topbar">
-                <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
-                  <div class="kts-side-toggle" role="tablist" aria-label="Pilih sisi layout kartu">
-                    <button type="button" id="ktsLaySideFrontBtn" class="kts-side-btn active">Sisi Depan</button>
-                    <button type="button" id="ktsLaySideBackBtn" class="kts-side-btn">Sisi Belakang</button>
-                  </div>
-                  <div class="kts-layout-history-group" role="group" aria-label="Riwayat Undo dan Redo">
-                    <button type="button" id="ktsLayUndoBtn" class="kts-history-btn" title="Undo (Ctrl+Z)" disabled>&#8630; Undo</button>
-                    <button type="button" id="ktsLayRedoBtn" class="kts-history-btn" title="Redo (Ctrl+Shift+Z)" disabled>&#8631; Redo</button>
-                  </div>
-                </div>
-                <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;">
-                  <label class="kts-layout-group-check" title="Garis bantu lurus &amp; simetris saat menggeser (tahan Alt untuk geser bebas)">
-                    <input type="checkbox" id="ktsLaySmartGuidesToggle" checked />
-                    <span>Smart Guides</span>
-                  </label>
-                  <label class="kts-layout-group-check">
-                    <input type="checkbox" id="ktsLayMoveBioGroup" />
-                    <span>Geser 5 baris biodata sekaligus</span>
-                  </label>
-                </div>
+            <div class="kts-studio-header">
+              <div class="kts-studio-header-left">
+                <h3>Edit Layout KTS</h3>
                 <span id="ktsLayPreviewStudentLabel" class="kts-layout-preview-student">Pratinjau: Siswa Contoh</span>
               </div>
+              <div class="kts-studio-header-center">
+                <div class="kts-side-toggle" role="tablist" aria-label="Pilih sisi layout kartu">
+                  <button type="button" id="ktsLaySideFrontBtn" class="kts-side-btn active">Sisi Depan</button>
+                  <button type="button" id="ktsLaySideBackBtn" class="kts-side-btn">Sisi Belakang</button>
+                </div>
+                <div class="kts-layout-history-group" role="group" aria-label="Riwayat Undo dan Redo">
+                  <button type="button" id="ktsLayUndoBtn" class="kts-history-btn" title="Undo (Ctrl+Z)" disabled>&#8630; Undo</button>
+                  <button type="button" id="ktsLayRedoBtn" class="kts-history-btn" title="Redo (Ctrl+Shift+Z)" disabled>&#8631; Redo</button>
+                </div>
+                <label class="kts-studio-pill-toggle" title="Garis bantu lurus &amp; simetris saat menggeser (tahan Alt untuk geser bebas)">
+                  <input type="checkbox" id="ktsLaySmartGuidesToggle" checked />
+                  <span>Smart Guides</span>
+                </label>
+              </div>
+              <div class="kts-studio-header-right">
+                <button type="button" onclick="closeKtsLayoutModal()" class="student-modal-close-btn" aria-label="Tutup">&times;</button>
+              </div>
+            </div>
 
-              <div class="kts-layout-editor-grid">
-                <div class="kts-layout-stage-wrap">
+            <div class="kts-layout-workspace">
+              <div class="kts-layout-stage-wrap">
+                <div class="kts-layout-canvas-frame">
                   <canvas id="ktsLayoutCanvas" width="1011" height="638" aria-label="Kanvas Editor Layout KTS"></canvas>
-                  <div class="kts-layout-stage-footer">
-                    <p class="kts-layout-hint">Tarik di area kosong atau <strong>Shift+Klik</strong> untuk blok banyak font, seret langsung dengan Smart Guides (tahan <strong>Alt</strong> untuk geser bebas), serta <strong>Ctrl+Z / Ctrl+Shift+Z</strong> untuk Undo/Redo.</p>
-                    <div class="kts-nudge-group">
-                      <button type="button" id="ktsLayNudgeLeft" class="kts-nudge-btn" title="Geser Kiri (2px)">&#9664;</button>
-                      <button type="button" id="ktsLayNudgeUp" class="kts-nudge-btn" title="Geser Atas (2px)">&#9650;</button>
-                      <button type="button" id="ktsLayNudgeDown" class="kts-nudge-btn" title="Geser Bawah (2px)">&#9660;</button>
-                      <button type="button" id="ktsLayNudgeRight" class="kts-nudge-btn" title="Geser Kanan (2px)">&#9654;</button>
-                      <button type="button" id="ktsLayResetElBtn" class="kts-nudge-btn" style="padding:0 10px;">Reset Elemen</button>
+                </div>
+                <div class="kts-stage-dock">
+                  <div class="kts-quick-block-btns">
+                    <button type="button" id="ktsLaySelectHeaderBtn" class="kts-quick-block-btn" title="Blok semua teks header">Blok 4 Kop</button>
+                    <button type="button" id="ktsLaySelectBioBtn" class="kts-quick-block-btn" title="Blok 5 baris biodata siswa">Blok 5 Biodata</button>
+                    <button type="button" id="ktsLaySelectAllTextBtn" class="kts-quick-block-btn" title="Blok seluruh teks pada sisi aktif">Semua Teks</button>
+                  </div>
+                  <div class="kts-nudge-group">
+                    <button type="button" id="ktsLayNudgeLeft" class="kts-nudge-btn" title="Geser Kiri (2px)">&#9664;</button>
+                    <button type="button" id="ktsLayNudgeUp" class="kts-nudge-btn" title="Geser Atas (2px)">&#9650;</button>
+                    <button type="button" id="ktsLayNudgeDown" class="kts-nudge-btn" title="Geser Bawah (2px)">&#9660;</button>
+                    <button type="button" id="ktsLayNudgeRight" class="kts-nudge-btn" title="Geser Kanan (2px)">&#9654;</button>
+                    <button type="button" id="ktsLayResetElBtn" class="kts-nudge-btn" style="padding:0 10px;">Reset Elemen</button>
+                  </div>
+                  <p class="kts-layout-hint">Tarik di area kosong atau <strong>Shift+Klik</strong> untuk blok banyak elemen &bull; Seret dengan Smart Guides (tahan <strong>Alt</strong> bebas) &bull; <strong>Ctrl+Z / Ctrl+Shift+Z</strong></p>
+                </div>
+              </div>
+
+              <div class="kts-layout-inspector-card">
+                <div class="kts-insp-section">
+                  <div class="kts-insp-section-header">
+                    <span class="kts-insp-section-title">Elemen Kartu</span>
+                    <div style="display:flex;align-items:center;gap:6px;">
+                      <span id="ktsLayMultiBadge">1 elemen dipilih</span>
+                      <label class="kts-eye-pill" title="Tampilkan atau sembunyikan elemen terpilih">
+                        <input type="checkbox" id="ktsLayVisibleToggle" checked />
+                        <span>Tampil</span>
+                      </label>
                     </div>
+                  </div>
+                  <select id="ktsLayElementSelect" class="kts-sr-only" aria-label="Pilih Elemen Kartu"></select>
+                  <div id="ktsLayElementChips" class="kts-layout-el-chips"></div>
+                </div>
+
+                <div id="ktsLayMultiAlignGroup" class="kts-multi-align-group" style="display:none;">
+                  <label>Perataan &amp; Simetri Elemen Terblok</label>
+                  <div class="kts-style-btn-group">
+                    <button type="button" id="ktsLayAlignElsLeft" class="kts-nudge-btn" style="padding:0 9px;" title="Sejajarkan tepi kiri semua elemen terpilih">Lurus Kiri</button>
+                    <button type="button" id="ktsLayAlignElsCenterH" class="kts-nudge-btn" style="padding:0 9px;" title="Sejajarkan titik tengah horizontal semua elemen terpilih">Simetris Tengah</button>
+                    <button type="button" id="ktsLayAlignElsRight" class="kts-nudge-btn" style="padding:0 9px;" title="Sejajarkan tepi kanan semua elemen terpilih">Lurus Kanan</button>
+                    <button type="button" id="ktsLayDistributeV" class="kts-nudge-btn" style="padding:0 9px;" title="Ratakan jarak vertikal antar elemen terpilih">Ratakan Jarak</button>
                   </div>
                 </div>
 
-                <div class="kts-layout-inspector-card">
-                  <div class="kts-layout-control-row">
-                    <label for="ktsLayElementSelect">Pilih Elemen Kartu</label>
-                    <select id="ktsLayElementSelect" class="input-box"></select>
-                    <div class="kts-layout-multi-bar">
-                      <div class="kts-quick-block-btns">
-                        <button type="button" id="ktsLaySelectHeaderBtn" class="kts-quick-block-btn" title="Blok semua teks header kop">Blok 4 Kop</button>
-                        <button type="button" id="ktsLaySelectBioBtn" class="kts-quick-block-btn" title="Blok 5 baris biodata siswa">Blok 5 Biodata</button>
-                        <button type="button" id="ktsLaySelectAllTextBtn" class="kts-quick-block-btn" title="Blok seluruh teks pada sisi aktif">Blok Semua Teks</button>
-                      </div>
-                      <span id="ktsLayMultiBadge">1 elemen dipilih</span>
-                    </div>
-                    <div id="ktsLayElementChips" class="kts-layout-el-chips"></div>
+                <div id="ktsLayPosGroup" class="kts-insp-section">
+                  <div class="kts-insp-section-header">
+                    <span class="kts-insp-section-title">Posisi</span>
+                    <label id="ktsLayMoveBioGroupWrap" class="kts-layout-group-check">
+                      <input type="checkbox" id="ktsLayMoveBioGroup" />
+                      <span>Geser 5 biodata sekaligus</span>
+                    </label>
                   </div>
-
-                  <div id="ktsLayMultiAlignGroup" class="kts-multi-align-group" style="display:none;">
-                    <label>Perataan &amp; Simetri Elemen Terblok</label>
-                    <div class="kts-style-btn-group">
-                      <button type="button" id="ktsLayAlignElsLeft" class="kts-nudge-btn" style="padding:0 9px;" title="Sejajarkan tepi kiri semua elemen terpilih">Lurus Kiri</button>
-                      <button type="button" id="ktsLayAlignElsCenterH" class="kts-nudge-btn" style="padding:0 9px;" title="Sejajarkan titik tengah horizontal semua elemen terpilih">Simetris Tengah</button>
-                      <button type="button" id="ktsLayAlignElsRight" class="kts-nudge-btn" style="padding:0 9px;" title="Sejajarkan tepi kanan semua elemen terpilih">Lurus Kanan</button>
-                      <button type="button" id="ktsLayDistributeV" class="kts-nudge-btn" style="padding:0 9px;" title="Ratakan jarak vertikal antar elemen terpilih">Ratakan Jarak</button>
-                    </div>
-                  </div>
-
-                  <label class="kts-layout-group-check">
-                    <input type="checkbox" id="ktsLayVisibleToggle" checked />
-                    <span>Tampilkan Elemen pada Kartu</span>
-                  </label>
-
                   <div class="kts-layout-two-col">
                     <div class="kts-layout-control-row">
-                      <label for="ktsLayPosX">Posisi X</label>
+                      <label for="ktsLayPosX">X</label>
                       <div class="kts-layout-slider-pair">
                         <input type="range" id="ktsLayPosX" min="0" max="1011" step="1" />
                         <input type="number" id="ktsLayPosXNum" min="0" max="1011" step="1" />
                       </div>
                     </div>
                     <div class="kts-layout-control-row">
-                      <label for="ktsLayPosY">Posisi Y</label>
+                      <label for="ktsLayPosY">Y</label>
                       <div class="kts-layout-slider-pair">
                         <input type="range" id="ktsLayPosY" min="0" max="638" step="1" />
                         <input type="number" id="ktsLayPosYNum" min="0" max="638" step="1" />
                       </div>
                     </div>
                   </div>
+                </div>
 
-                  <div id="ktsLayTypoGroup" style="display:flex;flex-direction:column;gap:10px;border-top:1px solid #e2e8f0;padding-top:10px;">
-                    <div class="kts-layout-control-row">
-                      <label for="ktsLayFontSize">Ukuran Font (px)</label>
-                      <div class="kts-layout-slider-pair">
-                        <input type="range" id="ktsLayFontSize" min="10" max="68" step="0.5" />
-                        <input type="number" id="ktsLayFontSizeNum" min="10" max="68" step="0.5" />
-                        <button type="button" id="ktsLayFontDecBtn" class="kts-font-step-btn" title="Perkecil semua font terblok (-1px)">A-</button>
-                        <button type="button" id="ktsLayFontIncBtn" class="kts-font-step-btn" title="Perbesar semua font terblok (+1px)">A+</button>
-                      </div>
-                    </div>
-
-                    <div class="kts-layout-two-col">
-                      <div class="kts-layout-control-row">
-                        <label for="ktsLayLetterSpacing">Jarak Huruf</label>
-                        <div class="kts-layout-slider-pair">
-                          <input type="range" id="ktsLayLetterSpacing" min="-1" max="20" step="0.5" />
-                          <input type="number" id="ktsLayLetterSpacingNum" min="-1" max="20" step="0.5" />
-                        </div>
-                      </div>
-                      <div class="kts-layout-control-row">
-                        <label for="ktsLayLineGap">Jarak Baris (Line-Height)</label>
-                        <div class="kts-layout-slider-pair">
-                          <input type="range" id="ktsLayLineGap" min="12" max="64" step="1" />
-                          <input type="number" id="ktsLayLineGapNum" min="12" max="64" step="1" />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div class="kts-layout-control-row">
-                      <label for="ktsLayMaxWidth">Lebar Area Teks</label>
-                      <div class="kts-layout-slider-pair">
-                        <input type="range" id="ktsLayMaxWidth" min="120" max="960" step="2" />
-                        <input type="number" id="ktsLayMaxWidthNum" min="120" max="960" step="2" />
-                      </div>
-                    </div>
-
-                    <div class="kts-layout-control-row">
-                      <label>Gaya Teks &amp; Perataan</label>
-                      <div class="kts-style-btn-group">
-                        <button type="button" id="ktsLayBoldBtn" class="kts-style-toggle-btn" title="Tebalkan (Bold)"><strong>B</strong></button>
-                        <button type="button" id="ktsLayItalicBtn" class="kts-style-toggle-btn" title="Miring (Italic)"><em>I</em></button>
-                        <button type="button" id="ktsLayUpperBtn" class="kts-style-toggle-btn" title="Huruf Kapital Semua">AA</button>
-                        <button type="button" id="ktsLayAlignLeftBtn" class="kts-style-toggle-btn" title="Rata Kiri">Kiri</button>
-                        <button type="button" id="ktsLayAlignCenterBtn" class="kts-style-toggle-btn" title="Rata Tengah">Tengah</button>
-                        <button type="button" id="ktsLayAlignRightBtn" class="kts-style-toggle-btn" title="Rata Kanan">Kanan</button>
-                      </div>
-                    </div>
-
-                    <div id="ktsLayUnderlineWrap" class="kts-layout-control-row" style="display:none;">
-                      <label class="kts-layout-group-check">
-                        <input type="checkbox" id="ktsLayUnderlineToggle" checked />
-                        <span>Tampilkan Garis Aksen Bawah Nama</span>
-                      </label>
-                    </div>
-
-                    <div class="kts-layout-control-row">
-                      <label for="ktsLayColorPicker">Warna Teks</label>
-                      <div class="kts-color-swatch-row">
-                        <input type="color" id="ktsLayColorPicker" value="#0f172a" />
-                        <button type="button" class="kts-color-swatch" data-kts-color="#ffffff" style="background:#ffffff;" title="Putih"></button>
-                        <button type="button" class="kts-color-swatch" data-kts-color="#fde047" style="background:#fde047;" title="Emas"></button>
-                        <button type="button" class="kts-color-swatch" data-kts-color="#dcfce7" style="background:#dcfce7;" title="Hijau Muda"></button>
-                        <button type="button" class="kts-color-swatch" data-kts-color="#0f172a" style="background:#0f172a;" title="Hitam Slate"></button>
-                        <button type="button" class="kts-color-swatch" data-kts-color="#1e293b" style="background:#1e293b;" title="Abu Tua"></button>
-                        <button type="button" class="kts-color-swatch" data-kts-color="#334155" style="background:#334155;" title="Slate"></button>
-                        <button type="button" class="kts-color-swatch" data-kts-color="#15803d" style="background:#15803d;" title="Hijau"></button>
-                        <button type="button" class="kts-color-swatch" data-kts-color="#052e16" style="background:#052e16;" title="Hijau Tua"></button>
-                      </div>
-                    </div>
+                <div id="ktsLayBoxGroup" class="kts-insp-section" style="display:none;">
+                  <div class="kts-insp-section-header">
+                    <span class="kts-insp-section-title">Dimensi / Tinggi Area</span>
                   </div>
-
-                  <div id="ktsLayBoxGroup" class="kts-layout-two-col" style="display:none;border-top:1px solid #e2e8f0;padding-top:10px;">
+                  <div class="kts-layout-two-col">
                     <div class="kts-layout-control-row">
                       <label for="ktsLayBoxW">Lebar / Ukuran (px)</label>
                       <div class="kts-layout-slider-pair">
@@ -4120,11 +4060,95 @@ html, body {
                     </div>
                   </div>
                 </div>
+
+                <div id="ktsLayTypoGroup" class="kts-insp-section">
+                  <div class="kts-insp-section-header">
+                    <span class="kts-insp-section-title">Tipografi &amp; Warna</span>
+                  </div>
+
+                  <div class="kts-layout-control-row">
+                    <label for="ktsLayFontSize">Ukuran Font (px)</label>
+                    <div class="kts-layout-slider-pair">
+                      <input type="range" id="ktsLayFontSize" min="10" max="68" step="0.5" />
+                      <input type="number" id="ktsLayFontSizeNum" min="10" max="68" step="0.5" />
+                      <button type="button" id="ktsLayFontDecBtn" class="kts-font-step-btn" title="Perkecil semua font terblok (-1px)">A-</button>
+                      <button type="button" id="ktsLayFontIncBtn" class="kts-font-step-btn" title="Perbesar semua font terblok (+1px)">A+</button>
+                    </div>
+                  </div>
+
+                  <div class="kts-layout-two-col">
+                    <div class="kts-layout-control-row">
+                      <label for="ktsLayLetterSpacing">Jarak Huruf</label>
+                      <div class="kts-layout-slider-pair">
+                        <input type="range" id="ktsLayLetterSpacing" min="-1" max="20" step="0.5" />
+                        <input type="number" id="ktsLayLetterSpacingNum" min="-1" max="20" step="0.5" />
+                      </div>
+                    </div>
+                    <div class="kts-layout-control-row">
+                      <label for="ktsLayLineGap">Jarak Baris</label>
+                      <div class="kts-layout-slider-pair">
+                        <input type="range" id="ktsLayLineGap" min="12" max="64" step="1" />
+                        <input type="number" id="ktsLayLineGapNum" min="12" max="64" step="1" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="kts-layout-control-row">
+                    <label for="ktsLayMaxWidth">Lebar Area Teks</label>
+                    <div class="kts-layout-slider-pair">
+                      <input type="range" id="ktsLayMaxWidth" min="120" max="960" step="2" />
+                      <input type="number" id="ktsLayMaxWidthNum" min="120" max="960" step="2" />
+                    </div>
+                  </div>
+
+                  <div class="kts-layout-control-row">
+                    <label>Gaya &amp; Perataan</label>
+                    <div class="kts-style-unified-row">
+                      <div class="kts-style-btn-group">
+                        <button type="button" id="ktsLayBoldBtn" class="kts-style-toggle-btn" title="Tebalkan (Bold)"><strong>B</strong></button>
+                        <button type="button" id="ktsLayItalicBtn" class="kts-style-toggle-btn" title="Miring (Italic)"><em>I</em></button>
+                        <button type="button" id="ktsLayUpperBtn" class="kts-style-toggle-btn" title="Huruf Kapital Semua">AA</button>
+                      </div>
+                      <div class="kts-style-btn-group">
+                        <button type="button" id="ktsLayAlignLeftBtn" class="kts-style-toggle-btn" title="Rata Kiri">Kiri</button>
+                        <button type="button" id="ktsLayAlignCenterBtn" class="kts-style-toggle-btn" title="Rata Tengah">Tengah</button>
+                        <button type="button" id="ktsLayAlignRightBtn" class="kts-style-toggle-btn" title="Rata Kanan">Kanan</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div id="ktsLayUnderlineWrap" class="kts-layout-control-row" style="display:none;">
+                    <label class="kts-layout-group-check">
+                      <input type="checkbox" id="ktsLayUnderlineToggle" checked />
+                      <span>Tampilkan Garis Aksen Bawah Nama</span>
+                    </label>
+                  </div>
+
+                  <div class="kts-layout-control-row">
+                    <label for="ktsLayColorPicker">Warna Teks</label>
+                    <div class="kts-color-swatch-row">
+                      <input type="color" id="ktsLayColorPicker" value="#0f172a" />
+                      <button type="button" class="kts-color-swatch" data-kts-color="#ffffff" style="background:#ffffff;" title="Putih"></button>
+                      <button type="button" class="kts-color-swatch" data-kts-color="#fde047" style="background:#fde047;" title="Emas"></button>
+                      <button type="button" class="kts-color-swatch" data-kts-color="#dcfce7" style="background:#dcfce7;" title="Hijau Muda"></button>
+                      <button type="button" class="kts-color-swatch" data-kts-color="#0f172a" style="background:#0f172a;" title="Hitam Slate"></button>
+                      <button type="button" class="kts-color-swatch" data-kts-color="#1e293b" style="background:#1e293b;" title="Abu Tua"></button>
+                      <button type="button" class="kts-color-swatch" data-kts-color="#334155" style="background:#334155;" title="Slate"></button>
+                      <button type="button" class="kts-color-swatch" data-kts-color="#15803d" style="background:#15803d;" title="Hijau"></button>
+                      <button type="button" class="kts-color-swatch" data-kts-color="#052e16" style="background:#052e16;" title="Hijau Tua"></button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="student-modal-footer" style="justify-content:space-between;flex-wrap:wrap;gap:8px;">
-              <button type="button" id="ktsLayResetAllBtn" class="login-button student-btn-cancel" style="background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;">Reset Semua ke Default</button>
-              <div style="display:flex;gap:8px;">
+
+            <div class="kts-layout-footer">
+              <div class="kts-layout-footer-left">
+                <button type="button" id="ktsLayResetAllBtn" class="kts-btn-reset-subtle">Reset ke Default</button>
+                <button type="button" id="ktsLaySetDefaultBtn" class="kts-btn-default-star" title="Simpan tata letak saat ini sebagai default madrasah">&#9733; Jadikan Default</button>
+                <button type="button" id="ktsLayResetFactoryBtn" class="kts-btn-factory-link" style="display:none;" title="Kembalikan ke tata letak awal aplikasi">Reset Pabrik</button>
+              </div>
+              <div class="kts-layout-footer-right">
                 <button type="button" onclick="closeKtsLayoutModal()" class="login-button student-btn-cancel">Batal</button>
                 <button type="button" id="ktsLaySaveBtn" class="login-button student-btn-save">Simpan Layout KTS</button>
               </div>
@@ -21813,7 +21837,8 @@ function startOrOpenResponder(options) {
             custom_front_bg: '',
             custom_back_bg: '',
             signature_img: '',
-            layout_config: ''
+            layout_config: '',
+            layout_default_config: ''
         },
         selectedStudentId: null,
         selectedIds: new Set(),
@@ -21840,9 +21865,10 @@ function startOrOpenResponder(options) {
 
     const KTS_BIO_KEYS = ['nis_nisn', 'student_name', 'ttl', 'address', 'dormitory'];
     const KTS_HEADER_KEYS = ['header_title', 'header_arabic', 'school_name', 'school_address'];
+    const KTS_BACK_HEADER_KEYS = ['back_school_name', 'back_yayasan'];
 
     const DEFAULT_KTS_LAYOUT = {
-        _v: 2,
+        _v: 3,
         front: {
             header_banner:  { label: 'Banner Header',         kind: 'box',    visible: true, x: 0,   y: 0,   h: 174 },
             logo:           { label: 'Logo Madrasah',         kind: 'square', visible: true, x: 56,  y: 28,  size: 114 },
@@ -21860,47 +21886,81 @@ function startOrOpenResponder(options) {
             qrcode:         { label: 'QR Code',               kind: 'square', visible: true, x: 818, y: 436, size: 150 }
         },
         back: {
-            back_header:    { label: 'Header Belakang',       kind: 'box',    visible: true, x: 0,   y: 0,   h: 104 },
-            back_title:     { label: 'Judul Ketentuan',       kind: 'text',   visible: true, x: 54,  y: 152, fontSize: 23,   letterSpacing: 0,   lineGap: 28, maxWidth: 900, bold: true,  italic: false, uppercase: false, align: 'left',   color: '#052e16' },
-            back_rules:     { label: 'Daftar Ketentuan',      kind: 'text',   visible: true, x: 54,  y: 192, fontSize: 18.5, letterSpacing: 0,   lineGap: 28, maxWidth: 903, bold: false, italic: false, uppercase: false, align: 'left',   color: '#1e293b' },
-            back_holder:    { label: 'Pemegang Kartu',        kind: 'text',   visible: true, x: 54,  y: 434, fontSize: 22,   letterSpacing: 0,   lineGap: 32, maxWidth: 490, bold: true,  italic: false, uppercase: true,  align: 'left',   color: '#0f172a' },
-            back_signature: { label: 'Blok TTD Kepala',       kind: 'text',   visible: true, x: 785, y: 434, fontSize: 17.5, letterSpacing: 0,   lineGap: 24, maxWidth: 320, bold: true,  italic: false, uppercase: false, align: 'center', color: '#0f172a' }
+            back_header:      { label: 'Banner Header Belakang', kind: 'box',    visible: true, x: 0,   y: 0,   h: 104 },
+            back_logo:        { label: 'Logo Belakang',          kind: 'square', visible: true, x: 46,  y: 20,  size: 64 },
+            back_school_name: { label: 'Nama Madrasah (Belakang)', kind: 'text', visible: true, x: 132, y: 49,  fontSize: 28,   letterSpacing: 2.5, lineGap: 32, maxWidth: 830, bold: true,  italic: false, uppercase: true,  align: 'left', color: '#ffffff' },
+            back_yayasan:     { label: 'Yayasan (Belakang)',     kind: 'text',   visible: true, x: 132, y: 80,  fontSize: 16,   letterSpacing: 0.3, lineGap: 20, maxWidth: 830, bold: false, italic: false, uppercase: false, align: 'left', color: '#dcfce7' },
+            back_title:       { label: 'Judul Ketentuan',        kind: 'text',   visible: true, x: 54,  y: 152, fontSize: 23,   letterSpacing: 0,   lineGap: 28, maxWidth: 900, bold: true,  italic: false, uppercase: false, align: 'left', color: '#052e16' },
+            back_rules:       { label: 'Daftar Ketentuan',       kind: 'text',   visible: true, x: 54,  y: 192, fontSize: 18.5, letterSpacing: 0,   lineGap: 28, maxWidth: 903, bold: false, italic: false, uppercase: false, align: 'left', color: '#1e293b' },
+            back_holder:      { label: 'Pemegang Kartu',         kind: 'text',   visible: true, x: 54,  y: 434, fontSize: 22,   letterSpacing: 0,   lineGap: 32, maxWidth: 490, bold: true,  italic: false, uppercase: true,  align: 'left', color: '#0f172a' },
+            back_signature:   { label: 'Blok TTD Kepala',        kind: 'text',   visible: true, x: 785, y: 434, fontSize: 17.5, letterSpacing: 0,   lineGap: 24, maxWidth: 320, bold: true,  italic: false, uppercase: false, align: 'center', color: '#0f172a' }
         }
     };
 
     function cloneKtsLayout(src) {
-        const out = { _v: 2, front: {}, back: {} };
+        const out = { _v: 3, front: {}, back: {} };
         ['front', 'back'].forEach(function(sKey) {
             const baseMap = DEFAULT_KTS_LAYOUT[sKey];
             const srcMap = (src && src[sKey]) || {};
             Object.keys(baseMap).forEach(function(elKey) {
                 out[sKey][elKey] = Object.assign({}, baseMap[elKey], srcMap[elKey] || {});
+                // Always adopt updated clean labels from schema
+                out[sKey][elKey].label = baseMap[elKey].label;
             });
         });
         return out;
     }
 
     function upgradeLegacyKtsLayoutHeader(layoutObj, parsed) {
-        if (parsed && Number(parsed._v) >= 2) return layoutObj;
-        const frontHeaderKeys = ['header_banner', 'logo', 'header_title', 'header_arabic', 'school_name', 'school_address'];
-        frontHeaderKeys.forEach(function(k) {
-            layoutObj.front[k] = Object.assign({}, DEFAULT_KTS_LAYOUT.front[k]);
-        });
-        layoutObj.back.back_header = Object.assign({}, DEFAULT_KTS_LAYOUT.back.back_header);
-        if (Math.abs((Number(layoutObj.front.photo.y) || 0) - 192) <= 2) {
-            layoutObj.front.photo.y = DEFAULT_KTS_LAYOUT.front.photo.y;
+        const v = parsed ? (Number(parsed._v) || 1) : 1;
+        if (v < 2) {
+            const frontHeaderKeys = ['header_banner', 'logo', 'header_title', 'header_arabic', 'school_name', 'school_address'];
+            frontHeaderKeys.forEach(function(k) {
+                layoutObj.front[k] = Object.assign({}, DEFAULT_KTS_LAYOUT.front[k]);
+            });
+            layoutObj.back.back_header = Object.assign({}, DEFAULT_KTS_LAYOUT.back.back_header);
+            if (Math.abs((Number(layoutObj.front.photo.y) || 0) - 192) <= 2) {
+                layoutObj.front.photo.y = DEFAULT_KTS_LAYOUT.front.photo.y;
+            }
+            if (Math.abs((Number(layoutObj.front.validity.y) || 0) - 514) <= 2) {
+                layoutObj.front.validity.y = DEFAULT_KTS_LAYOUT.front.validity.y;
+            }
+            if (Math.abs((Number(layoutObj.back.back_title.y) || 0) - 120) <= 2) {
+                layoutObj.back.back_title.y = DEFAULT_KTS_LAYOUT.back.back_title.y;
+            }
+            if (Math.abs((Number(layoutObj.back.back_rules.y) || 0) - 162) <= 2) {
+                layoutObj.back.back_rules.y = DEFAULT_KTS_LAYOUT.back.back_rules.y;
+            }
         }
-        if (Math.abs((Number(layoutObj.front.validity.y) || 0) - 514) <= 2) {
-            layoutObj.front.validity.y = DEFAULT_KTS_LAYOUT.front.validity.y;
+        if (v < 3) {
+            ['back_logo', 'back_school_name', 'back_yayasan'].forEach(function(k) {
+                if (!parsed || !parsed.back || !parsed.back[k]) {
+                    layoutObj.back[k] = Object.assign({}, DEFAULT_KTS_LAYOUT.back[k]);
+                }
+            });
+            if (Math.abs((Number(layoutObj.back.back_title.y) || 0) - 120) <= 2) {
+                layoutObj.back.back_title.y = DEFAULT_KTS_LAYOUT.back.back_title.y;
+            }
+            if (Math.abs((Number(layoutObj.back.back_rules.y) || 0) - 162) <= 2) {
+                layoutObj.back.back_rules.y = DEFAULT_KTS_LAYOUT.back.back_rules.y;
+            }
         }
-        if (Math.abs((Number(layoutObj.back.back_title.y) || 0) - 120) <= 2) {
-            layoutObj.back.back_title.y = DEFAULT_KTS_LAYOUT.back.back_title.y;
-        }
-        if (Math.abs((Number(layoutObj.back.back_rules.y) || 0) - 162) <= 2) {
-            layoutObj.back.back_rules.y = DEFAULT_KTS_LAYOUT.back.back_rules.y;
-        }
-        layoutObj._v = 2;
+        layoutObj._v = 3;
         return layoutObj;
+    }
+
+    function getActiveDefaultKtsLayout(cfgOverride) {
+        const cfg = cfgOverride || ktsState.settings;
+        const rawDef = cfg && cfg.layout_default_config;
+        if (rawDef) {
+            try {
+                const parsedDef = typeof rawDef === 'string' ? JSON.parse(rawDef) : rawDef;
+                if (parsedDef && typeof parsedDef === 'object') {
+                    return upgradeLegacyKtsLayoutHeader(cloneKtsLayout(parsedDef), parsedDef);
+                }
+            } catch (_) {}
+        }
+        return cloneKtsLayout(DEFAULT_KTS_LAYOUT);
     }
 
     function getEffectiveKtsLayout(cfg) {
@@ -21908,14 +21968,14 @@ function startOrOpenResponder(options) {
             return cloneKtsLayout(cfg._draftLayout);
         }
         const raw = cfg && cfg.layout_config;
-        if (!raw) return cloneKtsLayout(DEFAULT_KTS_LAYOUT);
+        if (!raw) return getActiveDefaultKtsLayout(cfg);
         try {
             const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
             if (parsed && typeof parsed === 'object') {
                 return upgradeLegacyKtsLayoutHeader(cloneKtsLayout(parsed), parsed);
             }
         } catch (_) {}
-        return cloneKtsLayout(DEFAULT_KTS_LAYOUT);
+        return getActiveDefaultKtsLayout(cfg);
     }
 
     const ktsPhotoCache = new Map();
@@ -22654,40 +22714,31 @@ function startOrOpenResponder(options) {
                     bGoldGrad.addColorStop(1, '#eab308');
                     ctx.fillStyle = bGoldGrad;
                     ctx.fillRect(0, bh, W, 6);
-
-                    const logoSize = Math.max(44, Math.min(72, Math.round(bh * 0.62)));
-                    const logoTop = Math.max(4, Math.round((bh - logoSize) / 2));
-                    const logoX = 46;
-                    if (logoImg) {
-                        ctx.save();
-                        ctx.fillStyle = 'rgba(255,255,255,0.14)';
-                        ctx.beginPath();
-                        ctx.arc(logoX + logoSize / 2, logoTop + logoSize / 2, logoSize * 0.56, 0, Math.PI * 2);
-                        ctx.fill();
-                        ctx.drawImage(logoImg, logoX, logoTop, logoSize, logoSize);
-                        ctx.restore();
-                    }
-
-                    const textX = logoX + logoSize + 22;
-                    const maxTextW = W - textX - 42;
-                    const schoolTitleSize = Math.max(18, Math.min(34, Math.round(bh * 0.27)));
-                    const subTitleSize = Math.max(12, Math.min(20, Math.round(bh * 0.154)));
-
-                    ctx.save();
-                    ctx.fillStyle = '#ffffff';
-                    ctx.font = '800 ' + schoolTitleSize + 'px ' + fontFamily;
-                    const schoolStr = (cfg.school_name || 'MA AT-TAUJIH').toUpperCase();
-                    let sSpace = 2.5;
-                    while (sSpace > 0 && measureSpacedTextWidth(ctx, schoolStr, sSpace) > maxTextW) {
-                        sSpace = Math.max(0, sSpace - 0.5);
-                    }
-                    drawSingleLineWithSpacing(ctx, schoolStr, textX, Math.round(bh * 0.47), 'left', sSpace);
-
-                    ctx.fillStyle = '#dcfce7';
-                    ctx.font = '500 ' + subTitleSize + 'px ' + fontFamily;
-                    drawSingleLineWithSpacing(ctx, cfg.header_arabic || 'Yayasan Muwajjihul Ulum Asy-Syariyyah', textX, Math.round(bh * 0.77), 'left', 0.3);
-                    ctx.restore();
                     pushBox('back_header', lb.back_header.label, { x: 0, y: 0, w: W, h: bh + 6 });
+                }
+
+                if (logoImg && lb.back_logo && lb.back_logo.visible !== false) {
+                    const ls = Math.max(36, Math.min(140, Number(lb.back_logo.size) || 64));
+                    const lx = Number(lb.back_logo.x);
+                    const ly = Number(lb.back_logo.y);
+                    ctx.save();
+                    ctx.fillStyle = 'rgba(255,255,255,0.14)';
+                    ctx.beginPath();
+                    ctx.arc(lx + ls / 2, ly + ls / 2, ls * 0.56, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.drawImage(logoImg, lx, ly, ls, ls);
+                    ctx.restore();
+                    pushBox('back_logo', lb.back_logo.label, { x: lx, y: ly, w: ls, h: ls });
+                }
+
+                if (lb.back_school_name && lb.back_school_name.visible !== false) {
+                    const bsRes = drawKtsLayoutTextBlock(ctx, cfg.school_name || 'MA AT-TAUJIH', lb.back_school_name, fontFamily, { maxLines: 1, normalWeight: '600', boldWeight: '800', autoFitSingleLine: true });
+                    pushBox('back_school_name', lb.back_school_name.label, bsRes.box);
+                }
+
+                if (lb.back_yayasan && lb.back_yayasan.visible !== false) {
+                    const byRes = drawKtsLayoutTextBlock(ctx, cfg.header_arabic || 'Yayasan Muwajjihul Ulum Asy-Syariyyah', lb.back_yayasan, fontFamily, { maxLines: 1, normalWeight: '500', boldWeight: '700', autoFitSingleLine: true });
+                    pushBox('back_yayasan', lb.back_yayasan.label, byRes.box);
                 }
             }
 
@@ -23338,7 +23389,8 @@ function startOrOpenResponder(options) {
             custom_front_bg: ktsState.tplDraftImages.custom_front_bg || '',
             custom_back_bg: ktsState.tplDraftImages.custom_back_bg || '',
             signature_img: ktsState.tplDraftImages.signature_img || '',
-            layout_config: ktsState.settings.layout_config || ''
+            layout_config: ktsState.settings.layout_config || '',
+            layout_default_config: ktsState.settings.layout_default_config || ''
         };
 
         showModalProcessing('ktsTemplateModal', 'Menyimpan Template KTS...', 'Memperbarui tampilan kartu seluruh madrasah...');
@@ -23457,8 +23509,11 @@ function startOrOpenResponder(options) {
 
     function selectKtsQuickBlock(blockType) {
         if (blockType === 'header') {
-            ktsState.layoutSide = 'front';
-            setKtsSelectedKeys(KTS_HEADER_KEYS, 'school_name');
+            if (ktsState.layoutSide === 'back') {
+                setKtsSelectedKeys(KTS_BACK_HEADER_KEYS, 'back_school_name');
+            } else {
+                setKtsSelectedKeys(KTS_HEADER_KEYS, 'school_name');
+            }
             return;
         }
         if (blockType === 'bio') {
@@ -23607,9 +23662,21 @@ function startOrOpenResponder(options) {
         if (frontBtn) frontBtn.classList.toggle('active', ktsState.layoutSide === 'front');
         if (backBtn) backBtn.classList.toggle('active', ktsState.layoutSide === 'back');
 
-        const groupChk = document.getElementById('ktsLayMoveBioGroup');
-        if (groupChk && groupChk.parentElement) {
-            groupChk.parentElement.style.display = ktsState.layoutSide === 'front' ? '' : 'none';
+        const blkHdrBtn = document.getElementById('ktsLaySelectHeaderBtn');
+        if (blkHdrBtn) blkHdrBtn.textContent = ktsState.layoutSide === 'back' ? 'Blok Kop Belakang' : 'Blok 4 Kop';
+
+        const blkBioBtn = document.getElementById('ktsLaySelectBioBtn');
+        if (blkBioBtn) blkBioBtn.style.display = ktsState.layoutSide === 'front' ? '' : 'none';
+
+        const bioWrap = document.getElementById('ktsLayMoveBioGroupWrap');
+        const hasBioSel = selKeys.some(function(k) { return KTS_BIO_KEYS.indexOf(k) !== -1; });
+        if (bioWrap) {
+            bioWrap.style.display = (ktsState.layoutSide === 'front' && hasBioSel) ? 'inline-flex' : 'none';
+        }
+
+        const factoryBtn = document.getElementById('ktsLayResetFactoryBtn');
+        if (factoryBtn) {
+            factoryBtn.style.display = (ktsState.settings && ktsState.settings.layout_default_config) ? 'inline-block' : 'none';
         }
 
         const multiAlignGrp = document.getElementById('ktsLayMultiAlignGroup');
@@ -23632,6 +23699,10 @@ function startOrOpenResponder(options) {
             if (n) { n.value = val; n.disabled = Boolean(disabled); }
         };
 
+        const posGroup = document.getElementById('ktsLayPosGroup');
+        const onlyBoxSelected = selKeys.length === 1 && el.kind === 'box';
+        if (posGroup) posGroup.style.display = onlyBoxSelected ? 'none' : 'flex';
+
         setPair('ktsLayPosX', 'ktsLayPosXNum', Math.round(Number(el.x) || 0), el.kind === 'box');
         setPair('ktsLayPosY', 'ktsLayPosYNum', Math.round(Number(el.y) || 0), el.kind === 'box');
 
@@ -23641,7 +23712,7 @@ function startOrOpenResponder(options) {
         const textRef = el.kind === 'text' ? el : selTexts[0];
 
         if (typoGroup) typoGroup.style.display = hasText ? 'flex' : 'none';
-        if (boxGroup) boxGroup.style.display = (selKeys.length === 1 && el.kind !== 'text') ? 'grid' : 'none';
+        if (boxGroup) boxGroup.style.display = (selKeys.length === 1 && el.kind !== 'text') ? 'flex' : 'none';
 
         if (hasText && textRef) {
             setPair('ktsLayFontSize', 'ktsLayFontSizeNum', Number(textRef.fontSize) || 18, false);
@@ -24126,7 +24197,8 @@ function startOrOpenResponder(options) {
 
     function resetCurrentKtsLayoutElement() {
         const sideMap = getKtsLayoutSideMap();
-        const baseMap = DEFAULT_KTS_LAYOUT[ktsState.layoutSide] || {};
+        const activeDef = getActiveDefaultKtsLayout();
+        const baseMap = activeDef[ktsState.layoutSide] || DEFAULT_KTS_LAYOUT[ktsState.layoutSide] || {};
         getKtsSelectedKeys().forEach(function(k) {
             if (baseMap[k]) sideMap[k] = Object.assign({}, baseMap[k]);
         });
@@ -24136,17 +24208,69 @@ function startOrOpenResponder(options) {
     }
 
     function resetAllKtsLayout() {
-        ktsState.layoutDraft = cloneKtsLayout(DEFAULT_KTS_LAYOUT);
+        ktsState.layoutDraft = cloneKtsLayout(getActiveDefaultKtsLayout());
         commitKtsLayoutHistory();
         syncKtsLayoutInspectorFromState();
         scheduleKtsLayoutEditorRender();
+    }
+
+    async function resetFactoryKtsLayout() {
+        ktsState.layoutDraft = cloneKtsLayout(DEFAULT_KTS_LAYOUT);
+        showModalProcessing('ktsLayoutEditorModal', 'Mengembalikan Reset Pabrik...', 'Menghapus default kustom & memulihkan tata letak awal aplikasi...');
+        try {
+            const res = await simataClient.updateKtsSettings({ layout_config: '', layout_default_config: '' });
+            if (res && res.data) ktsState.settings = Object.assign({}, ktsState.settings, res.data);
+            else {
+                ktsState.settings.layout_config = '';
+                ktsState.settings.layout_default_config = '';
+            }
+            resetKtsLayoutHistory();
+            syncKtsLayoutInspectorFromState();
+            await renderKtsLayoutEditorCanvas();
+            await refreshKtsPreviewCanvas();
+            hideModalProcessing('ktsLayoutEditorModal');
+            if (typeof showToast === 'function') {
+                showToast('success', 'Reset Pabrik Berhasil', 'Tata letak dikembalikan ke setelan awal aplikasi.');
+            }
+        } catch (err) {
+            hideModalProcessing('ktsLayoutEditorModal');
+            alert('Gagal reset pabrik layout KTS: ' + (err.message || err));
+        }
+    }
+
+    async function setCurrentLayoutAsDefault() {
+        flushKtsLayoutHistoryCommit();
+        if (!ktsState.layoutDraft) return;
+        ktsState.layoutDraft._v = 3;
+        const jsonStr = JSON.stringify(ktsState.layoutDraft);
+        showModalProcessing('ktsLayoutEditorModal', 'Menyimpan Sebagai Default...', 'Menjadikan tata letak saat ini sebagai default resmi madrasah...');
+        try {
+            const res = await simataClient.updateKtsSettings({
+                layout_config: jsonStr,
+                layout_default_config: jsonStr
+            });
+            if (res && res.data) ktsState.settings = Object.assign({}, ktsState.settings, res.data);
+            else {
+                ktsState.settings.layout_config = jsonStr;
+                ktsState.settings.layout_default_config = jsonStr;
+            }
+            hideModalProcessing('ktsLayoutEditorModal');
+            syncKtsLayoutInspectorFromState();
+            await refreshKtsPreviewCanvas();
+            if (typeof showToast === 'function') {
+                showToast('success', 'Default Diperbarui', 'Layout saat ini disimpan sebagai default KTS.');
+            }
+        } catch (err) {
+            hideModalProcessing('ktsLayoutEditorModal');
+            alert('Gagal menyimpan default layout KTS: ' + (err.message || err));
+        }
     }
 
     function openKtsLayoutModal() {
         if (!isCurrentUserAdmin) return;
         ktsState.layoutSide = ktsState.side === 'back' ? 'back' : 'front';
         ktsState.layoutDraft = cloneKtsLayout(getEffectiveKtsLayout(ktsState.settings));
-        const initKey = ktsState.layoutSide === 'back' ? 'back_rules' : 'student_name';
+        const initKey = ktsState.layoutSide === 'back' ? 'back_school_name' : 'student_name';
         ktsState.layoutSelectedEl = initKey;
         ktsState.layoutSelectedEls = [initKey];
         ktsLayoutActiveGuides = [];
@@ -24174,7 +24298,7 @@ function startOrOpenResponder(options) {
     async function saveKtsLayoutSettings() {
         flushKtsLayoutHistoryCommit();
         if (!ktsState.layoutDraft) return;
-        ktsState.layoutDraft._v = 2;
+        ktsState.layoutDraft._v = 3;
         const payload = {
             layout_config: JSON.stringify(ktsState.layoutDraft)
         };
@@ -24674,7 +24798,7 @@ function startOrOpenResponder(options) {
         });
         if (layBackBtn) layBackBtn.addEventListener('click', function() {
             ktsState.layoutSide = 'back';
-            setKtsSelectedKeys(['back_rules'], 'back_rules');
+            setKtsSelectedKeys(['back_school_name'], 'back_school_name');
         });
 
         const layUndoBtn = document.getElementById('ktsLayUndoBtn');
@@ -24885,8 +25009,22 @@ function startOrOpenResponder(options) {
 
         const rstAllBtn = document.getElementById('ktsLayResetAllBtn');
         if (rstAllBtn) rstAllBtn.addEventListener('click', function() {
-            if (confirm('Kembalikan seluruh posisi, jarak, dan ukuran font KTS ke pengaturan bawaan?')) {
+            if (confirm('Kembalikan seluruh posisi, jarak, dan ukuran font KTS ke pengaturan default?')) {
                 resetAllKtsLayout();
+            }
+        });
+
+        const setDefaultBtn = document.getElementById('ktsLaySetDefaultBtn');
+        if (setDefaultBtn) setDefaultBtn.addEventListener('click', function() {
+            if (confirm('Jadikan posisi, jarak & ukuran font saat ini sebagai pengaturan default KTS madrasah?')) {
+                setCurrentLayoutAsDefault();
+            }
+        });
+
+        const resetFactoryBtn = document.getElementById('ktsLayResetFactoryBtn');
+        if (resetFactoryBtn) resetFactoryBtn.addEventListener('click', function() {
+            if (confirm('Kembalikan default madrasah ke tata letak awal aplikasi (pabrik)?')) {
+                resetFactoryKtsLayout();
             }
         });
 
