@@ -5992,6 +5992,12 @@ select.attendance-filter-control {
   border: 0;
 }
 
+#ktsLayoutEditorModal *,
+#ktsLayoutEditorModal *::before,
+#ktsLayoutEditorModal *::after {
+  box-sizing: border-box;
+}
+
 .kts-layout-modal-card {
   max-width: 1240px;
   width: 96vw;
@@ -6083,14 +6089,16 @@ select.attendance-filter-control {
 .kts-layout-workspace {
   flex: 1 1 auto;
   min-height: 0;
+  min-width: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 370px;
+  grid-template-columns: minmax(0, 1fr) clamp(350px, 34%, 400px);
   overflow: hidden;
 }
 
 .kts-layout-stage-wrap {
   height: 100%;
   min-height: 0;
+  min-width: 0;
   background-color: #f1f5f9;
   background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
   background-size: 16px 16px;
@@ -6106,6 +6114,7 @@ select.attendance-filter-control {
 .kts-layout-canvas-frame {
   flex: 1 1 auto;
   min-height: 0;
+  min-width: 0;
   width: 100%;
   display: flex;
   align-items: center;
@@ -6196,6 +6205,9 @@ select.attendance-filter-control {
 
 .kts-layout-inspector-card {
   height: 100%;
+  width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
   overflow-y: auto;
   border-left: 1px solid #e2e8f0;
   background: #f8fafc;
@@ -6210,6 +6222,9 @@ select.attendance-filter-control {
   border: 1px solid #e2e8f0;
   border-radius: 11px;
   padding: 11px 12px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   display: flex;
   flex-direction: column;
   gap: 9px;
@@ -6217,9 +6232,11 @@ select.attendance-filter-control {
 
 .kts-insp-section-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 6px 8px;
+  min-width: 0;
 }
 
 .kts-insp-section-title {
@@ -6256,6 +6273,7 @@ select.attendance-filter-control {
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
+  min-width: 0;
 }
 
 .kts-layout-el-chip {
@@ -6266,6 +6284,7 @@ select.attendance-filter-control {
   color: #334155;
   font-size: 11px;
   font-weight: 600;
+  max-width: 100%;
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -6296,6 +6315,8 @@ select.attendance-filter-control {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
+  width: 100%;
 }
 
 .kts-layout-control-row label {
@@ -6306,25 +6327,33 @@ select.attendance-filter-control {
 
 .kts-layout-two-col {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 8px;
+  min-width: 0;
+  width: 100%;
 }
 
 .kts-layout-slider-pair {
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
+  width: 100%;
 }
 
 .kts-layout-slider-pair input[type="range"] {
-  flex: 1 1 auto;
+  flex: 1 1 0;
+  width: 0;
   min-width: 0;
+  max-width: 100%;
   accent-color: #166534;
   cursor: pointer;
 }
 
 .kts-layout-slider-pair input[type="number"] {
-  width: 56px;
+  flex: 0 0 54px;
+  width: 54px;
+  min-width: 0;
   height: 30px;
   padding: 2px 4px;
   border: 1px solid #cbd5e1;
@@ -6505,6 +6534,8 @@ select.attendance-filter-control {
   border-radius: 10px;
   background: #eff6ff;
   border: 1px solid #bfdbfe;
+  width: 100%;
+  min-width: 0;
 }
 
 .kts-multi-align-group label {
@@ -6517,6 +6548,7 @@ select.attendance-filter-control {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex: 0 0 auto;
   height: 30px;
   min-width: 30px;
   padding: 0 7px;
