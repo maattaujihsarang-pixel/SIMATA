@@ -22300,58 +22300,32 @@ function startOrOpenResponder(options) {
         if (side === 'back') {
             const bgGrad = ctx.createLinearGradient(0, 0, W, H);
             bgGrad.addColorStop(0, '#ffffff');
-            bgGrad.addColorStop(0.52, '#f8fafc');
+            bgGrad.addColorStop(0.5, '#f6fbf8');
             bgGrad.addColorStop(1, '#ecfdf5');
             ctx.fillStyle = bgGrad;
             ctx.fillRect(0, 0, W, H);
 
+            // Subtle overlapping circular watermark motifs (matching front KTS style, balanced diagonally)
             ctx.save();
-            // Flowing translucent emerald abstract wave along right margin
-            ctx.fillStyle = 'rgba(22, 163, 74, 0.055)';
+            ctx.globalAlpha = 0.052;
+            ctx.fillStyle = '#166534';
+
+            // Upper-right circular motif (filling empty area beside Ketentuan)
             ctx.beginPath();
-            ctx.moveTo(695, 96);
-            ctx.bezierCurveTo(795, 205, 675, 335, 835, 435);
-            ctx.quadraticCurveTo(935, 498, W, 565);
-            ctx.lineTo(W, 96);
-            ctx.closePath();
+            ctx.arc(885, 225, 195, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(765, 315, 130, 0, Math.PI * 2);
             ctx.fill();
 
-            // Overlapping deeper emerald wave layer
-            ctx.fillStyle = 'rgba(15, 81, 50, 0.045)';
+            // Bottom-left circular motif (softly grounding PEMEGANG KARTU area)
             ctx.beginPath();
-            ctx.moveTo(795, 96);
-            ctx.bezierCurveTo(880, 215, 770, 345, W, 475);
-            ctx.lineTo(W, 96);
-            ctx.closePath();
+            ctx.arc(135, 535, 195, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(285, 595, 135, 0, Math.PI * 2);
             ctx.fill();
 
-            // Delicate translucent gold hairline wave accent
-            ctx.strokeStyle = 'rgba(234, 179, 8, 0.17)';
-            ctx.lineWidth = 2.5;
-            ctx.beginPath();
-            ctx.moveTo(738, 108);
-            ctx.bezierCurveTo(832, 212, 725, 332, W, 408);
-            ctx.stroke();
-
-            // Subtle upper-right geometric circular watermark rings
-            ctx.fillStyle = 'rgba(22, 101, 52, 0.04)';
-            ctx.beginPath();
-            ctx.arc(912, 236, 132, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = 'rgba(22, 163, 74, 0.065)';
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            ctx.arc(912, 236, 162, 0, Math.PI * 2);
-            ctx.stroke();
-
-            // Soft bottom-left wave corner fill
-            ctx.fillStyle = 'rgba(22, 163, 74, 0.042)';
-            ctx.beginPath();
-            ctx.moveTo(0, 560);
-            ctx.quadraticCurveTo(210, 622, 470, H);
-            ctx.lineTo(0, H);
-            ctx.closePath();
-            ctx.fill();
             ctx.restore();
             return;
         }
