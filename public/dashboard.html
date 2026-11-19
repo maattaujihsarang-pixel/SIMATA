@@ -16,6 +16,9 @@
 
   <title>SIMATA | Dashboard</title>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css?v=bug51b">
   <link rel="stylesheet" href="/css/notifications.css">
   <link rel="stylesheet" href="/css/finance.css">
@@ -21839,15 +21842,16 @@ function startOrOpenResponder(options) {
     const KTS_HEADER_KEYS = ['header_title', 'header_arabic', 'school_name', 'school_address'];
 
     const DEFAULT_KTS_LAYOUT = {
+        _v: 2,
         front: {
-            header_banner:  { label: 'Banner Header',         kind: 'box',    visible: true, x: 0,   y: 0,   h: 156 },
-            logo:           { label: 'Logo Madrasah',         kind: 'square', visible: true, x: 68,  y: 30,  size: 104 },
-            header_title:   { label: 'Judul Kartu (Baris 1)', kind: 'text',   visible: true, x: 588, y: 30,  fontSize: 15,   letterSpacing: 2.5, lineGap: 20, maxWidth: 750, bold: false, italic: false, uppercase: true,  align: 'center', color: '#fde047' },
-            header_arabic:  { label: 'Yayasan (Baris 2)',     kind: 'text',   visible: true, x: 588, y: 55,  fontSize: 16.5, letterSpacing: 0,   lineGap: 22, maxWidth: 750, bold: false, italic: false, uppercase: false, align: 'center', color: '#f0fdf4' },
-            school_name:    { label: 'Nama Madrasah (Baris 3)',kind: 'text',  visible: true, x: 588, y: 102, fontSize: 38,   letterSpacing: 8,   lineGap: 44, maxWidth: 750, bold: true,  italic: false, uppercase: true,  align: 'center', color: '#ffffff' },
-            school_address: { label: 'Alamat Madrasah (B.4)', kind: 'text',   visible: true, x: 588, y: 132, fontSize: 13.5, letterSpacing: 0,   lineGap: 18, maxWidth: 750, bold: false, italic: false, uppercase: false, align: 'center', color: '#dcfce7' },
-            photo:          { label: 'Pasfoto 3x4',           kind: 'rect',   visible: true, x: 52,  y: 192, w: 220, h: 294 },
-            validity:       { label: 'Masa Berlaku',          kind: 'text',   visible: true, x: 162, y: 514, fontSize: 14,   letterSpacing: 0,   lineGap: 18, maxWidth: 244, bold: false, italic: true,  uppercase: false, align: 'center', color: '#475569' },
+            header_banner:  { label: 'Banner Header',         kind: 'box',    visible: true, x: 0,   y: 0,   h: 174 },
+            logo:           { label: 'Logo Madrasah',         kind: 'square', visible: true, x: 56,  y: 28,  size: 114 },
+            header_title:   { label: 'Judul Kartu (Baris 1)', kind: 'text',   visible: true, x: 583, y: 37,  fontSize: 17.5, letterSpacing: 6,   lineGap: 22, maxWidth: 770, bold: true,  italic: false, uppercase: true,  align: 'center', color: '#fde047' },
+            header_arabic:  { label: 'Yayasan (Baris 2)',     kind: 'text',   visible: true, x: 583, y: 67,  fontSize: 21,   letterSpacing: 0.6, lineGap: 24, maxWidth: 770, bold: false, italic: false, uppercase: false, align: 'center', color: '#f0fdf4' },
+            school_name:    { label: 'Nama Madrasah (Baris 3)',kind: 'text',  visible: true, x: 583, y: 121, fontSize: 47,   letterSpacing: 11,  lineGap: 52, maxWidth: 770, bold: true,  italic: false, uppercase: true,  align: 'center', color: '#ffffff' },
+            school_address: { label: 'Alamat Madrasah (B.4)', kind: 'text',   visible: true, x: 583, y: 152, fontSize: 16,   letterSpacing: 0.2, lineGap: 20, maxWidth: 775, bold: false, italic: false, uppercase: false, align: 'center', color: '#dcfce7' },
+            photo:          { label: 'Pasfoto 3x4',           kind: 'rect',   visible: true, x: 52,  y: 196, w: 220, h: 294 },
+            validity:       { label: 'Masa Berlaku',          kind: 'text',   visible: true, x: 162, y: 518, fontSize: 14,   letterSpacing: 0,   lineGap: 18, maxWidth: 244, bold: false, italic: true,  uppercase: false, align: 'center', color: '#475569' },
             nis_nisn:       { label: 'NIS / NISN',            kind: 'text',   visible: true, x: 308, y: 224, fontSize: 21,   letterSpacing: 0,   lineGap: 26, maxWidth: 666, bold: false, italic: false, uppercase: false, align: 'left',   color: '#334155' },
             student_name:   { label: 'Nama Siswa',            kind: 'text',   visible: true, x: 308, y: 270, fontSize: 31,   letterSpacing: 0,   lineGap: 34, maxWidth: 666, bold: true,  italic: false, uppercase: true,  align: 'left',   color: '#0f172a', showUnderline: true },
             ttl:            { label: 'Tempat, Tgl Lahir',     kind: 'text',   visible: true, x: 308, y: 322, fontSize: 21,   letterSpacing: 0,   lineGap: 26, maxWidth: 666, bold: false, italic: false, uppercase: false, align: 'left',   color: '#1e293b' },
@@ -21856,16 +21860,16 @@ function startOrOpenResponder(options) {
             qrcode:         { label: 'QR Code',               kind: 'square', visible: true, x: 818, y: 436, size: 150 }
         },
         back: {
-            back_header:    { label: 'Header Belakang',       kind: 'box',    visible: true, x: 0,   y: 0,   h: 68 },
-            back_title:     { label: 'Judul Ketentuan',       kind: 'text',   visible: true, x: 54,  y: 120, fontSize: 23,   letterSpacing: 0,   lineGap: 28, maxWidth: 900, bold: true,  italic: false, uppercase: false, align: 'left',   color: '#052e16' },
-            back_rules:     { label: 'Daftar Ketentuan',      kind: 'text',   visible: true, x: 54,  y: 162, fontSize: 18.5, letterSpacing: 0,   lineGap: 28, maxWidth: 903, bold: false, italic: false, uppercase: false, align: 'left',   color: '#1e293b' },
+            back_header:    { label: 'Header Belakang',       kind: 'box',    visible: true, x: 0,   y: 0,   h: 104 },
+            back_title:     { label: 'Judul Ketentuan',       kind: 'text',   visible: true, x: 54,  y: 152, fontSize: 23,   letterSpacing: 0,   lineGap: 28, maxWidth: 900, bold: true,  italic: false, uppercase: false, align: 'left',   color: '#052e16' },
+            back_rules:     { label: 'Daftar Ketentuan',      kind: 'text',   visible: true, x: 54,  y: 192, fontSize: 18.5, letterSpacing: 0,   lineGap: 28, maxWidth: 903, bold: false, italic: false, uppercase: false, align: 'left',   color: '#1e293b' },
             back_holder:    { label: 'Pemegang Kartu',        kind: 'text',   visible: true, x: 54,  y: 434, fontSize: 22,   letterSpacing: 0,   lineGap: 32, maxWidth: 490, bold: true,  italic: false, uppercase: true,  align: 'left',   color: '#0f172a' },
             back_signature: { label: 'Blok TTD Kepala',       kind: 'text',   visible: true, x: 785, y: 434, fontSize: 17.5, letterSpacing: 0,   lineGap: 24, maxWidth: 320, bold: true,  italic: false, uppercase: false, align: 'center', color: '#0f172a' }
         }
     };
 
     function cloneKtsLayout(src) {
-        const out = { front: {}, back: {} };
+        const out = { _v: 2, front: {}, back: {} };
         ['front', 'back'].forEach(function(sKey) {
             const baseMap = DEFAULT_KTS_LAYOUT[sKey];
             const srcMap = (src && src[sKey]) || {};
@@ -21874,6 +21878,29 @@ function startOrOpenResponder(options) {
             });
         });
         return out;
+    }
+
+    function upgradeLegacyKtsLayoutHeader(layoutObj, parsed) {
+        if (parsed && Number(parsed._v) >= 2) return layoutObj;
+        const frontHeaderKeys = ['header_banner', 'logo', 'header_title', 'header_arabic', 'school_name', 'school_address'];
+        frontHeaderKeys.forEach(function(k) {
+            layoutObj.front[k] = Object.assign({}, DEFAULT_KTS_LAYOUT.front[k]);
+        });
+        layoutObj.back.back_header = Object.assign({}, DEFAULT_KTS_LAYOUT.back.back_header);
+        if (Math.abs((Number(layoutObj.front.photo.y) || 0) - 192) <= 2) {
+            layoutObj.front.photo.y = DEFAULT_KTS_LAYOUT.front.photo.y;
+        }
+        if (Math.abs((Number(layoutObj.front.validity.y) || 0) - 514) <= 2) {
+            layoutObj.front.validity.y = DEFAULT_KTS_LAYOUT.front.validity.y;
+        }
+        if (Math.abs((Number(layoutObj.back.back_title.y) || 0) - 120) <= 2) {
+            layoutObj.back.back_title.y = DEFAULT_KTS_LAYOUT.back.back_title.y;
+        }
+        if (Math.abs((Number(layoutObj.back.back_rules.y) || 0) - 162) <= 2) {
+            layoutObj.back.back_rules.y = DEFAULT_KTS_LAYOUT.back.back_rules.y;
+        }
+        layoutObj._v = 2;
+        return layoutObj;
     }
 
     function getEffectiveKtsLayout(cfg) {
@@ -21885,7 +21912,7 @@ function startOrOpenResponder(options) {
         try {
             const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
             if (parsed && typeof parsed === 'object') {
-                return cloneKtsLayout(parsed);
+                return upgradeLegacyKtsLayoutHeader(cloneKtsLayout(parsed), parsed);
             }
         } catch (_) {}
         return cloneKtsLayout(DEFAULT_KTS_LAYOUT);
@@ -22267,6 +22294,27 @@ function startOrOpenResponder(options) {
         return totalW;
     }
 
+    let ktsFontLoadPromise = null;
+    function ensureKtsFontsLoaded() {
+        if (ktsFontLoadPromise) return ktsFontLoadPromise;
+        if (!document.fonts || typeof document.fonts.load !== 'function') {
+            ktsFontLoadPromise = Promise.resolve();
+            return ktsFontLoadPromise;
+        }
+        ktsFontLoadPromise = Promise.race([
+            Promise.all([
+                document.fonts.load('400 16px Montserrat'),
+                document.fonts.load('500 16px Montserrat'),
+                document.fonts.load('600 16px Montserrat'),
+                document.fonts.load('700 16px Montserrat'),
+                document.fonts.load('800 32px Montserrat'),
+                document.fonts.load('italic 400 14px Montserrat')
+            ]).catch(function() { return []; }),
+            new Promise(function(resolve) { setTimeout(resolve, 1200); })
+        ]);
+        return ktsFontLoadPromise;
+    }
+
     function drawKtsLayoutTextBlock(ctx, text, elCfg, family, opts) {
         const cfg = elCfg || {};
         const o = opts || {};
@@ -22286,7 +22334,9 @@ function startOrOpenResponder(options) {
         if (cfg.uppercase) raw = raw.toUpperCase();
 
         ctx.save();
-        ctx.font = fontStyle + weight + ' ' + fontSize + 'px ' + family;
+        let activeFontSize = fontSize;
+        let activeLetterSpacing = letterSpacing;
+        ctx.font = fontStyle + weight + ' ' + activeFontSize + 'px ' + family;
         if (o.withShadow) {
             ctx.shadowColor = 'rgba(0, 0, 0, 0.38)';
             ctx.shadowBlur = 8;
@@ -22296,16 +22346,35 @@ function startOrOpenResponder(options) {
         ctx.fillStyle = color;
 
         const maxLines = Math.max(1, Number(o.maxLines) || 1);
-        const wrapLimit = Math.abs(letterSpacing) > 0.2 ? Math.max(60, maxWidth * 0.88) : maxWidth;
+        const wrapLimit = Math.abs(activeLetterSpacing) > 0.2 ? Math.max(60, maxWidth * 0.88) : maxWidth;
+        const measureLineWith = function(s, ls) {
+            return Math.abs(ls) >= 0.05 ? measureSpacedTextWidth(ctx, s, ls) : ctx.measureText(s).width;
+        };
         let lines = [];
         if (maxLines > 1) {
             lines = wrapTextLines(ctx, raw, wrapLimit, maxLines);
         } else {
+            if (o.autoFitSingleLine && measureLineWith(raw, activeLetterSpacing) > maxWidth) {
+                if (activeLetterSpacing > 0) {
+                    if (measureLineWith(raw, 0) <= maxWidth) {
+                        let low = 0, high = activeLetterSpacing;
+                        for (let iter = 0; iter < 8; iter++) {
+                            const mid = (low + high) / 2;
+                            if (measureLineWith(raw, mid) <= maxWidth) low = mid;
+                            else high = mid;
+                        }
+                        activeLetterSpacing = Math.floor(low * 4) / 4;
+                    } else {
+                        activeLetterSpacing = 0;
+                    }
+                }
+                while (activeFontSize > 10 && measureLineWith(raw, activeLetterSpacing) > maxWidth) {
+                    activeFontSize = Math.max(10, Math.round((activeFontSize - 0.5) * 2) / 2);
+                    ctx.font = fontStyle + weight + ' ' + activeFontSize + 'px ' + family;
+                }
+            }
             let out = raw;
-            const measureLine = function(s) {
-                return Math.abs(letterSpacing) >= 0.05 ? measureSpacedTextWidth(ctx, s, letterSpacing) : ctx.measureText(s).width;
-            };
-            while (out.length > 3 && measureLine(out) > maxWidth) {
+            while (out.length > 3 && measureLineWith(out, activeLetterSpacing) > maxWidth) {
                 out = out.slice(0, -1);
             }
             if (out !== raw) out = out.trim() + '...';
@@ -22314,7 +22383,7 @@ function startOrOpenResponder(options) {
 
         let maxRenderedW = 0;
         lines.forEach(function(line, idx) {
-            const w = drawSingleLineWithSpacing(ctx, line, x, y + idx * lineGap, align, letterSpacing);
+            const w = drawSingleLineWithSpacing(ctx, line, x, y + idx * lineGap, align, activeLetterSpacing);
             if (w > maxRenderedW) maxRenderedW = w;
         });
         ctx.restore();
@@ -22323,8 +22392,8 @@ function startOrOpenResponder(options) {
         let boxX = x - 6;
         if (align === 'center') boxX = x - boxW / 2 - 6;
         else if (align === 'right') boxX = x - boxW - 6;
-        const boxTop = y - fontSize - 2;
-        const boxH = Math.max(fontSize + 10, (lines.length - 1) * lineGap + fontSize + 10);
+        const boxTop = y - activeFontSize - 2;
+        const boxH = Math.max(activeFontSize + 10, (lines.length - 1) * lineGap + activeFontSize + 10);
         return {
             linesCount: lines.length,
             renderedWidth: maxRenderedW,
@@ -22344,7 +22413,7 @@ function startOrOpenResponder(options) {
         const cfg = settings || ktsState.settings;
         const st = student || {};
         const cardSide = side === 'back' ? 'back' : 'front';
-        const fontFamily = '"Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif';
+        const fontFamily = '"Montserrat", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif';
         const lay = getEffectiveKtsLayout(cfg);
         const pushBox = function(id, label, box) {
             if (!Array.isArray(outHitBoxes) || !box) return;
@@ -22356,7 +22425,8 @@ function startOrOpenResponder(options) {
             cfg.custom_front_bg ? loadAssetImage(cfg.custom_front_bg) : Promise.resolve(null),
             cfg.custom_back_bg ? loadAssetImage(cfg.custom_back_bg) : Promise.resolve(null),
             cfg.signature_img ? loadAssetImage(cfg.signature_img) : Promise.resolve(null),
-            cardSide === 'front' ? getKtsStudentPhotoAsset(st) : Promise.resolve(null)
+            cardSide === 'front' ? getKtsStudentPhotoAsset(st) : Promise.resolve(null),
+            ensureKtsFontsLoaded()
         ]);
 
         ctx.clearRect(0, 0, W, H);
@@ -22372,9 +22442,9 @@ function startOrOpenResponder(options) {
                 drawKtsDecorativeBackground(ctx, W, H, 'front');
 
                 if (lf.header_banner.visible !== false) {
-                    const bh = Math.max(60, Math.min(240, Number(lf.header_banner.h) || 156));
-                    const rightY = Math.max(48, bh - 8);
-                    const ctrlY = bh + 32;
+                    const bh = Math.max(60, Math.min(240, Number(lf.header_banner.h) || 174));
+                    const rightY = Math.max(48, bh - 6);
+                    const ctrlY = bh + 22;
 
                     const headGrad = ctx.createLinearGradient(0, 0, W, bh + 24);
                     headGrad.addColorStop(0, '#0f3f26');
@@ -22404,9 +22474,9 @@ function startOrOpenResponder(options) {
                 }
 
                 if (logoImg && lf.logo.visible !== false) {
-                    const ls = Math.max(40, Math.min(180, Number(lf.logo.size) || 104));
-                    const lx = Number(lf.logo.x) || 68;
-                    const ly = Number(lf.logo.y) || 30;
+                    const ls = Math.max(40, Math.min(180, Number(lf.logo.size) || 114));
+                    const lx = Number(lf.logo.x) || 56;
+                    const ly = Number(lf.logo.y) || 28;
                     ctx.save();
                     ctx.fillStyle = 'rgba(255,255,255,0.14)';
                     ctx.beginPath();
@@ -22418,19 +22488,19 @@ function startOrOpenResponder(options) {
                 }
 
                 if (lf.header_title.visible !== false) {
-                    const r1 = drawKtsLayoutTextBlock(ctx, cfg.header_title || 'KARTU IDENTITAS SISWA', lf.header_title, fontFamily, { maxLines: 1, normalWeight: '600', boldWeight: '800' });
+                    const r1 = drawKtsLayoutTextBlock(ctx, cfg.header_title || 'KARTU IDENTITAS SISWA', lf.header_title, fontFamily, { maxLines: 1, normalWeight: '600', boldWeight: '800', autoFitSingleLine: true });
                     pushBox('header_title', lf.header_title.label, r1.box);
                 }
                 if (lf.header_arabic.visible !== false) {
-                    const r2 = drawKtsLayoutTextBlock(ctx, cfg.header_arabic || 'Yayasan Muwajjihul Ulum Asy-Syariyyah', lf.header_arabic, fontFamily, { maxLines: 1, normalWeight: '400', boldWeight: '700' });
+                    const r2 = drawKtsLayoutTextBlock(ctx, cfg.header_arabic || 'Yayasan Muwajjihul Ulum Asy-Syariyyah', lf.header_arabic, fontFamily, { maxLines: 1, normalWeight: '500', boldWeight: '700', autoFitSingleLine: true });
                     pushBox('header_arabic', lf.header_arabic.label, r2.box);
                 }
                 if (lf.school_name.visible !== false) {
-                    const r3 = drawKtsLayoutTextBlock(ctx, cfg.school_name || 'MA AT-TAUJIH', lf.school_name, fontFamily, { maxLines: 1, normalWeight: '600', boldWeight: '800', withShadow: true });
+                    const r3 = drawKtsLayoutTextBlock(ctx, cfg.school_name || 'MA AT-TAUJIH', lf.school_name, fontFamily, { maxLines: 1, normalWeight: '600', boldWeight: '800', withShadow: true, autoFitSingleLine: true });
                     pushBox('school_name', lf.school_name.label, r3.box);
                 }
                 if (lf.school_address.visible !== false) {
-                    const r4 = drawKtsLayoutTextBlock(ctx, cfg.school_address || 'Dk. Pulorejo, Desa Bajingjowo, Kec. Sarang, Kab. Rembang, Jawa Tengah (59274)', lf.school_address, fontFamily, { maxLines: 1, normalWeight: '400', boldWeight: '700' });
+                    const r4 = drawKtsLayoutTextBlock(ctx, cfg.school_address || 'Dk. Pulorejo, Desa Bajingjowo, Kec. Sarang, Kab. Rembang, Jawa Tengah (59274)', lf.school_address, fontFamily, { maxLines: 1, normalWeight: '500', boldWeight: '700', autoFitSingleLine: true });
                     pushBox('school_address', lf.school_address.label, r4.box);
                 }
             }
@@ -22570,22 +22640,53 @@ function startOrOpenResponder(options) {
                 drawKtsDecorativeBackground(ctx, W, H, 'back');
 
                 if (lb.back_header.visible !== false) {
-                    const bh = Math.max(40, Math.min(160, Number(lb.back_header.h) || 68));
-                    ctx.fillStyle = '#166534';
+                    const bh = Math.max(40, Math.min(180, Number(lb.back_header.h) || 104));
+                    const bHeadGrad = ctx.createLinearGradient(0, 0, W, bh);
+                    bHeadGrad.addColorStop(0, '#0f3f26');
+                    bHeadGrad.addColorStop(0.55, '#166534');
+                    bHeadGrad.addColorStop(1, '#047857');
+                    ctx.fillStyle = bHeadGrad;
                     ctx.fillRect(0, 0, W, bh);
-                    ctx.fillStyle = '#eab308';
+
+                    const bGoldGrad = ctx.createLinearGradient(0, 0, W, 0);
+                    bGoldGrad.addColorStop(0, '#ca8a04');
+                    bGoldGrad.addColorStop(0.5, '#facc15');
+                    bGoldGrad.addColorStop(1, '#eab308');
+                    ctx.fillStyle = bGoldGrad;
                     ctx.fillRect(0, bh, W, 6);
 
+                    const logoSize = Math.max(44, Math.min(72, Math.round(bh * 0.62)));
+                    const logoTop = Math.max(4, Math.round((bh - logoSize) / 2));
+                    const logoX = 46;
                     if (logoImg) {
-                        const logoTop = Math.max(4, Math.round((bh - 44) / 2));
-                        ctx.drawImage(logoImg, 44, logoTop, 44, 44);
+                        ctx.save();
+                        ctx.fillStyle = 'rgba(255,255,255,0.14)';
+                        ctx.beginPath();
+                        ctx.arc(logoX + logoSize / 2, logoTop + logoSize / 2, logoSize * 0.56, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.drawImage(logoImg, logoX, logoTop, logoSize, logoSize);
+                        ctx.restore();
                     }
+
+                    const textX = logoX + logoSize + 22;
+                    const maxTextW = W - textX - 42;
+                    const schoolTitleSize = Math.max(18, Math.min(34, Math.round(bh * 0.27)));
+                    const subTitleSize = Math.max(12, Math.min(20, Math.round(bh * 0.154)));
+
+                    ctx.save();
                     ctx.fillStyle = '#ffffff';
-                    ctx.font = '700 22px ' + fontFamily;
-                    ctx.fillText((cfg.school_name || 'MA AT-TAUJIH').toUpperCase(), 102, Math.round(bh * 0.5));
+                    ctx.font = '800 ' + schoolTitleSize + 'px ' + fontFamily;
+                    const schoolStr = (cfg.school_name || 'MA AT-TAUJIH').toUpperCase();
+                    let sSpace = 2.5;
+                    while (sSpace > 0 && measureSpacedTextWidth(ctx, schoolStr, sSpace) > maxTextW) {
+                        sSpace = Math.max(0, sSpace - 0.5);
+                    }
+                    drawSingleLineWithSpacing(ctx, schoolStr, textX, Math.round(bh * 0.47), 'left', sSpace);
+
                     ctx.fillStyle = '#dcfce7';
-                    ctx.font = '400 13.5px ' + fontFamily;
-                    ctx.fillText(cfg.header_arabic || 'Yayasan Muwajjihul Ulum Asy-Syariyyah', 102, Math.round(bh * 0.81));
+                    ctx.font = '500 ' + subTitleSize + 'px ' + fontFamily;
+                    drawSingleLineWithSpacing(ctx, cfg.header_arabic || 'Yayasan Muwajjihul Ulum Asy-Syariyyah', textX, Math.round(bh * 0.77), 'left', 0.3);
+                    ctx.restore();
                     pushBox('back_header', lb.back_header.label, { x: 0, y: 0, w: W, h: bh + 6 });
                 }
             }
@@ -23796,7 +23897,7 @@ function startOrOpenResponder(options) {
         ];
         const draggedHeader = dragState.keys.some(function(k) { return KTS_HEADER_KEYS.indexOf(k) !== -1; });
         if (ktsState.layoutSide === 'front' && draggedHeader) {
-            xCandidates.push({ target: 588, kind: 'center', label: 'Tengah Kop', y1: 0, y2: 185 });
+            xCandidates.push({ target: 583, kind: 'center', label: 'Tengah Kop', y1: 0, y2: 196 });
         }
         siblings.forEach(function(sb) {
             xCandidates.push({ target: sb.x, kind: 'left', label: 'Lurus Kiri', sb: sb });
@@ -24073,6 +24174,7 @@ function startOrOpenResponder(options) {
     async function saveKtsLayoutSettings() {
         flushKtsLayoutHistoryCommit();
         if (!ktsState.layoutDraft) return;
+        ktsState.layoutDraft._v = 2;
         const payload = {
             layout_config: JSON.stringify(ktsState.layoutDraft)
         };
