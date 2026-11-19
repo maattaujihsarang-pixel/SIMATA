@@ -6281,3 +6281,135 @@ select.attendance-filter-control {
   border-radius: 10px;
   margin-bottom: 14px;
 }
+
+.kts-layout-history-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.kts-history-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #1e293b;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.kts-history-btn:hover:not(:disabled) {
+  background: #ecfdf5;
+  border-color: #16a34a;
+  color: #14532d;
+}
+
+.kts-history-btn:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.kts-layout-multi-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.kts-quick-block-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.kts-quick-block-btn {
+  padding: 4px 9px;
+  border-radius: 7px;
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.kts-quick-block-btn:hover {
+  background: #dbeafe;
+  border-color: #2563eb;
+}
+
+#ktsLayMultiBadge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #166534;
+  background: #dcfce7;
+  border: 1px solid #86efac;
+  padding: 3px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+#ktsLayMultiBadge.is-multi {
+  color: #1d4ed8;
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+.kts-layout-el-chip.multi-selected {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+}
+
+.kts-multi-align-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 9px 10px;
+  border-radius: 9px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+}
+
+.kts-multi-align-group label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #1e40af;
+}
+
+.kts-font-step-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  min-width: 32px;
+  padding: 0 7px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  background: #f8fafc;
+  color: #0f172a;
+  font-size: 11.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.kts-font-step-btn:hover {
+  background: #ecfdf5;
+  border-color: #16a34a;
+  color: #14532d;
+}
+
+#ktsLayoutCanvas.is-marquee {
+  cursor: crosshair;
+}

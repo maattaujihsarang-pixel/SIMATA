@@ -3944,14 +3944,26 @@ html, body {
             </div>
             <div class="student-modal-body">
               <div class="kts-layout-topbar">
-                <div class="kts-side-toggle" role="tablist" aria-label="Pilih sisi layout kartu">
-                  <button type="button" id="ktsLaySideFrontBtn" class="kts-side-btn active">Sisi Depan</button>
-                  <button type="button" id="ktsLaySideBackBtn" class="kts-side-btn">Sisi Belakang</button>
+                <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
+                  <div class="kts-side-toggle" role="tablist" aria-label="Pilih sisi layout kartu">
+                    <button type="button" id="ktsLaySideFrontBtn" class="kts-side-btn active">Sisi Depan</button>
+                    <button type="button" id="ktsLaySideBackBtn" class="kts-side-btn">Sisi Belakang</button>
+                  </div>
+                  <div class="kts-layout-history-group" role="group" aria-label="Riwayat Undo dan Redo">
+                    <button type="button" id="ktsLayUndoBtn" class="kts-history-btn" title="Undo (Ctrl+Z)" disabled>&#8630; Undo</button>
+                    <button type="button" id="ktsLayRedoBtn" class="kts-history-btn" title="Redo (Ctrl+Shift+Z)" disabled>&#8631; Redo</button>
+                  </div>
                 </div>
-                <label class="kts-layout-group-check">
-                  <input type="checkbox" id="ktsLayMoveBioGroup" />
-                  <span>Geser 5 baris biodata sekaligus</span>
-                </label>
+                <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;">
+                  <label class="kts-layout-group-check" title="Garis bantu lurus &amp; simetris saat menggeser (tahan Alt untuk geser bebas)">
+                    <input type="checkbox" id="ktsLaySmartGuidesToggle" checked />
+                    <span>Smart Guides</span>
+                  </label>
+                  <label class="kts-layout-group-check">
+                    <input type="checkbox" id="ktsLayMoveBioGroup" />
+                    <span>Geser 5 baris biodata sekaligus</span>
+                  </label>
+                </div>
                 <span id="ktsLayPreviewStudentLabel" class="kts-layout-preview-student">Pratinjau: Siswa Contoh</span>
               </div>
 
@@ -3959,7 +3971,7 @@ html, body {
                 <div class="kts-layout-stage-wrap">
                   <canvas id="ktsLayoutCanvas" width="1011" height="638" aria-label="Kanvas Editor Layout KTS"></canvas>
                   <div class="kts-layout-stage-footer">
-                    <p class="kts-layout-hint">Klik &amp; geser langsung teks/foto/QR pada kartu, atau gunakan panel pengatur di sebelah kanan.</p>
+                    <p class="kts-layout-hint">Tarik di area kosong atau <strong>Shift+Klik</strong> untuk blok banyak font, seret langsung dengan Smart Guides (tahan <strong>Alt</strong> untuk geser bebas), serta <strong>Ctrl+Z / Ctrl+Shift+Z</strong> untuk Undo/Redo.</p>
                     <div class="kts-nudge-group">
                       <button type="button" id="ktsLayNudgeLeft" class="kts-nudge-btn" title="Geser Kiri (2px)">&#9664;</button>
                       <button type="button" id="ktsLayNudgeUp" class="kts-nudge-btn" title="Geser Atas (2px)">&#9650;</button>
@@ -3974,7 +3986,25 @@ html, body {
                   <div class="kts-layout-control-row">
                     <label for="ktsLayElementSelect">Pilih Elemen Kartu</label>
                     <select id="ktsLayElementSelect" class="input-box"></select>
+                    <div class="kts-layout-multi-bar">
+                      <div class="kts-quick-block-btns">
+                        <button type="button" id="ktsLaySelectHeaderBtn" class="kts-quick-block-btn" title="Blok semua teks header kop">Blok 4 Kop</button>
+                        <button type="button" id="ktsLaySelectBioBtn" class="kts-quick-block-btn" title="Blok 5 baris biodata siswa">Blok 5 Biodata</button>
+                        <button type="button" id="ktsLaySelectAllTextBtn" class="kts-quick-block-btn" title="Blok seluruh teks pada sisi aktif">Blok Semua Teks</button>
+                      </div>
+                      <span id="ktsLayMultiBadge">1 elemen dipilih</span>
+                    </div>
                     <div id="ktsLayElementChips" class="kts-layout-el-chips"></div>
+                  </div>
+
+                  <div id="ktsLayMultiAlignGroup" class="kts-multi-align-group" style="display:none;">
+                    <label>Perataan &amp; Simetri Elemen Terblok</label>
+                    <div class="kts-style-btn-group">
+                      <button type="button" id="ktsLayAlignElsLeft" class="kts-nudge-btn" style="padding:0 9px;" title="Sejajarkan tepi kiri semua elemen terpilih">Lurus Kiri</button>
+                      <button type="button" id="ktsLayAlignElsCenterH" class="kts-nudge-btn" style="padding:0 9px;" title="Sejajarkan titik tengah horizontal semua elemen terpilih">Simetris Tengah</button>
+                      <button type="button" id="ktsLayAlignElsRight" class="kts-nudge-btn" style="padding:0 9px;" title="Sejajarkan tepi kanan semua elemen terpilih">Lurus Kanan</button>
+                      <button type="button" id="ktsLayDistributeV" class="kts-nudge-btn" style="padding:0 9px;" title="Ratakan jarak vertikal antar elemen terpilih">Ratakan Jarak</button>
+                    </div>
                   </div>
 
                   <label class="kts-layout-group-check">
@@ -4000,14 +4030,17 @@ html, body {
                   </div>
 
                   <div id="ktsLayTypoGroup" style="display:flex;flex-direction:column;gap:10px;border-top:1px solid #e2e8f0;padding-top:10px;">
-                    <div class="kts-layout-two-col">
-                      <div class="kts-layout-control-row">
-                        <label for="ktsLayFontSize">Ukuran Font (px)</label>
-                        <div class="kts-layout-slider-pair">
-                          <input type="range" id="ktsLayFontSize" min="10" max="68" step="0.5" />
-                          <input type="number" id="ktsLayFontSizeNum" min="10" max="68" step="0.5" />
-                        </div>
+                    <div class="kts-layout-control-row">
+                      <label for="ktsLayFontSize">Ukuran Font (px)</label>
+                      <div class="kts-layout-slider-pair">
+                        <input type="range" id="ktsLayFontSize" min="10" max="68" step="0.5" />
+                        <input type="number" id="ktsLayFontSizeNum" min="10" max="68" step="0.5" />
+                        <button type="button" id="ktsLayFontDecBtn" class="kts-font-step-btn" title="Perkecil semua font terblok (-1px)">A-</button>
+                        <button type="button" id="ktsLayFontIncBtn" class="kts-font-step-btn" title="Perbesar semua font terblok (+1px)">A+</button>
                       </div>
+                    </div>
+
+                    <div class="kts-layout-two-col">
                       <div class="kts-layout-control-row">
                         <label for="ktsLayLetterSpacing">Jarak Huruf</label>
                         <div class="kts-layout-slider-pair">
@@ -4015,9 +4048,6 @@ html, body {
                           <input type="number" id="ktsLayLetterSpacingNum" min="-1" max="20" step="0.5" />
                         </div>
                       </div>
-                    </div>
-
-                    <div class="kts-layout-two-col">
                       <div class="kts-layout-control-row">
                         <label for="ktsLayLineGap">Jarak Baris (Line-Height)</label>
                         <div class="kts-layout-slider-pair">
@@ -4025,12 +4055,13 @@ html, body {
                           <input type="number" id="ktsLayLineGapNum" min="12" max="64" step="1" />
                         </div>
                       </div>
-                      <div class="kts-layout-control-row">
-                        <label for="ktsLayMaxWidth">Lebar Area Teks</label>
-                        <div class="kts-layout-slider-pair">
-                          <input type="range" id="ktsLayMaxWidth" min="120" max="960" step="2" />
-                          <input type="number" id="ktsLayMaxWidthNum" min="120" max="960" step="2" />
-                        </div>
+                    </div>
+
+                    <div class="kts-layout-control-row">
+                      <label for="ktsLayMaxWidth">Lebar Area Teks</label>
+                      <div class="kts-layout-slider-pair">
+                        <input type="range" id="ktsLayMaxWidth" min="120" max="960" step="2" />
+                        <input type="number" id="ktsLayMaxWidthNum" min="120" max="960" step="2" />
                       </div>
                     </div>
 
@@ -21797,10 +21828,15 @@ function startOrOpenResponder(options) {
         },
         layoutDraft: null,
         layoutSide: 'front',
-        layoutSelectedEl: 'student_name'
+        layoutSelectedEl: 'student_name',
+        layoutSelectedEls: ['student_name'],
+        layoutHistory: [],
+        layoutHistoryIndex: -1,
+        layoutSmartGuides: true
     };
 
     const KTS_BIO_KEYS = ['nis_nisn', 'student_name', 'ttl', 'address', 'dormitory'];
+    const KTS_HEADER_KEYS = ['header_title', 'header_arabic', 'school_name', 'school_address'];
 
     const DEFAULT_KTS_LAYOUT = {
         front: {
@@ -23223,12 +23259,15 @@ function startOrOpenResponder(options) {
     }
 
     // ======================================================================
-    // VISUAL KTS LAYOUT EDITOR (DRAG & DROP, FONT, SPACING, BOLD/STYLE)
+    // VISUAL KTS LAYOUT EDITOR (DRAG & DROP, MULTI-SELECT, SMART GUIDES, UNDO/REDO)
     // ======================================================================
     let ktsLayoutHitBoxes = [];
     let ktsLayoutRenderSeq = 0;
     let ktsLayoutRafPending = false;
     let ktsLayoutDragState = null;
+    let ktsLayoutMarquee = null;
+    let ktsLayoutActiveGuides = [];
+    let ktsLayoutHistoryTimer = null;
 
     function getKtsLayoutSideMap() {
         if (!ktsState.layoutDraft) {
@@ -23237,20 +23276,199 @@ function startOrOpenResponder(options) {
         return ktsState.layoutDraft[ktsState.layoutSide] || {};
     }
 
+    function getKtsSelectedKeys() {
+        const sideMap = getKtsLayoutSideMap();
+        const rawList = Array.isArray(ktsState.layoutSelectedEls) && ktsState.layoutSelectedEls.length
+            ? ktsState.layoutSelectedEls
+            : [ktsState.layoutSelectedEl];
+        const clean = [];
+        rawList.forEach(function(k) {
+            if (sideMap[k] && clean.indexOf(k) === -1) clean.push(k);
+        });
+        if (!clean.length) {
+            const firstKey = Object.keys(sideMap)[0] || 'student_name';
+            clean.push(firstKey);
+        }
+        ktsState.layoutSelectedEls = clean;
+        if (clean.indexOf(ktsState.layoutSelectedEl) === -1) {
+            ktsState.layoutSelectedEl = clean[clean.length - 1];
+        }
+        return clean;
+    }
+
     function getKtsLayoutSelectedObj() {
         const sideMap = getKtsLayoutSideMap();
-        if (!sideMap[ktsState.layoutSelectedEl]) {
-            const keys = Object.keys(sideMap);
-            ktsState.layoutSelectedEl = keys[0] || 'student_name';
-        }
+        getKtsSelectedKeys();
         return sideMap[ktsState.layoutSelectedEl] || null;
+    }
+
+    function getKtsSelectedObjs() {
+        const sideMap = getKtsLayoutSideMap();
+        return getKtsSelectedKeys().map(function(k) { return sideMap[k]; }).filter(Boolean);
+    }
+
+    function getKtsSelectedTextObjs() {
+        return getKtsSelectedObjs().filter(function(o) { return o.kind === 'text'; });
+    }
+
+    function setKtsSelectedKeys(keys, primaryKey) {
+        const sideMap = getKtsLayoutSideMap();
+        const filtered = [];
+        (keys || []).forEach(function(k) {
+            if (sideMap[k] && filtered.indexOf(k) === -1) filtered.push(k);
+        });
+        if (!filtered.length) {
+            const fallback = Object.keys(sideMap)[0] || 'student_name';
+            filtered.push(fallback);
+        }
+        ktsState.layoutSelectedEls = filtered;
+        ktsState.layoutSelectedEl = (primaryKey && filtered.indexOf(primaryKey) !== -1)
+            ? primaryKey
+            : filtered[filtered.length - 1];
+
+        const bioChk = document.getElementById('ktsLayMoveBioGroup');
+        if (bioChk && ktsState.layoutSide === 'front') {
+            const isExactBio = filtered.length === KTS_BIO_KEYS.length &&
+                KTS_BIO_KEYS.every(function(k) { return filtered.indexOf(k) !== -1; });
+            if (!isExactBio && bioChk.checked && KTS_BIO_KEYS.indexOf(ktsState.layoutSelectedEl) === -1) {
+                bioChk.checked = false;
+            }
+        }
+        syncKtsLayoutInspectorFromState();
+        scheduleKtsLayoutEditorRender();
+    }
+
+    function toggleKtsSelectionKey(key) {
+        const sideMap = getKtsLayoutSideMap();
+        if (!sideMap[key]) return;
+        const curr = getKtsSelectedKeys().slice();
+        const idx = curr.indexOf(key);
+        if (idx !== -1) {
+            if (curr.length > 1) {
+                curr.splice(idx, 1);
+                setKtsSelectedKeys(curr, curr[curr.length - 1]);
+            }
+        } else {
+            curr.push(key);
+            setKtsSelectedKeys(curr, key);
+        }
+    }
+
+    function selectKtsQuickBlock(blockType) {
+        if (blockType === 'header') {
+            ktsState.layoutSide = 'front';
+            setKtsSelectedKeys(KTS_HEADER_KEYS, 'school_name');
+            return;
+        }
+        if (blockType === 'bio') {
+            ktsState.layoutSide = 'front';
+            const bioChk = document.getElementById('ktsLayMoveBioGroup');
+            if (bioChk) bioChk.checked = true;
+            setKtsSelectedKeys(KTS_BIO_KEYS, 'student_name');
+            return;
+        }
+        if (blockType === 'all_text') {
+            const sideMap = getKtsLayoutSideMap();
+            const textKeys = Object.keys(sideMap).filter(function(k) {
+                return sideMap[k] && sideMap[k].kind === 'text';
+            });
+            setKtsSelectedKeys(textKeys, textKeys[0]);
+        }
+    }
+
+    function syncKtsHistoryButtons() {
+        const uBtn = document.getElementById('ktsLayUndoBtn');
+        const rBtn = document.getElementById('ktsLayRedoBtn');
+        if (uBtn) uBtn.disabled = ktsState.layoutHistoryIndex <= 0;
+        if (rBtn) rBtn.disabled = ktsState.layoutHistoryIndex >= ktsState.layoutHistory.length - 1;
+    }
+
+    function commitKtsLayoutHistory() {
+        if (!ktsState.layoutDraft) return;
+        const draftJson = JSON.stringify(ktsState.layoutDraft);
+        const hist = ktsState.layoutHistory;
+        const idx = ktsState.layoutHistoryIndex;
+        if (idx >= 0 && hist[idx] && hist[idx].draftJson === draftJson) {
+            syncKtsHistoryButtons();
+            return;
+        }
+        const trimmed = hist.slice(0, idx + 1);
+        trimmed.push({
+            draftJson: draftJson,
+            side: ktsState.layoutSide,
+            selectedEls: getKtsSelectedKeys().slice(),
+            primary: ktsState.layoutSelectedEl
+        });
+        if (trimmed.length > 60) trimmed.shift();
+        ktsState.layoutHistory = trimmed;
+        ktsState.layoutHistoryIndex = trimmed.length - 1;
+        syncKtsHistoryButtons();
+    }
+
+    function flushKtsLayoutHistoryCommit() {
+        if (ktsLayoutHistoryTimer) {
+            clearTimeout(ktsLayoutHistoryTimer);
+            ktsLayoutHistoryTimer = null;
+            commitKtsLayoutHistory();
+        }
+    }
+
+    function scheduleKtsLayoutHistoryCommit() {
+        if (ktsLayoutHistoryTimer) clearTimeout(ktsLayoutHistoryTimer);
+        ktsLayoutHistoryTimer = setTimeout(function() {
+            ktsLayoutHistoryTimer = null;
+            commitKtsLayoutHistory();
+        }, 350);
+    }
+
+    function resetKtsLayoutHistory() {
+        if (ktsLayoutHistoryTimer) {
+            clearTimeout(ktsLayoutHistoryTimer);
+            ktsLayoutHistoryTimer = null;
+        }
+        ktsState.layoutHistory = [];
+        ktsState.layoutHistoryIndex = -1;
+        commitKtsLayoutHistory();
+    }
+
+    function applyKtsHistorySnapshot(entry) {
+        if (!entry || !entry.draftJson) return;
+        try {
+            ktsState.layoutDraft = cloneKtsLayout(JSON.parse(entry.draftJson));
+            ktsState.layoutSide = entry.side === 'back' ? 'back' : 'front';
+            ktsState.layoutSelectedEls = Array.isArray(entry.selectedEls) ? entry.selectedEls.slice() : [entry.primary || 'student_name'];
+            ktsState.layoutSelectedEl = entry.primary || ktsState.layoutSelectedEls[ktsState.layoutSelectedEls.length - 1];
+            getKtsSelectedKeys();
+            syncKtsLayoutInspectorFromState();
+            syncKtsHistoryButtons();
+            scheduleKtsLayoutEditorRender();
+        } catch (_) {}
+    }
+
+    function undoKtsLayout() {
+        flushKtsLayoutHistoryCommit();
+        if (ktsState.layoutHistoryIndex <= 0) return;
+        ktsState.layoutHistoryIndex--;
+        applyKtsHistorySnapshot(ktsState.layoutHistory[ktsState.layoutHistoryIndex]);
+    }
+
+    function redoKtsLayout() {
+        if (ktsLayoutHistoryTimer) {
+            clearTimeout(ktsLayoutHistoryTimer);
+            ktsLayoutHistoryTimer = null;
+        }
+        if (ktsState.layoutHistoryIndex >= ktsState.layoutHistory.length - 1) return;
+        ktsState.layoutHistoryIndex++;
+        applyKtsHistorySnapshot(ktsState.layoutHistory[ktsState.layoutHistoryIndex]);
     }
 
     function populateKtsLayoutElementPicker() {
         const sideMap = getKtsLayoutSideMap();
         const keys = Object.keys(sideMap);
+        const selKeys = getKtsSelectedKeys();
         const selEl = document.getElementById('ktsLayElementSelect');
         const chipsEl = document.getElementById('ktsLayElementChips');
+        const badgeEl = document.getElementById('ktsLayMultiBadge');
 
         if (selEl) {
             selEl.innerHTML = keys.map(function(k) {
@@ -23265,14 +23483,22 @@ function startOrOpenResponder(options) {
                 const item = sideMap[k];
                 const cls = ['kts-layout-el-chip'];
                 if (k === ktsState.layoutSelectedEl) cls.push('active');
+                else if (selKeys.indexOf(k) !== -1) cls.push('multi-selected');
                 if (item.visible === false) cls.push('is-hidden');
                 return '<button type="button" class="' + cls.join(' ') + '" data-kts-el="' + k + '">' + escKts(item.label || k) + '</button>';
             }).join('');
+        }
+        if (badgeEl) {
+            badgeEl.textContent = selKeys.length + ' elemen dipilih';
+            badgeEl.classList.toggle('is-multi', selKeys.length > 1);
         }
     }
 
     function syncKtsLayoutInspectorFromState() {
         const el = getKtsLayoutSelectedObj();
+        const selKeys = getKtsSelectedKeys();
+        const selObjs = getKtsSelectedObjs();
+        const selTexts = getKtsSelectedTextObjs();
         populateKtsLayoutElementPicker();
 
         const frontBtn = document.getElementById('ktsLaySideFrontBtn');
@@ -23283,6 +23509,14 @@ function startOrOpenResponder(options) {
         const groupChk = document.getElementById('ktsLayMoveBioGroup');
         if (groupChk && groupChk.parentElement) {
             groupChk.parentElement.style.display = ktsState.layoutSide === 'front' ? '' : 'none';
+        }
+
+        const multiAlignGrp = document.getElementById('ktsLayMultiAlignGroup');
+        const movableCount = selObjs.filter(function(o) { return o.kind !== 'box'; }).length;
+        if (multiAlignGrp) {
+            multiAlignGrp.style.display = movableCount >= 2 ? 'flex' : 'none';
+            const distBtn = document.getElementById('ktsLayDistributeV');
+            if (distBtn) distBtn.disabled = movableCount < 3;
         }
 
         if (!el) return;
@@ -23302,16 +23536,17 @@ function startOrOpenResponder(options) {
 
         const typoGroup = document.getElementById('ktsLayTypoGroup');
         const boxGroup = document.getElementById('ktsLayBoxGroup');
-        const isText = el.kind === 'text';
+        const hasText = selTexts.length > 0;
+        const textRef = el.kind === 'text' ? el : selTexts[0];
 
-        if (typoGroup) typoGroup.style.display = isText ? 'flex' : 'none';
-        if (boxGroup) boxGroup.style.display = isText ? 'none' : 'grid';
+        if (typoGroup) typoGroup.style.display = hasText ? 'flex' : 'none';
+        if (boxGroup) boxGroup.style.display = (selKeys.length === 1 && el.kind !== 'text') ? 'grid' : 'none';
 
-        if (isText) {
-            setPair('ktsLayFontSize', 'ktsLayFontSizeNum', Number(el.fontSize) || 18, false);
-            setPair('ktsLayLetterSpacing', 'ktsLayLetterSpacingNum', Number(el.letterSpacing) || 0, false);
-            setPair('ktsLayLineGap', 'ktsLayLineGapNum', Math.round(Number(el.lineGap) || 24), false);
-            setPair('ktsLayMaxWidth', 'ktsLayMaxWidthNum', Math.round(Number(el.maxWidth) || 500), false);
+        if (hasText && textRef) {
+            setPair('ktsLayFontSize', 'ktsLayFontSizeNum', Number(textRef.fontSize) || 18, false);
+            setPair('ktsLayLetterSpacing', 'ktsLayLetterSpacingNum', Number(textRef.letterSpacing) || 0, false);
+            setPair('ktsLayLineGap', 'ktsLayLineGapNum', Math.round(Number(textRef.lineGap) || 24), false);
+            setPair('ktsLayMaxWidth', 'ktsLayMaxWidthNum', Math.round(Number(textRef.maxWidth) || 500), false);
 
             const bBtn = document.getElementById('ktsLayBoldBtn');
             const iBtn = document.getElementById('ktsLayItalicBtn');
@@ -23319,24 +23554,27 @@ function startOrOpenResponder(options) {
             const aL = document.getElementById('ktsLayAlignLeftBtn');
             const aC = document.getElementById('ktsLayAlignCenterBtn');
             const aR = document.getElementById('ktsLayAlignRightBtn');
-            if (bBtn) bBtn.classList.toggle('active', Boolean(el.bold));
-            if (iBtn) iBtn.classList.toggle('active', Boolean(el.italic));
-            if (uBtn) uBtn.classList.toggle('active', Boolean(el.uppercase));
-            const al = el.align || 'left';
+            if (bBtn) bBtn.classList.toggle('active', Boolean(textRef.bold));
+            if (iBtn) iBtn.classList.toggle('active', Boolean(textRef.italic));
+            if (uBtn) uBtn.classList.toggle('active', Boolean(textRef.uppercase));
+            const al = textRef.align || 'left';
             if (aL) aL.classList.toggle('active', al === 'left');
             if (aC) aC.classList.toggle('active', al === 'center');
             if (aR) aR.classList.toggle('active', al === 'right');
 
             const uWrap = document.getElementById('ktsLayUnderlineWrap');
             const uChk = document.getElementById('ktsLayUnderlineToggle');
-            if (uWrap) uWrap.style.display = ktsState.layoutSelectedEl === 'student_name' ? '' : 'none';
-            if (uChk) uChk.checked = el.showUnderline !== false;
+            const hasStudentName = selKeys.indexOf('student_name') !== -1;
+            const snObj = getKtsLayoutSideMap().student_name;
+            if (uWrap) uWrap.style.display = hasStudentName ? '' : 'none';
+            if (uChk && snObj) uChk.checked = snObj.showUnderline !== false;
 
             const cPick = document.getElementById('ktsLayColorPicker');
-            if (cPick && /^#[0-9a-fA-F]{6}$/.test(el.color || '')) {
-                cPick.value = el.color;
+            if (cPick && /^#[0-9a-fA-F]{6}$/.test(textRef.color || '')) {
+                cPick.value = textRef.color;
             }
-        } else {
+        }
+        if (selKeys.length === 1 && el.kind !== 'text') {
             if (el.kind === 'rect') {
                 setPair('ktsLayBoxW', 'ktsLayBoxWNum', Math.round(Number(el.w) || 220), false);
                 setPair('ktsLayBoxH', 'ktsLayBoxHNum', Math.round(Number(el.h) || 294), false);
@@ -23365,6 +23603,21 @@ function startOrOpenResponder(options) {
         };
     }
 
+    function drawGuidePillLabel(ctx, text, cx, cy) {
+        ctx.save();
+        ctx.font = '700 10.5px "Segoe UI", sans-serif';
+        const tw = ctx.measureText(text).width + 10;
+        const x = Math.max(4, Math.min(1007 - tw, cx - tw / 2));
+        const y = Math.max(4, Math.min(620, cy - 8));
+        ctx.fillStyle = '#ec4899';
+        drawRoundedRectPath(ctx, x, y, tw, 16, 4);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'left';
+        ctx.fillText(text, x + 5, y + 11.5);
+        ctx.restore();
+    }
+
     async function renderKtsLayoutEditorCanvas() {
         const seq = ++ktsLayoutRenderSeq;
         const canvas = document.getElementById('ktsLayoutCanvas');
@@ -23379,45 +23632,136 @@ function startOrOpenResponder(options) {
         if (seq !== ktsLayoutRenderSeq) return;
 
         ktsLayoutHitBoxes = boxes;
-        const activeBox = boxes.find(function(b) { return b.id === ktsState.layoutSelectedEl; });
-        if (activeBox) {
-            const ctx = canvas.getContext('2d');
-            const bx = Math.max(4, Math.min(1007 - Math.max(24, activeBox.w), activeBox.x));
-            const by = Math.max(4, Math.min(634 - Math.max(20, activeBox.h), activeBox.y));
-            const bw = Math.max(24, Math.min(1003 - bx, activeBox.w));
-            const bh = Math.max(20, Math.min(630 - by, activeBox.h));
+        const ctx = canvas.getContext('2d');
+        const selKeys = getKtsSelectedKeys();
+        const selectedBoxes = [];
+
+        selKeys.forEach(function(key) {
+            const box = boxes.find(function(b) { return b.id === key; });
+            if (!box) return;
+            const isPrimary = key === ktsState.layoutSelectedEl;
+            const bx = Math.max(4, Math.min(1007 - Math.max(24, box.w), box.x));
+            const by = Math.max(4, Math.min(634 - Math.max(20, box.h), box.y));
+            const bw = Math.max(24, Math.min(1003 - bx, box.w));
+            const bh = Math.max(20, Math.min(630 - by, box.h));
+            selectedBoxes.push({ id: key, label: box.label, bx: bx, by: by, bw: bw, bh: bh, isPrimary: isPrimary });
 
             ctx.save();
-            ctx.fillStyle = 'rgba(22, 163, 74, 0.08)';
+            ctx.fillStyle = isPrimary ? 'rgba(22, 163, 74, 0.08)' : 'rgba(37, 99, 235, 0.07)';
             ctx.fillRect(bx, by, bw, bh);
-            ctx.strokeStyle = '#16a34a';
-            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = isPrimary ? '#16a34a' : '#2563eb';
+            ctx.lineWidth = isPrimary ? 2.4 : 1.8;
             ctx.setLineDash([7, 5]);
             ctx.strokeRect(bx, by, bw, bh);
             ctx.setLineDash([]);
 
-            // 4 corner anchor handles
-            const hs = 8;
+            const hs = 7;
             ctx.fillStyle = '#ffffff';
-            ctx.strokeStyle = '#166534';
-            ctx.lineWidth = 2;
+            ctx.strokeStyle = isPrimary ? '#166534' : '#1d4ed8';
+            ctx.lineWidth = 1.8;
             [[bx, by], [bx + bw, by], [bx, by + bh], [bx + bw, by + bh]].forEach(function(pt) {
                 ctx.fillRect(pt[0] - hs / 2, pt[1] - hs / 2, hs, hs);
                 ctx.strokeRect(pt[0] - hs / 2, pt[1] - hs / 2, hs, hs);
             });
 
-            // Floating element tag
-            const tagText = activeBox.label || activeBox.id;
-            ctx.font = '700 12px "Segoe UI", sans-serif';
-            const tagW = ctx.measureText(tagText).width + 14;
-            const tagY = by >= 28 ? by - 22 : by + bh + 4;
-            const tagX = Math.max(6, Math.min(1005 - tagW, bx));
-            ctx.fillStyle = '#166534';
-            drawRoundedRectPath(ctx, tagX, tagY, tagW, 18, 5);
+            if (selKeys.length === 1) {
+                const tagText = box.label || box.id;
+                ctx.font = '700 11px "Segoe UI", sans-serif';
+                const tagW = ctx.measureText(tagText).width + 12;
+                const tagY = by >= 26 ? by - 20 : by + bh + 4;
+                const tagX = Math.max(6, Math.min(1005 - tagW, bx));
+                ctx.fillStyle = '#166534';
+                drawRoundedRectPath(ctx, tagX, tagY, tagW, 17, 5);
+                ctx.fill();
+                ctx.fillStyle = '#ffffff';
+                ctx.textAlign = 'left';
+                ctx.fillText(tagText, tagX + 6, tagY + 12);
+            }
+            ctx.restore();
+        });
+
+        // Outer group bounding box when 2+ elements are selected
+        if (selectedBoxes.length > 1) {
+            const gMinX = Math.max(2, Math.min.apply(null, selectedBoxes.map(function(b) { return b.bx; })) - 6);
+            const gMinY = Math.max(2, Math.min.apply(null, selectedBoxes.map(function(b) { return b.by; })) - 6);
+            const gMaxX = Math.min(1009, Math.max.apply(null, selectedBoxes.map(function(b) { return b.bx + b.bw; })) + 6);
+            const gMaxY = Math.min(636, Math.max.apply(null, selectedBoxes.map(function(b) { return b.by + b.bh; })) + 6);
+            ctx.save();
+            ctx.strokeStyle = '#1d4ed8';
+            ctx.lineWidth = 1.6;
+            ctx.setLineDash([4, 4]);
+            ctx.strokeRect(gMinX, gMinY, gMaxX - gMinX, gMaxY - gMinY);
+            ctx.setLineDash([]);
+
+            const gTag = selectedBoxes.length + ' elemen dipilih';
+            ctx.font = '700 11px "Segoe UI", sans-serif';
+            const gw = ctx.measureText(gTag).width + 12;
+            const gy = gMinY >= 22 ? gMinY - 19 : gMaxY + 3;
+            const gx = Math.max(6, Math.min(1005 - gw, gMinX));
+            ctx.fillStyle = '#1d4ed8';
+            drawRoundedRectPath(ctx, gx, gy, gw, 17, 5);
             ctx.fill();
             ctx.fillStyle = '#ffffff';
             ctx.textAlign = 'left';
-            ctx.fillText(tagText, tagX + 7, tagY + 13);
+            ctx.fillText(gTag, gx + 6, gy + 12);
+            ctx.restore();
+        }
+
+        // Photoshop-style Smart Guides (Magenta #ec4899)
+        if (ktsLayoutActiveGuides && ktsLayoutActiveGuides.length) {
+            ctx.save();
+            ctx.strokeStyle = '#ec4899';
+            ctx.fillStyle = '#ec4899';
+            ctx.lineWidth = 1.5;
+            ktsLayoutActiveGuides.forEach(function(g) {
+                if (g.type === 'v') {
+                    ctx.beginPath();
+                    ctx.moveTo(g.x, g.y1);
+                    ctx.lineTo(g.x, g.y2);
+                    ctx.moveTo(g.x - 4, g.y1);
+                    ctx.lineTo(g.x + 4, g.y1);
+                    ctx.moveTo(g.x - 4, g.y2);
+                    ctx.lineTo(g.x + 4, g.y2);
+                    ctx.stroke();
+                    if (g.label) drawGuidePillLabel(ctx, g.label, g.x, Math.min(610, Math.max(24, (g.y1 + g.y2) / 2)));
+                } else if (g.type === 'h') {
+                    ctx.beginPath();
+                    ctx.moveTo(g.x1, g.y);
+                    ctx.lineTo(g.x2, g.y);
+                    ctx.moveTo(g.x1, g.y - 4);
+                    ctx.lineTo(g.x1, g.y + 4);
+                    ctx.moveTo(g.x2, g.y - 4);
+                    ctx.lineTo(g.x2, g.y + 4);
+                    ctx.stroke();
+                    if (g.label) drawGuidePillLabel(ctx, g.label, Math.min(930, Math.max(80, (g.x1 + g.x2) / 2)), g.y - 12);
+                } else if (g.type === 'gap-v') {
+                    ctx.beginPath();
+                    ctx.moveTo(g.x, g.y1);
+                    ctx.lineTo(g.x, g.y2);
+                    ctx.moveTo(g.x - 5, g.y1);
+                    ctx.lineTo(g.x + 5, g.y1);
+                    ctx.moveTo(g.x - 5, g.y2);
+                    ctx.lineTo(g.x + 5, g.y2);
+                    ctx.stroke();
+                    if (g.label) drawGuidePillLabel(ctx, g.label, g.x + 26, (g.y1 + g.y2) / 2);
+                }
+            });
+            ctx.restore();
+        }
+
+        // Canvas marquee selection rectangle
+        if (ktsLayoutMarquee) {
+            const mx = Math.min(ktsLayoutMarquee.startX, ktsLayoutMarquee.curX);
+            const my = Math.min(ktsLayoutMarquee.startY, ktsLayoutMarquee.curY);
+            const mw = Math.abs(ktsLayoutMarquee.curX - ktsLayoutMarquee.startX);
+            const mh = Math.abs(ktsLayoutMarquee.curY - ktsLayoutMarquee.startY);
+            ctx.save();
+            ctx.fillStyle = 'rgba(37, 99, 235, 0.12)';
+            ctx.fillRect(mx, my, mw, mh);
+            ctx.strokeStyle = '#2563eb';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([5, 4]);
+            ctx.strokeRect(mx, my, mw, mh);
             ctx.restore();
         }
     }
@@ -23431,35 +23775,268 @@ function startOrOpenResponder(options) {
         });
     }
 
-    function applyKtsLayoutMoveDelta(dx, dy) {
+    function computeKtsSmartGuides(rawDx, rawDy, dragState) {
+        const SNAP_THRESHOLD = 6;
+        const gb = dragState.groupBox;
+        if (!gb) return { snappedDx: rawDx, snappedDy: rawDy, guides: [] };
+
+        const cLeft = gb.minX + rawDx;
+        const cMidX = (gb.minX + gb.maxX) / 2 + rawDx;
+        const cRight = gb.maxX + rawDx;
+        const cTop = gb.minY + rawDy;
+        const cMidY = (gb.minY + gb.maxY) / 2 + rawDy;
+        const cBottom = gb.maxY + rawDy;
+
+        const sideMap = getKtsLayoutSideMap();
+        const siblings = (dragState.staticBoxes || []);
+
+        // 1. Collect X snap candidates
+        const xCandidates = [
+            { target: 505.5, kind: 'center', label: 'Tengah Kartu', y1: 0, y2: 638 }
+        ];
+        const draggedHeader = dragState.keys.some(function(k) { return KTS_HEADER_KEYS.indexOf(k) !== -1; });
+        if (ktsState.layoutSide === 'front' && draggedHeader) {
+            xCandidates.push({ target: 588, kind: 'center', label: 'Tengah Kop', y1: 0, y2: 185 });
+        }
+        siblings.forEach(function(sb) {
+            xCandidates.push({ target: sb.x, kind: 'left', label: 'Lurus Kiri', sb: sb });
+            xCandidates.push({ target: sb.x + sb.w / 2, kind: 'center', label: 'Simetris Tengah', sb: sb });
+            xCandidates.push({ target: sb.x + sb.w, kind: 'right', label: 'Lurus Kanan', sb: sb });
+            const sbObj = sideMap[sb.id];
+            if (sbObj && sbObj.kind === 'text' && sbObj.align === 'center') {
+                xCandidates.push({ target: Number(sbObj.x), kind: 'center', label: 'Simetris Tengah', sb: sb });
+            }
+        });
+
+        let bestXDelta = 0;
+        let bestXDist = SNAP_THRESHOLD + 0.01;
+        let snappedTargetX = null;
+
+        xCandidates.forEach(function(c) {
+            const dragPoint = c.kind === 'left' ? cLeft : (c.kind === 'right' ? cRight : cMidX);
+            const diff = c.target - dragPoint;
+            if (Math.abs(diff) < bestXDist) {
+                bestXDist = Math.abs(diff);
+                bestXDelta = diff;
+                snappedTargetX = c.target;
+            }
+        });
+
+        const snappedDx = snappedTargetX !== null ? rawDx + bestXDelta : rawDx;
+        const fLeft = gb.minX + snappedDx;
+        const fMidX = (gb.minX + gb.maxX) / 2 + snappedDx;
+        const fRight = gb.maxX + snappedDx;
+
+        // 2. Collect Y snap candidates
+        const yCandidates = [
+            { target: 319, kind: 'center', label: 'Tengah Vertikal', x1: 0, x2: 1011 }
+        ];
+        siblings.forEach(function(sb) {
+            yCandidates.push({ target: sb.y, kind: 'top', label: 'Sejajar Atas', sb: sb });
+            yCandidates.push({ target: sb.y + sb.h / 2, kind: 'center', label: 'Simetris Horizontal', sb: sb });
+            yCandidates.push({ target: sb.y + sb.h, kind: 'bottom', label: 'Sejajar Bawah', sb: sb });
+        });
+
+        // Vertical equal-spacing candidates among horizontally overlapping siblings
+        const horizSiblings = siblings.filter(function(sb) {
+            return Math.min(sb.x + sb.w, fRight) - Math.max(sb.x, fLeft) > -24;
+        }).sort(function(a, b) { return a.y - b.y; });
+
+        const gapSnaps = [];
+        for (let i = 0; i < horizSiblings.length - 1; i++) {
+            const a = horizSiblings[i];
+            const b = horizSiblings[i + 1];
+            const gap = b.y - (a.y + a.h);
+            if (gap < 4 || gap > 100) continue;
+            const dBelow = (b.y + b.h + gap) - cTop;
+            if (Math.abs(dBelow) < SNAP_THRESHOLD) {
+                gapSnaps.push({
+                    delta: dBelow,
+                    gap: Math.round(gap),
+                    refA: a,
+                    refB: b,
+                    mode: 'below'
+                });
+            }
+            const dAbove = (a.y - gap) - cBottom;
+            if (Math.abs(dAbove) < SNAP_THRESHOLD) {
+                gapSnaps.push({
+                    delta: dAbove,
+                    gap: Math.round(gap),
+                    refA: a,
+                    refB: b,
+                    mode: 'above'
+                });
+            }
+        }
+
+        let bestYDelta = 0;
+        let bestYDist = SNAP_THRESHOLD + 0.01;
+        let snappedTargetY = null;
+
+        yCandidates.forEach(function(c) {
+            const dragPoint = c.kind === 'top' ? cTop : (c.kind === 'bottom' ? cBottom : cMidY);
+            const diff = c.target - dragPoint;
+            if (Math.abs(diff) < bestYDist) {
+                bestYDist = Math.abs(diff);
+                bestYDelta = diff;
+                snappedTargetY = c.target;
+            }
+        });
+
+        let activeGapSnap = null;
+        gapSnaps.forEach(function(gs) {
+            if (Math.abs(gs.delta) < bestYDist) {
+                bestYDist = Math.abs(gs.delta);
+                bestYDelta = gs.delta;
+                snappedTargetY = 'GAP';
+                activeGapSnap = gs;
+            }
+        });
+
+        const snappedDy = snappedTargetY !== null ? rawDy + bestYDelta : rawDy;
+        const fTop = gb.minY + snappedDy;
+        const fMidY = (gb.minY + gb.maxY) / 2 + snappedDy;
+        const fBottom = gb.maxY + snappedDy;
+
+        // 3. Emit active visual guide lines matching final snapped bounds
+        const guides = [];
+        if (snappedTargetX !== null) {
+            let xGuideLabel = '';
+            let y1 = fTop;
+            let y2 = fBottom;
+            xCandidates.forEach(function(c) {
+                const pt = c.kind === 'left' ? fLeft : (c.kind === 'right' ? fRight : fMidX);
+                if (Math.abs(c.target - pt) <= 0.8) {
+                    if (!xGuideLabel) xGuideLabel = c.label;
+                    if (c.sb) {
+                        y1 = Math.min(y1, c.sb.y);
+                        y2 = Math.max(y2, c.sb.y + c.sb.h);
+                    } else {
+                        y1 = Math.min(y1, c.y1);
+                        y2 = Math.max(y2, c.y2);
+                    }
+                }
+            });
+            guides.push({ type: 'v', x: snappedTargetX, y1: y1, y2: y2, label: xGuideLabel });
+        }
+
+        if (snappedTargetY !== null && snappedTargetY !== 'GAP') {
+            let yGuideLabel = '';
+            let x1 = fLeft;
+            let x2 = fRight;
+            yCandidates.forEach(function(c) {
+                const pt = c.kind === 'top' ? fTop : (c.kind === 'bottom' ? fBottom : fMidY);
+                if (Math.abs(c.target - pt) <= 0.8) {
+                    if (!yGuideLabel) yGuideLabel = c.label;
+                    if (c.sb) {
+                        x1 = Math.min(x1, c.sb.x);
+                        x2 = Math.max(x2, c.sb.x + c.sb.w);
+                    } else {
+                        x1 = Math.min(x1, c.x1);
+                        x2 = Math.max(x2, c.x2);
+                    }
+                }
+            });
+            guides.push({ type: 'h', y: snappedTargetY, x1: x1, x2: x2, label: yGuideLabel });
+        } else if (activeGapSnap) {
+            const gx = Math.min(980, Math.max(30, fLeft + (fRight - fLeft) * 0.5));
+            const a = activeGapSnap.refA;
+            const b = activeGapSnap.refB;
+            guides.push({ type: 'gap-v', x: gx, y1: a.y + a.h, y2: b.y, label: activeGapSnap.gap + 'px' });
+            if (activeGapSnap.mode === 'below') {
+                guides.push({ type: 'gap-v', x: gx, y1: b.y + b.h, y2: fTop, label: activeGapSnap.gap + 'px' });
+            } else {
+                guides.push({ type: 'gap-v', x: gx, y1: fBottom, y2: a.y, label: activeGapSnap.gap + 'px' });
+            }
+        }
+
+        return { snappedDx: snappedDx, snappedDy: snappedDy, guides: guides };
+    }
+
+    function alignSelectedKtsElements(mode) {
+        const sideMap = getKtsLayoutSideMap();
+        const keys = getKtsSelectedKeys().filter(function(k) { return sideMap[k] && sideMap[k].kind !== 'box'; });
+        if (keys.length < 2) return;
+
+        const items = keys.map(function(k) {
+            const box = ktsLayoutHitBoxes.find(function(b) { return b.id === k; }) || {
+                id: k, x: Number(sideMap[k].x) || 0, y: Number(sideMap[k].y) || 0, w: 120, h: 28
+            };
+            return { key: k, obj: sideMap[k], box: box };
+        });
+
+        if (mode === 'left') {
+            const targetLeft = Math.min.apply(null, items.map(function(it) { return it.box.x; }));
+            items.forEach(function(it) {
+                it.obj.x = Math.max(0, Math.min(1011, Math.round((Number(it.obj.x) || 0) + (targetLeft - it.box.x))));
+            });
+        } else if (mode === 'centerH') {
+            const minL = Math.min.apply(null, items.map(function(it) { return it.box.x; }));
+            const maxR = Math.max.apply(null, items.map(function(it) { return it.box.x + it.box.w; }));
+            const centerX = (minL + maxR) / 2;
+            items.forEach(function(it) {
+                const curCx = it.box.x + it.box.w / 2;
+                it.obj.x = Math.max(0, Math.min(1011, Math.round((Number(it.obj.x) || 0) + (centerX - curCx))));
+            });
+        } else if (mode === 'right') {
+            const targetRight = Math.max.apply(null, items.map(function(it) { return it.box.x + it.box.w; }));
+            items.forEach(function(it) {
+                it.obj.x = Math.max(0, Math.min(1011, Math.round((Number(it.obj.x) || 0) + (targetRight - (it.box.x + it.box.w)))));
+            });
+        } else if (mode === 'distributeV' && items.length >= 3) {
+            items.sort(function(a, b) { return a.box.y - b.box.y; });
+            const topY = items[0].box.y;
+            const bottomEdge = items[items.length - 1].box.y + items[items.length - 1].box.h;
+            const totalBoxH = items.reduce(function(acc, it) { return acc + it.box.h; }, 0);
+            const gap = (bottomEdge - topY - totalBoxH) / (items.length - 1);
+            let runY = topY + items[0].box.h + gap;
+            for (let i = 1; i < items.length - 1; i++) {
+                const dy = runY - items[i].box.y;
+                items[i].obj.y = Math.max(0, Math.min(638, Math.round((Number(items[i].obj.y) || 0) + dy)));
+                runY += items[i].box.h + gap;
+            }
+        }
+
+        commitKtsLayoutHistory();
+        syncKtsLayoutInspectorFromState();
+        scheduleKtsLayoutEditorRender();
+    }
+
+    function applyKtsLayoutMoveDelta(dx, dy, skipHistory) {
         const el = getKtsLayoutSelectedObj();
         if (!el || el.kind === 'box') return;
         const sideMap = getKtsLayoutSideMap();
+        const selKeys = getKtsSelectedKeys().filter(function(k) { return sideMap[k] && sideMap[k].kind !== 'box'; });
         const moveBioGroup = ktsState.layoutSide === 'front' &&
             KTS_BIO_KEYS.indexOf(ktsState.layoutSelectedEl) !== -1 &&
             Boolean(document.getElementById('ktsLayMoveBioGroup') && document.getElementById('ktsLayMoveBioGroup').checked);
-        const targets = moveBioGroup ? KTS_BIO_KEYS : [ktsState.layoutSelectedEl];
+        const targets = moveBioGroup ? Array.from(new Set(selKeys.concat(KTS_BIO_KEYS))) : selKeys;
         targets.forEach(function(key) {
             const item = sideMap[key];
-            if (!item) return;
+            if (!item || item.kind === 'box') return;
             item.x = Math.max(0, Math.min(1011, Math.round((Number(item.x) || 0) + dx)));
             item.y = Math.max(0, Math.min(638, Math.round((Number(item.y) || 0) + dy)));
         });
         syncKtsLayoutInspectorFromState();
         scheduleKtsLayoutEditorRender();
+        if (!skipHistory) scheduleKtsLayoutHistoryCommit();
     }
 
     function resetCurrentKtsLayoutElement() {
         const sideMap = getKtsLayoutSideMap();
-        const base = (DEFAULT_KTS_LAYOUT[ktsState.layoutSide] || {})[ktsState.layoutSelectedEl];
-        if (!base) return;
-        sideMap[ktsState.layoutSelectedEl] = Object.assign({}, base);
+        const baseMap = DEFAULT_KTS_LAYOUT[ktsState.layoutSide] || {};
+        getKtsSelectedKeys().forEach(function(k) {
+            if (baseMap[k]) sideMap[k] = Object.assign({}, baseMap[k]);
+        });
+        commitKtsLayoutHistory();
         syncKtsLayoutInspectorFromState();
         scheduleKtsLayoutEditorRender();
     }
 
     function resetAllKtsLayout() {
         ktsState.layoutDraft = cloneKtsLayout(DEFAULT_KTS_LAYOUT);
+        commitKtsLayoutHistory();
         syncKtsLayoutInspectorFromState();
         scheduleKtsLayoutEditorRender();
     }
@@ -23468,22 +24045,33 @@ function startOrOpenResponder(options) {
         if (!isCurrentUserAdmin) return;
         ktsState.layoutSide = ktsState.side === 'back' ? 'back' : 'front';
         ktsState.layoutDraft = cloneKtsLayout(getEffectiveKtsLayout(ktsState.settings));
-        ktsState.layoutSelectedEl = ktsState.layoutSide === 'back' ? 'back_rules' : 'student_name';
+        const initKey = ktsState.layoutSide === 'back' ? 'back_rules' : 'student_name';
+        ktsState.layoutSelectedEl = initKey;
+        ktsState.layoutSelectedEls = [initKey];
+        ktsLayoutActiveGuides = [];
+        ktsLayoutMarquee = null;
+        resetKtsLayoutHistory();
         syncKtsLayoutInspectorFromState();
+        const sgChk = document.getElementById('ktsLaySmartGuidesToggle');
+        if (sgChk) sgChk.checked = ktsState.layoutSmartGuides !== false;
         const m = document.getElementById('ktsLayoutEditorModal');
         if (m) m.style.display = 'flex';
         renderKtsLayoutEditorCanvas();
     }
 
     window.closeKtsLayoutModal = function() {
+        flushKtsLayoutHistoryCommit();
         ktsLayoutDragState = null;
+        ktsLayoutMarquee = null;
+        ktsLayoutActiveGuides = [];
         const c = document.getElementById('ktsLayoutCanvas');
-        if (c) c.classList.remove('is-dragging');
+        if (c) c.classList.remove('is-dragging', 'is-marquee');
         const m = document.getElementById('ktsLayoutEditorModal');
         if (m) m.style.display = 'none';
     };
 
     async function saveKtsLayoutSettings() {
+        flushKtsLayoutHistoryCommit();
         if (!ktsState.layoutDraft) return;
         const payload = {
             layout_config: JSON.stringify(ktsState.layoutDraft)
@@ -23975,43 +24563,73 @@ function startOrOpenResponder(options) {
         const tplSaveBtn = document.getElementById('ktsTplSaveBtn');
         if (tplSaveBtn) tplSaveBtn.addEventListener('click', saveKtsTemplateSettings);
 
-        // Visual KTS Layout Editor Handlers (Drag & Drop + Inspector)
+        // Visual KTS Layout Editor Handlers (Drag & Drop, Multi-Select, Smart Guides, Undo/Redo)
         const layFrontBtn = document.getElementById('ktsLaySideFrontBtn');
         const layBackBtn = document.getElementById('ktsLaySideBackBtn');
         if (layFrontBtn) layFrontBtn.addEventListener('click', function() {
             ktsState.layoutSide = 'front';
-            ktsState.layoutSelectedEl = 'student_name';
-            syncKtsLayoutInspectorFromState();
-            renderKtsLayoutEditorCanvas();
+            setKtsSelectedKeys(['student_name'], 'student_name');
         });
         if (layBackBtn) layBackBtn.addEventListener('click', function() {
             ktsState.layoutSide = 'back';
-            ktsState.layoutSelectedEl = 'back_rules';
-            syncKtsLayoutInspectorFromState();
-            renderKtsLayoutEditorCanvas();
+            setKtsSelectedKeys(['back_rules'], 'back_rules');
         });
+
+        const layUndoBtn = document.getElementById('ktsLayUndoBtn');
+        const layRedoBtn = document.getElementById('ktsLayRedoBtn');
+        if (layUndoBtn) layUndoBtn.addEventListener('click', undoKtsLayout);
+        if (layRedoBtn) layRedoBtn.addEventListener('click', redoKtsLayout);
+
+        const laySgChk = document.getElementById('ktsLaySmartGuidesToggle');
+        if (laySgChk) laySgChk.addEventListener('change', function() {
+            ktsState.layoutSmartGuides = this.checked;
+        });
+
+        const layBioChk = document.getElementById('ktsLayMoveBioGroup');
+        if (layBioChk) layBioChk.addEventListener('change', function() {
+            if (this.checked && ktsState.layoutSide === 'front') {
+                setKtsSelectedKeys(KTS_BIO_KEYS, 'student_name');
+            }
+        });
+
+        const blkHeaderBtn = document.getElementById('ktsLaySelectHeaderBtn');
+        const blkBioBtn = document.getElementById('ktsLaySelectBioBtn');
+        const blkAllBtn = document.getElementById('ktsLaySelectAllTextBtn');
+        if (blkHeaderBtn) blkHeaderBtn.addEventListener('click', function() { selectKtsQuickBlock('header'); });
+        if (blkBioBtn) blkBioBtn.addEventListener('click', function() { selectKtsQuickBlock('bio'); });
+        if (blkAllBtn) blkAllBtn.addEventListener('click', function() { selectKtsQuickBlock('all_text'); });
 
         const laySel = document.getElementById('ktsLayElementSelect');
         if (laySel) laySel.addEventListener('change', function() {
-            ktsState.layoutSelectedEl = this.value;
-            syncKtsLayoutInspectorFromState();
-            renderKtsLayoutEditorCanvas();
+            setKtsSelectedKeys([this.value], this.value);
         });
 
         const layChips = document.getElementById('ktsLayElementChips');
         if (layChips) layChips.addEventListener('click', function(e) {
             const btn = e.target.closest('.kts-layout-el-chip');
             if (!btn || !btn.dataset.ktsEl) return;
-            ktsState.layoutSelectedEl = btn.dataset.ktsEl;
-            syncKtsLayoutInspectorFromState();
-            renderKtsLayoutEditorCanvas();
+            if (e.shiftKey || e.ctrlKey || e.metaKey) {
+                toggleKtsSelectionKey(btn.dataset.ktsEl);
+            } else {
+                setKtsSelectedKeys([btn.dataset.ktsEl], btn.dataset.ktsEl);
+            }
+        });
+
+        [
+            ['ktsLayAlignElsLeft', 'left'],
+            ['ktsLayAlignElsCenterH', 'centerH'],
+            ['ktsLayAlignElsRight', 'right'],
+            ['ktsLayDistributeV', 'distributeV']
+        ].forEach(function(pair) {
+            const btn = document.getElementById(pair[0]);
+            if (btn) btn.addEventListener('click', function() { alignSelectedKtsElements(pair[1]); });
         });
 
         const layVis = document.getElementById('ktsLayVisibleToggle');
         if (layVis) layVis.addEventListener('change', function() {
-            const el = getKtsLayoutSelectedObj();
-            if (!el) return;
-            el.visible = this.checked;
+            const checked = this.checked;
+            getKtsSelectedObjs().forEach(function(obj) { obj.visible = checked; });
+            commitKtsLayoutHistory();
             populateKtsLayoutElementPicker();
             scheduleKtsLayoutEditorRender();
         });
@@ -24026,6 +24644,7 @@ function startOrOpenResponder(options) {
                 if (n && sourceEl !== n) n.value = v;
                 onValue(v);
                 scheduleKtsLayoutEditorRender();
+                scheduleKtsLayoutHistoryCommit();
             };
             if (r) r.addEventListener('input', function() { handle(this.value, r); });
             if (n) n.addEventListener('input', function() { handle(this.value, n); });
@@ -24035,29 +24654,29 @@ function startOrOpenResponder(options) {
             const el = getKtsLayoutSelectedObj();
             if (!el || el.kind === 'box') return;
             const prev = Number(el.x) || 0;
-            applyKtsLayoutMoveDelta(v - prev, 0);
+            applyKtsLayoutMoveDelta(v - prev, 0, true);
         });
         bindLayPair('ktsLayPosY', 'ktsLayPosYNum', function(v) {
             const el = getKtsLayoutSelectedObj();
             if (!el || el.kind === 'box') return;
             const prev = Number(el.y) || 0;
-            applyKtsLayoutMoveDelta(0, v - prev);
+            applyKtsLayoutMoveDelta(0, v - prev, true);
         });
         bindLayPair('ktsLayFontSize', 'ktsLayFontSizeNum', function(v) {
-            const el = getKtsLayoutSelectedObj();
-            if (el) el.fontSize = Math.max(8, Math.min(90, v));
+            const clamped = Math.max(8, Math.min(90, v));
+            getKtsSelectedTextObjs().forEach(function(obj) { obj.fontSize = clamped; });
         });
         bindLayPair('ktsLayLetterSpacing', 'ktsLayLetterSpacingNum', function(v) {
-            const el = getKtsLayoutSelectedObj();
-            if (el) el.letterSpacing = Math.max(-2, Math.min(24, v));
+            const clamped = Math.max(-2, Math.min(24, v));
+            getKtsSelectedTextObjs().forEach(function(obj) { obj.letterSpacing = clamped; });
         });
         bindLayPair('ktsLayLineGap', 'ktsLayLineGapNum', function(v) {
-            const el = getKtsLayoutSelectedObj();
-            if (el) el.lineGap = Math.max(10, Math.min(80, v));
+            const clamped = Math.max(10, Math.min(80, v));
+            getKtsSelectedTextObjs().forEach(function(obj) { obj.lineGap = clamped; });
         });
         bindLayPair('ktsLayMaxWidth', 'ktsLayMaxWidthNum', function(v) {
-            const el = getKtsLayoutSelectedObj();
-            if (el) el.maxWidth = Math.max(80, Math.min(980, v));
+            const clamped = Math.max(80, Math.min(980, v));
+            getKtsSelectedTextObjs().forEach(function(obj) { obj.maxWidth = clamped; });
         });
         bindLayPair('ktsLayBoxW', 'ktsLayBoxWNum', function(v) {
             const el = getKtsLayoutSelectedObj();
@@ -24079,14 +24698,32 @@ function startOrOpenResponder(options) {
             else if (el.kind === 'box') el.h = Math.max(40, Math.min(260, v));
         });
 
+        [['ktsLayFontDecBtn', -1], ['ktsLayFontIncBtn', 1]].forEach(function(pair) {
+            const btn = document.getElementById(pair[0]);
+            if (!btn) return;
+            btn.addEventListener('click', function() {
+                const texts = getKtsSelectedTextObjs();
+                if (!texts.length) return;
+                texts.forEach(function(obj) {
+                    obj.fontSize = Math.max(8, Math.min(90, Math.round(((Number(obj.fontSize) || 18) + pair[1]) * 2) / 2));
+                });
+                syncKtsLayoutInspectorFromState();
+                scheduleKtsLayoutEditorRender();
+                scheduleKtsLayoutHistoryCommit();
+            });
+        });
+
         const wireToggleProp = function(btnId, propName) {
             const btn = document.getElementById(btnId);
             if (!btn) return;
             btn.addEventListener('click', function() {
-                const el = getKtsLayoutSelectedObj();
-                if (!el) return;
-                el[propName] = !el[propName];
-                this.classList.toggle('active', Boolean(el[propName]));
+                const texts = getKtsSelectedTextObjs();
+                if (!texts.length) return;
+                const ref = getKtsLayoutSelectedObj();
+                const nextVal = !((ref && ref.kind === 'text' ? ref : texts[0])[propName]);
+                texts.forEach(function(obj) { obj[propName] = nextVal; });
+                commitKtsLayoutHistory();
+                syncKtsLayoutInspectorFromState();
                 scheduleKtsLayoutEditorRender();
             });
         };
@@ -24098,9 +24735,10 @@ function startOrOpenResponder(options) {
             const btn = document.getElementById(pair[0]);
             if (!btn) return;
             btn.addEventListener('click', function() {
-                const el = getKtsLayoutSelectedObj();
-                if (!el) return;
-                el.align = pair[1];
+                const texts = getKtsSelectedTextObjs();
+                if (!texts.length) return;
+                texts.forEach(function(obj) { obj.align = pair[1]; });
+                commitKtsLayoutHistory();
                 syncKtsLayoutInspectorFromState();
                 scheduleKtsLayoutEditorRender();
             });
@@ -24108,27 +24746,29 @@ function startOrOpenResponder(options) {
 
         const uLineChk = document.getElementById('ktsLayUnderlineToggle');
         if (uLineChk) uLineChk.addEventListener('change', function() {
-            const el = getKtsLayoutSelectedObj();
-            if (!el) return;
-            el.showUnderline = this.checked;
+            const sn = getKtsLayoutSideMap().student_name;
+            if (!sn) return;
+            sn.showUnderline = this.checked;
+            commitKtsLayoutHistory();
             scheduleKtsLayoutEditorRender();
         });
 
         const colPick = document.getElementById('ktsLayColorPicker');
         if (colPick) colPick.addEventListener('input', function() {
-            const el = getKtsLayoutSelectedObj();
-            if (!el) return;
-            el.color = this.value;
+            const c = this.value;
+            getKtsSelectedTextObjs().forEach(function(obj) { obj.color = c; });
             scheduleKtsLayoutEditorRender();
+            scheduleKtsLayoutHistoryCommit();
         });
 
         document.querySelectorAll('#ktsLayoutEditorModal .kts-color-swatch').forEach(function(sw) {
             sw.addEventListener('click', function() {
                 const c = this.dataset.ktsColor;
-                const el = getKtsLayoutSelectedObj();
-                if (!el || !c) return;
-                el.color = c;
+                const texts = getKtsSelectedTextObjs();
+                if (!texts.length || !c) return;
+                texts.forEach(function(obj) { obj.color = c; });
                 if (colPick) colPick.value = c;
+                commitKtsLayoutHistory();
                 scheduleKtsLayoutEditorRender();
             });
         });
@@ -24151,6 +24791,38 @@ function startOrOpenResponder(options) {
         const saveLayBtn = document.getElementById('ktsLaySaveBtn');
         if (saveLayBtn) saveLayBtn.addEventListener('click', saveKtsLayoutSettings);
 
+        // Keyboard shortcuts (Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y / Arrow Nudge) when Layout Modal is open
+        if (!document.body.dataset.ktsLayKeyBound) {
+            document.body.dataset.ktsLayKeyBound = '1';
+            document.addEventListener('keydown', function(ev) {
+                const modal = document.getElementById('ktsLayoutEditorModal');
+                if (!modal || modal.style.display === 'none') return;
+
+                if (ev.ctrlKey || ev.metaKey) {
+                    const keyLow = String(ev.key || '').toLowerCase();
+                    if (keyLow === 'z') {
+                        ev.preventDefault();
+                        if (ev.shiftKey) redoKtsLayout();
+                        else undoKtsLayout();
+                        return;
+                    }
+                    if (keyLow === 'y') {
+                        ev.preventDefault();
+                        redoKtsLayout();
+                        return;
+                    }
+                }
+
+                const activeTag = document.activeElement ? document.activeElement.tagName : '';
+                if (['INPUT', 'SELECT', 'TEXTAREA'].indexOf(activeTag) !== -1) return;
+                const step = ev.shiftKey ? 5 : 1;
+                if (ev.key === 'ArrowLeft') { ev.preventDefault(); applyKtsLayoutMoveDelta(-step, 0); }
+                else if (ev.key === 'ArrowRight') { ev.preventDefault(); applyKtsLayoutMoveDelta(step, 0); }
+                else if (ev.key === 'ArrowUp') { ev.preventDefault(); applyKtsLayoutMoveDelta(0, -step); }
+                else if (ev.key === 'ArrowDown') { ev.preventDefault(); applyKtsLayoutMoveDelta(0, step); }
+            });
+        }
+
         const layCanvas = document.getElementById('ktsLayoutCanvas');
         if (layCanvas) {
             const getCanvasCoords = function(ev) {
@@ -24165,37 +24837,92 @@ function startOrOpenResponder(options) {
 
             layCanvas.addEventListener('pointerdown', function(ev) {
                 const pt = getCanvasCoords(ev);
+                const additive = Boolean(ev.shiftKey || ev.ctrlKey || ev.metaKey);
+
                 let picked = null;
                 for (let i = ktsLayoutHitBoxes.length - 1; i >= 0; i--) {
                     const b = ktsLayoutHitBoxes[i];
+                    if (b.id === 'header_banner' || b.id === 'back_header') continue;
                     if (pt.x >= b.x && pt.x <= b.x + b.w && pt.y >= b.y && pt.y <= b.y + b.h) {
                         picked = b;
                         break;
                     }
                 }
-                if (!picked) return;
-                ktsState.layoutSelectedEl = picked.id;
-                syncKtsLayoutInspectorFromState();
+
+                if (!picked) {
+                    ktsLayoutMarquee = {
+                        pointerId: ev.pointerId,
+                        startX: pt.x,
+                        startY: pt.y,
+                        curX: pt.x,
+                        curY: pt.y,
+                        additive: additive,
+                        baseKeys: additive ? getKtsSelectedKeys().slice() : []
+                    };
+                    layCanvas.classList.add('is-marquee');
+                    if (layCanvas.setPointerCapture) {
+                        try { layCanvas.setPointerCapture(ev.pointerId); } catch (_) {}
+                    }
+                    scheduleKtsLayoutEditorRender();
+                    return;
+                }
+
+                if (additive) {
+                    toggleKtsSelectionKey(picked.id);
+                    return;
+                }
+
+                const currKeys = getKtsSelectedKeys();
+                const wasAlreadyInSelection = currKeys.indexOf(picked.id) !== -1;
+                if (!wasAlreadyInSelection) {
+                    ktsState.layoutSelectedEls = [picked.id];
+                    ktsState.layoutSelectedEl = picked.id;
+                    syncKtsLayoutInspectorFromState();
+                } else {
+                    ktsState.layoutSelectedEl = picked.id;
+                    syncKtsLayoutInspectorFromState();
+                }
 
                 const sideMap = getKtsLayoutSideMap();
-                const pickedObj = sideMap[picked.id];
-                if (pickedObj && pickedObj.kind !== 'box') {
-                    const moveBioGroup = ktsState.layoutSide === 'front' &&
-                        KTS_BIO_KEYS.indexOf(picked.id) !== -1 &&
-                        Boolean(document.getElementById('ktsLayMoveBioGroup') && document.getElementById('ktsLayMoveBioGroup').checked);
-                    const keys = moveBioGroup ? KTS_BIO_KEYS : [picked.id];
+                const moveBioGroup = ktsState.layoutSide === 'front' &&
+                    KTS_BIO_KEYS.indexOf(picked.id) !== -1 &&
+                    Boolean(document.getElementById('ktsLayMoveBioGroup') && document.getElementById('ktsLayMoveBioGroup').checked);
+                const baseKeys = moveBioGroup ? Array.from(new Set(getKtsSelectedKeys().concat(KTS_BIO_KEYS))) : getKtsSelectedKeys();
+                const dragKeys = baseKeys.filter(function(k) { return sideMap[k] && sideMap[k].kind !== 'box'; });
+
+                if (dragKeys.length) {
                     const origins = {};
-                    keys.forEach(function(k) {
-                        if (sideMap[k]) {
-                            origins[k] = { x: Number(sideMap[k].x) || 0, y: Number(sideMap[k].y) || 0 };
-                        }
+                    const dragBoxes = [];
+                    dragKeys.forEach(function(k) {
+                        origins[k] = { x: Number(sideMap[k].x) || 0, y: Number(sideMap[k].y) || 0 };
+                        const hb = ktsLayoutHitBoxes.find(function(b) { return b.id === k; });
+                        if (hb) dragBoxes.push(hb);
                     });
+
+                    const groupBox = dragBoxes.length ? {
+                        minX: Math.min.apply(null, dragBoxes.map(function(b) { return b.x; })),
+                        minY: Math.min.apply(null, dragBoxes.map(function(b) { return b.y; })),
+                        maxX: Math.max.apply(null, dragBoxes.map(function(b) { return b.x + b.w; })),
+                        maxY: Math.max.apply(null, dragBoxes.map(function(b) { return b.y + b.h; }))
+                    } : null;
+
+                    const staticBoxes = ktsLayoutHitBoxes.filter(function(b) {
+                        return b.id !== 'header_banner' && b.id !== 'back_header' && dragKeys.indexOf(b.id) === -1;
+                    });
+
                     ktsLayoutDragState = {
                         pointerId: ev.pointerId,
                         startX: pt.x,
                         startY: pt.y,
-                        origins: origins
+                        keys: dragKeys,
+                        origins: origins,
+                        groupBox: groupBox,
+                        staticBoxes: staticBoxes,
+                        clickedId: picked.id,
+                        wasInGroup: wasAlreadyInSelection && currKeys.length > 1,
+                        didMove: false
                     };
+                    ktsLayoutActiveGuides = [];
                     layCanvas.classList.add('is-dragging');
                     if (layCanvas.setPointerCapture) {
                         try { layCanvas.setPointerCapture(ev.pointerId); } catch (_) {}
@@ -24205,32 +24932,95 @@ function startOrOpenResponder(options) {
             });
 
             layCanvas.addEventListener('pointermove', function(ev) {
+                if (ktsLayoutMarquee && ev.pointerId === ktsLayoutMarquee.pointerId) {
+                    const pt = getCanvasCoords(ev);
+                    ktsLayoutMarquee.curX = pt.x;
+                    ktsLayoutMarquee.curY = pt.y;
+                    const mx1 = Math.min(ktsLayoutMarquee.startX, pt.x);
+                    const mx2 = Math.max(ktsLayoutMarquee.startX, pt.x);
+                    const my1 = Math.min(ktsLayoutMarquee.startY, pt.y);
+                    const my2 = Math.max(ktsLayoutMarquee.startY, pt.y);
+                    if (Math.hypot(pt.x - ktsLayoutMarquee.startX, pt.y - ktsLayoutMarquee.startY) >= 5) {
+                        const hits = ktsLayoutHitBoxes.filter(function(b) {
+                            if (b.id === 'header_banner' || b.id === 'back_header') return false;
+                            return b.x < mx2 && (b.x + b.w) > mx1 && b.y < my2 && (b.y + b.h) > my1;
+                        }).map(function(b) { return b.id; });
+                        const merged = ktsLayoutMarquee.additive
+                            ? Array.from(new Set(ktsLayoutMarquee.baseKeys.concat(hits)))
+                            : hits;
+                        if (merged.length) {
+                            setKtsSelectedKeys(merged, merged[merged.length - 1]);
+                        }
+                    }
+                    scheduleKtsLayoutEditorRender();
+                    return;
+                }
+
                 if (!ktsLayoutDragState || ev.pointerId !== ktsLayoutDragState.pointerId) return;
                 const pt = getCanvasCoords(ev);
-                const dx = pt.x - ktsLayoutDragState.startX;
-                const dy = pt.y - ktsLayoutDragState.startY;
+                const rawDx = pt.x - ktsLayoutDragState.startX;
+                const rawDy = pt.y - ktsLayoutDragState.startY;
+                if (Math.hypot(rawDx, rawDy) >= 3) ktsLayoutDragState.didMove = true;
+
+                let finalDx = rawDx;
+                let finalDy = rawDy;
+                if (ktsState.layoutSmartGuides && !ev.altKey) {
+                    const snap = computeKtsSmartGuides(rawDx, rawDy, ktsLayoutDragState);
+                    finalDx = snap.snappedDx;
+                    finalDy = snap.snappedDy;
+                    ktsLayoutActiveGuides = snap.guides || [];
+                } else {
+                    ktsLayoutActiveGuides = [];
+                }
+
                 const sideMap = getKtsLayoutSideMap();
-                Object.keys(ktsLayoutDragState.origins).forEach(function(k) {
+                ktsLayoutDragState.keys.forEach(function(k) {
                     const orig = ktsLayoutDragState.origins[k];
                     if (!sideMap[k] || !orig) return;
-                    sideMap[k].x = Math.max(0, Math.min(1011, Math.round(orig.x + dx)));
-                    sideMap[k].y = Math.max(0, Math.min(638, Math.round(orig.y + dy)));
+                    sideMap[k].x = Math.max(0, Math.min(1011, Math.round(orig.x + finalDx)));
+                    sideMap[k].y = Math.max(0, Math.min(638, Math.round(orig.y + finalDy)));
                 });
                 syncKtsLayoutInspectorFromState();
                 scheduleKtsLayoutEditorRender();
             });
 
-            const endDrag = function(ev) {
+            const endPointer = function(ev) {
+                if (ktsLayoutMarquee) {
+                    const dist = Math.hypot(ktsLayoutMarquee.curX - ktsLayoutMarquee.startX, ktsLayoutMarquee.curY - ktsLayoutMarquee.startY);
+                    if (ev && ev.pointerId !== undefined && layCanvas.releasePointerCapture) {
+                        try { layCanvas.releasePointerCapture(ev.pointerId); } catch (_) {}
+                    }
+                    if (dist < 5) {
+                        const bannerBox = ktsLayoutHitBoxes.find(function(b) {
+                            return (b.id === 'header_banner' || b.id === 'back_header') &&
+                                ktsLayoutMarquee.startX >= b.x && ktsLayoutMarquee.startX <= b.x + b.w &&
+                                ktsLayoutMarquee.startY >= b.y && ktsLayoutMarquee.startY <= b.y + b.h;
+                        });
+                        if (bannerBox) setKtsSelectedKeys([bannerBox.id], bannerBox.id);
+                    }
+                    ktsLayoutMarquee = null;
+                    layCanvas.classList.remove('is-marquee');
+                    renderKtsLayoutEditorCanvas();
+                    return;
+                }
+
                 if (!ktsLayoutDragState) return;
                 if (ev && ev.pointerId !== undefined && layCanvas.releasePointerCapture) {
                     try { layCanvas.releasePointerCapture(ev.pointerId); } catch (_) {}
                 }
+                const drag = ktsLayoutDragState;
                 ktsLayoutDragState = null;
+                ktsLayoutActiveGuides = [];
                 layCanvas.classList.remove('is-dragging');
+                if (drag.didMove) {
+                    commitKtsLayoutHistory();
+                } else if (drag.wasInGroup && drag.clickedId) {
+                    setKtsSelectedKeys([drag.clickedId], drag.clickedId);
+                }
                 renderKtsLayoutEditorCanvas();
             };
-            layCanvas.addEventListener('pointerup', endDrag);
-            layCanvas.addEventListener('pointercancel', endDrag);
+            layCanvas.addEventListener('pointerup', endPointer);
+            layCanvas.addEventListener('pointercancel', endPointer);
         }
 
         // Batch Print Modal Handlers
