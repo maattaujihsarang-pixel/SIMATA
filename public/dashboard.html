@@ -7066,6 +7066,11 @@ let allLoadedStudents = [];
 let loadedClassesList = [];
 let studentClassMap = {};
 
+function resolveStudentClassName(s) {
+    if (!s) return '-';
+    return s.className || s.class_name || (studentClassMap && studentClassMap[s.classId]) || s.classId || '-';
+}
+
 const masterStudentTableState = {
     pageSize: 10,
     currentPage: 1,
@@ -7175,7 +7180,7 @@ function getFilteredMasterStudentList() {
             const nisn = String(s.nisn || '').toLowerCase();
             const sid = String(s.studentId || '').toLowerCase();
             const gender = String(s.gender || '').toLowerCase();
-            const className = String((studentClassMap && studentClassMap[s.classId]) || s.classId || '').toLowerCase();
+            const className = String(resolveStudentClassName(s)).toLowerCase();
             const birthPlace = String(s.birthPlace || s.birth_place || '').toLowerCase();
             const address = String(s.address || '').toLowerCase();
             const dormitory = String(s.dormitory || '').toLowerCase();
@@ -7211,8 +7216,8 @@ function sortMasterStudentRecords(records, sortField, sortDirection) {
             case 'name': valA = a.name || ''; valB = b.name || ''; break;
             case 'gender': valA = a.gender || ''; valB = b.gender || ''; break;
             case 'class':
-                valA = (studentClassMap && studentClassMap[a.classId]) || a.classId || '';
-                valB = (studentClassMap && studentClassMap[b.classId]) || b.classId || '';
+                valA = resolveStudentClassName(a);
+                valB = resolveStudentClassName(b);
                 break;
             case 'birthPlace': valA = a.birthPlace || a.birth_place || ''; valB = b.birthPlace || b.birth_place || ''; break;
             case 'birthDate': valA = a.birthDate || ''; valB = b.birthDate || ''; break;
@@ -7334,7 +7339,8 @@ function renderMasterStudentTbody() {
         const nisn = escapeHtml(s.nisn || '-');
         const name = escapeHtml(s.name || '-');
         const gender = escapeHtml(s.gender || '-');
-        const className = escapeHtml((studentClassMap && studentClassMap[s.classId]) || s.classId || '-');
+        const resolvedClassName = resolveStudentClassName(s);
+        const className = escapeHtml(resolvedClassName);
         const birthPlace = escapeHtml(s.birthPlace || s.birth_place || '-');
         const birthDate = escapeHtml(formatBirthDateIndoShort(s.birthDate || s.birth_date));
         const address = escapeHtml(s.address || '-');
@@ -7408,7 +7414,7 @@ function renderMasterStudentTbody() {
         const detailRowHtml = renderMobileAttendanceDetailRow('masterStudent', idx, [
             { label: 'NIS', value: s.nis || '-' },
             { label: 'NISN', value: s.nisn || '-' },
-            { label: 'Kelas', value: (studentClassMap && studentClassMap[s.classId]) || s.classId || '-' },
+            { label: 'Kelas', value: resolvedClassName },
             { label: 'Gender', value: s.gender || '-' },
             { label: 'Tmp Lahir', value: s.birthPlace || s.birth_place || '-' },
             { label: 'Tgl Lahir', value: formatBirthDateIndoShort(s.birthDate || s.birth_date) },
@@ -7737,7 +7743,7 @@ function exportMasterStudentData(format) {
     }
     const headers = ['No', 'Student ID', 'NIS', 'NISN', 'Nama Siswa', 'Jenis Kelamin', 'Kelas', 'Tempat Lahir', 'Tanggal Lahir', 'Alamat Lengkap', 'Pondok / Asrama', 'Status'];
     const rows = sorted.map(function(s, idx) {
-        const className = (studentClassMap && studentClassMap[s.classId]) || s.classId || '-';
+        const className = resolveStudentClassName(s);
         const isAktif = (s.status || 'Active').toLowerCase() === 'active' || (s.status || '').toLowerCase() === 'aktif';
         return [
             idx + 1,
@@ -7783,7 +7789,7 @@ function printMasterStudentReport() {
         const nisn = escapeHtml(s.nisn || '-');
         const name = escapeHtml(s.name || '-');
         const gender = escapeHtml(s.gender || '-');
-        const cName = escapeHtml((studentClassMap && studentClassMap[s.classId]) || s.classId || '-');
+        const cName = escapeHtml(resolveStudentClassName(s));
         const isAktif = (s.status || 'Active').toLowerCase() === 'active' || (s.status || '').toLowerCase() === 'aktif';
         const statusText = isAktif ? 'Aktif' : 'Tidak Aktif';
         const statusColor = isAktif ? '#15803d' : '#b91c1c';
@@ -8032,6 +8038,9 @@ function loadStudents(filter) {
                 filterSelect.value = currentVal || '';
             }
             updateStudentSummaryChips();
+            if (Array.isArray(allLoadedStudents) && allLoadedStudents.length > 0) {
+                renderMasterStudentTbody();
+            }
         }
     }).withFailureHandler(function() { /* ignore */ }).getClasses();
 
