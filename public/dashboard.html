@@ -22789,10 +22789,10 @@ function startOrOpenResponder(options) {
         document.body.appendChild(tempDiv);
         try {
             const levels = [
-                { code: QRCode.CorrectLevel.H, name: 'H' },
-                { code: QRCode.CorrectLevel.Q, name: 'Q' },
-                { code: QRCode.CorrectLevel.M, name: 'M' },
-                { code: QRCode.CorrectLevel.L, name: 'L' }
+                QRCode.CorrectLevel.Q,
+                QRCode.CorrectLevel.M,
+                QRCode.CorrectLevel.H,
+                QRCode.CorrectLevel.L
             ];
             const candidates = [cleanText];
             if (cleanText.length > 500) {
@@ -22809,7 +22809,7 @@ function startOrOpenResponder(options) {
                             height: renderSize,
                             colorDark: '#000000',
                             colorLight: '#ffffff',
-                            correctLevel: levels[i].code
+                            correctLevel: levels[i]
                         });
                         const qrCanvas = tempDiv.querySelector('canvas');
                         if (qrCanvas) {
@@ -22819,11 +22819,10 @@ function startOrOpenResponder(options) {
                             const cCtx = cloned.getContext('2d');
                             cCtx.imageSmoothingEnabled = false;
                             cCtx.drawImage(qrCanvas, 0, 0);
-                            cloned._ecLevel = levels[i].name;
                             return cloned;
                         }
                     } catch (_) {
-                        // Retry with lower error correction level (qrcodejs throws code length overflow at H on longer payloads)
+                        // Retry with lower error correction level (qrcodejs throws code length overflow on longer payloads)
                     }
                 }
             }
@@ -24443,7 +24442,6 @@ function startOrOpenResponder(options) {
                 }
             }
             oCtx.putImageData(imgData, 0, 0);
-            out._ecLevel = rawCanvas._ecLevel;
             return out;
         } catch (_) {
             return rawCanvas;
@@ -24477,34 +24475,27 @@ function startOrOpenResponder(options) {
         if (opts && opts.payloadOverride) return String(opts.payloadOverride);
         const url = String((opts && opts.verifyUrl) || '').trim();
         const name = String((opts && opts.signerName) || 'Kepala Madrasah').trim();
-        const title = String((opts && opts.signerTitle) || 'Kepala Madrasah').trim();
         const id = String((opts && opts.signerNip) || '').trim();
         const dt = String((opts && opts.cityDate) || '').trim();
         const doc = String((opts && opts.docNote) || '').trim();
         const uniqueCode = computeTteUniqueCode(opts);
         if (url) {
-            return url + ' | Kode: ' + uniqueCode + (doc ? ' | ' + doc : '') + ' | ' + name;
+            return url;
         }
         const parts = [
-            '[TTE-SIMATA UU-ITE-11/2008]',
-            'Kode Unik: ' + uniqueCode,
-            'Instansi: Madrasah Aliyah At-Taujih',
-            'Yayasan: Yayasan Muwajjihul Ulum Asy Syariyyah',
-            'NPSN: 70033117',
-            'Alamat: MA. At-Taujih, Dk. Pulorejo, Desa Bajingjowo, Kec. Sarang, Kab. Rembang, Jawa Tengah (59274)',
-            'Penandatangan: ' + name,
-            'Jabatan: ' + title
+            'TTE MA At-Taujih (NPSN 70033117)',
+            'Yayasan Muwajjihul Ulum Asy-Syariyyah, Sarang',
+            'Kode: ' + uniqueCode,
+            'Oleh: ' + name + (id && id !== '-' && id !== 'NIP. -' ? ' (' + id + ')' : '')
         ];
-        if (id && id !== '-' && id !== 'NIP. -') parts.push('ID: ' + id);
-        if (dt) parts.push('Tanggal: ' + dt);
+        if (dt) parts.push('Tgl: ' + dt);
         if (doc) parts.push('Ket: ' + doc);
         return parts.join('\n');
     }
 
-    function drawQrCrestOverlay(ctx, qx, qy, qSize, logoImg, ecLevel) {
-        if (!logoImg || ecLevel === 'L') return;
-        const badgeRatio = ecLevel === 'H' ? 0.2 : 0.17;
-        const badgeS = Math.round(qSize * badgeRatio);
+    function drawQrCrestOverlay(ctx, qx, qy, qSize, logoImg) {
+        if (!logoImg) return;
+        const badgeS = Math.round(qSize * 0.25);
         const bx = qx + (qSize - badgeS) / 2;
         const by = qy + (qSize - badgeS) / 2;
         ctx.save();
@@ -24531,7 +24522,6 @@ function startOrOpenResponder(options) {
         const payload = buildNationalTtePayload(opts);
         const qrPx = Number(opts.exportQrSize) || (Math.max(w, h) >= 360 ? 1024 : 512);
         const qrCanvas = buildQrCanvasWithTransparentSupport(payload, keepQuietBg, qrPx);
-        const ecLevel = (qrCanvas && qrCanvas._ecLevel) || 'M';
 
         ctx.save();
         if (style === 'qr_only_crest') {
@@ -24555,7 +24545,7 @@ function startOrOpenResponder(options) {
                 ctx.drawImage(qrCanvas, qx, qy, innerSide, innerSide);
                 ctx.imageSmoothingEnabled = true;
             }
-            drawQrCrestOverlay(ctx, qx, qy, innerSide, opts.logoImg, ecLevel);
+            drawQrCrestOverlay(ctx, qx, qy, innerSide, opts.logoImg);
             ctx.restore();
             return { x: ox, y: oy, w: outerSide, h: outerSide };
         }
@@ -24582,7 +24572,7 @@ function startOrOpenResponder(options) {
                 ctx.drawImage(qrCanvas, qx, qy, qrInner, qrInner);
                 ctx.imageSmoothingEnabled = true;
             }
-            drawQrCrestOverlay(ctx, qx, qy, qrInner, opts.logoImg, ecLevel);
+            drawQrCrestOverlay(ctx, qx, qy, qrInner, opts.logoImg);
 
             // Compact BSrE / UU ITE verified ribbon below QR
             const ribY = qyOuter + outerSide + 1;
@@ -24629,7 +24619,7 @@ function startOrOpenResponder(options) {
             ctx.drawImage(qrCanvas, qx, qy, qrSide, qrSide);
             ctx.imageSmoothingEnabled = true;
         }
-        drawQrCrestOverlay(ctx, qx, qy, qrSide, opts.logoImg, ecLevel);
+        drawQrCrestOverlay(ctx, qx, qy, qrSide, opts.logoImg);
 
         // Vertical divider
         const divX = qx + qrSide + pad;
