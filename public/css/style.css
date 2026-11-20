@@ -7104,6 +7104,238 @@ select.attendance-filter-control {
   text-decoration: underline;
 }
 
+/* KTS Layout Inspector Tabs & White-Base Background Studio */
+.kts-insp-tabs {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 4px;
+  padding: 3px;
+  background: #e2e8f0;
+  border-radius: 10px;
+  width: 100%;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.kts-insp-tab-btn {
+  border: none;
+  background: transparent;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 8px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.kts-insp-tab-btn:hover {
+  color: #0f172a;
+}
+.kts-insp-tab-btn.active {
+  background: #ffffff;
+  color: #166534;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.1);
+}
+
+.kts-insp-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  width: 100%;
+}
+
+.kts-bg-side-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #166534;
+  background: #dcfce7;
+  border: 1px solid #86efac;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.kts-bg-note {
+  margin: 0;
+  font-size: 11px;
+  color: #64748b;
+  line-height: 1.35;
+}
+
+.kts-bg-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  width: 100%;
+  min-width: 0;
+}
+
+.kts-bg-preset-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 8px;
+  border: 1.5px solid #cbd5e1;
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-width: 0;
+  text-align: center;
+}
+.kts-bg-preset-card:hover {
+  border-color: #16a34a;
+  transform: translateY(-1px);
+}
+.kts-bg-preset-card.active {
+  border-color: #166534;
+  background: #ecfdf5;
+  box-shadow: 0 0 0 2px rgba(22, 101, 52, 0.18);
+}
+
+.kts-bg-preset-thumb {
+  width: 100%;
+  aspect-ratio: 1011 / 638;
+  border-radius: 5px;
+  display: block;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+
+.kts-bg-preset-name {
+  font-size: 10px;
+  font-weight: 700;
+  color: #334155;
+  line-height: 1.18;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.kts-bg-preset-card.active .kts-bg-preset-name {
+  color: #14532d;
+}
+
+.kts-bg-color-hex-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+.kts-bg-color-hex-row input[type="color"] {
+  width: 38px;
+  height: 32px;
+  padding: 2px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  background: #ffffff;
+  cursor: pointer;
+  flex: 0 0 38px;
+}
+
+.kts-bg-hex-input {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 32px;
+  padding: 0 9px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: monospace;
+  color: #0f172a;
+  background: #f8fafc;
+  text-transform: uppercase;
+}
+
+.kts-bg-rgb-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.kts-bg-rgb-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.kts-bg-rgb-field span {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #64748b;
+}
+.kts-bg-rgb-field input[type="number"] {
+  width: 100%;
+  min-width: 0;
+  height: 30px;
+  padding: 2px 4px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+  text-align: center;
+  background: #f8fafc;
+}
+
+.kts-bg-upload-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.kts-bg-upload-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 34px;
+  padding: 0 10px;
+  border: 1.5px dashed #16a34a;
+  border-radius: 8px;
+  background: #f0fdf4;
+  color: #166534;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.kts-bg-upload-btn:hover {
+  background: #dcfce7;
+}
+
+.kts-bg-danger-btn {
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+.kts-bg-danger-btn:hover {
+  background: #fee2e2;
+}
+
+.kts-bg-action-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
 @media (max-width: 960px) {
   .kts-layout-modal-card {
     height: 94vh;

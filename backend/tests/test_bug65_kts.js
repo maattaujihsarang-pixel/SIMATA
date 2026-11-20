@@ -31,6 +31,7 @@ function assertFrontendKtsIntegrity() {
   assert.ok(css.includes('.kts-unified-summary-banner'), 'style.css must define .kts-unified-summary-banner');
   assert.ok(css.includes('#ktsPreviewCanvas'), 'style.css must style #ktsPreviewCanvas');
   assert.ok(css.includes('.kts-layout-select'), 'style.css must style .kts-layout-select');
+  assert.ok(css.includes('.kts-bg-preset-grid'), 'style.css must style .kts-bg-preset-grid');
   for (const hiddenSel of [
     '#ktsEditLayoutBtn',
     '#ktsCustomizeTemplateBtn',
@@ -77,6 +78,14 @@ function assertFrontendKtsIntegrity() {
     'id="ktsLayFontFamily"',
     'id="ktsLayFontWeight"',
     'resolveKtsFontWeight',
+    'id="ktsInspTabBg"',
+    'id="ktsLayBgPresetGrid"',
+    'id="ktsLayBgRgbR"',
+    'id="ktsLayBgFileInput"',
+    'id="ktsLayBgScale"',
+    'id="ktsLayBgWhiteOverlay"',
+    'drawKtsCardBodyBackground',
+    'KTS_BG_PRESETS',
     'simataConfirm',
     'simataPrompt',
     'id="ktsTpl_headerTitle"',
@@ -321,6 +330,10 @@ async function runBug65KtsTests() {
     const customLayoutStr = JSON.stringify({
       front: {
         student_name: { x: 320, y: 280, fontSize: 36, letterSpacing: 1.5, bold: true }
+      },
+      bg: {
+        front: { mode: 'solid', solidColor: '#f0fdf4' },
+        back: { mode: 'preset', preset: 'islamic_star', accentColor: '#166534', opacity: 110 }
       }
     });
     const goodLayoutRes = await fetch(`${baseUrl}/api/v1/students/kts/settings`, {

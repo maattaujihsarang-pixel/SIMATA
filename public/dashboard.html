@@ -19,7 +19,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100..900;1,100..900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=bug60_kts_redesign">
+  <link rel="stylesheet" href="/css/style.css?v=bug65_bgstudio">
   <link rel="stylesheet" href="/css/notifications.css?v=bug65_2">
   <link rel="stylesheet" href="/css/finance.css">
   <style>
@@ -4017,182 +4017,324 @@ html, body {
               </div>
 
               <div class="kts-layout-inspector-card">
-                <div class="kts-insp-section">
-                  <div class="kts-insp-section-header">
-                    <span class="kts-insp-section-title">Elemen Kartu</span>
-                    <div style="display:flex;align-items:center;gap:6px;">
-                      <span id="ktsLayMultiBadge">1 elemen dipilih</span>
-                      <label class="kts-eye-pill" title="Tampilkan atau sembunyikan elemen terpilih">
-                        <input type="checkbox" id="ktsLayVisibleToggle" checked />
-                        <span>Tampil</span>
+                <div class="kts-insp-tabs" role="tablist" aria-label="Mode Pengaturan KTS">
+                  <button type="button" id="ktsInspTabElements" class="kts-insp-tab-btn active" data-kts-insp-tab="elements">Elemen &amp; Teks</button>
+                  <button type="button" id="ktsInspTabBg" class="kts-insp-tab-btn" data-kts-insp-tab="background">Background</button>
+                </div>
+
+                <div id="ktsInspPanelElements" class="kts-insp-panel">
+                  <div class="kts-insp-section">
+                    <div class="kts-insp-section-header">
+                      <span class="kts-insp-section-title">Elemen Kartu</span>
+                      <div style="display:flex;align-items:center;gap:6px;">
+                        <span id="ktsLayMultiBadge">1 elemen dipilih</span>
+                        <label class="kts-eye-pill" title="Tampilkan atau sembunyikan elemen terpilih">
+                          <input type="checkbox" id="ktsLayVisibleToggle" checked />
+                          <span>Tampil</span>
+                        </label>
+                      </div>
+                    </div>
+                    <select id="ktsLayElementSelect" class="kts-sr-only" aria-label="Pilih Elemen Kartu"></select>
+                    <div id="ktsLayElementChips" class="kts-layout-el-chips"></div>
+                  </div>
+
+                  <div id="ktsLayMultiAlignGroup" class="kts-multi-align-group" style="display:none;">
+                    <label>Perataan &amp; Simetri Elemen Terblok</label>
+                    <div class="kts-style-btn-group">
+                      <button type="button" id="ktsLayAlignElsLeft" class="kts-nudge-btn" style="padding:0 9px;" title="Sejajarkan tepi kiri semua elemen terpilih">Lurus Kiri</button>
+                      <button type="button" id="ktsLayAlignElsCenterH" class="kts-nudge-btn" style="padding:0 9px;" title="Sejajarkan titik tengah horizontal semua elemen terpilih">Simetris Tengah</button>
+                      <button type="button" id="ktsLayAlignElsRight" class="kts-nudge-btn" style="padding:0 9px;" title="Sejajarkan tepi kanan semua elemen terpilih">Lurus Kanan</button>
+                      <button type="button" id="ktsLayDistributeV" class="kts-nudge-btn" style="padding:0 9px;" title="Ratakan jarak vertikal antar elemen terpilih">Ratakan Jarak</button>
+                    </div>
+                  </div>
+
+                  <div id="ktsLayPosGroup" class="kts-insp-section">
+                    <div class="kts-insp-section-header">
+                      <span class="kts-insp-section-title">Posisi</span>
+                      <label id="ktsLayMoveBioGroupWrap" class="kts-layout-group-check">
+                        <input type="checkbox" id="ktsLayMoveBioGroup" />
+                        <span>Geser 5 biodata sekaligus</span>
                       </label>
                     </div>
+                    <div class="kts-layout-two-col">
+                      <div class="kts-layout-control-row">
+                        <label for="ktsLayPosX">X</label>
+                        <div class="kts-layout-slider-pair">
+                          <input type="range" id="ktsLayPosX" min="0" max="1011" step="1" />
+                          <input type="number" id="ktsLayPosXNum" min="0" max="1011" step="1" />
+                        </div>
+                      </div>
+                      <div class="kts-layout-control-row">
+                        <label for="ktsLayPosY">Y</label>
+                        <div class="kts-layout-slider-pair">
+                          <input type="range" id="ktsLayPosY" min="0" max="638" step="1" />
+                          <input type="number" id="ktsLayPosYNum" min="0" max="638" step="1" />
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <select id="ktsLayElementSelect" class="kts-sr-only" aria-label="Pilih Elemen Kartu"></select>
-                  <div id="ktsLayElementChips" class="kts-layout-el-chips"></div>
+
+                  <div id="ktsLayBoxGroup" class="kts-insp-section" style="display:none;">
+                    <div class="kts-insp-section-header">
+                      <span class="kts-insp-section-title">Dimensi / Tinggi Area</span>
+                    </div>
+                    <div class="kts-layout-two-col">
+                      <div class="kts-layout-control-row">
+                        <label for="ktsLayBoxW">Lebar / Ukuran (px)</label>
+                        <div class="kts-layout-slider-pair">
+                          <input type="range" id="ktsLayBoxW" min="40" max="1011" step="2" />
+                          <input type="number" id="ktsLayBoxWNum" min="40" max="1011" step="2" />
+                        </div>
+                      </div>
+                      <div class="kts-layout-control-row">
+                        <label for="ktsLayBoxH">Tinggi (px)</label>
+                        <div class="kts-layout-slider-pair">
+                          <input type="range" id="ktsLayBoxH" min="40" max="638" step="2" />
+                          <input type="number" id="ktsLayBoxHNum" min="40" max="638" step="2" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div id="ktsLayTypoGroup" class="kts-insp-section">
+                    <div class="kts-insp-section-header">
+                      <span class="kts-insp-section-title">Tipografi &amp; Warna</span>
+                    </div>
+
+                    <div class="kts-layout-two-col">
+                      <div class="kts-layout-control-row">
+                        <label for="ktsLayFontFamily">Jenis Font</label>
+                        <select id="ktsLayFontFamily" class="kts-layout-select">
+                          <option value="Montserrat">Montserrat</option>
+                          <option value="Plus Jakarta Sans">Plus Jakarta Sans</option>
+                          <option value="Poppins">Poppins</option>
+                          <option value="Inter">Inter</option>
+                          <option value="Playfair Display">Playfair Display</option>
+                          <option value="Roboto Mono">Roboto Mono</option>
+                        </select>
+                      </div>
+                      <div class="kts-layout-control-row">
+                        <label for="ktsLayFontWeight">Ketebalan Font</label>
+                        <select id="ktsLayFontWeight" class="kts-layout-select">
+                          <option value="100">Thin (100)</option>
+                          <option value="200">ExtraLight (200)</option>
+                          <option value="300">Light (300)</option>
+                          <option value="400">Regular (400)</option>
+                          <option value="500">Medium (500)</option>
+                          <option value="600">SemiBold (600)</option>
+                          <option value="700">Bold (700)</option>
+                          <option value="800">ExtraBold (800)</option>
+                          <option value="900">Black (900)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div class="kts-layout-control-row">
+                      <label for="ktsLayFontSize">Ukuran Font (px)</label>
+                      <div class="kts-layout-slider-pair">
+                        <input type="range" id="ktsLayFontSize" min="10" max="68" step="0.5" />
+                        <input type="number" id="ktsLayFontSizeNum" min="10" max="68" step="0.5" />
+                        <button type="button" id="ktsLayFontDecBtn" class="kts-font-step-btn" title="Perkecil semua font terblok (-1px)">A-</button>
+                        <button type="button" id="ktsLayFontIncBtn" class="kts-font-step-btn" title="Perbesar semua font terblok (+1px)">A+</button>
+                      </div>
+                    </div>
+
+                    <div class="kts-layout-two-col">
+                      <div class="kts-layout-control-row">
+                        <label for="ktsLayLetterSpacing">Jarak Huruf</label>
+                        <div class="kts-layout-slider-pair">
+                          <input type="range" id="ktsLayLetterSpacing" min="-1" max="20" step="0.5" />
+                          <input type="number" id="ktsLayLetterSpacingNum" min="-1" max="20" step="0.5" />
+                        </div>
+                      </div>
+                      <div class="kts-layout-control-row">
+                        <label for="ktsLayLineGap">Jarak Baris</label>
+                        <div class="kts-layout-slider-pair">
+                          <input type="range" id="ktsLayLineGap" min="12" max="64" step="1" />
+                          <input type="number" id="ktsLayLineGapNum" min="12" max="64" step="1" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="kts-layout-control-row">
+                      <label for="ktsLayMaxWidth">Lebar Area Teks</label>
+                      <div class="kts-layout-slider-pair">
+                        <input type="range" id="ktsLayMaxWidth" min="120" max="960" step="2" />
+                        <input type="number" id="ktsLayMaxWidthNum" min="120" max="960" step="2" />
+                      </div>
+                    </div>
+
+                    <div class="kts-layout-control-row">
+                      <label>Gaya &amp; Perataan</label>
+                      <div class="kts-style-unified-row">
+                        <div class="kts-style-btn-group">
+                          <button type="button" id="ktsLayBoldBtn" class="kts-style-toggle-btn" title="Tebalkan (Bold)"><strong>B</strong></button>
+                          <button type="button" id="ktsLayItalicBtn" class="kts-style-toggle-btn" title="Miring (Italic)"><em>I</em></button>
+                          <button type="button" id="ktsLayUpperBtn" class="kts-style-toggle-btn" title="Huruf Kapital Semua">AA</button>
+                        </div>
+                        <div class="kts-style-btn-group">
+                          <button type="button" id="ktsLayAlignLeftBtn" class="kts-style-toggle-btn" title="Rata Kiri">Kiri</button>
+                          <button type="button" id="ktsLayAlignCenterBtn" class="kts-style-toggle-btn" title="Rata Tengah">Tengah</button>
+                          <button type="button" id="ktsLayAlignRightBtn" class="kts-style-toggle-btn" title="Rata Kanan">Kanan</button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div id="ktsLayUnderlineWrap" class="kts-layout-control-row" style="display:none;">
+                      <label class="kts-layout-group-check">
+                        <input type="checkbox" id="ktsLayUnderlineToggle" checked />
+                        <span>Tampilkan Garis Aksen Bawah Nama</span>
+                      </label>
+                    </div>
+
+                    <div class="kts-layout-control-row">
+                      <label for="ktsLayColorPicker">Warna Teks</label>
+                      <div class="kts-color-swatch-row">
+                        <input type="color" id="ktsLayColorPicker" value="#0f172a" />
+                        <button type="button" class="kts-color-swatch" data-kts-color="#ffffff" style="background:#ffffff;" title="Putih"></button>
+                        <button type="button" class="kts-color-swatch" data-kts-color="#fde047" style="background:#fde047;" title="Emas"></button>
+                        <button type="button" class="kts-color-swatch" data-kts-color="#dcfce7" style="background:#dcfce7;" title="Hijau Muda"></button>
+                        <button type="button" class="kts-color-swatch" data-kts-color="#0f172a" style="background:#0f172a;" title="Hitam Slate"></button>
+                        <button type="button" class="kts-color-swatch" data-kts-color="#1e293b" style="background:#1e293b;" title="Abu Tua"></button>
+                        <button type="button" class="kts-color-swatch" data-kts-color="#334155" style="background:#334155;" title="Slate"></button>
+                        <button type="button" class="kts-color-swatch" data-kts-color="#15803d" style="background:#15803d;" title="Hijau"></button>
+                        <button type="button" class="kts-color-swatch" data-kts-color="#052e16" style="background:#052e16;" title="Hijau Tua"></button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <div id="ktsLayMultiAlignGroup" class="kts-multi-align-group" style="display:none;">
-                  <label>Perataan &amp; Simetri Elemen Terblok</label>
-                  <div class="kts-style-btn-group">
-                    <button type="button" id="ktsLayAlignElsLeft" class="kts-nudge-btn" style="padding:0 9px;" title="Sejajarkan tepi kiri semua elemen terpilih">Lurus Kiri</button>
-                    <button type="button" id="ktsLayAlignElsCenterH" class="kts-nudge-btn" style="padding:0 9px;" title="Sejajarkan titik tengah horizontal semua elemen terpilih">Simetris Tengah</button>
-                    <button type="button" id="ktsLayAlignElsRight" class="kts-nudge-btn" style="padding:0 9px;" title="Sejajarkan tepi kanan semua elemen terpilih">Lurus Kanan</button>
-                    <button type="button" id="ktsLayDistributeV" class="kts-nudge-btn" style="padding:0 9px;" title="Ratakan jarak vertikal antar elemen terpilih">Ratakan Jarak</button>
-                  </div>
-                </div>
-
-                <div id="ktsLayPosGroup" class="kts-insp-section">
-                  <div class="kts-insp-section-header">
-                    <span class="kts-insp-section-title">Posisi</span>
-                    <label id="ktsLayMoveBioGroupWrap" class="kts-layout-group-check">
-                      <input type="checkbox" id="ktsLayMoveBioGroup" />
-                      <span>Geser 5 biodata sekaligus</span>
-                    </label>
-                  </div>
-                  <div class="kts-layout-two-col">
-                    <div class="kts-layout-control-row">
-                      <label for="ktsLayPosX">X</label>
-                      <div class="kts-layout-slider-pair">
-                        <input type="range" id="ktsLayPosX" min="0" max="1011" step="1" />
-                        <input type="number" id="ktsLayPosXNum" min="0" max="1011" step="1" />
-                      </div>
+                <div id="ktsInspPanelBg" class="kts-insp-panel" style="display:none;">
+                  <div class="kts-insp-section">
+                    <div class="kts-insp-section-header">
+                      <span class="kts-insp-section-title">Pilihan Background Putih</span>
+                      <span id="ktsLayBgSideBadge" class="kts-bg-side-badge">Sisi Depan</span>
                     </div>
-                    <div class="kts-layout-control-row">
-                      <label for="ktsLayPosY">Y</label>
-                      <div class="kts-layout-slider-pair">
-                        <input type="range" id="ktsLayPosY" min="0" max="638" step="1" />
-                        <input type="number" id="ktsLayPosYNum" min="0" max="638" step="1" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div id="ktsLayBoxGroup" class="kts-insp-section" style="display:none;">
-                  <div class="kts-insp-section-header">
-                    <span class="kts-insp-section-title">Dimensi / Tinggi Area</span>
-                  </div>
-                  <div class="kts-layout-two-col">
-                    <div class="kts-layout-control-row">
-                      <label for="ktsLayBoxW">Lebar / Ukuran (px)</label>
-                      <div class="kts-layout-slider-pair">
-                        <input type="range" id="ktsLayBoxW" min="40" max="1011" step="2" />
-                        <input type="number" id="ktsLayBoxWNum" min="40" max="1011" step="2" />
-                      </div>
-                    </div>
-                    <div class="kts-layout-control-row">
-                      <label for="ktsLayBoxH">Tinggi (px)</label>
-                      <div class="kts-layout-slider-pair">
-                        <input type="range" id="ktsLayBoxH" min="40" max="638" step="2" />
-                        <input type="number" id="ktsLayBoxHNum" min="40" max="638" step="2" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div id="ktsLayTypoGroup" class="kts-insp-section">
-                  <div class="kts-insp-section-header">
-                    <span class="kts-insp-section-title">Tipografi &amp; Warna</span>
+                    <p class="kts-bg-note">Hanya mengubah latar belakang kartu; banner header &amp; kop madrasah tetap utuh di atas.</p>
+                    <div id="ktsLayBgPresetGrid" class="kts-bg-preset-grid"></div>
                   </div>
 
-                  <div class="kts-layout-two-col">
-                    <div class="kts-layout-control-row">
-                      <label for="ktsLayFontFamily">Jenis Font</label>
-                      <select id="ktsLayFontFamily" class="kts-layout-select">
-                        <option value="Montserrat">Montserrat</option>
-                        <option value="Plus Jakarta Sans">Plus Jakarta Sans</option>
-                        <option value="Poppins">Poppins</option>
-                        <option value="Inter">Inter</option>
-                        <option value="Playfair Display">Playfair Display</option>
-                        <option value="Roboto Mono">Roboto Mono</option>
-                      </select>
+                  <div id="ktsLayBgSolidControls" class="kts-insp-section" style="display:none;">
+                    <div class="kts-insp-section-header">
+                      <span class="kts-insp-section-title">Opsi 1: Warna RGB Polos</span>
                     </div>
-                    <div class="kts-layout-control-row">
-                      <label for="ktsLayFontWeight">Ketebalan Font</label>
-                      <select id="ktsLayFontWeight" class="kts-layout-select">
-                        <option value="100">Thin (100)</option>
-                        <option value="200">ExtraLight (200)</option>
-                        <option value="300">Light (300)</option>
-                        <option value="400">Regular (400)</option>
-                        <option value="500">Medium (500)</option>
-                        <option value="600">SemiBold (600)</option>
-                        <option value="700">Bold (700)</option>
-                        <option value="800">ExtraBold (800)</option>
-                        <option value="900">Black (900)</option>
-                      </select>
+                    <div class="kts-bg-color-hex-row">
+                      <input type="color" id="ktsLayBgSolidPicker" value="#ffffff" title="Pilih warna dasar RGB" />
+                      <input type="text" id="ktsLayBgHexInput" class="kts-bg-hex-input" value="#FFFFFF" maxlength="7" aria-label="Kode Hex Warna" />
                     </div>
-                  </div>
-
-                  <div class="kts-layout-control-row">
-                    <label for="ktsLayFontSize">Ukuran Font (px)</label>
-                    <div class="kts-layout-slider-pair">
-                      <input type="range" id="ktsLayFontSize" min="10" max="68" step="0.5" />
-                      <input type="number" id="ktsLayFontSizeNum" min="10" max="68" step="0.5" />
-                      <button type="button" id="ktsLayFontDecBtn" class="kts-font-step-btn" title="Perkecil semua font terblok (-1px)">A-</button>
-                      <button type="button" id="ktsLayFontIncBtn" class="kts-font-step-btn" title="Perbesar semua font terblok (+1px)">A+</button>
+                    <div class="kts-bg-rgb-grid">
+                      <label class="kts-bg-rgb-field"><span>R</span><input type="number" id="ktsLayBgRgbR" min="0" max="255" step="1" value="255" /></label>
+                      <label class="kts-bg-rgb-field"><span>G</span><input type="number" id="ktsLayBgRgbG" min="0" max="255" step="1" value="255" /></label>
+                      <label class="kts-bg-rgb-field"><span>B</span><input type="number" id="ktsLayBgRgbB" min="0" max="255" step="1" value="255" /></label>
                     </div>
-                  </div>
-
-                  <div class="kts-layout-two-col">
-                    <div class="kts-layout-control-row">
-                      <label for="ktsLayLetterSpacing">Jarak Huruf</label>
-                      <div class="kts-layout-slider-pair">
-                        <input type="range" id="ktsLayLetterSpacing" min="-1" max="20" step="0.5" />
-                        <input type="number" id="ktsLayLetterSpacingNum" min="-1" max="20" step="0.5" />
-                      </div>
-                    </div>
-                    <div class="kts-layout-control-row">
-                      <label for="ktsLayLineGap">Jarak Baris</label>
-                      <div class="kts-layout-slider-pair">
-                        <input type="range" id="ktsLayLineGap" min="12" max="64" step="1" />
-                        <input type="number" id="ktsLayLineGapNum" min="12" max="64" step="1" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="kts-layout-control-row">
-                    <label for="ktsLayMaxWidth">Lebar Area Teks</label>
-                    <div class="kts-layout-slider-pair">
-                      <input type="range" id="ktsLayMaxWidth" min="120" max="960" step="2" />
-                      <input type="number" id="ktsLayMaxWidthNum" min="120" max="960" step="2" />
-                    </div>
-                  </div>
-
-                  <div class="kts-layout-control-row">
-                    <label>Gaya &amp; Perataan</label>
-                    <div class="kts-style-unified-row">
-                      <div class="kts-style-btn-group">
-                        <button type="button" id="ktsLayBoldBtn" class="kts-style-toggle-btn" title="Tebalkan (Bold)"><strong>B</strong></button>
-                        <button type="button" id="ktsLayItalicBtn" class="kts-style-toggle-btn" title="Miring (Italic)"><em>I</em></button>
-                        <button type="button" id="ktsLayUpperBtn" class="kts-style-toggle-btn" title="Huruf Kapital Semua">AA</button>
-                      </div>
-                      <div class="kts-style-btn-group">
-                        <button type="button" id="ktsLayAlignLeftBtn" class="kts-style-toggle-btn" title="Rata Kiri">Kiri</button>
-                        <button type="button" id="ktsLayAlignCenterBtn" class="kts-style-toggle-btn" title="Rata Tengah">Tengah</button>
-                        <button type="button" id="ktsLayAlignRightBtn" class="kts-style-toggle-btn" title="Rata Kanan">Kanan</button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div id="ktsLayUnderlineWrap" class="kts-layout-control-row" style="display:none;">
-                    <label class="kts-layout-group-check">
-                      <input type="checkbox" id="ktsLayUnderlineToggle" checked />
-                      <span>Tampilkan Garis Aksen Bawah Nama</span>
-                    </label>
-                  </div>
-
-                  <div class="kts-layout-control-row">
-                    <label for="ktsLayColorPicker">Warna Teks</label>
                     <div class="kts-color-swatch-row">
-                      <input type="color" id="ktsLayColorPicker" value="#0f172a" />
-                      <button type="button" class="kts-color-swatch" data-kts-color="#ffffff" style="background:#ffffff;" title="Putih"></button>
-                      <button type="button" class="kts-color-swatch" data-kts-color="#fde047" style="background:#fde047;" title="Emas"></button>
-                      <button type="button" class="kts-color-swatch" data-kts-color="#dcfce7" style="background:#dcfce7;" title="Hijau Muda"></button>
-                      <button type="button" class="kts-color-swatch" data-kts-color="#0f172a" style="background:#0f172a;" title="Hitam Slate"></button>
-                      <button type="button" class="kts-color-swatch" data-kts-color="#1e293b" style="background:#1e293b;" title="Abu Tua"></button>
-                      <button type="button" class="kts-color-swatch" data-kts-color="#334155" style="background:#334155;" title="Slate"></button>
-                      <button type="button" class="kts-color-swatch" data-kts-color="#15803d" style="background:#15803d;" title="Hijau"></button>
-                      <button type="button" class="kts-color-swatch" data-kts-color="#052e16" style="background:#052e16;" title="Hijau Tua"></button>
+                      <button type="button" class="kts-color-swatch kts-bg-solid-swatch" data-bg-solid="#ffffff" style="background:#ffffff;" title="Putih Murni"></button>
+                      <button type="button" class="kts-color-swatch kts-bg-solid-swatch" data-bg-solid="#f8fafc" style="background:#f8fafc;" title="Putih Slate"></button>
+                      <button type="button" class="kts-color-swatch kts-bg-solid-swatch" data-bg-solid="#f0fdf4" style="background:#f0fdf4;" title="Mint Lembut"></button>
+                      <button type="button" class="kts-color-swatch kts-bg-solid-swatch" data-bg-solid="#fffbeb" style="background:#fffbeb;" title="Krem Hangat"></button>
+                      <button type="button" class="kts-color-swatch kts-bg-solid-swatch" data-bg-solid="#f0f9ff" style="background:#f0f9ff;" title="Biru Muda Lembut"></button>
+                      <button type="button" class="kts-color-swatch kts-bg-solid-swatch" data-bg-solid="#f1f5f9" style="background:#f1f5f9;" title="Abu Terang"></button>
+                      <button type="button" class="kts-color-swatch kts-bg-solid-swatch" data-bg-solid="#fef2f2" style="background:#fef2f2;" title="Mawar Lembut"></button>
+                      <button type="button" class="kts-color-swatch kts-bg-solid-swatch" data-bg-solid="#faf5ff" style="background:#faf5ff;" title="Lavender Lembut"></button>
+                    </div>
+                  </div>
+
+                  <div id="ktsLayBgPresetControls" class="kts-insp-section">
+                    <div class="kts-insp-section-header">
+                      <span class="kts-insp-section-title">Penyesuaian Motif &amp; Warna</span>
+                    </div>
+                    <div class="kts-layout-two-col">
+                      <div class="kts-layout-control-row">
+                        <label for="ktsLayBgBasePicker">Warna Dasar</label>
+                        <input type="color" id="ktsLayBgBasePicker" value="#ffffff" style="width:100%;height:32px;padding:2px;border:1px solid #cbd5e1;border-radius:7px;background:#fff;cursor:pointer;" />
+                      </div>
+                      <div class="kts-layout-control-row">
+                        <label for="ktsLayBgAccentPicker">Warna Aksen</label>
+                        <input type="color" id="ktsLayBgAccentPicker" value="#166534" style="width:100%;height:32px;padding:2px;border:1px solid #cbd5e1;border-radius:7px;background:#fff;cursor:pointer;" />
+                      </div>
+                    </div>
+                    <div class="kts-color-swatch-row">
+                      <button type="button" class="kts-color-swatch kts-bg-accent-swatch" data-bg-accent="#166534" style="background:#166534;" title="Hijau Madrasah"></button>
+                      <button type="button" class="kts-color-swatch kts-bg-accent-swatch" data-bg-accent="#059669" style="background:#059669;" title="Emerald"></button>
+                      <button type="button" class="kts-color-swatch kts-bg-accent-swatch" data-bg-accent="#ca8a04" style="background:#ca8a04;" title="Emas"></button>
+                      <button type="button" class="kts-color-swatch kts-bg-accent-swatch" data-bg-accent="#0f766e" style="background:#0f766e;" title="Teal"></button>
+                      <button type="button" class="kts-color-swatch kts-bg-accent-swatch" data-bg-accent="#1d4ed8" style="background:#1d4ed8;" title="Biru"></button>
+                      <button type="button" class="kts-color-swatch kts-bg-accent-swatch" data-bg-accent="#475569" style="background:#475569;" title="Abu Slate"></button>
+                    </div>
+                    <div class="kts-layout-control-row">
+                      <label for="ktsLayBgOpacity">Intensitas Motif (%)</label>
+                      <div class="kts-layout-slider-pair">
+                        <input type="range" id="ktsLayBgOpacity" min="0" max="200" step="5" value="100" />
+                        <input type="number" id="ktsLayBgOpacityNum" min="0" max="200" step="5" value="100" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div id="ktsLayBgUploadSection" class="kts-insp-section">
+                    <div class="kts-insp-section-header">
+                      <span class="kts-insp-section-title">Upload Background Sendiri</span>
+                    </div>
+                    <div class="kts-bg-upload-row">
+                      <button type="button" id="ktsLayBgUploadBtn" class="kts-bg-upload-btn">&#8679; Pilih Gambar (PNG/JPG)</button>
+                      <button type="button" id="ktsLayBgRemoveImgBtn" class="kts-bg-danger-btn" style="display:none;">Hapus</button>
+                      <input type="file" id="ktsLayBgFileInput" accept="image/jpeg,image/png,image/webp" style="display:none;" />
+                    </div>
+                    <div id="ktsLayBgUploadControls" style="display:none;flex-direction:column;gap:8px;width:100%;min-width:0;">
+                      <div class="kts-layout-control-row">
+                        <label for="ktsLayBgFitSelect">Mode Penyesuaian</label>
+                        <select id="ktsLayBgFitSelect" class="kts-layout-select">
+                          <option value="cover">Isi Penuh (Cover)</option>
+                          <option value="contain">Utuh Tanpa Terpotong (Contain)</option>
+                          <option value="tile">Pola Berulang (Tile)</option>
+                        </select>
+                      </div>
+                      <div class="kts-layout-control-row">
+                        <label for="ktsLayBgScale">Zoom / Skala (%)</label>
+                        <div class="kts-layout-slider-pair">
+                          <input type="range" id="ktsLayBgScale" min="50" max="250" step="2" value="100" />
+                          <input type="number" id="ktsLayBgScaleNum" min="50" max="250" step="2" value="100" />
+                        </div>
+                      </div>
+                      <div class="kts-layout-two-col">
+                        <div class="kts-layout-control-row">
+                          <label for="ktsLayBgOffsetX">Geser X (%)</label>
+                          <div class="kts-layout-slider-pair">
+                            <input type="range" id="ktsLayBgOffsetX" min="-100" max="100" step="1" value="0" />
+                            <input type="number" id="ktsLayBgOffsetXNum" min="-100" max="100" step="1" value="0" />
+                          </div>
+                        </div>
+                        <div class="kts-layout-control-row">
+                          <label for="ktsLayBgOffsetY">Geser Y (%)</label>
+                          <div class="kts-layout-slider-pair">
+                            <input type="range" id="ktsLayBgOffsetY" min="-100" max="100" step="1" value="0" />
+                            <input type="number" id="ktsLayBgOffsetYNum" min="-100" max="100" step="1" value="0" />
+                          </div>
+                        </div>
+                      </div>
+                      <div class="kts-layout-two-col">
+                        <div class="kts-layout-control-row">
+                          <label for="ktsLayBgImgOpacity">Opasitas (%)</label>
+                          <div class="kts-layout-slider-pair">
+                            <input type="range" id="ktsLayBgImgOpacity" min="10" max="100" step="2" value="100" />
+                            <input type="number" id="ktsLayBgImgOpacityNum" min="10" max="100" step="2" value="100" />
+                          </div>
+                        </div>
+                        <div class="kts-layout-control-row">
+                          <label for="ktsLayBgWhiteOverlay">Overlay Putih (%)</label>
+                          <div class="kts-layout-slider-pair">
+                            <input type="range" id="ktsLayBgWhiteOverlay" min="0" max="85" step="5" value="0" />
+                            <input type="number" id="ktsLayBgWhiteOverlayNum" min="0" max="85" step="5" value="0" />
+                          </div>
+                        </div>
+                      </div>
+                      <button type="button" id="ktsLayBgResetTransformBtn" class="kts-nudge-btn" style="width:100%;">Reset Posisi Gambar</button>
+                    </div>
+                  </div>
+
+                  <div class="kts-insp-section">
+                    <div class="kts-bg-action-row">
+                      <button type="button" id="ktsLayBgApplyBothBtn" class="kts-nudge-btn" style="width:100%;">Terapkan ke Kedua Sisi</button>
+                      <button type="button" id="ktsLayBgResetSideBtn" class="kts-nudge-btn">Reset BG</button>
                     </div>
                   </div>
                 </div>
@@ -21924,6 +22066,90 @@ function startOrOpenResponder(options) {
     const KTS_HEADER_KEYS = ['header_title', 'header_arabic', 'school_name', 'school_address'];
     const KTS_BACK_HEADER_KEYS = ['back_school_name', 'back_yayasan'];
 
+    const DEFAULT_KTS_BG = {
+        front: {
+            mode: 'preset',
+            preset: 'classic_circles',
+            solidColor: '#ffffff',
+            baseColor: '#ffffff',
+            accentColor: '#166534',
+            opacity: 100,
+            imageData: '',
+            fit: 'cover',
+            scale: 100,
+            offsetX: 0,
+            offsetY: 0,
+            whiteOverlay: 0,
+            _customized: false
+        },
+        back: {
+            mode: 'preset',
+            preset: 'diagonal_circles',
+            solidColor: '#ffffff',
+            baseColor: '#ffffff',
+            accentColor: '#166534',
+            opacity: 100,
+            imageData: '',
+            fit: 'cover',
+            scale: 100,
+            offsetX: 0,
+            offsetY: 0,
+            whiteOverlay: 0,
+            _customized: false
+        }
+    };
+
+    const KTS_BG_PRESETS = [
+        { id: 'solid_rgb',        label: 'Warna RGB Polos',     mode: 'solid'  },
+        { id: 'classic_circles',  label: 'Lingkaran Klasik',    mode: 'preset' },
+        { id: 'diagonal_circles', label: 'Lingkaran Diagonal',  mode: 'preset' },
+        { id: 'islamic_star',     label: 'Geometris Islami',    mode: 'preset' },
+        { id: 'dot_matrix',       label: 'Pola Titik',          mode: 'preset' },
+        { id: 'diagonal_lines',   label: 'Garis Diagonal',      mode: 'preset' },
+        { id: 'silk_waves',       label: 'Gelombang Sutra',     mode: 'preset' },
+        { id: 'concentric_rings', label: 'Cincin Orbit',        mode: 'preset' },
+        { id: 'hex_mesh',         label: 'Sarang Lebah',        mode: 'preset' },
+        { id: 'corner_ribbons',   label: 'Pita Sudut',          mode: 'preset' },
+        { id: 'guilloche_curves', label: 'Kurva Resmi',         mode: 'preset' },
+        { id: 'soft_aurora',      label: 'Aurora Lembut',       mode: 'preset' }
+    ];
+
+    function ktsNormalizeHex(hex, fallback) {
+        const fb = fallback || '#ffffff';
+        const s = String(hex || '').trim();
+        if (/^#[0-9a-fA-F]{6}$/.test(s)) return s.toLowerCase();
+        if (/^#[0-9a-fA-F]{3}$/.test(s)) {
+            return ('#' + s[1] + s[1] + s[2] + s[2] + s[3] + s[3]).toLowerCase();
+        }
+        return fb;
+    }
+
+    function ktsHexToRgb(hex) {
+        const clean = ktsNormalizeHex(hex, '#ffffff').slice(1);
+        return {
+            r: parseInt(clean.slice(0, 2), 16),
+            g: parseInt(clean.slice(2, 4), 16),
+            b: parseInt(clean.slice(4, 6), 16)
+        };
+    }
+
+    function ktsRgbToHex(r, g, b) {
+        const clampByte = function(v) {
+            return Math.max(0, Math.min(255, Math.round(Number(v) || 0)));
+        };
+        const toHex = function(n) {
+            const h = clampByte(n).toString(16);
+            return h.length === 1 ? ('0' + h) : h;
+        };
+        return '#' + toHex(r) + toHex(g) + toHex(b);
+    }
+
+    function ktsHexToRgba(hex, alpha) {
+        const rgb = ktsHexToRgb(hex);
+        const a = Math.max(0, Math.min(1, Number(alpha) || 0));
+        return 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',' + a.toFixed(4) + ')';
+    }
+
     const DEFAULT_KTS_LAYOUT = {
         _v: 3,
         front: {
@@ -21951,11 +22177,40 @@ function startOrOpenResponder(options) {
             back_rules:       { label: 'Daftar Ketentuan',       kind: 'text',   visible: true, x: 54,  y: 192, fontFamily: 'Montserrat', fontWeight: 400, fontSize: 18.5, letterSpacing: 0,   lineGap: 28, maxWidth: 903, bold: false, italic: false, uppercase: false, align: 'left', color: '#1e293b' },
             back_holder:      { label: 'Pemegang Kartu',         kind: 'text',   visible: true, x: 54,  y: 434, fontFamily: 'Montserrat', fontWeight: 700, fontSize: 22,   letterSpacing: 0,   lineGap: 32, maxWidth: 490, bold: true,  italic: false, uppercase: true,  align: 'left', color: '#0f172a' },
             back_signature:   { label: 'Blok TTD Kepala',        kind: 'text',   visible: true, x: 785, y: 434, fontFamily: 'Montserrat', fontWeight: 700, fontSize: 17.5, letterSpacing: 0,   lineGap: 24, maxWidth: 320, bold: true,  italic: false, uppercase: false, align: 'center', color: '#0f172a' }
+        },
+        bg: {
+            front: Object.assign({}, DEFAULT_KTS_BG.front),
+            back: Object.assign({}, DEFAULT_KTS_BG.back)
         }
     };
 
+    function getKtsSideBgConfig(layObj, side) {
+        const sKey = side === 'back' ? 'back' : 'front';
+        if (!layObj) return Object.assign({}, DEFAULT_KTS_BG[sKey]);
+        if (!layObj.bg || typeof layObj.bg !== 'object') {
+            layObj.bg = {
+                front: Object.assign({}, DEFAULT_KTS_BG.front),
+                back: Object.assign({}, DEFAULT_KTS_BG.back)
+            };
+        }
+        if (!layObj.bg[sKey] || typeof layObj.bg[sKey] !== 'object') {
+            layObj.bg[sKey] = Object.assign({}, DEFAULT_KTS_BG[sKey]);
+        } else {
+            layObj.bg[sKey] = Object.assign({}, DEFAULT_KTS_BG[sKey], layObj.bg[sKey]);
+        }
+        return layObj.bg[sKey];
+    }
+
     function cloneKtsLayout(src) {
-        const out = { _v: 3, front: {}, back: {} };
+        const out = {
+            _v: 3,
+            front: {},
+            back: {},
+            bg: {
+                front: Object.assign({}, DEFAULT_KTS_BG.front, (src && src.bg && src.bg.front) || {}),
+                back: Object.assign({}, DEFAULT_KTS_BG.back, (src && src.bg && src.bg.back) || {})
+            }
+        };
         ['front', 'back'].forEach(function(sKey) {
             const baseMap = DEFAULT_KTS_LAYOUT[sKey];
             const srcMap = (src && src[sKey]) || {};
@@ -22396,59 +22651,301 @@ function startOrOpenResponder(options) {
         ctx.restore();
     }
 
-    function drawKtsDecorativeBackground(ctx, W, H, side) {
-        if (side === 'back') {
-            const bgGrad = ctx.createLinearGradient(0, 0, W, H);
-            bgGrad.addColorStop(0, '#ffffff');
-            bgGrad.addColorStop(0.5, '#f6fbf8');
-            bgGrad.addColorStop(1, '#ecfdf5');
-            ctx.fillStyle = bgGrad;
-            ctx.fillRect(0, 0, W, H);
+    function drawKtsCardBodyBackground(ctx, W, H, side, bgCfg, uploadedImg) {
+        const cardSide = side === 'back' ? 'back' : 'front';
+        const sBg = Object.assign({}, DEFAULT_KTS_BG[cardSide], bgCfg || {});
+        const baseColor = ktsNormalizeHex(sBg.baseColor, '#ffffff');
+        const solidColor = ktsNormalizeHex(sBg.solidColor, '#ffffff');
+        const accentColor = ktsNormalizeHex(sBg.accentColor, '#166534');
 
-            // Subtle overlapping circular watermark motifs (matching front KTS style, balanced diagonally)
-            ctx.save();
-            ctx.globalAlpha = 0.052;
-            ctx.fillStyle = '#166534';
+        // Base fill
+        ctx.fillStyle = sBg.mode === 'solid' ? solidColor : baseColor;
+        ctx.fillRect(0, 0, W, H);
 
-            // Upper-right circular motif (filling empty area beside Ketentuan)
-            ctx.beginPath();
-            ctx.arc(885, 225, 195, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(765, 315, 130, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Bottom-left circular motif (softly grounding PEMEGANG KARTU area)
-            ctx.beginPath();
-            ctx.arc(135, 535, 195, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(285, 595, 135, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.restore();
+        if (sBg.mode === 'solid') {
             return;
         }
 
-        // Default Official MA At-Taujih Sarang Background
-        const bodyGrad = ctx.createLinearGradient(0, 0, W, H);
-        bodyGrad.addColorStop(0, '#ffffff');
-        bodyGrad.addColorStop(0.55, '#f8fafc');
-        bodyGrad.addColorStop(1, '#ecfdf5');
-        ctx.fillStyle = bodyGrad;
+        if (sBg.mode === 'upload' && uploadedImg) {
+            const iw = uploadedImg.naturalWidth || uploadedImg.width || W;
+            const ih = uploadedImg.naturalHeight || uploadedImg.height || H;
+            const fit = sBg.fit || 'cover';
+            const scalePct = Math.max(25, Math.min(300, Number(sBg.scale) || 100)) / 100;
+            const offX = Number(sBg.offsetX) || 0;
+            const offY = Number(sBg.offsetY) || 0;
+            const imgOp = Math.max(0.05, Math.min(1, (sBg.imgOpacity !== undefined ? Number(sBg.imgOpacity) : 100) / 100));
+
+            ctx.save();
+            ctx.globalAlpha = imgOp;
+            if (fit === 'tile') {
+                const baseTile = Math.min(1, 260 / Math.max(1, Math.max(iw, ih)));
+                const tw = Math.max(36, Math.round(iw * baseTile * scalePct));
+                const th = Math.max(36, Math.round(ih * baseTile * scalePct));
+                let ox = ((offX / 100) * tw) % tw;
+                let oy = ((offY / 100) * th) % th;
+                if (ox > 0) ox -= tw;
+                if (oy > 0) oy -= th;
+                for (let x = ox; x < W; x += tw) {
+                    for (let y = oy; y < H; y += th) {
+                        ctx.drawImage(uploadedImg, x, y, tw, th);
+                    }
+                }
+            } else {
+                const baseScale = fit === 'contain'
+                    ? Math.min(W / Math.max(1, iw), H / Math.max(1, ih))
+                    : Math.max(W / Math.max(1, iw), H / Math.max(1, ih));
+                const drawW = iw * baseScale * scalePct;
+                const drawH = ih * baseScale * scalePct;
+                const dx = (W - drawW) / 2 + (offX / 100) * (W * 0.5);
+                const dy = (H - drawH) / 2 + (offY / 100) * (H * 0.5);
+                ctx.drawImage(uploadedImg, dx, dy, drawW, drawH);
+            }
+            ctx.restore();
+
+            const whiteOv = Math.max(0, Math.min(85, Number(sBg.whiteOverlay) || 0));
+            if (whiteOv > 0) {
+                ctx.fillStyle = 'rgba(255, 255, 255, ' + (whiteOv / 100).toFixed(3) + ')';
+                ctx.fillRect(0, 0, W, H);
+            }
+            return;
+        }
+
+        // Preset white-base patterns / overlays / filler motifs
+        const presetId = sBg.preset || (cardSide === 'back' ? 'diagonal_circles' : 'classic_circles');
+        const rawIntensity = sBg.opacity === undefined ? 100 : Number(sBg.opacity);
+        const alphaMul = Math.max(0, Math.min(2, (Number.isFinite(rawIntensity) ? rawIntensity : 100) / 100));
+
+        // Soft tinted corner gradient wash over white/base surface
+        const washGrad = ctx.createLinearGradient(0, 0, W, H);
+        washGrad.addColorStop(0, ktsHexToRgba(accentColor, 0));
+        washGrad.addColorStop(0.55, ktsHexToRgba(accentColor, Math.min(0.18, 0.02 * alphaMul)));
+        washGrad.addColorStop(1, ktsHexToRgba(accentColor, Math.min(0.26, 0.075 * alphaMul)));
+        ctx.fillStyle = washGrad;
         ctx.fillRect(0, 0, W, H);
 
-        // Subtle bottom-right circular watermark motif
+        if (alphaMul <= 0) return;
+
         ctx.save();
-        ctx.globalAlpha = 0.055;
-        ctx.fillStyle = '#166534';
-        ctx.beginPath();
-        ctx.arc(820, 480, 210, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(710, 560, 150, 0, Math.PI * 2);
-        ctx.fill();
+        switch (presetId) {
+            case 'classic_circles': {
+                ctx.fillStyle = ktsHexToRgba(accentColor, Math.min(0.45, 0.055 * alphaMul));
+                ctx.beginPath();
+                ctx.arc(820, 480, 210, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(710, 560, 150, 0, Math.PI * 2);
+                ctx.fill();
+                break;
+            }
+            case 'diagonal_circles': {
+                ctx.fillStyle = ktsHexToRgba(accentColor, Math.min(0.45, 0.052 * alphaMul));
+                ctx.beginPath();
+                ctx.arc(885, 225, 195, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(765, 315, 130, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(135, 535, 195, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(285, 595, 135, 0, Math.PI * 2);
+                ctx.fill();
+                break;
+            }
+            case 'islamic_star': {
+                ctx.strokeStyle = ktsHexToRgba(accentColor, Math.min(0.35, 0.068 * alphaMul));
+                ctx.lineWidth = 1.5;
+                const step = 112;
+                const rSq = 36;
+                for (let cx = step / 2; cx < W + step; cx += step) {
+                    for (let cy = 120; cy < H + step; cy += step) {
+                        ctx.strokeRect(cx - rSq, cy - rSq, rSq * 2, rSq * 2);
+                        ctx.save();
+                        ctx.translate(cx, cy);
+                        ctx.rotate(Math.PI / 4);
+                        ctx.strokeRect(-rSq, -rSq, rSq * 2, rSq * 2);
+                        ctx.restore();
+                        ctx.beginPath();
+                        ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                }
+                break;
+            }
+            case 'dot_matrix': {
+                const gap = 28;
+                for (let x = 20; x < W; x += gap) {
+                    for (let y = 120; y < H; y += gap) {
+                        const weight = Math.min(1, ((x / W) * 0.65 + (y / H) * 0.35));
+                        const dotR = 1.6 + weight * 2.8;
+                        const dotA = Math.min(0.38, (0.025 + weight * 0.085) * alphaMul);
+                        ctx.fillStyle = ktsHexToRgba(accentColor, dotA);
+                        ctx.beginPath();
+                        ctx.arc(x, y, dotR, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+                break;
+            }
+            case 'diagonal_lines': {
+                ctx.strokeStyle = ktsHexToRgba(accentColor, Math.min(0.35, 0.058 * alphaMul));
+                ctx.lineWidth = 1.3;
+                const spacing = 24;
+                ctx.beginPath();
+                for (let d = -H; d < W + H; d += spacing) {
+                    ctx.moveTo(d, 0);
+                    ctx.lineTo(d + H, H);
+                }
+                ctx.stroke();
+                const cornerGlow = ctx.createRadialGradient(W * 0.88, H * 0.82, 20, W * 0.88, H * 0.82, 340);
+                cornerGlow.addColorStop(0, ktsHexToRgba(accentColor, Math.min(0.28, 0.065 * alphaMul)));
+                cornerGlow.addColorStop(1, ktsHexToRgba(accentColor, 0));
+                ctx.fillStyle = cornerGlow;
+                ctx.fillRect(0, 0, W, H);
+                break;
+            }
+            case 'silk_waves': {
+                ctx.fillStyle = ktsHexToRgba(accentColor, Math.min(0.35, 0.052 * alphaMul));
+                ctx.beginPath();
+                ctx.moveTo(0, 505);
+                ctx.bezierCurveTo(280, 420, 620, 625, W, 445);
+                ctx.lineTo(W, H);
+                ctx.lineTo(0, H);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = ktsHexToRgba(accentColor, Math.min(0.3, 0.042 * alphaMul));
+                ctx.beginPath();
+                ctx.moveTo(640, 90);
+                ctx.bezierCurveTo(790, 225, 670, 390, 910, 515);
+                ctx.quadraticCurveTo(975, 548, W, 565);
+                ctx.lineTo(W, 90);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.strokeStyle = 'rgba(234, 179, 8, ' + Math.min(0.45, 0.16 * alphaMul).toFixed(3) + ')';
+                ctx.lineWidth = 2.4;
+                ctx.beginPath();
+                ctx.moveTo(0, 535);
+                ctx.bezierCurveTo(310, 455, 645, 635, W, 480);
+                ctx.stroke();
+                break;
+            }
+            case 'concentric_rings': {
+                ctx.strokeStyle = ktsHexToRgba(accentColor, Math.min(0.38, 0.075 * alphaMul));
+                ctx.lineWidth = 1.6;
+                [85, 138, 195, 255, 320, 390].forEach(function(r) {
+                    ctx.beginPath();
+                    ctx.arc(885, 515, r, 0, Math.PI * 2);
+                    ctx.stroke();
+                });
+                ctx.strokeStyle = ktsHexToRgba(accentColor, Math.min(0.3, 0.048 * alphaMul));
+                [70, 125, 185].forEach(function(r) {
+                    ctx.beginPath();
+                    ctx.arc(110, 215, r, 0, Math.PI * 2);
+                    ctx.stroke();
+                });
+                break;
+            }
+            case 'hex_mesh': {
+                ctx.strokeStyle = ktsHexToRgba(accentColor, Math.min(0.36, 0.07 * alphaMul));
+                ctx.lineWidth = 1.3;
+                const hr = 32;
+                const dx = hr * 1.5;
+                const dy = hr * Math.sqrt(3);
+                for (let col = 0; col * dx < W + hr; col++) {
+                    for (let row = 0; row * dy < H + hr; row++) {
+                        const hx = col * dx + 18;
+                        const hy = row * dy + (col % 2 ? dy / 2 : 0) + 120;
+                        ctx.beginPath();
+                        for (let s = 0; s < 6; s++) {
+                            const ang = (Math.PI / 3) * s;
+                            const px = hx + hr * Math.cos(ang);
+                            const py = hy + hr * Math.sin(ang);
+                            if (s === 0) ctx.moveTo(px, py);
+                            else ctx.lineTo(px, py);
+                        }
+                        ctx.closePath();
+                        ctx.stroke();
+                    }
+                }
+                break;
+            }
+            case 'corner_ribbons': {
+                ctx.fillStyle = ktsHexToRgba(accentColor, Math.min(0.38, 0.06 * alphaMul));
+                ctx.beginPath();
+                ctx.moveTo(770, 0);
+                ctx.lineTo(W, 0);
+                ctx.lineTo(W, 385);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = ktsHexToRgba(accentColor, Math.min(0.3, 0.045 * alphaMul));
+                ctx.beginPath();
+                ctx.moveTo(640, H);
+                ctx.lineTo(W, 320);
+                ctx.lineTo(W, H);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = 'rgba(234, 179, 8, ' + Math.min(0.35, 0.09 * alphaMul).toFixed(3) + ')';
+                ctx.beginPath();
+                ctx.moveTo(0, 470);
+                ctx.lineTo(250, H);
+                ctx.lineTo(155, H);
+                ctx.lineTo(0, 535);
+                ctx.closePath();
+                ctx.fill();
+                break;
+            }
+            case 'guilloche_curves': {
+                ctx.lineWidth = 1.3;
+                for (let k = 0; k < 6; k++) {
+                    ctx.strokeStyle = ktsHexToRgba(accentColor, Math.min(0.35, (0.045 + k * 0.008) * alphaMul));
+                    ctx.beginPath();
+                    const baseY = 475 + k * 14;
+                    for (let x = 0; x <= W; x += 16) {
+                        const y = baseY + Math.sin((x / W) * Math.PI * 3.5 + k * 0.48) * 34 + Math.cos((x / W) * Math.PI * 6 - k * 0.3) * 10;
+                        if (x === 0) ctx.moveTo(x, y);
+                        else ctx.lineTo(x, y);
+                    }
+                    ctx.stroke();
+                }
+                break;
+            }
+            case 'soft_aurora': {
+                const rad1 = ctx.createRadialGradient(840, 480, 15, 840, 480, 360);
+                rad1.addColorStop(0, ktsHexToRgba(accentColor, Math.min(0.36, 0.1 * alphaMul)));
+                rad1.addColorStop(1, ktsHexToRgba(accentColor, 0));
+                ctx.fillStyle = rad1;
+                ctx.fillRect(0, 0, W, H);
+
+                const rad2 = ctx.createRadialGradient(140, 540, 10, 140, 540, 290);
+                rad2.addColorStop(0, 'rgba(234, 179, 8, ' + Math.min(0.28, 0.075 * alphaMul).toFixed(3) + ')');
+                rad2.addColorStop(1, 'rgba(234, 179, 8, 0)');
+                ctx.fillStyle = rad2;
+                ctx.fillRect(0, 0, W, H);
+
+                ctx.fillStyle = ktsHexToRgba(accentColor, Math.min(0.36, 0.075 * alphaMul));
+                [[890, 250, 12], [935, 310, 8], [840, 330, 6], [920, 490, 14], [115, 560, 9]].forEach(function(pt) {
+                    const cx = pt[0], cy = pt[1], sz = pt[2];
+                    ctx.beginPath();
+                    ctx.moveTo(cx, cy - sz);
+                    ctx.lineTo(cx + sz, cy);
+                    ctx.lineTo(cx, cy + sz);
+                    ctx.lineTo(cx - sz, cy);
+                    ctx.closePath();
+                    ctx.fill();
+                });
+                break;
+            }
+        }
         ctx.restore();
+    }
+
+    function drawKtsDecorativeBackground(ctx, W, H, side) {
+        drawKtsCardBodyBackground(ctx, W, H, side, null, null);
     }
 
     function drawCroppedPhotoIntoFrame(ctx, photoAsset, px, py, pw, ph) {
@@ -22685,6 +23182,7 @@ function startOrOpenResponder(options) {
         const cardSide = side === 'back' ? 'back' : 'front';
         const fontFamily = KTS_FONT_STACKS['Montserrat'];
         const lay = getEffectiveKtsLayout(cfg);
+        const sideBgCfg = getKtsSideBgConfig(lay, cardSide);
         const pushBox = function(id, label, box) {
             if (!Array.isArray(outHitBoxes) || !box) return;
             outHitBoxes.push({ id: id, side: cardSide, label: label, x: box.x, y: box.y, w: box.w, h: box.h });
@@ -22700,10 +23198,11 @@ function startOrOpenResponder(options) {
                 };
             });
 
-        const [logoImg, frontBgImg, backBgImg, sigImg, photoAsset] = await Promise.all([
+        const [logoImg, frontBgImg, backBgImg, customBodyBgImg, sigImg, photoAsset] = await Promise.all([
             loadAssetImage('/assets/logo.png'),
             cfg.custom_front_bg ? loadAssetImage(cfg.custom_front_bg) : Promise.resolve(null),
             cfg.custom_back_bg ? loadAssetImage(cfg.custom_back_bg) : Promise.resolve(null),
+            (sideBgCfg.mode === 'upload' && sideBgCfg.imageData) ? loadAssetImage(sideBgCfg.imageData) : Promise.resolve(null),
             cfg.signature_img ? loadAssetImage(cfg.signature_img) : Promise.resolve(null),
             cardSide === 'front' ? getKtsStudentPhotoAsset(st) : Promise.resolve(null),
             ensureKtsFontsLoaded(activeFontSpecs)
@@ -22716,10 +23215,10 @@ function startOrOpenResponder(options) {
 
         if (cardSide === 'front') {
             const lf = lay.front;
-            if (frontBgImg) {
+            if (frontBgImg && !sideBgCfg._customized) {
                 ctx.drawImage(frontBgImg, 0, 0, W, H);
             } else {
-                drawKtsDecorativeBackground(ctx, W, H, 'front');
+                drawKtsCardBodyBackground(ctx, W, H, 'front', sideBgCfg, customBodyBgImg);
 
                 if (lf.header_banner.visible !== false) {
                     const bh = Math.max(60, Math.min(240, Number(lf.header_banner.h) || 174));
@@ -22914,10 +23413,10 @@ function startOrOpenResponder(options) {
         } else {
             // BACK SIDE RENDERER
             const lb = lay.back;
-            if (backBgImg) {
+            if (backBgImg && !sideBgCfg._customized) {
                 ctx.drawImage(backBgImg, 0, 0, W, H);
             } else {
-                drawKtsDecorativeBackground(ctx, W, H, 'back');
+                drawKtsCardBodyBackground(ctx, W, H, 'back', sideBgCfg, customBodyBgImg);
 
                 if (lb.back_header.visible !== false) {
                     const bh = Math.max(40, Math.min(180, Number(lb.back_header.h) || 104));
@@ -23615,6 +24114,10 @@ function startOrOpenResponder(options) {
                     c.width = w;
                     c.height = h;
                     const cCtx = c.getContext('2d');
+                    if (!isPngAlpha) {
+                        cCtx.fillStyle = '#ffffff';
+                        cCtx.fillRect(0, 0, w, h);
+                    }
                     cCtx.drawImage(img, 0, 0, w, h);
                     const mime = isPngAlpha ? 'image/png' : 'image/jpeg';
                     resolve(isPngAlpha ? c.toDataURL(mime) : c.toDataURL(mime, 0.88));
@@ -24060,6 +24563,129 @@ function startOrOpenResponder(options) {
                 setPair('ktsLayBoxW', 'ktsLayBoxWNum', 1011, true);
                 setPair('ktsLayBoxH', 'ktsLayBoxHNum', Math.round(Number(el.h) || 120), false);
             }
+        }
+        syncKtsLayoutBgControls();
+    }
+
+    function setKtsInspTab(tabName) {
+        const mode = tabName === 'background' ? 'background' : 'elements';
+        ktsState.layoutInspTab = mode;
+        const tabElBtn = document.getElementById('ktsInspTabElements');
+        const tabBgBtn = document.getElementById('ktsInspTabBg');
+        const panelEl = document.getElementById('ktsInspPanelElements');
+        const panelBg = document.getElementById('ktsInspPanelBg');
+        if (tabElBtn) tabElBtn.classList.toggle('active', mode === 'elements');
+        if (tabBgBtn) tabBgBtn.classList.toggle('active', mode === 'background');
+        if (panelEl) panelEl.style.display = mode === 'elements' ? 'flex' : 'none';
+        if (panelBg) panelBg.style.display = mode === 'background' ? 'flex' : 'none';
+        if (mode === 'background') {
+            renderKtsBgPresetGallery();
+            syncKtsLayoutBgControls();
+        }
+    }
+
+    function renderKtsBgPresetGallery() {
+        const grid = document.getElementById('ktsLayBgPresetGrid');
+        if (!grid || !ktsState.layoutDraft) return;
+        const sBg = getKtsSideBgConfig(ktsState.layoutDraft, ktsState.layoutSide);
+        if (!grid.dataset.built) {
+            grid.dataset.built = '1';
+            grid.innerHTML = KTS_BG_PRESETS.map(function(p) {
+                return '<button type="button" class="kts-bg-preset-card" data-bg-preset="' + escapeAttr(p.id) + '" data-bg-mode="' + escapeAttr(p.mode) + '">' +
+                    '<canvas class="kts-bg-preset-thumb" width="160" height="101"></canvas>' +
+                    '<span class="kts-bg-preset-name">' + escKts(p.label) + '</span>' +
+                '</button>';
+            }).join('');
+        }
+        grid.querySelectorAll('.kts-bg-preset-card').forEach(function(card) {
+            const pId = card.dataset.bgPreset;
+            const pMode = card.dataset.bgMode;
+            const isActive = (pMode === 'solid' && sBg.mode === 'solid') ||
+                (pMode === 'preset' && sBg.mode === 'preset' && sBg.preset === pId);
+            card.classList.toggle('active', isActive);
+
+            const thumbCanvas = card.querySelector('canvas');
+            if (thumbCanvas) {
+                const tCtx = thumbCanvas.getContext('2d');
+                tCtx.save();
+                tCtx.clearRect(0, 0, 160, 101);
+                tCtx.scale(160 / 1011, 101 / 638);
+                const previewBg = Object.assign({}, sBg, {
+                    mode: pMode,
+                    preset: pId
+                });
+                drawKtsCardBodyBackground(tCtx, 1011, 638, ktsState.layoutSide, previewBg, null);
+                tCtx.restore();
+            }
+        });
+    }
+
+    function syncKtsLayoutBgControls() {
+        if (!ktsState.layoutDraft) return;
+        const sBg = getKtsSideBgConfig(ktsState.layoutDraft, ktsState.layoutSide);
+        const sideBadge = document.getElementById('ktsLayBgSideBadge');
+        if (sideBadge) {
+            sideBadge.textContent = ktsState.layoutSide === 'back' ? 'Sisi Belakang' : 'Sisi Depan';
+        }
+
+        const solidCtrl = document.getElementById('ktsLayBgSolidControls');
+        const presetCtrl = document.getElementById('ktsLayBgPresetControls');
+        const uploadCtrl = document.getElementById('ktsLayBgUploadControls');
+        const removeImgBtn = document.getElementById('ktsLayBgRemoveImgBtn');
+
+        if (solidCtrl) solidCtrl.style.display = sBg.mode === 'solid' ? 'flex' : 'none';
+        if (presetCtrl) presetCtrl.style.display = sBg.mode === 'preset' ? 'flex' : 'none';
+        const hasImg = Boolean(sBg.imageData);
+        if (removeImgBtn) removeImgBtn.style.display = hasImg ? '' : 'none';
+        if (uploadCtrl) uploadCtrl.style.display = (sBg.mode === 'upload' && hasImg) ? 'flex' : 'none';
+
+        const solidHex = ktsNormalizeHex(sBg.solidColor, '#ffffff');
+        const rgb = ktsHexToRgb(solidHex);
+        const solidPick = document.getElementById('ktsLayBgSolidPicker');
+        const hexIn = document.getElementById('ktsLayBgHexInput');
+        const rIn = document.getElementById('ktsLayBgRgbR');
+        const gIn = document.getElementById('ktsLayBgRgbG');
+        const bIn = document.getElementById('ktsLayBgRgbB');
+        if (solidPick) solidPick.value = solidHex;
+        if (hexIn && document.activeElement !== hexIn) hexIn.value = solidHex.toUpperCase();
+        if (rIn && document.activeElement !== rIn) rIn.value = rgb.r;
+        if (gIn && document.activeElement !== gIn) gIn.value = rgb.g;
+        if (bIn && document.activeElement !== bIn) bIn.value = rgb.b;
+
+        const basePick = document.getElementById('ktsLayBgBasePicker');
+        const accentPick = document.getElementById('ktsLayBgAccentPicker');
+        if (basePick) basePick.value = ktsNormalizeHex(sBg.baseColor, '#ffffff');
+        if (accentPick) accentPick.value = ktsNormalizeHex(sBg.accentColor, '#166534');
+
+        const setBgPair = function(rId, nId, val) {
+            const rEl = document.getElementById(rId);
+            const nEl = document.getElementById(nId);
+            if (rEl && document.activeElement !== rEl) rEl.value = val;
+            if (nEl && document.activeElement !== nEl) nEl.value = val;
+        };
+        setBgPair('ktsLayBgOpacity', 'ktsLayBgOpacityNum', sBg.opacity === undefined ? 100 : Math.round(Number(sBg.opacity)));
+
+        const fitSel = document.getElementById('ktsLayBgFitSelect');
+        if (fitSel) fitSel.value = sBg.fit || 'cover';
+        setBgPair('ktsLayBgScale', 'ktsLayBgScaleNum', Math.round(Number(sBg.scale) || 100));
+        setBgPair('ktsLayBgOffsetX', 'ktsLayBgOffsetXNum', Math.round(Number(sBg.offsetX) || 0));
+        setBgPair('ktsLayBgOffsetY', 'ktsLayBgOffsetYNum', Math.round(Number(sBg.offsetY) || 0));
+        setBgPair('ktsLayBgImgOpacity', 'ktsLayBgImgOpacityNum', sBg.imgOpacity === undefined ? 100 : Math.round(Number(sBg.imgOpacity)));
+        setBgPair('ktsLayBgWhiteOverlay', 'ktsLayBgWhiteOverlayNum', Math.round(Number(sBg.whiteOverlay) || 0));
+
+        const grid = document.getElementById('ktsLayBgPresetGrid');
+        if (grid && (!grid.dataset.built || grid.dataset.renderedSide !== ktsState.layoutSide)) {
+            grid.dataset.renderedSide = ktsState.layoutSide;
+            renderKtsBgPresetGallery();
+        }
+        if (grid && grid.dataset.built) {
+            grid.querySelectorAll('.kts-bg-preset-card').forEach(function(card) {
+                const pId = card.dataset.bgPreset;
+                const pMode = card.dataset.bgMode;
+                const active = (pMode === 'solid' && sBg.mode === 'solid') ||
+                    (pMode === 'preset' && sBg.mode === 'preset' && sBg.preset === pId);
+                card.classList.toggle('active', active);
+            });
         }
     }
 
@@ -24578,6 +25204,8 @@ function startOrOpenResponder(options) {
         ktsLayoutActiveGuides = [];
         ktsLayoutMarquee = null;
         resetKtsLayoutHistory();
+        setKtsInspTab('elements');
+        renderKtsBgPresetGallery();
         syncKtsLayoutInspectorFromState();
         const sgChk = document.getElementById('ktsLaySmartGuidesToggle');
         if (sgChk) sgChk.checked = ktsState.layoutSmartGuides !== false;
@@ -25439,6 +26067,225 @@ function startOrOpenResponder(options) {
                 { title: 'Reset Tata Letak Pabrik', confirmText: 'Ya, Reset Pabrik', danger: true }
             );
             if (ok) resetFactoryKtsLayout();
+        });
+
+        // Background Studio Tabs & Controls
+        document.querySelectorAll('#ktsLayoutEditorModal .kts-insp-tab-btn').forEach(function(tabBtn) {
+            tabBtn.addEventListener('click', function() {
+                setKtsInspTab(this.dataset.ktsInspTab || 'elements');
+            });
+        });
+
+        const bgGrid = document.getElementById('ktsLayBgPresetGrid');
+        if (bgGrid) bgGrid.addEventListener('click', function(ev) {
+            const card = ev.target.closest('.kts-bg-preset-card[data-bg-preset]');
+            if (!card || !ktsState.layoutDraft) return;
+            const sBg = getKtsSideBgConfig(ktsState.layoutDraft, ktsState.layoutSide);
+            const pMode = card.dataset.bgMode === 'solid' ? 'solid' : 'preset';
+            sBg.mode = pMode;
+            sBg.preset = card.dataset.bgPreset;
+            sBg._customized = true;
+            commitKtsLayoutHistory();
+            syncKtsLayoutBgControls();
+            scheduleKtsLayoutEditorRender();
+        });
+
+        const applySolidRgbHex = function(nextHex, skipHistory) {
+            if (!ktsState.layoutDraft) return;
+            const sBg = getKtsSideBgConfig(ktsState.layoutDraft, ktsState.layoutSide);
+            sBg.mode = 'solid';
+            sBg.solidColor = ktsNormalizeHex(nextHex, '#ffffff');
+            sBg._customized = true;
+            syncKtsLayoutBgControls();
+            renderKtsBgPresetGallery();
+            scheduleKtsLayoutEditorRender();
+            if (skipHistory) scheduleKtsLayoutHistoryCommit();
+            else commitKtsLayoutHistory();
+        };
+
+        const solidPicker = document.getElementById('ktsLayBgSolidPicker');
+        if (solidPicker) solidPicker.addEventListener('input', function() {
+            applySolidRgbHex(this.value, true);
+        });
+
+        const hexInput = document.getElementById('ktsLayBgHexInput');
+        if (hexInput) hexInput.addEventListener('input', function() {
+            const clean = String(this.value || '').trim();
+            if (/^#?[0-9a-fA-F]{6}$/.test(clean)) {
+                applySolidRgbHex(clean.startsWith('#') ? clean : ('#' + clean), true);
+            }
+        });
+
+        const rgbR = document.getElementById('ktsLayBgRgbR');
+        const rgbG = document.getElementById('ktsLayBgRgbG');
+        const rgbB = document.getElementById('ktsLayBgRgbB');
+        const handleRgbChange = function() {
+            if (!rgbR || !rgbG || !rgbB) return;
+            const hex = ktsRgbToHex(rgbR.value, rgbG.value, rgbB.value);
+            applySolidRgbHex(hex, true);
+        };
+        [rgbR, rgbG, rgbB].forEach(function(inp) {
+            if (inp) inp.addEventListener('input', handleRgbChange);
+        });
+
+        document.querySelectorAll('#ktsLayoutEditorModal .kts-bg-solid-swatch').forEach(function(sw) {
+            sw.addEventListener('click', function() {
+                if (this.dataset.bgSolid) applySolidRgbHex(this.dataset.bgSolid, false);
+            });
+        });
+
+        const basePick = document.getElementById('ktsLayBgBasePicker');
+        if (basePick) basePick.addEventListener('input', function() {
+            if (!ktsState.layoutDraft) return;
+            const sBg = getKtsSideBgConfig(ktsState.layoutDraft, ktsState.layoutSide);
+            sBg.baseColor = ktsNormalizeHex(this.value, '#ffffff');
+            sBg._customized = true;
+            renderKtsBgPresetGallery();
+            scheduleKtsLayoutEditorRender();
+            scheduleKtsLayoutHistoryCommit();
+        });
+
+        const accentPick = document.getElementById('ktsLayBgAccentPicker');
+        if (accentPick) accentPick.addEventListener('input', function() {
+            if (!ktsState.layoutDraft) return;
+            const sBg = getKtsSideBgConfig(ktsState.layoutDraft, ktsState.layoutSide);
+            sBg.accentColor = ktsNormalizeHex(this.value, '#166534');
+            sBg._customized = true;
+            renderKtsBgPresetGallery();
+            scheduleKtsLayoutEditorRender();
+            scheduleKtsLayoutHistoryCommit();
+        });
+
+        document.querySelectorAll('#ktsLayoutEditorModal .kts-bg-accent-swatch').forEach(function(sw) {
+            sw.addEventListener('click', function() {
+                if (!ktsState.layoutDraft || !this.dataset.bgAccent) return;
+                const sBg = getKtsSideBgConfig(ktsState.layoutDraft, ktsState.layoutSide);
+                sBg.accentColor = ktsNormalizeHex(this.dataset.bgAccent, '#166534');
+                sBg._customized = true;
+                syncKtsLayoutBgControls();
+                renderKtsBgPresetGallery();
+                commitKtsLayoutHistory();
+                scheduleKtsLayoutEditorRender();
+            });
+        });
+
+        const bindBgSliderPair = function(rId, nId, propName, minVal, maxVal) {
+            const rEl = document.getElementById(rId);
+            const nEl = document.getElementById(nId);
+            const onVal = function(rawVal, sourceEl) {
+                const parsed = Number(rawVal);
+                if (!Number.isFinite(parsed) || !ktsState.layoutDraft) return;
+                const clamped = Math.max(minVal, Math.min(maxVal, parsed));
+                if (rEl && sourceEl !== rEl) rEl.value = clamped;
+                if (nEl && sourceEl !== nEl) nEl.value = clamped;
+                const sBg = getKtsSideBgConfig(ktsState.layoutDraft, ktsState.layoutSide);
+                sBg[propName] = clamped;
+                sBg._customized = true;
+                scheduleKtsLayoutEditorRender();
+                scheduleKtsLayoutHistoryCommit();
+            };
+            if (rEl) rEl.addEventListener('input', function() { onVal(this.value, rEl); });
+            if (nEl) nEl.addEventListener('input', function() { onVal(this.value, nEl); });
+        };
+
+        bindBgSliderPair('ktsLayBgOpacity', 'ktsLayBgOpacityNum', 'opacity', 0, 200);
+        bindBgSliderPair('ktsLayBgScale', 'ktsLayBgScaleNum', 'scale', 50, 250);
+        bindBgSliderPair('ktsLayBgOffsetX', 'ktsLayBgOffsetXNum', 'offsetX', -100, 100);
+        bindBgSliderPair('ktsLayBgOffsetY', 'ktsLayBgOffsetYNum', 'offsetY', -100, 100);
+        bindBgSliderPair('ktsLayBgImgOpacity', 'ktsLayBgImgOpacityNum', 'imgOpacity', 10, 100);
+        bindBgSliderPair('ktsLayBgWhiteOverlay', 'ktsLayBgWhiteOverlayNum', 'whiteOverlay', 0, 85);
+
+        const bgUploadBtn = document.getElementById('ktsLayBgUploadBtn');
+        const bgFileInput = document.getElementById('ktsLayBgFileInput');
+        if (bgUploadBtn && bgFileInput) {
+            bgUploadBtn.addEventListener('click', function() { bgFileInput.click(); });
+        }
+        if (bgFileInput) bgFileInput.addEventListener('change', async function() {
+            const f = this.files && this.files[0];
+            if (!f || !ktsState.layoutDraft) return;
+            if (f.size > 5 * 1024 * 1024) {
+                alert('Ukuran gambar background maksimal 5 MB.');
+                this.value = '';
+                return;
+            }
+            try {
+                const usePngAlpha = f.type === 'image/png' && f.size <= 450 * 1024;
+                const dataUrl = await compressTemplateImageFile(f, 1200, 760, usePngAlpha);
+                const sBg = getKtsSideBgConfig(ktsState.layoutDraft, ktsState.layoutSide);
+                sBg.mode = 'upload';
+                sBg.imageData = dataUrl;
+                sBg._customized = true;
+                commitKtsLayoutHistory();
+                syncKtsLayoutBgControls();
+                scheduleKtsLayoutEditorRender();
+            } catch (err) {
+                alert(err && err.message ? err.message : 'Gagal memproses gambar background.');
+            } finally {
+                this.value = '';
+            }
+        });
+
+        const bgRemoveBtn = document.getElementById('ktsLayBgRemoveImgBtn');
+        if (bgRemoveBtn) bgRemoveBtn.addEventListener('click', function() {
+            if (!ktsState.layoutDraft) return;
+            const sKey = ktsState.layoutSide === 'back' ? 'back' : 'front';
+            const sBg = getKtsSideBgConfig(ktsState.layoutDraft, sKey);
+            sBg.imageData = '';
+            sBg.mode = 'preset';
+            sBg.preset = DEFAULT_KTS_BG[sKey].preset;
+            commitKtsLayoutHistory();
+            syncKtsLayoutBgControls();
+            scheduleKtsLayoutEditorRender();
+        });
+
+        const bgFitSel = document.getElementById('ktsLayBgFitSelect');
+        if (bgFitSel) bgFitSel.addEventListener('change', function() {
+            if (!ktsState.layoutDraft) return;
+            const sBg = getKtsSideBgConfig(ktsState.layoutDraft, ktsState.layoutSide);
+            sBg.fit = this.value || 'cover';
+            sBg._customized = true;
+            commitKtsLayoutHistory();
+            scheduleKtsLayoutEditorRender();
+        });
+
+        const bgResetTfBtn = document.getElementById('ktsLayBgResetTransformBtn');
+        if (bgResetTfBtn) bgResetTfBtn.addEventListener('click', function() {
+            if (!ktsState.layoutDraft) return;
+            const sBg = getKtsSideBgConfig(ktsState.layoutDraft, ktsState.layoutSide);
+            sBg.fit = 'cover';
+            sBg.scale = 100;
+            sBg.offsetX = 0;
+            sBg.offsetY = 0;
+            sBg.imgOpacity = 100;
+            sBg.whiteOverlay = 0;
+            commitKtsLayoutHistory();
+            syncKtsLayoutBgControls();
+            scheduleKtsLayoutEditorRender();
+        });
+
+        const bgApplyBothBtn = document.getElementById('ktsLayBgApplyBothBtn');
+        if (bgApplyBothBtn) bgApplyBothBtn.addEventListener('click', function() {
+            if (!ktsState.layoutDraft) return;
+            const curKey = ktsState.layoutSide === 'back' ? 'back' : 'front';
+            const otherKey = curKey === 'front' ? 'back' : 'front';
+            const curBg = getKtsSideBgConfig(ktsState.layoutDraft, curKey);
+            ktsState.layoutDraft.bg[otherKey] = Object.assign({}, curBg, { _customized: true });
+            curBg._customized = true;
+            commitKtsLayoutHistory();
+            if (typeof showToast === 'function') {
+                showToast('success', 'Diterapkan ke Kedua Sisi', 'Pengaturan background disalin ke sisi depan & belakang.');
+            }
+        });
+
+        const bgResetSideBtn = document.getElementById('ktsLayBgResetSideBtn');
+        if (bgResetSideBtn) bgResetSideBtn.addEventListener('click', function() {
+            if (!ktsState.layoutDraft) return;
+            const sKey = ktsState.layoutSide === 'back' ? 'back' : 'front';
+            ktsState.layoutDraft.bg[sKey] = Object.assign({}, DEFAULT_KTS_BG[sKey]);
+            commitKtsLayoutHistory();
+            syncKtsLayoutBgControls();
+            renderKtsBgPresetGallery();
+            scheduleKtsLayoutEditorRender();
         });
 
         const saveLayBtn = document.getElementById('ktsLaySaveBtn');
