@@ -22794,8 +22794,8 @@ function startOrOpenResponder(options) {
                 QRCode.CorrectLevel.L
             ];
             const candidates = [cleanText];
-            if (cleanText.length > 160) {
-                candidates.push(cleanText.slice(0, 157) + '...');
+            if (cleanText.length > 500) {
+                candidates.push(cleanText.slice(0, 497) + '...');
             }
             for (let cIdx = 0; cIdx < candidates.length; cIdx++) {
                 const candidate = candidates[cIdx];
@@ -24457,6 +24457,10 @@ function startOrOpenResponder(options) {
         }
         const parts = [
             '[TTE-SIMATA UU-ITE-11/2008]',
+            'Instansi: Madrasah Aliyah At-Taujih',
+            'Yayasan: Yayasan Muwajjihul Ulum Asy Syariyyah',
+            'NPSN: 70033117',
+            'Alamat: MA. At-Taujih, Dk. Pulorejo, Desa Bajingjowo, Kec. Sarang, Kab. Rembang, Jawa Tengah (59274)',
             'Penandatangan: ' + name,
             'Jabatan: ' + title
         ];
