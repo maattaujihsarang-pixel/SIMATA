@@ -22778,9 +22778,10 @@ function startOrOpenResponder(options) {
         }
     }
 
-    function buildQrCanvasSync(qrText) {
+    function buildQrCanvasSync(qrText, sizePx) {
         if (!qrText || typeof QRCode === 'undefined') return null;
         const cleanText = String(qrText).trim();
+        const renderSize = Math.max(256, Number(sizePx) || 512);
         const tempDiv = document.createElement('div');
         tempDiv.style.position = 'fixed';
         tempDiv.style.left = '-9999px';
@@ -22788,10 +22789,10 @@ function startOrOpenResponder(options) {
         document.body.appendChild(tempDiv);
         try {
             const levels = [
-                QRCode.CorrectLevel.H,
-                QRCode.CorrectLevel.Q,
-                QRCode.CorrectLevel.M,
-                QRCode.CorrectLevel.L
+                { code: QRCode.CorrectLevel.H, name: 'H' },
+                { code: QRCode.CorrectLevel.Q, name: 'Q' },
+                { code: QRCode.CorrectLevel.M, name: 'M' },
+                { code: QRCode.CorrectLevel.L, name: 'L' }
             ];
             const candidates = [cleanText];
             if (cleanText.length > 500) {
@@ -22804,18 +22805,21 @@ function startOrOpenResponder(options) {
                         tempDiv.innerHTML = '';
                         new QRCode(tempDiv, {
                             text: candidate,
-                            width: 256,
-                            height: 256,
+                            width: renderSize,
+                            height: renderSize,
                             colorDark: '#000000',
                             colorLight: '#ffffff',
-                            correctLevel: levels[i]
+                            correctLevel: levels[i].code
                         });
                         const qrCanvas = tempDiv.querySelector('canvas');
                         if (qrCanvas) {
                             const cloned = document.createElement('canvas');
                             cloned.width = qrCanvas.width;
                             cloned.height = qrCanvas.height;
-                            cloned.getContext('2d').drawImage(qrCanvas, 0, 0);
+                            const cCtx = cloned.getContext('2d');
+                            cCtx.imageSmoothingEnabled = false;
+                            cCtx.drawImage(qrCanvas, 0, 0);
+                            cloned._ecLevel = levels[i].name;
                             return cloned;
                         }
                     } catch (_) {
@@ -24420,8 +24424,8 @@ function startOrOpenResponder(options) {
         });
     }
 
-    function buildQrCanvasWithTransparentSupport(qrText, keepWhiteBg) {
-        const rawCanvas = buildQrCanvasSync(qrText);
+    function buildQrCanvasWithTransparentSupport(qrText, keepWhiteBg, sizePx) {
+        const rawCanvas = buildQrCanvasSync(qrText, sizePx);
         if (!rawCanvas) return null;
         if (keepWhiteBg !== false) return rawCanvas;
         try {
@@ -24429,6 +24433,7 @@ function startOrOpenResponder(options) {
             out.width = rawCanvas.width;
             out.height = rawCanvas.height;
             const oCtx = out.getContext('2d');
+            oCtx.imageSmoothingEnabled = false;
             oCtx.drawImage(rawCanvas, 0, 0);
             const imgData = oCtx.getImageData(0, 0, out.width, out.height);
             const px = imgData.data;
@@ -24438,6 +24443,7 @@ function startOrOpenResponder(options) {
                 }
             }
             oCtx.putImageData(imgData, 0, 0);
+            out._ecLevel = rawCanvas._ecLevel;
             return out;
         } catch (_) {
             return rawCanvas;
@@ -24495,9 +24501,10 @@ function startOrOpenResponder(options) {
         return parts.join('\n');
     }
 
-    function drawQrCrestOverlay(ctx, qx, qy, qSize, logoImg) {
-        if (!logoImg) return;
-        const badgeS = Math.round(qSize * 0.25);
+    function drawQrCrestOverlay(ctx, qx, qy, qSize, logoImg, ecLevel) {
+        if (!logoImg || ecLevel === 'L') return;
+        const badgeRatio = ecLevel === 'H' ? 0.2 : 0.17;
+        const badgeS = Math.round(qSize * badgeRatio);
         const bx = qx + (qSize - badgeS) / 2;
         const by = qy + (qSize - badgeS) / 2;
         ctx.save();
@@ -24505,9 +24512,10 @@ function startOrOpenResponder(options) {
         drawRoundedRectPath(ctx, bx, by, badgeS, badgeS, Math.max(4, Math.round(badgeS * 0.22)));
         ctx.fill();
         ctx.strokeStyle = 'rgba(22, 101, 52, 0.35)';
-        ctx.lineWidth = 1.2;
+        ctx.lineWidth = Math.max(1, qSize * 0.005);
         ctx.stroke();
         const pad = Math.max(2, Math.round(badgeS * 0.14));
+        ctx.imageSmoothingEnabled = true;
         ctx.drawImage(logoImg, bx + pad, by + pad, badgeS - pad * 2, badgeS - pad * 2);
         ctx.restore();
     }
@@ -24521,55 +24529,73 @@ function startOrOpenResponder(options) {
         const keepQuietBg = opts.keepQuietBg !== false;
         const fontFamily = opts.fontFamily || '"Plus Jakarta Sans", "Segoe UI", sans-serif';
         const payload = buildNationalTtePayload(opts);
-        const qrCanvas = buildQrCanvasWithTransparentSupport(payload, keepQuietBg);
+        const qrPx = Number(opts.exportQrSize) || (Math.max(w, h) >= 360 ? 1024 : 512);
+        const qrCanvas = buildQrCanvasWithTransparentSupport(payload, keepQuietBg, qrPx);
+        const ecLevel = (qrCanvas && qrCanvas._ecLevel) || 'M';
 
         ctx.save();
         if (style === 'qr_only_crest') {
-            const side = Math.min(w, h);
-            const qx = x + (w - side) / 2;
-            const qy = y + (h - side) / 2;
+            const outerSide = Math.min(w, h);
+            const ox = x + (w - outerSide) / 2;
+            const oy = y + (h - outerSide) / 2;
+            const qz = Math.max(4, Math.round(outerSide * 0.055));
+            const innerSide = outerSide - qz * 2;
+            const qx = ox + qz;
+            const qy = oy + qz;
             if (keepQuietBg) {
                 ctx.fillStyle = '#ffffff';
-                drawRoundedRectPath(ctx, qx - 3, qy - 3, side + 6, side + 6, Math.max(6, Math.round(side * 0.08)));
+                drawRoundedRectPath(ctx, ox, oy, outerSide, outerSide, Math.max(6, Math.round(outerSide * 0.06)));
                 ctx.fill();
                 ctx.strokeStyle = 'rgba(15, 23, 42, 0.14)';
-                ctx.lineWidth = 1;
+                ctx.lineWidth = Math.max(1, outerSide * 0.004);
                 ctx.stroke();
             }
-            if (qrCanvas) ctx.drawImage(qrCanvas, qx, qy, side, side);
-            drawQrCrestOverlay(ctx, qx, qy, side, opts.logoImg);
+            if (qrCanvas) {
+                ctx.imageSmoothingEnabled = false;
+                ctx.drawImage(qrCanvas, qx, qy, innerSide, innerSide);
+                ctx.imageSmoothingEnabled = true;
+            }
+            drawQrCrestOverlay(ctx, qx, qy, innerSide, opts.logoImg, ecLevel);
             ctx.restore();
-            return { x: qx, y: qy, w: side, h: side };
+            return { x: ox, y: oy, w: outerSide, h: outerSide };
         }
 
         if (style === 'tte_compact') {
-            const capH = Math.max(13, Math.round(h * 0.19));
-            const qrSide = Math.min(w - 4, h - capH - 3);
-            const qx = x + (w - qrSide) / 2;
-            const qy = y;
+            const capH = Math.max(13, Math.round(h * 0.17));
+            const outerSide = Math.min(w - 2, h - capH - 4);
+            const qxOuter = x + (w - outerSide) / 2;
+            const qyOuter = y;
+            const qz = Math.max(4, Math.round(outerSide * 0.055));
+            const qrInner = outerSide - qz * 2;
+            const qx = qxOuter + qz;
+            const qy = qyOuter + qz;
             if (keepQuietBg) {
                 ctx.fillStyle = '#ffffff';
-                drawRoundedRectPath(ctx, qx - 3, qy - 3, qrSide + 6, qrSide + capH + 7, 7);
+                drawRoundedRectPath(ctx, qxOuter, qyOuter, outerSide, outerSide + capH + 4, Math.max(7, Math.round(outerSide * 0.05)));
                 ctx.fill();
                 ctx.strokeStyle = 'rgba(22, 101, 52, 0.25)';
-                ctx.lineWidth = 1;
+                ctx.lineWidth = Math.max(1, outerSide * 0.004);
                 ctx.stroke();
             }
-            if (qrCanvas) ctx.drawImage(qrCanvas, qx, qy, qrSide, qrSide);
-            drawQrCrestOverlay(ctx, qx, qy, qrSide, opts.logoImg);
+            if (qrCanvas) {
+                ctx.imageSmoothingEnabled = false;
+                ctx.drawImage(qrCanvas, qx, qy, qrInner, qrInner);
+                ctx.imageSmoothingEnabled = true;
+            }
+            drawQrCrestOverlay(ctx, qx, qy, qrInner, opts.logoImg, ecLevel);
 
             // Compact BSrE / UU ITE verified ribbon below QR
-            const ribY = qy + qrSide + 2;
-            ctx.fillStyle = keepQuietBg ? '#ecfdf5' : 'rgba(236, 253, 245, 0.88)';
-            drawRoundedRectPath(ctx, qx - 2, ribY, qrSide + 4, capH, 4);
+            const ribY = qyOuter + outerSide + 1;
+            ctx.fillStyle = keepQuietBg ? '#ecfdf5' : 'rgba(236, 253, 245, 0.9)';
+            drawRoundedRectPath(ctx, qxOuter + 2, ribY, outerSide - 4, capH, Math.max(4, Math.round(capH * 0.2)));
             ctx.fill();
             ctx.fillStyle = '#065f46';
-            ctx.font = '700 ' + Math.max(7.5, Math.min(11, Math.round(capH * 0.62))) + 'px ' + fontFamily;
+            ctx.font = '700 ' + Math.max(7.5, Math.round(capH * 0.56)) + 'px ' + fontFamily;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('TTE • UU ITE', qx + qrSide / 2, ribY + capH / 2 + 0.5);
+            ctx.fillText('TTE • UU ITE', qxOuter + outerSide / 2, ribY + capH / 2 + 0.5);
             ctx.restore();
-            return { x: qx - 3, y: qy - 3, w: qrSide + 6, h: qrSide + capH + 7 };
+            return { x: qxOuter, y: qyOuter, w: outerSide, h: outerSide + capH + 4 };
         }
 
         // tte_horizontal (Indonesian National Electronic Signature Block BSrE style)
@@ -24598,8 +24624,12 @@ function startOrOpenResponder(options) {
             drawRoundedRectPath(ctx, qx - 4, qy - 4, qrSide + 8, qrSide + 8, 8);
             ctx.fill();
         }
-        if (qrCanvas) ctx.drawImage(qrCanvas, qx, qy, qrSide, qrSide);
-        drawQrCrestOverlay(ctx, qx, qy, qrSide, opts.logoImg);
+        if (qrCanvas) {
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(qrCanvas, qx, qy, qrSide, qrSide);
+            ctx.imageSmoothingEnabled = true;
+        }
+        drawQrCrestOverlay(ctx, qx, qy, qrSide, opts.logoImg, ecLevel);
 
         // Vertical divider
         const divX = qx + qrSide + pad;
@@ -24957,18 +24987,19 @@ function startOrOpenResponder(options) {
         const opts = getKtsQrGenOptionsFromInputs();
         const logoImg = await loadAssetImage('/assets/logo.png');
         const isSquare = opts.style !== 'tte_horizontal';
-        const exportW = isSquare ? 640 : 1200;
-        const exportH = isSquare ? 640 : 480;
+        const exportW = isSquare ? 1200 : 2000;
+        const exportH = isSquare ? 1200 : 800;
         const out = document.createElement('canvas');
         out.width = exportW;
         out.height = exportH;
         const ctx = out.getContext('2d');
         ctx.clearRect(0, 0, exportW, exportH); // True alpha transparency!
         drawNationalQrSignatureBlock(ctx, Object.assign({
-            x: 12,
-            y: 12,
-            w: exportW - 24,
-            h: exportH - 24,
+            x: 24,
+            y: 24,
+            w: exportW - 48,
+            h: exportH - 48,
+            exportQrSize: 1024,
             logoImg: logoImg,
             fontFamily: '"Plus Jakarta Sans", "Segoe UI", sans-serif'
         }, opts));
