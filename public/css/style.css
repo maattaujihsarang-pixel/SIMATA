@@ -6334,20 +6334,39 @@ select.attendance-filter-control {
 }
 
 @media (max-width: 768px) {
-  /* Mobile Viewer Mode: hide studio/edit/print/download/import buttons per user spec */
+  /* Mobile Viewer Mode: hide studio/edit/print/import buttons; keep only Unduh PNG */
   .kts-header-actions,
   #ktsEditLayoutBtn,
   #ktsCustomizeTemplateBtn,
   #ktsBatchPrintOpenBtn,
-  #ktsDownloadPngBtn,
   #ktsPrintSingleBtn,
   #ktsQuickEditCurrentBtn,
   #ktsToggleImportBtn,
-  .kts-preview-action-row,
   #ktsBulkSelectionBar,
   .kts-desktop-table-wrap,
   .kts-toolbar-left .entries-select-group {
     display: none !important;
+  }
+
+  .dashboard-layout #ktsContent .section-heading > div:first-child {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+  }
+
+  .kts-preview-action-row {
+    display: flex;
+    margin-top: 10px;
+  }
+
+  #ktsDownloadPngBtn {
+    width: 100%;
+    min-height: 40px;
+    justify-content: center;
+    background: #166534;
+    border-color: #166534;
+    color: #ffffff;
+    font-size: 13px;
   }
 
   .kts-unified-summary-banner {
@@ -6362,10 +6381,20 @@ select.attendance-filter-control {
   }
 
   .kts-readiness-bar {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding-bottom: 2px;
-    -webkit-overflow-scrolling: touch;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    overflow: visible;
+    padding-bottom: 0;
+  }
+
+  .kts-readiness-chip {
+    width: 100%;
+    justify-content: space-between;
+    padding: 0 10px;
+    font-size: 12px;
+    box-sizing: border-box;
+    min-width: 0;
   }
 
   .kts-studio-grid {
