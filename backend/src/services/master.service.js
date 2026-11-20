@@ -25,7 +25,7 @@ const DEFAULT_KTS_SETTINGS = {
     '4. Jika menemukan kartu ini, mohon kembalikan ke MA At-Taujih Sarang.'
   ].join('\n'),
   sign_city_date: 'Sarang, 18 November 2026',
-  headmaster_name: 'Kepala Madrasah MA At-Taujih',
+  headmaster_name: 'M. Iqnaul Badril Falah, S.Ag',
   headmaster_nip: 'NIP. -',
   custom_front_bg: '',
   custom_back_bg: '',
