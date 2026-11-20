@@ -28,8 +28,20 @@ function assertFrontendKtsIntegrity() {
     assert.strictEqual(openBraces, 0, `${cssName} must have balanced curly braces`);
   }
   assert.ok(css.includes('.kts-studio-grid'), 'style.css must define .kts-studio-grid');
+  assert.ok(css.includes('.kts-unified-summary-banner'), 'style.css must define .kts-unified-summary-banner');
   assert.ok(css.includes('#ktsPreviewCanvas'), 'style.css must style #ktsPreviewCanvas');
   assert.ok(css.includes('.kts-layout-select'), 'style.css must style .kts-layout-select');
+  for (const hiddenSel of [
+    '#ktsEditLayoutBtn',
+    '#ktsCustomizeTemplateBtn',
+    '#ktsBatchPrintOpenBtn',
+    '#ktsDownloadPngBtn',
+    '#ktsPrintSingleBtn',
+    '#ktsQuickEditCurrentBtn',
+    '#ktsToggleImportBtn'
+  ]) {
+    assert.ok(css.includes(hiddenSel), `style.css must include mobile hide rule for ${hiddenSel}`);
+  }
 
   // HTML structure & Menu Siswa + KTS Studio elements
   for (const requiredToken of [
@@ -37,6 +49,11 @@ function assertFrontendKtsIntegrity() {
     '<span class="menu-text">KTS</span>',
     'id="sheetMenuKts"',
     'id="ktsContent"',
+    'id="ktsSummaryBanner"',
+    'id="ktsSummaryProportionBar"',
+    'id="ktsMobileCardList"',
+    'id="ktsImportModal"',
+    'id="ktsBulkSelectionBar"',
     'id="ktsPreviewCanvas"',
     'id="ktsQuickEditModal"',
     'id="ktsTemplateModal"',
