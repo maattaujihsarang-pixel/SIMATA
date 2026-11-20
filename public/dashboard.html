@@ -19,7 +19,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100..900;1,100..900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=bug65_mobilefix2">
+  <link rel="stylesheet" href="/css/style.css?v=bug65_tplstudio">
   <link rel="stylesheet" href="/css/notifications.css?v=bug65_2">
   <link rel="stylesheet" href="/css/finance.css">
   <style>
@@ -3837,79 +3837,110 @@ html, body {
           </div>
         </div>
 
-        <!-- KTS MODAL 2: KUSTOMISASI TEMPLATE & BACKGROUND -->
+        <!-- KTS MODAL 2: KUSTOMISASI TEMPLATE, BACKGROUND CUSTOM, TTD & QR DIGITAL -->
         <div id="ktsTemplateModal" class="student-modal-backdrop" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.5);align-items:center;justify-content:center;z-index:10050;">
-          <div class="student-modal-card" style="max-width:700px;">
+          <div class="student-modal-card kts-tpl-modal-card">
             <div class="student-modal-header">
-              <h3 style="margin:0;">Kustomisasi Template &amp; Desain KTS</h3>
+              <div>
+                <h3 style="margin:0;">Kustomisasi Template &amp; Desain KTS</h3>
+                <div style="font-size:11.5px;color:#64748b;margin-top:2px;">Atur identitas madrasah, background Canva/CorelDraw, TTD &amp; stempel transparan, serta generator QR TTD digital.</div>
+              </div>
               <button type="button" onclick="closeKtsTemplateModal()" class="student-modal-close-btn" aria-label="Tutup">&times;</button>
             </div>
             <div class="student-modal-body">
-              <div class="kts-tpl-layout-banner">
-                <div>
-                  <div style="font-size:12.5px;font-weight:700;color:#14532d;">Atur Posisi, Ukuran Font, Jarak &amp; Tebal Teks</div>
-                  <div style="font-size:11.5px;color:#166534;">Geser langsung elemen kartu secara visual atau atur tipografi setiap baris.</div>
-                </div>
-                <button type="button" id="ktsOpenLayoutFromTplBtn" class="kts-btn-outline" style="background:#ffffff;border-color:#16a34a;color:#166534;">Buka Editor Layout Visual (Geser Posisi &amp; Ukuran Font)</button>
+              <div class="kts-tpl-tabs" role="tablist">
+                <button type="button" class="kts-tpl-tab-btn active" data-tpl-tab="identity" role="tab" aria-selected="true">1. Identitas &amp; Ketentuan</button>
+                <button type="button" class="kts-tpl-tab-btn" data-tpl-tab="custombg" role="tab" aria-selected="false">2. Background Custom</button>
+                <button type="button" class="kts-tpl-tab-btn" data-tpl-tab="signature" role="tab" aria-selected="false">3. TTD, Stempel &amp; QR</button>
               </div>
-              <div class="student-form-grid">
-                <div class="student-form-group student-col-span-2">
-                  <label for="ktsTpl_headerTitle" class="student-form-label">Judul Kartu (Header Baris 1)</label>
-                  <input id="ktsTpl_headerTitle" class="input-box" placeholder="KARTU IDENTITAS SISWA" />
-                </div>
-                <div class="student-form-group student-col-span-2">
-                  <label for="ktsTpl_headerArabic" class="student-form-label">Nama Yayasan / Naungan (Header Baris 2)</label>
-                  <input id="ktsTpl_headerArabic" class="input-box" placeholder="Yayasan Muwajjihul Ulum Asy-Syariyyah" />
-                </div>
-                <div class="student-form-group">
-                  <label for="ktsTpl_schoolName" class="student-form-label">Nama Madrasah (Header Baris 3)</label>
-                  <input id="ktsTpl_schoolName" class="input-box" placeholder="MA AT-TAUJIH" />
-                </div>
-                <div class="student-form-group">
-                  <label for="ktsTpl_line5Mode" class="student-form-label">Isi Baris Ke-5 Biodata</label>
-                  <select id="ktsTpl_line5Mode" class="input-box">
-                    <option value="dormitory">Pondok / Asrama</option>
-                    <option value="class">Kelas Siswa</option>
-                    <option value="both">Pondok + Kelas</option>
-                  </select>
-                </div>
-                <div class="student-form-group student-col-span-2">
-                  <label for="ktsTpl_schoolAddress" class="student-form-label">Alamat Lengkap Madrasah (Header Baris 4)</label>
-                  <input id="ktsTpl_schoolAddress" class="input-box" placeholder="Dk. Pulorejo, Desa Bajingjowo, Kec. Sarang, Kab. Rembang, Jawa Tengah (59274)" />
-                </div>
-                <div class="student-form-group student-col-span-2">
-                  <label for="ktsTpl_validityText" class="student-form-label">Keterangan Masa Berlaku (Bawah Foto)</label>
-                  <input id="ktsTpl_validityText" class="input-box" />
-                </div>
-                <div class="student-form-group">
-                  <label for="ktsTpl_backTitle" class="student-form-label">Judul Sisi Belakang</label>
-                  <input id="ktsTpl_backTitle" class="input-box" />
-                </div>
-                <div class="student-form-group">
-                  <label for="ktsTpl_signCityDate" class="student-form-label">Tempat &amp; Tanggal Terbit</label>
-                  <input id="ktsTpl_signCityDate" class="input-box" placeholder="Sarang, 18 November 2026" />
-                </div>
-                <div class="student-form-group">
-                  <label for="ktsTpl_headmasterName" class="student-form-label">Nama Kepala Madrasah</label>
-                  <input id="ktsTpl_headmasterName" class="input-box" />
-                </div>
-                <div class="student-form-group">
-                  <label for="ktsTpl_headmasterNip" class="student-form-label">NIP / Keterangan Kepala</label>
-                  <input id="ktsTpl_headmasterNip" class="input-box" />
-                </div>
-                <div class="student-form-group student-col-span-2">
-                  <label for="ktsTpl_backRules" class="student-form-label">Ketentuan Sisi Belakang (1 baris 1 poin)</label>
-                  <textarea id="ktsTpl_backRules" rows="4" class="input-box" style="height:auto;padding:10px;"></textarea>
+
+              <!-- TAB 1: IDENTITAS & KETENTUAN -->
+              <div class="kts-tpl-tab-pane active" data-tpl-pane="identity">
+                <div class="kts-tpl-layout-banner" id="ktsTplIdentityBanner">
+                  <div>
+                    <div style="font-size:12.5px;font-weight:700;color:#14532d;" id="ktsTplLayBannerTitle">Atur Posisi, Ukuran Font, Jarak &amp; Tebal Teks</div>
+                    <div style="font-size:11.5px;color:#166534;" id="ktsTplLayBannerDesc">Geser langsung elemen kartu secara visual atau atur tipografi setiap baris.</div>
+                  </div>
+                  <button type="button" id="ktsOpenLayoutFromTplBtn" class="kts-btn-outline" style="background:#ffffff;border-color:#16a34a;color:#166534;">Buka Editor Layout Visual</button>
                 </div>
 
-                <!-- Custom Background & Signature Uploads -->
-                <div class="student-form-group student-col-span-2">
+                <div class="student-form-grid">
+                  <div class="student-form-group student-col-span-2">
+                    <label for="ktsTpl_headerTitle" class="student-form-label">Judul Kartu (Header Baris 1)</label>
+                    <input id="ktsTpl_headerTitle" class="input-box" placeholder="KARTU IDENTITAS SISWA" />
+                  </div>
+                  <div class="student-form-group student-col-span-2">
+                    <label for="ktsTpl_headerArabic" class="student-form-label">Nama Yayasan / Naungan (Header Baris 2)</label>
+                    <input id="ktsTpl_headerArabic" class="input-box" placeholder="Yayasan Muwajjihul Ulum Asy-Syariyyah" />
+                  </div>
+                  <div class="student-form-group">
+                    <label for="ktsTpl_schoolName" class="student-form-label">Nama Madrasah (Header Baris 3)</label>
+                    <input id="ktsTpl_schoolName" class="input-box" placeholder="MA AT-TAUJIH" />
+                  </div>
+                  <div class="student-form-group">
+                    <label for="ktsTpl_line5Mode" class="student-form-label">Isi Baris Ke-5 Biodata</label>
+                    <select id="ktsTpl_line5Mode" class="input-box">
+                      <option value="dormitory">Pondok / Asrama</option>
+                      <option value="class">Kelas Siswa</option>
+                      <option value="both">Pondok + Kelas</option>
+                    </select>
+                  </div>
+                  <div class="student-form-group student-col-span-2">
+                    <label for="ktsTpl_schoolAddress" class="student-form-label">Alamat Lengkap Madrasah (Header Baris 4)</label>
+                    <input id="ktsTpl_schoolAddress" class="input-box" placeholder="Dk. Pulorejo, Desa Bajingjowo, Kec. Sarang, Kab. Rembang, Jawa Tengah (59274)" />
+                  </div>
+                  <div class="student-form-group student-col-span-2">
+                    <label for="ktsTpl_validityText" class="student-form-label">Keterangan Masa Berlaku (Bawah Foto)</label>
+                    <input id="ktsTpl_validityText" class="input-box" />
+                  </div>
+                  <div class="student-form-group">
+                    <label for="ktsTpl_backTitle" class="student-form-label">Judul Sisi Belakang</label>
+                    <input id="ktsTpl_backTitle" class="input-box" />
+                  </div>
+                  <div class="student-form-group">
+                    <label for="ktsTpl_signCityDate" class="student-form-label">Tempat &amp; Tanggal Terbit</label>
+                    <input id="ktsTpl_signCityDate" class="input-box" placeholder="Sarang, 18 November 2026" />
+                  </div>
+                  <div class="student-form-group">
+                    <label for="ktsTpl_headmasterName" class="student-form-label">Nama Kepala Madrasah</label>
+                    <input id="ktsTpl_headmasterName" class="input-box" />
+                  </div>
+                  <div class="student-form-group">
+                    <label for="ktsTpl_headmasterNip" class="student-form-label">NIP / Keterangan Kepala</label>
+                    <input id="ktsTpl_headmasterNip" class="input-box" />
+                  </div>
+                  <div class="student-form-group student-col-span-2">
+                    <label for="ktsTpl_backRules" class="student-form-label">Ketentuan Sisi Belakang (1 baris 1 poin)</label>
+                    <textarea id="ktsTpl_backRules" rows="4" class="input-box" style="height:auto;padding:10px;"></textarea>
+                  </div>
+                </div>
+              </div>
+
+              <!-- TAB 2: BACKGROUND CUSTOM (CANVA / CORELDRAW) -->
+              <div class="kts-tpl-tab-pane" data-tpl-pane="custombg">
+                <div class="kts-tpl-lock-banner" id="ktsTplBgLockBanner">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  <div id="ktsTplBgLockText">
+                    <strong>Penguncian Layout Otomatis:</strong> Saat Anda mengunggah Background Custom (Canva/CorelDraw), sistem otomatis mengunci <em>Edit Layout KTS</em> ke tata letak standar resmi SIMATA dan menyembunyikan kop bawaan pada sisi terkait agar biodata tidak bertumpuk dengan desain Anda.
+                  </div>
+                </div>
+
+                <div style="display:flex;flex-direction:column;gap:12px;">
                   <div class="kts-tpl-asset-box">
-                    <div style="display:flex;align-items:center;gap:10px;">
-                      <img id="ktsTpl_frontBgThumb" class="kts-tpl-thumb" alt="Bg Depan" />
-                      <div>
-                        <div style="font-size:12.5px;font-weight:700;color:#0f172a;">Background Depan Custom (Canva/CorelDraw)</div>
-                        <div style="font-size:11.5px;color:#64748b;">Rasio 85.6&times;54 mm. Kosongkan untuk memakai desain resmi bawaan SIMATA.</div>
+                    <div class="kts-tpl-asset-info">
+                      <div class="kts-tpl-thumb-wrap">
+                        <img id="ktsTpl_frontBgThumb" class="kts-tpl-thumb" alt="Bg Depan" style="display:none;" />
+                        <span class="kts-tpl-thumb-empty" id="ktsTpl_frontBgEmpty">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                          Default
+                        </span>
+                      </div>
+                      <div style="min-width:0;">
+                        <div style="font-size:13px;font-weight:700;color:#0f172a;display:flex;align-items:center;flex-wrap:wrap;gap:4px;">
+                          <span>Background Depan Custom (Canva / CorelDraw)</span>
+                          <span class="kts-tpl-status-pill" id="ktsTpl_frontBgStatus">Default SIMATA</span>
+                        </div>
+                        <div style="font-size:11.5px;color:#64748b;margin-top:2px;">Ukuran ideal 1011&times;638 px (rasio 85.6&times;54 mm). Mengunci posisi biodata sisi depan ke standar SIMATA agar rapi dan tidak bertumpuk.</div>
                       </div>
                     </div>
                     <div style="display:flex;gap:6px;flex-wrap:wrap;">
@@ -3917,18 +3948,25 @@ html, body {
                         <span>Pilih Gambar</span>
                         <input type="file" id="ktsTpl_frontBgInput" accept="image/jpeg,image/png,image/webp" style="display:none;" />
                       </label>
-                      <button type="button" id="ktsTpl_frontBgResetBtn" class="photo-simple-download-btn">Default</button>
+                      <button type="button" id="ktsTpl_frontBgResetBtn" class="photo-simple-download-btn">Pakai Default</button>
                     </div>
                   </div>
-                </div>
 
-                <div class="student-form-group student-col-span-2">
                   <div class="kts-tpl-asset-box">
-                    <div style="display:flex;align-items:center;gap:10px;">
-                      <img id="ktsTpl_backBgThumb" class="kts-tpl-thumb" alt="Bg Belakang" />
-                      <div>
-                        <div style="font-size:12.5px;font-weight:700;color:#0f172a;">Background Belakang Custom</div>
-                        <div style="font-size:11.5px;color:#64748b;">Opsional. Sistem menempatkan ketentuan &amp; TTD secara otomatis di atasnya.</div>
+                    <div class="kts-tpl-asset-info">
+                      <div class="kts-tpl-thumb-wrap">
+                        <img id="ktsTpl_backBgThumb" class="kts-tpl-thumb" alt="Bg Belakang" style="display:none;" />
+                        <span class="kts-tpl-thumb-empty" id="ktsTpl_backBgEmpty">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                          Default
+                        </span>
+                      </div>
+                      <div style="min-width:0;">
+                        <div style="font-size:13px;font-weight:700;color:#0f172a;display:flex;align-items:center;flex-wrap:wrap;gap:4px;">
+                          <span>Background Belakang Custom</span>
+                          <span class="kts-tpl-status-pill" id="ktsTpl_backBgStatus">Default SIMATA</span>
+                        </div>
+                        <div style="font-size:11.5px;color:#64748b;margin-top:2px;">Opsional. Ketentuan, ringkasan pemegang kartu, dan blok TTD ditempatkan otomatis di atas background Anda dengan layout terkunci.</div>
                       </div>
                     </div>
                     <div style="display:flex;gap:6px;flex-wrap:wrap;">
@@ -3936,26 +3974,178 @@ html, body {
                         <span>Pilih Gambar</span>
                         <input type="file" id="ktsTpl_backBgInput" accept="image/jpeg,image/png,image/webp" style="display:none;" />
                       </label>
-                      <button type="button" id="ktsTpl_backBgResetBtn" class="photo-simple-download-btn">Default</button>
+                      <button type="button" id="ktsTpl_backBgResetBtn" class="photo-simple-download-btn">Pakai Default</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- TAB 3: TTD, STEMPEL & GENERATOR TTD QR DIGITAL -->
+              <div class="kts-tpl-tab-pane" data-tpl-pane="signature">
+                <div style="font-size:12px;font-weight:700;color:#0f172a;margin-bottom:6px;">Jenis Tanda Tangan di Sisi Belakang KTS</div>
+                <div class="kts-sig-mode-pills">
+                  <button type="button" class="kts-sig-mode-btn active" data-sig-mode="physical">
+                    <strong>TTD &amp; Stempel Fisik</strong>
+                    <span>PNG transparan TTD + Stempel resmi</span>
+                  </button>
+                  <button type="button" class="kts-sig-mode-btn" data-sig-mode="qr">
+                    <strong>TTD QR Digital (Nasional)</strong>
+                    <span>QR verifikasi TTE + emblem madrasah</span>
+                  </button>
+                  <button type="button" class="kts-sig-mode-btn" data-sig-mode="qr_stamp">
+                    <strong>Gabungan (QR + Stempel)</strong>
+                    <span>TTD QR Digital disertai stempel resmi</span>
+                  </button>
+                </div>
+
+                <!-- Separate Upload Cards for Signature & Stamp -->
+                <div class="kts-sig-assets-grid">
+                  <div class="kts-tpl-asset-box" style="padding:10px;">
+                    <div class="kts-tpl-asset-info" style="gap:10px;">
+                      <div class="kts-tpl-thumb-wrap is-checker" style="width:68px;height:48px;">
+                        <img id="ktsTpl_sigThumb" class="kts-tpl-thumb" alt="Tanda Tangan" style="display:none;" />
+                        <span class="kts-tpl-thumb-empty" id="ktsTpl_sigEmpty">Kosong</span>
+                      </div>
+                      <div style="min-width:0;">
+                        <div style="font-size:12px;font-weight:700;color:#0f172a;">Tanda Tangan (PNG)</div>
+                        <div style="font-size:10.5px;color:#64748b;" id="ktsTpl_sigStatus">Default Resmi Tersedia</div>
+                      </div>
+                    </div>
+                    <div style="display:flex;gap:5px;flex-wrap:wrap;width:100%;">
+                      <label class="photo-simple-upload-btn" style="cursor:pointer;font-size:11px;padding:5px 9px;">
+                        <span>Ganti TTD</span>
+                        <input type="file" id="ktsTpl_sigInput" accept="image/png,image/jpeg,image/webp" style="display:none;" />
+                      </label>
+                      <button type="button" id="ktsTpl_sigDefaultBtn" class="photo-simple-download-btn" style="font-size:11px;padding:5px 9px;">Bawaan</button>
+                      <button type="button" id="ktsTpl_sigResetBtn" class="photo-simple-download-btn" style="font-size:11px;padding:5px 9px;color:#b91c1c;">Hapus</button>
+                    </div>
+                  </div>
+
+                  <div class="kts-tpl-asset-box" style="padding:10px;">
+                    <div class="kts-tpl-asset-info" style="gap:10px;">
+                      <div class="kts-tpl-thumb-wrap is-checker" style="width:68px;height:48px;">
+                        <img id="ktsTpl_stampThumb" class="kts-tpl-thumb" alt="Stempel" style="display:none;" />
+                        <span class="kts-tpl-thumb-empty" id="ktsTpl_stampEmpty">Kosong</span>
+                      </div>
+                      <div style="min-width:0;">
+                        <div style="font-size:12px;font-weight:700;color:#0f172a;">Stempel Madrasah (PNG)</div>
+                        <div style="font-size:10.5px;color:#64748b;" id="ktsTpl_stampStatus">Default Resmi Tersedia</div>
+                      </div>
+                    </div>
+                    <div style="display:flex;gap:5px;flex-wrap:wrap;width:100%;align-items:center;">
+                      <label class="photo-simple-upload-btn" style="cursor:pointer;font-size:11px;padding:5px 9px;">
+                        <span>Ganti Stempel</span>
+                        <input type="file" id="ktsTpl_stampInput" accept="image/png,image/jpeg,image/webp" style="display:none;" />
+                      </label>
+                      <button type="button" id="ktsTpl_stampDefaultBtn" class="photo-simple-download-btn" style="font-size:11px;padding:5px 9px;">Bawaan</button>
+                      <button type="button" id="ktsTpl_stampResetBtn" class="photo-simple-download-btn" style="font-size:11px;padding:5px 9px;color:#b91c1c;">Hapus</button>
+                      <label style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#334155;margin-left:auto;cursor:pointer;">
+                        <input type="checkbox" id="ktsSig_showStamp" checked />
+                        <span>Tampilkan</span>
+                      </label>
                     </div>
                   </div>
                 </div>
 
-                <div class="student-form-group student-col-span-2">
-                  <div class="kts-tpl-asset-box">
-                    <div style="display:flex;align-items:center;gap:10px;">
-                      <img id="ktsTpl_sigThumb" class="kts-tpl-thumb" alt="TTD &amp; Stempel" />
-                      <div>
-                        <div style="font-size:12.5px;font-weight:700;color:#0f172a;">Tanda Tangan &amp; Stempel Digital (PNG Transparan)</div>
-                        <div style="font-size:11.5px;color:#64748b;">Ditampilkan di pojok kanan bawah Sisi Belakang kartu.</div>
+                <!-- Interactive Signature & Stamp Positioning Stage -->
+                <div class="kts-sig-composer-grid">
+                  <div class="kts-sig-stage-wrap">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                      <span style="font-size:11.5px;font-weight:700;color:#0f172a;">Pratinjau &amp; Geser Manual (Drag Langsung)</span>
+                      <span style="font-size:10.5px;color:#64748b;" id="ktsSigActiveTargetHint">Klik/tarik TTD atau Stempel</span>
+                    </div>
+                    <canvas id="ktsSigComposerCanvas" width="384" height="252"></canvas>
+                  </div>
+                  <div class="kts-sig-sliders">
+                    <div style="font-size:11.5px;font-weight:700;color:#0f172a;">Penyesuaian Halus Ukuran &amp; Transparansi</div>
+                    <div class="kts-sig-slider-row">
+                      <label><span>Ukuran TTD / QR</span><span id="ktsSig_sigScaleVal">100%</span></label>
+                      <input type="range" id="ktsSig_sigScale" min="50" max="165" value="100" />
+                    </div>
+                    <div class="kts-sig-slider-row">
+                      <label><span>Posisi TTD (X / Y)</span><span id="ktsSig_sigPosVal">0, 0</span></label>
+                      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+                        <input type="range" id="ktsSig_sigX" min="-90" max="90" value="0" title="Geser Horizontal TTD" />
+                        <input type="range" id="ktsSig_sigY" min="-45" max="45" value="0" title="Geser Vertikal TTD" />
                       </div>
                     </div>
-                    <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                      <label class="photo-simple-upload-btn" style="cursor:pointer;">
-                        <span>Pilih TTD</span>
-                        <input type="file" id="ktsTpl_sigInput" accept="image/png,image/jpeg,image/webp" style="display:none;" />
+                    <div class="kts-sig-slider-row">
+                      <label><span>Ukuran Stempel</span><span id="ktsSig_stampScaleVal">100%</span></label>
+                      <input type="range" id="ktsSig_stampScale" min="50" max="165" value="100" />
+                    </div>
+                    <div class="kts-sig-slider-row">
+                      <label><span>Posisi Stempel (X / Y)</span><span id="ktsSig_stampPosVal">-52, -6</span></label>
+                      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+                        <input type="range" id="ktsSig_stampX" min="-110" max="90" value="-52" title="Geser Horizontal Stempel" />
+                        <input type="range" id="ktsSig_stampY" min="-55" max="45" value="-6" title="Geser Vertikal Stempel" />
+                      </div>
+                    </div>
+                    <div class="kts-sig-slider-row">
+                      <label><span>Transparansi Stempel</span><span id="ktsSig_stampOpacityVal">88%</span></label>
+                      <input type="range" id="ktsSig_stampOpacity" min="20" max="100" value="88" />
+                    </div>
+                    <button type="button" id="ktsSig_resetPosBtn" class="kts-btn-outline" style="padding:6px 10px;font-size:11.5px;align-self:flex-start;">Reset Posisi &amp; Ukuran TTD/Stempel</button>
+                  </div>
+                </div>
+
+                <!-- Universal National-Standard QR Digital Signature Generator -->
+                <div class="kts-qrgen-panel">
+                  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+                    <div>
+                      <div style="font-size:13px;font-weight:700;color:#14532d;">Tool Universal: Generator Tanda Tangan QR Digital (Standar Nasional TTE)</div>
+                      <div style="font-size:11px;color:#166534;">Bebas dipakai untuk KTS maupun dokumen lain (Surat/SK/Piagam). Unduh sebagai PNG transparan siap tempel.</div>
+                    </div>
+                    <button type="button" id="ktsQrGenSyncFromKtsBtn" class="kts-btn-outline" style="background:#ffffff;padding:5px 10px;font-size:11px;">Salin Data Kepala KTS</button>
+                  </div>
+
+                  <div class="kts-qrgen-grid">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                      <div style="grid-column:span 2;">
+                        <label for="ktsQrGen_name" class="student-form-label" style="font-size:11px;">Nama Penandatangan</label>
+                        <input id="ktsQrGen_name" class="input-box" style="height:34px;font-size:12px;" placeholder="Nama lengkap &amp; gelar penandatangan" />
+                      </div>
+                      <div>
+                        <label for="ktsQrGen_title" class="student-form-label" style="font-size:11px;">Jabatan / Instansi</label>
+                        <input id="ktsQrGen_title" class="input-box" style="height:34px;font-size:12px;" placeholder="Kepala Madrasah" />
+                      </div>
+                      <div>
+                        <label for="ktsQrGen_id" class="student-form-label" style="font-size:11px;">NIP / NUPTK / ID</label>
+                        <input id="ktsQrGen_id" class="input-box" style="height:34px;font-size:12px;" placeholder="NIP. -" />
+                      </div>
+                      <div>
+                        <label for="ktsQrGen_date" class="student-form-label" style="font-size:11px;">Tempat &amp; Tanggal</label>
+                        <input id="ktsQrGen_date" class="input-box" style="height:34px;font-size:12px;" placeholder="Sarang, 20 November 2026" />
+                      </div>
+                      <div>
+                        <label for="ktsQrGen_style" class="student-form-label" style="font-size:11px;">Model Tampilan TTE</label>
+                        <select id="ktsQrGen_style" class="input-box" style="height:34px;font-size:12px;">
+                          <option value="tte_horizontal">Blok TTE Resmi (Untuk Surat/PDF)</option>
+                          <option value="tte_compact">QR TTE Ringkas + Emblem (Ideal KTS)</option>
+                          <option value="qr_only_crest">QR Polos + Logo Tengah</option>
+                        </select>
+                      </div>
+                      <div style="grid-column:span 2;">
+                        <label for="ktsQrGen_doc" class="student-form-label" style="font-size:11px;">Perihal / Nomor Dokumen (Opsional)</label>
+                        <input id="ktsQrGen_doc" class="input-box" style="height:34px;font-size:12px;" placeholder="Kartu Identitas Siswa Resmi / No. Surat" />
+                      </div>
+                      <div style="grid-column:span 2;">
+                        <label for="ktsQrGen_url" class="student-form-label" style="font-size:11px;">URL / Payload Verifikasi Khusus (Kosongkan untuk format TTE otomatis)</label>
+                        <input id="ktsQrGen_url" class="input-box" style="height:34px;font-size:12px;" placeholder="https://simata-attaujih.my.id/verify/..." />
+                      </div>
+                      <label style="grid-column:span 2;display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:#1e293b;cursor:pointer;">
+                        <input type="checkbox" id="ktsQrGen_keepBg" checked />
+                        <span>Pertahankan kotak putih tipis pada modul QR (disarankan agar tetap terbaca scanner)</span>
                       </label>
-                      <button type="button" id="ktsTpl_sigResetBtn" class="photo-simple-download-btn">Hapus</button>
+                    </div>
+
+                    <div style="display:flex;flex-direction:column;gap:8px;">
+                      <div class="kts-checkerboard-bg">
+                        <canvas id="ktsQrGenPreviewCanvas" width="520" height="210"></canvas>
+                      </div>
+                      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <button type="button" id="ktsQrGenDownloadBtn" class="kts-btn-primary" style="flex:1;justify-content:center;font-size:12px;padding:8px 12px;">Unduh PNG Transparan</button>
+                        <button type="button" id="ktsQrGenApplyKtsBtn" class="kts-btn-outline" style="flex:1;justify-content:center;font-size:12px;padding:8px 12px;border-color:#16a34a;color:#166534;background:#ffffff;">Terapkan ke KTS Ini</button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -22044,7 +22234,9 @@ function startOrOpenResponder(options) {
             headmaster_nip: 'NIP. -',
             custom_front_bg: '',
             custom_back_bg: '',
-            signature_img: '',
+            signature_img: '/assets/kts_signature.png',
+            stamp_img: '/assets/kts_stamp.png',
+            signature_config: '',
             layout_config: '',
             layout_default_config: ''
         },
@@ -22060,8 +22252,12 @@ function startOrOpenResponder(options) {
         tplDraftImages: {
             custom_front_bg: undefined,
             custom_back_bg: undefined,
-            signature_img: undefined
+            signature_img: undefined,
+            stamp_img: undefined
         },
+        tplDraftSigConfig: null,
+        tplActiveTab: 'identity',
+        tplActiveSigTarget: 'sig',
         layoutDraft: null,
         layoutSide: 'front',
         layoutSelectedEl: 'student_name',
@@ -22070,6 +22266,70 @@ function startOrOpenResponder(options) {
         layoutHistoryIndex: -1,
         layoutSmartGuides: true
     };
+
+    const DEFAULT_KTS_SIG_CONFIG = {
+        mode: 'physical', // 'physical' | 'qr' | 'qr_stamp'
+        showStamp: true,
+        sigOffsetX: 0,
+        sigOffsetY: 0,
+        sigScale: 1,
+        stampOffsetX: -52,
+        stampOffsetY: -6,
+        stampScale: 1,
+        stampOpacity: 0.88,
+        qrSignerName: '',
+        qrSignerTitle: 'Kepala Madrasah',
+        qrSignerNip: '',
+        qrCityDate: '',
+        qrDocNote: 'Kartu Identitas Siswa Resmi SIMATA',
+        qrVerifyUrl: '',
+        qrStyle: 'tte_compact',
+        qrKeepQuietBg: true
+    };
+
+    function getKtsSignatureConfig(cfgOverride) {
+        const cfg = cfgOverride || ktsState.settings || {};
+        if (cfg._draftSigConfig) {
+            return Object.assign({}, DEFAULT_KTS_SIG_CONFIG, cfg._draftSigConfig);
+        }
+        const raw = cfg.signature_config;
+        if (!raw) return Object.assign({}, DEFAULT_KTS_SIG_CONFIG);
+        try {
+            const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                return Object.assign({}, DEFAULT_KTS_SIG_CONFIG, parsed);
+            }
+        } catch (_) {}
+        return Object.assign({}, DEFAULT_KTS_SIG_CONFIG);
+    }
+
+    function resolveKtsSigAsset(rawVal, fallbackPath) {
+        if (rawVal === 'NONE') return '';
+        const clean = String(rawVal || '').trim();
+        return clean || fallbackPath || '';
+    }
+
+    function isKtsCustomBgLocked(cfgOverride) {
+        const cfg = cfgOverride || ktsState.settings || {};
+        return Boolean(String(cfg.custom_front_bg || '').trim() || String(cfg.custom_back_bg || '').trim());
+    }
+
+    function syncKtsCustomBgLayoutLockState() {
+        const locked = isKtsCustomBgLocked(ktsState.settings);
+        const editBtn = document.getElementById('ktsEditLayoutBtn');
+        if (editBtn) {
+            editBtn.classList.toggle('is-locked', locked);
+            editBtn.setAttribute('aria-disabled', locked ? 'true' : 'false');
+            editBtn.dataset.locked = locked ? '1' : '0';
+            editBtn.title = locked
+                ? 'Edit Layout dikunci otomatis saat Background Custom (Canva/CorelDraw) aktif'
+                : 'Atur posisi & background kartu secara visual';
+            const lbl = editBtn.querySelector('span');
+            if (lbl) {
+                lbl.textContent = locked ? 'Layout Terkunci (Custom BG)' : 'Edit Layout KTS';
+            }
+        }
+    }
 
     const KTS_BIO_KEYS = ['nis_nisn', 'student_name', 'ttl', 'address', 'dormitory'];
     const KTS_HEADER_KEYS = ['header_title', 'header_arabic', 'school_name', 'school_address'];
@@ -22293,15 +22553,30 @@ function startOrOpenResponder(options) {
         if (cfg && cfg._draftLayout) {
             return cloneKtsLayout(cfg._draftLayout);
         }
+        let resolved = null;
         const raw = cfg && cfg.layout_config;
-        if (!raw) return getActiveDefaultKtsLayout(cfg);
-        try {
-            const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
-            if (parsed && typeof parsed === 'object') {
-                return upgradeLegacyKtsLayoutHeader(cloneKtsLayout(parsed), parsed);
-            }
-        } catch (_) {}
-        return getActiveDefaultKtsLayout(cfg);
+        if (raw) {
+            try {
+                const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+                if (parsed && typeof parsed === 'object') {
+                    resolved = upgradeLegacyKtsLayoutHeader(cloneKtsLayout(parsed), parsed);
+                }
+            } catch (_) {}
+        }
+        if (!resolved) {
+            resolved = getActiveDefaultKtsLayout(cfg);
+        }
+        // When Custom Canva/CorelDraw background is uploaded on a side, enforce default SIMATA layout coordinates so elements don't overlap
+        const defLay = cloneKtsLayout(DEFAULT_KTS_LAYOUT);
+        if (cfg && String(cfg.custom_front_bg || '').trim()) {
+            resolved.front = defLay.front;
+            resolved.bg.front = defLay.bg.front;
+        }
+        if (cfg && String(cfg.custom_back_bg || '').trim()) {
+            resolved.back = defLay.back;
+            resolved.bg.back = defLay.bg.back;
+        }
+        return resolved;
     }
 
     const ktsPhotoCache = new Map();
@@ -23207,12 +23482,16 @@ function startOrOpenResponder(options) {
                 };
             });
 
-        const [logoImg, frontBgImg, backBgImg, customBodyBgImg, sigImg, photoAsset] = await Promise.all([
+        const resolvedSigSrc = resolveKtsSigAsset(cfg.signature_img, '/assets/kts_signature.png');
+        const resolvedStampSrc = resolveKtsSigAsset(cfg.stamp_img, '/assets/kts_stamp.png');
+
+        const [logoImg, frontBgImg, backBgImg, customBodyBgImg, sigImg, stampImg, photoAsset] = await Promise.all([
             loadAssetImage('/assets/logo.png'),
             cfg.custom_front_bg ? loadAssetImage(cfg.custom_front_bg) : Promise.resolve(null),
             cfg.custom_back_bg ? loadAssetImage(cfg.custom_back_bg) : Promise.resolve(null),
             (sideBgCfg.mode === 'upload' && sideBgCfg.imageData) ? loadAssetImage(sideBgCfg.imageData) : Promise.resolve(null),
-            cfg.signature_img ? loadAssetImage(cfg.signature_img) : Promise.resolve(null),
+            resolvedSigSrc ? loadAssetImage(resolvedSigSrc) : Promise.resolve(null),
+            resolvedStampSrc ? loadAssetImage(resolvedStampSrc) : Promise.resolve(null),
             cardSide === 'front' ? getKtsStudentPhotoAsset(st) : Promise.resolve(null),
             ensureKtsFontsLoaded(activeFontSpecs)
         ]);
@@ -23224,7 +23503,7 @@ function startOrOpenResponder(options) {
 
         if (cardSide === 'front') {
             const lf = lay.front;
-            if (frontBgImg && !sideBgCfg._customized) {
+            if (frontBgImg) {
                 ctx.drawImage(frontBgImg, 0, 0, W, H);
             } else {
                 drawKtsCardBodyBackground(ctx, W, H, 'front', sideBgCfg, customBodyBgImg);
@@ -23422,7 +23701,7 @@ function startOrOpenResponder(options) {
         } else {
             // BACK SIDE RENDERER
             const lb = lay.back;
-            if (backBgImg && !sideBgCfg._customized) {
+            if (backBgImg) {
                 ctx.drawImage(backBgImg, 0, 0, W, H);
             } else {
                 drawKtsCardBodyBackground(ctx, W, H, 'back', sideBgCfg, customBodyBgImg);
@@ -23556,50 +23835,30 @@ function startOrOpenResponder(options) {
                 pushBox('back_holder', bhCfg.label, { x: hBoxX, y: hy - 18, w: hW, h: hGap + 132 });
             }
 
-            // Right Bottom: Headmaster Signature Block
+            // Right Bottom: Headmaster Signature Block (Physical PNG + Stamp OR National Standard QR Digital)
             if (lb.back_signature.visible !== false) {
                 const sigCfg = lb.back_signature;
                 const sx = Number(sigCfg.x) || 785;
                 const sy = Number(sigCfg.y) || 434;
                 const sAlign = sigCfg.align || 'center';
-                const sFontSize = Math.max(11, Math.min(34, Number(sigCfg.fontSize) || 17.5));
                 const sLineGap = Math.max(16, Number(sigCfg.lineGap) || 24);
-                const sWeight = resolveKtsFontWeight(sigCfg, { normalWeight: '400', boldWeight: '700' });
-                const sFamily = resolveKtsFontFamily(sigCfg, fontFamily);
-                const sStyle = sigCfg.italic ? 'italic ' : '';
-
-                ctx.save();
-                ctx.fillStyle = '#1e293b';
-                ctx.font = '400 16px ' + fontFamily;
-                drawSingleLineWithSpacing(ctx, cfg.sign_city_date || 'Sarang, 18 November 2026', sx, sy, sAlign, 0);
-                drawSingleLineWithSpacing(ctx, 'Kepala Madrasah,', sx, sy + sLineGap, sAlign, 0);
-
-                if (sigImg) {
-                    const sMaxW = 195;
-                    const sMaxH = 82;
-                    const ratio = Math.min(sMaxW / (sigImg.naturalWidth || sMaxW), sMaxH / (sigImg.naturalHeight || sMaxH));
-                    const sw = (sigImg.naturalWidth || 120) * ratio;
-                    const sh = (sigImg.naturalHeight || 60) * ratio;
-                    let imgX = sx - sw / 2;
-                    if (sAlign === 'left') imgX = sx;
-                    else if (sAlign === 'right') imgX = sx - sw;
-                    ctx.drawImage(sigImg, imgX, sy + sLineGap + 8 + (sMaxH - sh) / 2, sw, sh);
-                }
-
-                const hmY = sy + sLineGap + 108;
-                ctx.font = sStyle + sWeight + ' ' + sFontSize + 'px ' + sFamily;
-                ctx.fillStyle = sigCfg.color || '#0f172a';
-                const hmName = sigCfg.uppercase ? String(cfg.headmaster_name || 'Kepala Madrasah').toUpperCase() : (cfg.headmaster_name || 'Kepala Madrasah');
-                const hmW = drawSingleLineWithSpacing(ctx, hmName, sx, hmY, sAlign, Number(sigCfg.letterSpacing) || 0);
-                let uX = sx - hmW / 2;
-                if (sAlign === 'left') uX = sx;
-                else if (sAlign === 'right') uX = sx - hmW;
-                ctx.fillRect(uX, hmY + 4, hmW, 1.5);
-
-                ctx.font = '400 14.5px ' + fontFamily;
-                ctx.fillStyle = '#475569';
-                drawSingleLineWithSpacing(ctx, cfg.headmaster_nip || 'NIP. -', sx, hmY + 28, sAlign, 0);
-                ctx.restore();
+                const sCfg = getKtsSignatureConfig(cfg);
+                drawKtsSignatureBlock(ctx, {
+                    sx: sx,
+                    sy: sy,
+                    sigCfg: sigCfg,
+                    sCfg: sCfg,
+                    fontFamily: fontFamily,
+                    cityDate: cfg.sign_city_date || 'Sarang, 18 November 2026',
+                    headmasterName: cfg.headmaster_name || 'Kepala Madrasah',
+                    headmasterNip: cfg.headmaster_nip || 'NIP. -',
+                    schoolName: cfg.school_name || 'MA AT-TAUJIH',
+                    sigImg: sigImg,
+                    stampImg: stampImg,
+                    logoImg: logoImg,
+                    studentObj: st,
+                    showGuides: false
+                });
 
                 const sW = Math.max(180, Number(sigCfg.maxWidth) || 320);
                 const sBoxX = sAlign === 'center' ? (sx - sW / 2) : (sAlign === 'right' ? (sx - sW) : sx);
@@ -23887,6 +24146,7 @@ function startOrOpenResponder(options) {
             if (tplRes && tplRes.success && tplRes.data) {
                 ktsState.settings = Object.assign({}, ktsState.settings, tplRes.data);
             }
+            syncKtsCustomBgLayoutLockState();
 
             if (stuRes && stuRes.success && Array.isArray(stuRes.students)) {
                 ktsState.students = stuRes.students;
@@ -24139,6 +24399,662 @@ function startOrOpenResponder(options) {
         });
     }
 
+    function buildQrCanvasWithTransparentSupport(qrText, keepWhiteBg) {
+        const rawCanvas = buildQrCanvasSync(qrText);
+        if (!rawCanvas) return null;
+        if (keepWhiteBg !== false) return rawCanvas;
+        try {
+            const out = document.createElement('canvas');
+            out.width = rawCanvas.width;
+            out.height = rawCanvas.height;
+            const oCtx = out.getContext('2d');
+            oCtx.drawImage(rawCanvas, 0, 0);
+            const imgData = oCtx.getImageData(0, 0, out.width, out.height);
+            const px = imgData.data;
+            for (let i = 0; i < px.length; i += 4) {
+                if (px[i] > 230 && px[i + 1] > 230 && px[i + 2] > 230) {
+                    px[i + 3] = 0;
+                }
+            }
+            oCtx.putImageData(imgData, 0, 0);
+            return out;
+        } catch (_) {
+            return rawCanvas;
+        }
+    }
+
+    function buildNationalTtePayload(opts) {
+        if (opts && opts.payloadOverride) return String(opts.payloadOverride);
+        const url = String((opts && opts.verifyUrl) || '').trim();
+        const name = String((opts && opts.signerName) || 'Kepala Madrasah').trim();
+        const title = String((opts && opts.signerTitle) || 'Kepala Madrasah').trim();
+        const id = String((opts && opts.signerNip) || '').trim();
+        const dt = String((opts && opts.cityDate) || '').trim();
+        const doc = String((opts && opts.docNote) || '').trim();
+        if (url) {
+            return url + (doc ? ' | ' + doc : '') + ' | ' + name;
+        }
+        const parts = [
+            '[TTE-SIMATA UU-ITE-11/2008]',
+            'Penandatangan: ' + name,
+            'Jabatan: ' + title
+        ];
+        if (id && id !== '-' && id !== 'NIP. -') parts.push('ID: ' + id);
+        if (dt) parts.push('Tanggal: ' + dt);
+        if (doc) parts.push('Ket: ' + doc);
+        return parts.join('\n');
+    }
+
+    function drawQrCrestOverlay(ctx, qx, qy, qSize, logoImg) {
+        if (!logoImg) return;
+        const badgeS = Math.round(qSize * 0.25);
+        const bx = qx + (qSize - badgeS) / 2;
+        const by = qy + (qSize - badgeS) / 2;
+        ctx.save();
+        ctx.fillStyle = '#ffffff';
+        drawRoundedRectPath(ctx, bx, by, badgeS, badgeS, Math.max(4, Math.round(badgeS * 0.22)));
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(22, 101, 52, 0.35)';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+        const pad = Math.max(2, Math.round(badgeS * 0.14));
+        ctx.drawImage(logoImg, bx + pad, by + pad, badgeS - pad * 2, badgeS - pad * 2);
+        ctx.restore();
+    }
+
+    function drawNationalQrSignatureBlock(ctx, opts) {
+        const x = Number(opts.x) || 0;
+        const y = Number(opts.y) || 0;
+        const w = Math.max(48, Number(opts.w) || 90);
+        const h = Math.max(48, Number(opts.h) || 90);
+        const style = opts.style || 'tte_compact';
+        const keepQuietBg = opts.keepQuietBg !== false;
+        const fontFamily = opts.fontFamily || '"Plus Jakarta Sans", "Segoe UI", sans-serif';
+        const payload = buildNationalTtePayload(opts);
+        const qrCanvas = buildQrCanvasWithTransparentSupport(payload, keepQuietBg);
+
+        ctx.save();
+        if (style === 'qr_only_crest') {
+            const side = Math.min(w, h);
+            const qx = x + (w - side) / 2;
+            const qy = y + (h - side) / 2;
+            if (keepQuietBg) {
+                ctx.fillStyle = '#ffffff';
+                drawRoundedRectPath(ctx, qx - 3, qy - 3, side + 6, side + 6, Math.max(6, Math.round(side * 0.08)));
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(15, 23, 42, 0.14)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+            if (qrCanvas) ctx.drawImage(qrCanvas, qx, qy, side, side);
+            drawQrCrestOverlay(ctx, qx, qy, side, opts.logoImg);
+            ctx.restore();
+            return { x: qx, y: qy, w: side, h: side };
+        }
+
+        if (style === 'tte_compact') {
+            const capH = Math.max(13, Math.round(h * 0.19));
+            const qrSide = Math.min(w - 4, h - capH - 3);
+            const qx = x + (w - qrSide) / 2;
+            const qy = y;
+            if (keepQuietBg) {
+                ctx.fillStyle = '#ffffff';
+                drawRoundedRectPath(ctx, qx - 3, qy - 3, qrSide + 6, qrSide + capH + 7, 7);
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(22, 101, 52, 0.25)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+            if (qrCanvas) ctx.drawImage(qrCanvas, qx, qy, qrSide, qrSide);
+            drawQrCrestOverlay(ctx, qx, qy, qrSide, opts.logoImg);
+
+            // Compact BSrE / UU ITE verified ribbon below QR
+            const ribY = qy + qrSide + 2;
+            ctx.fillStyle = keepQuietBg ? '#ecfdf5' : 'rgba(236, 253, 245, 0.88)';
+            drawRoundedRectPath(ctx, qx - 2, ribY, qrSide + 4, capH, 4);
+            ctx.fill();
+            ctx.fillStyle = '#065f46';
+            ctx.font = '700 ' + Math.max(7.5, Math.min(11, Math.round(capH * 0.62))) + 'px ' + fontFamily;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('TTE • UU ITE', qx + qrSide / 2, ribY + capH / 2 + 0.5);
+            ctx.restore();
+            return { x: qx - 3, y: qy - 3, w: qrSide + 6, h: qrSide + capH + 7 };
+        }
+
+        // tte_horizontal (Indonesian National Electronic Signature Block BSrE style)
+        const pad = Math.max(10, Math.round(h * 0.09));
+        const r = Math.max(10, Math.round(h * 0.09));
+        if (keepQuietBg) {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.96)';
+            drawRoundedRectPath(ctx, x, y, w, h, r);
+            ctx.fill();
+        }
+        ctx.strokeStyle = 'rgba(15, 118, 110, 0.45)';
+        ctx.lineWidth = 2;
+        drawRoundedRectPath(ctx, x + 1, y + 1, w - 2, h - 2, r);
+        ctx.stroke();
+
+        // Subtle left accent bar inside frame
+        ctx.fillStyle = '#0f766e';
+        drawRoundedRectPath(ctx, x + 1, y + 1, 6, h - 2, 3);
+        ctx.fill();
+
+        const qrSide = Math.min(h - pad * 2, Math.round(w * 0.34));
+        const qx = x + pad + 6;
+        const qy = y + (h - qrSide) / 2;
+        if (keepQuietBg) {
+            ctx.fillStyle = '#ffffff';
+            drawRoundedRectPath(ctx, qx - 4, qy - 4, qrSide + 8, qrSide + 8, 8);
+            ctx.fill();
+        }
+        if (qrCanvas) ctx.drawImage(qrCanvas, qx, qy, qrSide, qrSide);
+        drawQrCrestOverlay(ctx, qx, qy, qrSide, opts.logoImg);
+
+        // Vertical divider
+        const divX = qx + qrSide + pad;
+        ctx.strokeStyle = 'rgba(15, 118, 110, 0.25)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(divX, y + pad);
+        ctx.lineTo(divX, y + h - pad);
+        ctx.stroke();
+
+        // Right metadata attribution column
+        const tx = divX + pad;
+        const tMaxW = Math.max(80, x + w - tx - pad);
+        const scaleF = h / 200;
+
+        // Top verified pill
+        const badgeH = Math.round(24 * scaleF);
+        const badgeW = Math.min(tMaxW, Math.round(260 * scaleF));
+        ctx.fillStyle = '#ecfdf5';
+        drawRoundedRectPath(ctx, tx, y + pad, badgeW, badgeH, 6);
+        ctx.fill();
+        ctx.strokeStyle = '#6ee7b7';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.fillStyle = '#047857';
+        ctx.font = '700 ' + Math.round(11.5 * scaleF) + 'px ' + fontFamily;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('✓ DITANDATANGANI SECARA ELEKTRONIK', tx + 8 * scaleF, y + pad + badgeH / 2 + 0.5, tMaxW - 14);
+
+        ctx.textBaseline = 'alphabetic';
+        let curY = y + pad + badgeH + Math.round(22 * scaleF);
+        ctx.fillStyle = '#334155';
+        ctx.font = '600 ' + Math.round(13.5 * scaleF) + 'px ' + fontFamily;
+        ctx.fillText(String(opts.signerTitle || 'Kepala Madrasah'), tx, curY, tMaxW);
+
+        curY += Math.round(25 * scaleF);
+        ctx.fillStyle = '#0f172a';
+        ctx.font = '800 ' + Math.round(18 * scaleF) + 'px ' + fontFamily;
+        const nameLines = wrapTextLines(ctx, opts.signerName || 'Penandatangan', tMaxW, 2);
+        nameLines.forEach(function(ln) {
+            ctx.fillText(ln, tx, curY, tMaxW);
+            curY += Math.round(21 * scaleF);
+        });
+
+        const nipTxt = String(opts.signerNip || '').trim();
+        if (nipTxt) {
+            ctx.fillStyle = '#475569';
+            ctx.font = '500 ' + Math.round(12.5 * scaleF) + 'px ' + fontFamily;
+            ctx.fillText(nipTxt, tx, curY, tMaxW);
+            curY += Math.round(18 * scaleF);
+        }
+
+        const metaParts = [String(opts.cityDate || '').trim(), String(opts.docNote || '').trim()].filter(Boolean);
+        if (metaParts.length) {
+            ctx.fillStyle = '#64748b';
+            ctx.font = '400 ' + Math.round(11.5 * scaleF) + 'px ' + fontFamily;
+            const metaLines = wrapTextLines(ctx, metaParts.join(' • '), tMaxW, 2);
+            metaLines.forEach(function(ml) {
+                if (curY < y + h - Math.round(22 * scaleF)) {
+                    ctx.fillText(ml, tx, curY, tMaxW);
+                    curY += Math.round(15 * scaleF);
+                }
+            });
+        }
+
+        ctx.fillStyle = '#0f766e';
+        ctx.font = '600 ' + Math.round(10 * scaleF) + 'px ' + fontFamily;
+        ctx.fillText('Sesuai UU ITE No. 11 Th. 2008 • Verifikasi Kode QR', tx, y + h - pad, tMaxW);
+        ctx.restore();
+        return { x: x, y: y, w: w, h: h };
+    }
+
+    function drawKtsSignatureBlock(ctx, opts) {
+        const sigCfg = opts.sigCfg || DEFAULT_KTS_LAYOUT.back.back_signature;
+        const sCfg = opts.sCfg || DEFAULT_KTS_SIG_CONFIG;
+        const fontFamily = opts.fontFamily || '"Plus Jakarta Sans", "Segoe UI", sans-serif';
+        const sx = Number(opts.sx) || 785;
+        const sy = Number(opts.sy) || 434;
+        const sAlign = sigCfg.align || 'center';
+        const sFontSize = Math.max(11, Math.min(34, Number(sigCfg.fontSize) || 17.5));
+        const sLineGap = Math.max(16, Number(sigCfg.lineGap) || 24);
+        const sWeight = resolveKtsFontWeight(sigCfg, { normalWeight: '400', boldWeight: '700' });
+        const sFamily = resolveKtsFontFamily(sigCfg, fontFamily);
+        const sStyle = sigCfg.italic ? 'italic ' : '';
+
+        ctx.save();
+        ctx.fillStyle = '#1e293b';
+        ctx.font = '400 16px ' + fontFamily;
+        drawSingleLineWithSpacing(ctx, opts.cityDate || 'Sarang, 18 November 2026', sx, sy, sAlign, 0);
+        const signerRoleLabel = (sCfg.mode !== 'physical' && sCfg.qrSignerTitle) ? (sCfg.qrSignerTitle + ',') : 'Kepala Madrasah,';
+        drawSingleLineWithSpacing(ctx, signerRoleLabel, sx, sy + sLineGap, sAlign, 0);
+
+        let imgBaseCx = sx;
+        if (sAlign === 'left') imgBaseCx = sx + 96;
+        else if (sAlign === 'right') imgBaseCx = sx - 96;
+        const imgBaseCy = sy + sLineGap + 50;
+
+        let sigBox = null;
+        let stampBox = null;
+        const mode = sCfg.mode || 'physical';
+        const sigScale = Math.max(0.45, Math.min(1.75, Number(sCfg.sigScale) || 1));
+        const sigCx = imgBaseCx + (Number(sCfg.sigOffsetX) || 0);
+        const sigCy = imgBaseCy + (Number(sCfg.sigOffsetY) || 0);
+
+        if (mode === 'qr' || mode === 'qr_stamp') {
+            const qrH = Math.round(78 * sigScale);
+            const qrW = qrH;
+            const st = opts.studentObj || {};
+            const ktsVerifyPayload = buildNationalTtePayload({
+                signerName: sCfg.qrSignerName || opts.headmasterName || 'Kepala Madrasah',
+                signerTitle: sCfg.qrSignerTitle || 'Kepala Madrasah',
+                signerNip: sCfg.qrSignerNip || opts.headmasterNip || '',
+                cityDate: sCfg.qrCityDate || opts.cityDate || '',
+                docNote: (sCfg.qrDocNote || 'KTS Resmi') + (st.name ? ' - ' + st.name : '') + (st.qrCodeId ? ' (' + st.qrCodeId + ')' : ''),
+                verifyUrl: sCfg.qrVerifyUrl || ''
+            });
+            sigBox = drawNationalQrSignatureBlock(ctx, {
+                x: sigCx - qrW / 2,
+                y: sigCy - qrH / 2,
+                w: qrW,
+                h: qrH,
+                style: sCfg.qrStyle === 'qr_only_crest' ? 'qr_only_crest' : 'tte_compact',
+                logoImg: opts.logoImg,
+                keepQuietBg: sCfg.qrKeepQuietBg !== false,
+                fontFamily: fontFamily,
+                payloadOverride: ktsVerifyPayload
+            });
+        } else if (opts.sigImg) {
+            const sMaxW = 195 * sigScale;
+            const sMaxH = 82 * sigScale;
+            const ratio = Math.min(sMaxW / (opts.sigImg.naturalWidth || sMaxW), sMaxH / (opts.sigImg.naturalHeight || sMaxH));
+            const sw = (opts.sigImg.naturalWidth || 120) * ratio;
+            const sh = (opts.sigImg.naturalHeight || 60) * ratio;
+            const drawX = sigCx - sw / 2;
+            const drawY = sigCy - sh / 2;
+            ctx.drawImage(opts.sigImg, drawX, drawY, sw, sh);
+            sigBox = { x: drawX, y: drawY, w: sw, h: sh };
+        }
+
+        // Draw Stamp overlay when enabled (in physical or qr_stamp mode)
+        if ((mode === 'physical' || mode === 'qr_stamp') && sCfg.showStamp !== false && opts.stampImg) {
+            const stScale = Math.max(0.45, Math.min(1.75, Number(sCfg.stampScale) || 1));
+            const stAlpha = Math.max(0.15, Math.min(1, Number(sCfg.stampOpacity) || 0.88));
+            const stMax = 94 * stScale;
+            const stRatio = Math.min(stMax / (opts.stampImg.naturalWidth || stMax), stMax / (opts.stampImg.naturalHeight || stMax));
+            const stW = (opts.stampImg.naturalWidth || 90) * stRatio;
+            const stH = (opts.stampImg.naturalHeight || 90) * stRatio;
+            const stCx = imgBaseCx + (Number(sCfg.stampOffsetX !== undefined ? sCfg.stampOffsetX : -52));
+            const stCy = imgBaseCy + (Number(sCfg.stampOffsetY !== undefined ? sCfg.stampOffsetY : -6));
+            const stX = stCx - stW / 2;
+            const stY = stCy - stH / 2;
+            ctx.save();
+            ctx.globalAlpha = stAlpha;
+            ctx.drawImage(opts.stampImg, stX, stY, stW, stH);
+            ctx.restore();
+            stampBox = { x: stX, y: stY, w: stW, h: stH };
+        }
+
+        // Headmaster Name & NIP
+        const hmY = sy + sLineGap + 108;
+        ctx.font = sStyle + sWeight + ' ' + sFontSize + 'px ' + sFamily;
+        ctx.fillStyle = sigCfg.color || '#0f172a';
+        const dispNameRaw = (mode !== 'physical' && sCfg.qrSignerName) ? sCfg.qrSignerName : (opts.headmasterName || 'Kepala Madrasah');
+        const hmName = sigCfg.uppercase ? String(dispNameRaw).toUpperCase() : dispNameRaw;
+        const hmW = drawSingleLineWithSpacing(ctx, hmName, sx, hmY, sAlign, Number(sigCfg.letterSpacing) || 0);
+        let uX = sx - hmW / 2;
+        if (sAlign === 'left') uX = sx;
+        else if (sAlign === 'right') uX = sx - hmW;
+        ctx.fillRect(uX, hmY + 4, hmW, 1.5);
+
+        ctx.font = '400 14.5px ' + fontFamily;
+        ctx.fillStyle = '#475569';
+        const dispNip = (mode !== 'physical' && sCfg.qrSignerNip) ? sCfg.qrSignerNip : (opts.headmasterNip || 'NIP. -');
+        drawSingleLineWithSpacing(ctx, dispNip, sx, hmY + 28, sAlign, 0);
+
+        if (opts.showGuides) {
+            const drawSelFrame = function(box, label, color, active) {
+                if (!box) return;
+                ctx.save();
+                ctx.strokeStyle = color;
+                ctx.lineWidth = active ? 2 : 1.2;
+                ctx.setLineDash(active ? [] : [5, 4]);
+                ctx.strokeRect(box.x - 3, box.y - 3, box.w + 6, box.h + 6);
+                ctx.setLineDash([]);
+                if (active) {
+                    ctx.fillStyle = color;
+                    drawRoundedRectPath(ctx, box.x - 3, box.y - 19, 58, 15, 4);
+                    ctx.fill();
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '700 9.5px "Segoe UI", sans-serif';
+                    ctx.textAlign = 'left';
+                    ctx.fillText(label, box.x + 2, box.y - 8.5);
+                }
+                ctx.restore();
+            };
+            drawSelFrame(sigBox, mode === 'physical' ? 'TTD' : 'QR TTE', '#16a34a', opts.activeTarget !== 'stamp');
+            drawSelFrame(stampBox, 'Stempel', '#6366f1', opts.activeTarget === 'stamp');
+        }
+        ctx.restore();
+
+        return { sigBox: sigBox, stampBox: stampBox };
+    }
+
+    let ktsSigComposerBoxes = { sigBox: null, stampBox: null };
+    let ktsSigComposerDrag = null;
+    let ktsSigComposerSeq = 0;
+
+    async function renderKtsSigComposerCanvas() {
+        const seq = ++ktsSigComposerSeq;
+        const canvas = document.getElementById('ktsSigComposerCanvas');
+        if (!canvas) return;
+        const sCfg = ktsState.tplDraftSigConfig || getKtsSignatureConfig();
+        const sigSrc = resolveKtsSigAsset(
+            ktsState.tplDraftImages.signature_img !== undefined ? ktsState.tplDraftImages.signature_img : ktsState.settings.signature_img,
+            '/assets/kts_signature.png'
+        );
+        const stampSrc = resolveKtsSigAsset(
+            ktsState.tplDraftImages.stamp_img !== undefined ? ktsState.tplDraftImages.stamp_img : ktsState.settings.stamp_img,
+            '/assets/kts_stamp.png'
+        );
+
+        const [sigImg, stampImg, logoImg] = await Promise.all([
+            sigSrc ? loadAssetImage(sigSrc) : Promise.resolve(null),
+            stampSrc ? loadAssetImage(stampSrc) : Promise.resolve(null),
+            loadAssetImage('/assets/logo.png')
+        ]);
+        if (seq !== ktsSigComposerSeq) return;
+
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width;
+        const H = canvas.height;
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, W, H);
+
+        // Subtle ruled background hint like back card paper
+        ctx.save();
+        ctx.strokeStyle = 'rgba(203, 213, 225, 0.45)';
+        ctx.setLineDash([4, 4]);
+        ctx.strokeRect(8, 8, W - 16, H - 16);
+        ctx.restore();
+
+        const cityDate = (document.getElementById('ktsTpl_signCityDate') && document.getElementById('ktsTpl_signCityDate').value.trim()) || ktsState.settings.sign_city_date || 'Sarang, 18 November 2026';
+        const hmName = (document.getElementById('ktsTpl_headmasterName') && document.getElementById('ktsTpl_headmasterName').value.trim()) || ktsState.settings.headmaster_name || 'Kepala Madrasah';
+        const hmNip = (document.getElementById('ktsTpl_headmasterNip') && document.getElementById('ktsTpl_headmasterNip').value.trim()) || ktsState.settings.headmaster_nip || 'NIP. -';
+        const scale = 1.18;
+
+        ctx.save();
+        ctx.scale(scale, scale);
+        const res = drawKtsSignatureBlock(ctx, {
+            sx: (W / scale) / 2,
+            sy: 24,
+            sigCfg: DEFAULT_KTS_LAYOUT.back.back_signature,
+            sCfg: sCfg,
+            fontFamily: '"Plus Jakarta Sans", "Segoe UI", sans-serif',
+            cityDate: cityDate,
+            headmasterName: hmName,
+            headmasterNip: hmNip,
+            sigImg: sigImg,
+            stampImg: stampImg,
+            logoImg: logoImg,
+            studentObj: { name: 'Pratinjau Siswa', qrCodeId: 'SQR-10001' },
+            showGuides: true,
+            activeTarget: ktsState.tplActiveSigTarget || 'sig'
+        });
+        ctx.restore();
+
+        const scaleBox = function(b) {
+            return b ? { x: b.x * scale, y: b.y * scale, w: b.w * scale, h: b.h * scale } : null;
+        };
+        ktsSigComposerBoxes = {
+            sigBox: scaleBox(res.sigBox),
+            stampBox: scaleBox(res.stampBox),
+            scale: scale
+        };
+    }
+
+    function syncKtsSigControlsFromDraft() {
+        const sCfg = ktsState.tplDraftSigConfig || getKtsSignatureConfig();
+        document.querySelectorAll('#ktsTemplateModal .kts-sig-mode-btn[data-sig-mode]').forEach(function(btn) {
+            btn.classList.toggle('active', btn.dataset.sigMode === (sCfg.mode || 'physical'));
+        });
+        const setVal = function(id, val, lblId, fmt) {
+            const el = document.getElementById(id);
+            const lbl = lblId ? document.getElementById(lblId) : null;
+            if (el) el.value = val;
+            if (lbl) lbl.textContent = fmt;
+        };
+        const showStampChk = document.getElementById('ktsSig_showStamp');
+        if (showStampChk) showStampChk.checked = sCfg.showStamp !== false;
+
+        const sigSc = Math.round((Number(sCfg.sigScale) || 1) * 100);
+        const stSc = Math.round((Number(sCfg.stampScale) || 1) * 100);
+        const stOp = Math.round((Number(sCfg.stampOpacity) || 0.88) * 100);
+        const sx = Math.round(Number(sCfg.sigOffsetX) || 0);
+        const sy = Math.round(Number(sCfg.sigOffsetY) || 0);
+        const tx = Math.round(Number(sCfg.stampOffsetX !== undefined ? sCfg.stampOffsetX : -52));
+        const ty = Math.round(Number(sCfg.stampOffsetY !== undefined ? sCfg.stampOffsetY : -6));
+
+        setVal('ktsSig_sigScale', sigSc, 'ktsSig_sigScaleVal', sigSc + '%');
+        setVal('ktsSig_sigX', sx, null, null);
+        setVal('ktsSig_sigY', sy, 'ktsSig_sigPosVal', sx + ', ' + sy);
+        setVal('ktsSig_stampScale', stSc, 'ktsSig_stampScaleVal', stSc + '%');
+        setVal('ktsSig_stampX', tx, null, null);
+        setVal('ktsSig_stampY', ty, 'ktsSig_stampPosVal', tx + ', ' + ty);
+        setVal('ktsSig_stampOpacity', stOp, 'ktsSig_stampOpacityVal', stOp + '%');
+    }
+
+    function getKtsQrGenOptionsFromInputs() {
+        const gv = function(id, fallback) {
+            const el = document.getElementById(id);
+            return el ? el.value.trim() : (fallback || '');
+        };
+        const keepBgEl = document.getElementById('ktsQrGen_keepBg');
+        return {
+            signerName: gv('ktsQrGen_name', 'Kepala Madrasah') || 'Kepala Madrasah',
+            signerTitle: gv('ktsQrGen_title', 'Kepala Madrasah') || 'Kepala Madrasah',
+            signerNip: gv('ktsQrGen_id', ''),
+            cityDate: gv('ktsQrGen_date', ''),
+            docNote: gv('ktsQrGen_doc', ''),
+            verifyUrl: gv('ktsQrGen_url', ''),
+            style: gv('ktsQrGen_style', 'tte_horizontal') || 'tte_horizontal',
+            keepQuietBg: keepBgEl ? Boolean(keepBgEl.checked) : true
+        };
+    }
+
+    async function renderKtsQrGeneratorPreview() {
+        const canvas = document.getElementById('ktsQrGenPreviewCanvas');
+        if (!canvas) return;
+        const opts = getKtsQrGenOptionsFromInputs();
+        const logoImg = await loadAssetImage('/assets/logo.png');
+        const isSquare = opts.style !== 'tte_horizontal';
+        const cw = isSquare ? 220 : 520;
+        const ch = isSquare ? 220 : 210;
+        if (canvas.width !== cw || canvas.height !== ch) {
+            canvas.width = cw;
+            canvas.height = ch;
+        }
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, cw, ch);
+        drawNationalQrSignatureBlock(ctx, Object.assign({
+            x: 6,
+            y: 6,
+            w: cw - 12,
+            h: ch - 12,
+            logoImg: logoImg,
+            fontFamily: '"Plus Jakarta Sans", "Segoe UI", sans-serif'
+        }, opts));
+    }
+
+    async function downloadKtsQrGeneratorPng() {
+        const opts = getKtsQrGenOptionsFromInputs();
+        const logoImg = await loadAssetImage('/assets/logo.png');
+        const isSquare = opts.style !== 'tte_horizontal';
+        const exportW = isSquare ? 640 : 1200;
+        const exportH = isSquare ? 640 : 480;
+        const out = document.createElement('canvas');
+        out.width = exportW;
+        out.height = exportH;
+        const ctx = out.getContext('2d');
+        ctx.clearRect(0, 0, exportW, exportH); // True alpha transparency!
+        drawNationalQrSignatureBlock(ctx, Object.assign({
+            x: 12,
+            y: 12,
+            w: exportW - 24,
+            h: exportH - 24,
+            logoImg: logoImg,
+            fontFamily: '"Plus Jakarta Sans", "Segoe UI", sans-serif'
+        }, opts));
+
+        const safeName = String(opts.signerName || 'TTE').replace(/[^a-z0-9]+/gi, '_').replace(/^_|_$/g, '');
+        out.toBlob(function(blob) {
+            if (!blob) return;
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'TTD_QR_Digital_' + (safeName || 'SIMATA') + '.png';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+            if (typeof showToast === 'function') {
+                showToast('success', 'PNG Transparan Diunduh', 'Tanda tangan QR digital siap ditempel di dokumen atau desain Anda.');
+            }
+        }, 'image/png');
+    }
+
+    function applyKtsQrGeneratorToKts() {
+        const opts = getKtsQrGenOptionsFromInputs();
+        if (!ktsState.tplDraftSigConfig) ktsState.tplDraftSigConfig = getKtsSignatureConfig();
+        const sCfg = ktsState.tplDraftSigConfig;
+        if (sCfg.mode === 'physical') sCfg.mode = 'qr_stamp';
+        sCfg.qrSignerName = opts.signerName;
+        sCfg.qrSignerTitle = opts.signerTitle;
+        sCfg.qrSignerNip = opts.signerNip;
+        sCfg.qrCityDate = opts.cityDate;
+        sCfg.qrDocNote = opts.docNote;
+        sCfg.qrVerifyUrl = opts.verifyUrl;
+        sCfg.qrStyle = opts.style === 'qr_only_crest' ? 'qr_only_crest' : 'tte_compact';
+        sCfg.qrKeepQuietBg = opts.keepQuietBg;
+        syncKtsSigControlsFromDraft();
+        renderKtsSigComposerCanvas();
+        if (typeof showToast === 'function') {
+            showToast('success', 'Diterapkan ke KTS', 'Mode TTD QR Digital aktif di pratinjau KTS. Klik Simpan Template untuk menerapkan permanen.');
+        }
+    }
+
+    function setKtsTplTab(tabName) {
+        ktsState.tplActiveTab = tabName || 'identity';
+        document.querySelectorAll('#ktsTemplateModal .kts-tpl-tab-btn').forEach(function(btn) {
+            const active = btn.dataset.tplTab === ktsState.tplActiveTab;
+            btn.classList.toggle('active', active);
+            btn.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+        document.querySelectorAll('#ktsTemplateModal .kts-tpl-tab-pane').forEach(function(pane) {
+            pane.classList.toggle('active', pane.dataset.tplPane === ktsState.tplActiveTab);
+        });
+        if (ktsState.tplActiveTab === 'signature') {
+            renderKtsSigComposerCanvas();
+            renderKtsQrGeneratorPreview();
+        }
+    }
+
+    function syncKtsTplModalUiState() {
+        const d = ktsState.tplDraftImages || {};
+        const hasFront = Boolean(String(d.custom_front_bg || '').trim());
+        const hasBack = Boolean(String(d.custom_back_bg || '').trim());
+        const locked = hasFront || hasBack;
+
+        // Sync lock banner & Tab 1 layout button
+        const layBtn = document.getElementById('ktsOpenLayoutFromTplBtn');
+        const layTitle = document.getElementById('ktsTplLayBannerTitle');
+        const layDesc = document.getElementById('ktsTplLayBannerDesc');
+        if (layBtn) {
+            layBtn.disabled = locked;
+            layBtn.classList.toggle('is-locked', locked);
+            layBtn.textContent = locked ? 'Editor Layout Terkunci (Custom BG Aktif)' : 'Buka Editor Layout Visual';
+        }
+        if (layTitle) {
+            layTitle.textContent = locked
+                ? 'Layout Kartu Terkunci ke Standar SIMATA'
+                : 'Atur Posisi, Ukuran Font, Jarak & Tebal Teks';
+        }
+        if (layDesc) {
+            layDesc.textContent = locked
+                ? 'Background Custom (Canva/CorelDraw) aktif sehingga posisi elemen dikunci otomatis agar tidak bertumpuk.'
+                : 'Geser langsung elemen kartu secara visual atau atur tipografi setiap baris.';
+        }
+
+        const lockBanner = document.getElementById('ktsTplBgLockBanner');
+        const lockText = document.getElementById('ktsTplBgLockText');
+        if (lockBanner) lockBanner.classList.toggle('is-locked', locked);
+        if (lockText) {
+            lockText.innerHTML = locked
+                ? '<strong>Status: Layout KTS Sedang Terkunci Otomatis.</strong> Anda memakai desain background custom (' + [hasFront ? 'Sisi Depan' : '', hasBack ? 'Sisi Belakang' : ''].filter(Boolean).join(' &amp; ') + '). Kop bawaan disembunyikan dan posisi teks memakai layout standar resmi SIMATA agar tidak bertumpuk.'
+                : '<strong>Penguncian Layout Otomatis:</strong> Saat Anda mengunggah Background Custom (Canva/CorelDraw), sistem otomatis mengunci <em>Edit Layout KTS</em> ke tata letak standar resmi SIMATA dan menyembunyikan kop bawaan pada sisi terkait agar biodata tidak bertumpuk dengan desain Anda.';
+        }
+
+        // Sync BG thumbs without broken <img> icons
+        const syncBgThumb = function(thumbId, emptyId, statusId, val) {
+            const img = document.getElementById(thumbId);
+            const emp = document.getElementById(emptyId);
+            const st = document.getElementById(statusId);
+            if (val) {
+                if (img) { img.src = val; img.style.display = 'block'; }
+                if (emp) emp.style.display = 'none';
+                if (st) { st.textContent = 'Custom Aktif (Terkunci)'; st.className = 'kts-tpl-status-pill is-custom'; }
+            } else {
+                if (img) { img.removeAttribute('src'); img.style.display = 'none'; }
+                if (emp) emp.style.display = 'flex';
+                if (st) { st.textContent = 'Default SIMATA'; st.className = 'kts-tpl-status-pill'; }
+            }
+        };
+        syncBgThumb('ktsTpl_frontBgThumb', 'ktsTpl_frontBgEmpty', 'ktsTpl_frontBgStatus', d.custom_front_bg);
+        syncBgThumb('ktsTpl_backBgThumb', 'ktsTpl_backBgEmpty', 'ktsTpl_backBgStatus', d.custom_back_bg);
+
+        // Sync Signature & Stamp thumbs (preloaded defaults vs custom upload vs NONE)
+        const syncAssetThumb = function(thumbId, emptyId, statusId, rawVal, fallbackPath) {
+            const img = document.getElementById(thumbId);
+            const emp = document.getElementById(emptyId);
+            const st = document.getElementById(statusId);
+            const resolved = resolveKtsSigAsset(rawVal, fallbackPath);
+            if (resolved) {
+                if (img) { img.src = resolved; img.style.display = 'block'; }
+                if (emp) emp.style.display = 'none';
+                if (st) {
+                    st.textContent = resolved === fallbackPath ? 'Default Resmi Tersedia' : 'Gambar Custom Aktif';
+                    st.className = '';
+                    st.style.color = '#166534';
+                }
+            } else {
+                if (img) { img.removeAttribute('src'); img.style.display = 'none'; }
+                if (emp) emp.style.display = 'flex';
+                if (st) {
+                    st.textContent = 'Dihapus / Tidak Ditampilkan';
+                    st.style.color = '#b91c1c';
+                }
+            }
+        };
+        syncAssetThumb('ktsTpl_sigThumb', 'ktsTpl_sigEmpty', 'ktsTpl_sigStatus', d.signature_img, '/assets/kts_signature.png');
+        syncAssetThumb('ktsTpl_stampThumb', 'ktsTpl_stampEmpty', 'ktsTpl_stampStatus', d.stamp_img, '/assets/kts_stamp.png');
+    }
+
     function openKtsTemplateModal() {
         if (!isCurrentUserAdmin) return;
         const s = ktsState.settings;
@@ -24158,18 +25074,32 @@ function startOrOpenResponder(options) {
         ktsState.tplDraftImages = {
             custom_front_bg: s.custom_front_bg || '',
             custom_back_bg: s.custom_back_bg || '',
-            signature_img: s.signature_img || ''
+            signature_img: s.signature_img !== undefined ? s.signature_img : '/assets/kts_signature.png',
+            stamp_img: s.stamp_img !== undefined ? s.stamp_img : '/assets/kts_stamp.png'
         };
+        ktsState.tplDraftSigConfig = getKtsSignatureConfig(s);
+        ktsState.tplActiveSigTarget = 'sig';
 
-        const syncThumb = function(thumbId, val) {
-            const el = document.getElementById(thumbId);
-            if (!el) return;
-            if (val) { el.src = val; el.style.opacity = '1'; }
-            else { el.removeAttribute('src'); el.style.opacity = '0.35'; }
+        // Populate QR generator fields from saved signature_config or fallback to headmaster identity
+        const sc = ktsState.tplDraftSigConfig;
+        const setQrIn = function(id, val) {
+            const el = document.getElementById(id);
+            if (el) el.value = val || '';
         };
-        syncThumb('ktsTpl_frontBgThumb', ktsState.tplDraftImages.custom_front_bg);
-        syncThumb('ktsTpl_backBgThumb', ktsState.tplDraftImages.custom_back_bg);
-        syncThumb('ktsTpl_sigThumb', ktsState.tplDraftImages.signature_img);
+        setQrIn('ktsQrGen_name', sc.qrSignerName || s.headmaster_name || '');
+        setQrIn('ktsQrGen_title', sc.qrSignerTitle || 'Kepala Madrasah');
+        setQrIn('ktsQrGen_id', sc.qrSignerNip || s.headmaster_nip || '');
+        setQrIn('ktsQrGen_date', sc.qrCityDate || s.sign_city_date || '');
+        setQrIn('ktsQrGen_doc', sc.qrDocNote || 'Kartu Identitas Siswa Resmi SIMATA');
+        setQrIn('ktsQrGen_url', sc.qrVerifyUrl || '');
+        const styleEl = document.getElementById('ktsQrGen_style');
+        if (styleEl) styleEl.value = sc.qrStyle || 'tte_compact';
+        const keepBgEl = document.getElementById('ktsQrGen_keepBg');
+        if (keepBgEl) keepBgEl.checked = sc.qrKeepQuietBg !== false;
+
+        syncKtsTplModalUiState();
+        syncKtsSigControlsFromDraft();
+        setKtsTplTab('identity');
 
         const m = document.getElementById('ktsTemplateModal');
         if (m) m.style.display = 'flex';
@@ -24182,6 +25112,7 @@ function startOrOpenResponder(options) {
 
     async function saveKtsTemplateSettings() {
         const hTitleEl = document.getElementById('ktsTpl_headerTitle');
+        const sigCfgPayload = JSON.stringify(ktsState.tplDraftSigConfig || getKtsSignatureConfig());
         const payload = {
             header_title: hTitleEl ? hTitleEl.value.trim() : '',
             header_arabic: document.getElementById('ktsTpl_headerArabic').value.trim(),
@@ -24196,7 +25127,9 @@ function startOrOpenResponder(options) {
             headmaster_nip: document.getElementById('ktsTpl_headmasterNip').value.trim(),
             custom_front_bg: ktsState.tplDraftImages.custom_front_bg || '',
             custom_back_bg: ktsState.tplDraftImages.custom_back_bg || '',
-            signature_img: ktsState.tplDraftImages.signature_img || '',
+            signature_img: ktsState.tplDraftImages.signature_img !== undefined ? ktsState.tplDraftImages.signature_img : '/assets/kts_signature.png',
+            stamp_img: ktsState.tplDraftImages.stamp_img !== undefined ? ktsState.tplDraftImages.stamp_img : '/assets/kts_stamp.png',
+            signature_config: sigCfgPayload,
             layout_config: ktsState.settings.layout_config || '',
             layout_default_config: ktsState.settings.layout_default_config || ''
         };
@@ -24206,6 +25139,7 @@ function startOrOpenResponder(options) {
             const res = await simataClient.updateKtsSettings(payload);
             if (res && res.data) ktsState.settings = Object.assign({}, ktsState.settings, res.data);
             ktsAssetImageCache.clear();
+            syncKtsCustomBgLayoutLockState();
             hideModalProcessing('ktsTemplateModal');
             window.closeKtsTemplateModal();
             renderKtsTable();
@@ -25205,6 +26139,14 @@ function startOrOpenResponder(options) {
 
     function openKtsLayoutModal() {
         if (!isCurrentUserAdmin) return;
+        if (isKtsCustomBgLocked(ktsState.settings)) {
+            if (typeof showToast === 'function') {
+                showToast('warning', 'Edit Layout Terkunci', 'Background Custom (Canva/CorelDraw) sedang aktif. Hapus Background Custom di menu Template jika ingin mengedit posisi layout visual.');
+            } else {
+                alert('Edit Layout Terkunci karena Background Custom (Canva/CorelDraw) sedang aktif.');
+            }
+            return;
+        }
         ktsState.layoutSide = ktsState.side === 'back' ? 'back' : 'front';
         ktsState.layoutDraft = cloneKtsLayout(getEffectiveKtsLayout(ktsState.settings));
         const initKey = ktsState.layoutSide === 'back' ? 'back_school_name' : 'student_name';
@@ -25433,6 +26375,16 @@ function startOrOpenResponder(options) {
 
         const openLayFromTpl = document.getElementById('ktsOpenLayoutFromTplBtn');
         if (openLayFromTpl) openLayFromTpl.addEventListener('click', function() {
+            const draftHasCustomBg = Boolean(
+                (ktsState.tplDraftImages && (ktsState.tplDraftImages.custom_front_bg || ktsState.tplDraftImages.custom_back_bg)) ||
+                isKtsCustomBgLocked(ktsState.settings)
+            );
+            if (draftHasCustomBg) {
+                if (typeof showToast === 'function') {
+                    showToast('warning', 'Edit Layout Terkunci', 'Background Custom (Canva/CorelDraw) aktif. Hapus terlebih dahulu di tab Background Custom untuk membuka Editor Layout Visual.');
+                }
+                return;
+            }
             window.closeKtsTemplateModal();
             openKtsLayoutModal();
         });
@@ -25745,17 +26697,23 @@ function startOrOpenResponder(options) {
         if (qSaveNextBtn) qSaveNextBtn.addEventListener('click', function() { saveKtsQuickEdit(true); });
 
         // Template Customizer Handlers
-        const wireTplImage = function(inputId, resetId, thumbId, draftKey, maxW, maxH, isPngAlpha) {
+        document.querySelectorAll('#ktsTemplateModal .kts-tpl-tab-btn[data-tpl-tab]').forEach(function(tabBtn) {
+            tabBtn.addEventListener('click', function() {
+                setKtsTplTab(this.dataset.tplTab);
+            });
+        });
+
+        const wireTplImage = function(inputId, resetId, draftKey, maxW, maxH, isPngAlpha, emptyValue) {
             const inp = document.getElementById(inputId);
             const rst = document.getElementById(resetId);
-            const th = document.getElementById(thumbId);
             if (inp) inp.addEventListener('change', async function() {
                 const f = this.files && this.files[0];
                 if (!f) return;
                 try {
                     const dataUrl = await compressTemplateImageFile(f, maxW, maxH, isPngAlpha);
                     ktsState.tplDraftImages[draftKey] = dataUrl;
-                    if (th) { th.src = dataUrl; th.style.opacity = '1'; }
+                    syncKtsTplModalUiState();
+                    if (ktsState.tplActiveTab === 'signature') renderKtsSigComposerCanvas();
                 } catch (err) {
                     alert(err.message || err);
                 } finally {
@@ -25763,13 +26721,162 @@ function startOrOpenResponder(options) {
                 }
             });
             if (rst) rst.addEventListener('click', function() {
-                ktsState.tplDraftImages[draftKey] = '';
-                if (th) { th.removeAttribute('src'); th.style.opacity = '0.35'; }
+                ktsState.tplDraftImages[draftKey] = emptyValue !== undefined ? emptyValue : '';
+                syncKtsTplModalUiState();
+                if (ktsState.tplActiveTab === 'signature') renderKtsSigComposerCanvas();
             });
         };
-        wireTplImage('ktsTpl_frontBgInput', 'ktsTpl_frontBgResetBtn', 'ktsTpl_frontBgThumb', 'custom_front_bg', 1100, 700, false);
-        wireTplImage('ktsTpl_backBgInput', 'ktsTpl_backBgResetBtn', 'ktsTpl_backBgThumb', 'custom_back_bg', 1100, 700, false);
-        wireTplImage('ktsTpl_sigInput', 'ktsTpl_sigResetBtn', 'ktsTpl_sigThumb', 'signature_img', 480, 240, true);
+        wireTplImage('ktsTpl_frontBgInput', 'ktsTpl_frontBgResetBtn', 'custom_front_bg', 1200, 760, false, '');
+        wireTplImage('ktsTpl_backBgInput', 'ktsTpl_backBgResetBtn', 'custom_back_bg', 1200, 760, false, '');
+        wireTplImage('ktsTpl_sigInput', 'ktsTpl_sigResetBtn', 'signature_img', 520, 260, true, 'NONE');
+        wireTplImage('ktsTpl_stampInput', 'ktsTpl_stampResetBtn', 'stamp_img', 480, 480, true, 'NONE');
+
+        const sigDefBtn = document.getElementById('ktsTpl_sigDefaultBtn');
+        if (sigDefBtn) sigDefBtn.addEventListener('click', function() {
+            ktsState.tplDraftImages.signature_img = '/assets/kts_signature.png';
+            syncKtsTplModalUiState();
+            renderKtsSigComposerCanvas();
+        });
+        const stampDefBtn = document.getElementById('ktsTpl_stampDefaultBtn');
+        if (stampDefBtn) stampDefBtn.addEventListener('click', function() {
+            ktsState.tplDraftImages.stamp_img = '/assets/kts_stamp.png';
+            syncKtsTplModalUiState();
+            renderKtsSigComposerCanvas();
+        });
+
+        // Signature mode pills
+        document.querySelectorAll('#ktsTemplateModal .kts-sig-mode-btn[data-sig-mode]').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                if (!ktsState.tplDraftSigConfig) ktsState.tplDraftSigConfig = getKtsSignatureConfig();
+                ktsState.tplDraftSigConfig.mode = this.dataset.sigMode || 'physical';
+                syncKtsSigControlsFromDraft();
+                renderKtsSigComposerCanvas();
+            });
+        });
+
+        const showStampChk = document.getElementById('ktsSig_showStamp');
+        if (showStampChk) showStampChk.addEventListener('change', function() {
+            if (!ktsState.tplDraftSigConfig) ktsState.tplDraftSigConfig = getKtsSignatureConfig();
+            ktsState.tplDraftSigConfig.showStamp = Boolean(this.checked);
+            renderKtsSigComposerCanvas();
+        });
+
+        // Sliders for fine-tuning Signature & Stamp
+        const bindSigSlider = function(id, prop, isPercentScale, onAfter) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.addEventListener('input', function() {
+                if (!ktsState.tplDraftSigConfig) ktsState.tplDraftSigConfig = getKtsSignatureConfig();
+                const v = Number(this.value);
+                ktsState.tplDraftSigConfig[prop] = isPercentScale ? (v / 100) : v;
+                if (typeof onAfter === 'function') onAfter();
+                syncKtsSigControlsFromDraft();
+                renderKtsSigComposerCanvas();
+            });
+        };
+        bindSigSlider('ktsSig_sigScale', 'sigScale', true, function() { ktsState.tplActiveSigTarget = 'sig'; });
+        bindSigSlider('ktsSig_sigX', 'sigOffsetX', false, function() { ktsState.tplActiveSigTarget = 'sig'; });
+        bindSigSlider('ktsSig_sigY', 'sigOffsetY', false, function() { ktsState.tplActiveSigTarget = 'sig'; });
+        bindSigSlider('ktsSig_stampScale', 'stampScale', true, function() { ktsState.tplActiveSigTarget = 'stamp'; });
+        bindSigSlider('ktsSig_stampX', 'stampOffsetX', false, function() { ktsState.tplActiveSigTarget = 'stamp'; });
+        bindSigSlider('ktsSig_stampY', 'stampOffsetY', false, function() { ktsState.tplActiveSigTarget = 'stamp'; });
+        bindSigSlider('ktsSig_stampOpacity', 'stampOpacity', true, function() { ktsState.tplActiveSigTarget = 'stamp'; });
+
+        const resetSigPosBtn = document.getElementById('ktsSig_resetPosBtn');
+        if (resetSigPosBtn) resetSigPosBtn.addEventListener('click', function() {
+            if (!ktsState.tplDraftSigConfig) ktsState.tplDraftSigConfig = getKtsSignatureConfig();
+            Object.assign(ktsState.tplDraftSigConfig, {
+                sigOffsetX: 0,
+                sigOffsetY: 0,
+                sigScale: 1,
+                stampOffsetX: -52,
+                stampOffsetY: -6,
+                stampScale: 1,
+                stampOpacity: 0.88
+            });
+            syncKtsSigControlsFromDraft();
+            renderKtsSigComposerCanvas();
+        });
+
+        // Pointer drag directly on Signature & Stamp Composer Canvas
+        const sigCompCanvas = document.getElementById('ktsSigComposerCanvas');
+        if (sigCompCanvas) {
+            const getCompPt = function(ev) {
+                const rect = sigCompCanvas.getBoundingClientRect();
+                return {
+                    x: (ev.clientX - rect.left) * (sigCompCanvas.width / rect.width),
+                    y: (ev.clientY - rect.top) * (sigCompCanvas.height / rect.height)
+                };
+            };
+            const hitBox = function(pt, b) {
+                return b && pt.x >= b.x - 8 && pt.x <= b.x + b.w + 8 && pt.y >= b.y - 8 && pt.y <= b.y + b.h + 8;
+            };
+            sigCompCanvas.addEventListener('pointerdown', function(ev) {
+                const pt = getCompPt(ev);
+                if (!ktsState.tplDraftSigConfig) ktsState.tplDraftSigConfig = getKtsSignatureConfig();
+                let target = null;
+                if (ktsState.tplActiveSigTarget === 'stamp' && hitBox(pt, ktsSigComposerBoxes.stampBox)) target = 'stamp';
+                else if (ktsState.tplActiveSigTarget === 'sig' && hitBox(pt, ktsSigComposerBoxes.sigBox)) target = 'sig';
+                else if (hitBox(pt, ktsSigComposerBoxes.stampBox)) target = 'stamp';
+                else if (hitBox(pt, ktsSigComposerBoxes.sigBox)) target = 'sig';
+                if (!target) return;
+
+                ktsState.tplActiveSigTarget = target;
+                const sc = ktsState.tplDraftSigConfig;
+                ktsSigComposerDrag = {
+                    target: target,
+                    startX: pt.x,
+                    startY: pt.y,
+                    origOx: target === 'stamp' ? Number(sc.stampOffsetX !== undefined ? sc.stampOffsetX : -52) : Number(sc.sigOffsetX || 0),
+                    origOy: target === 'stamp' ? Number(sc.stampOffsetY !== undefined ? sc.stampOffsetY : -6) : Number(sc.sigOffsetY || 0),
+                    scale: ktsSigComposerBoxes.scale || 1.18
+                };
+                if (sigCompCanvas.setPointerCapture) sigCompCanvas.setPointerCapture(ev.pointerId);
+                renderKtsSigComposerCanvas();
+            });
+            sigCompCanvas.addEventListener('pointermove', function(ev) {
+                if (!ktsSigComposerDrag) return;
+                const pt = getCompPt(ev);
+                const dx = Math.round((pt.x - ktsSigComposerDrag.startX) / ktsSigComposerDrag.scale);
+                const dy = Math.round((pt.y - ktsSigComposerDrag.startY) / ktsSigComposerDrag.scale);
+                const sc = ktsState.tplDraftSigConfig;
+                if (ktsSigComposerDrag.target === 'stamp') {
+                    sc.stampOffsetX = Math.max(-110, Math.min(90, ktsSigComposerDrag.origOx + dx));
+                    sc.stampOffsetY = Math.max(-55, Math.min(45, ktsSigComposerDrag.origOy + dy));
+                } else {
+                    sc.sigOffsetX = Math.max(-90, Math.min(90, ktsSigComposerDrag.origOx + dx));
+                    sc.sigOffsetY = Math.max(-45, Math.min(45, ktsSigComposerDrag.origOy + dy));
+                }
+                syncKtsSigControlsFromDraft();
+                renderKtsSigComposerCanvas();
+            });
+            const endCompDrag = function() { ktsSigComposerDrag = null; };
+            sigCompCanvas.addEventListener('pointerup', endCompDrag);
+            sigCompCanvas.addEventListener('pointercancel', endCompDrag);
+        }
+
+        // Universal National-Standard QR Digital Signature Generator bindings
+        ['ktsQrGen_name', 'ktsQrGen_title', 'ktsQrGen_id', 'ktsQrGen_date', 'ktsQrGen_doc', 'ktsQrGen_url', 'ktsQrGen_style', 'ktsQrGen_keepBg'].forEach(function(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const evtName = (el.tagName === 'SELECT' || el.type === 'checkbox') ? 'change' : 'input';
+            el.addEventListener(evtName, renderKtsQrGeneratorPreview);
+        });
+        const qrSyncKtsBtn = document.getElementById('ktsQrGenSyncFromKtsBtn');
+        if (qrSyncKtsBtn) qrSyncKtsBtn.addEventListener('click', function() {
+            const gVal = function(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+            const sVal = function(id, val) { const el = document.getElementById(id); if (el) el.value = val; };
+            sVal('ktsQrGen_name', gVal('ktsTpl_headmasterName') || 'Kepala Madrasah');
+            sVal('ktsQrGen_title', 'Kepala Madrasah ' + (gVal('ktsTpl_schoolName') || 'MA At-Taujih'));
+            sVal('ktsQrGen_id', gVal('ktsTpl_headmasterNip') || 'NIP. -');
+            sVal('ktsQrGen_date', gVal('ktsTpl_signCityDate') || '');
+            sVal('ktsQrGen_doc', 'Kartu Identitas Siswa Resmi SIMATA');
+            renderKtsQrGeneratorPreview();
+        });
+        const qrDlBtn = document.getElementById('ktsQrGenDownloadBtn');
+        if (qrDlBtn) qrDlBtn.addEventListener('click', downloadKtsQrGeneratorPng);
+        const qrApplyBtn = document.getElementById('ktsQrGenApplyKtsBtn');
+        if (qrApplyBtn) qrApplyBtn.addEventListener('click', applyKtsQrGeneratorToKts);
 
         const tplSaveBtn = document.getElementById('ktsTplSaveBtn');
         if (tplSaveBtn) tplSaveBtn.addEventListener('click', saveKtsTemplateSettings);

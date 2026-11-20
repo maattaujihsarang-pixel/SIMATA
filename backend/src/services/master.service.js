@@ -29,7 +29,9 @@ const DEFAULT_KTS_SETTINGS = {
   headmaster_nip: 'NIP. -',
   custom_front_bg: '',
   custom_back_bg: '',
-  signature_img: '',
+  signature_img: '/assets/kts_signature.png',
+  stamp_img: '/assets/kts_stamp.png',
+  signature_config: '',
   layout_config: '',
   layout_default_config: ''
 };
@@ -545,18 +547,21 @@ class MasterService {
     for (const key of allowedKeys) {
       if (key in payload && payload[key] !== undefined) {
         const val = payload[key] === null ? '' : String(payload[key]);
-        if (['custom_front_bg', 'custom_back_bg', 'signature_img'].includes(key) && val && !val.startsWith('data:image/')) {
-          throw new BadRequestError(`Format gambar tidak valid untuk ${key}`);
+        if (['custom_front_bg', 'custom_back_bg', 'signature_img', 'stamp_img'].includes(key)) {
+          const isAllowedImg = !val || val === 'NONE' || val.startsWith('data:image/') || val.startsWith('/assets/');
+          if (!isAllowedImg) {
+            throw new BadRequestError(`Format gambar tidak valid untuk ${key}`);
+          }
         }
-        if (['layout_config', 'layout_default_config'].includes(key) && val) {
+        if (['layout_config', 'layout_default_config', 'signature_config'].includes(key) && val) {
           let parsedLayout = null;
           try {
             parsedLayout = JSON.parse(val);
           } catch (_) {
-            throw new BadRequestError('Format konfigurasi layout KTS tidak valid');
+            throw new BadRequestError(`Format konfigurasi ${key === 'signature_config' ? 'TTD' : 'layout'} KTS tidak valid`);
           }
           if (!parsedLayout || typeof parsedLayout !== 'object' || Array.isArray(parsedLayout)) {
-            throw new BadRequestError('Format konfigurasi layout KTS tidak valid');
+            throw new BadRequestError(`Format konfigurasi ${key === 'signature_config' ? 'TTD' : 'layout'} KTS tidak valid`);
           }
         }
         await studentRepository.upsertKtsSetting(key, val);

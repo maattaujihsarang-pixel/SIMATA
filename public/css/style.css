@@ -6298,25 +6298,325 @@ select.attendance-filter-control {
   justify-content: center;
 }
 
+.kts-btn-outline.is-locked {
+  background: #fffbeb !important;
+  border-color: #f59e0b !important;
+  color: #92400e !important;
+  cursor: not-allowed;
+  opacity: 0.92;
+}
+
+.kts-tpl-modal-card {
+  max-width: 840px;
+  width: min(95vw, 840px);
+}
+
+.kts-tpl-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  padding: 5px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 11px;
+  margin-bottom: 14px;
+}
+
+.kts-tpl-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #475569;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.kts-tpl-tab-btn:hover {
+  color: #0f172a;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.kts-tpl-tab-btn.active {
+  background: #ffffff;
+  color: #166534;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+  font-weight: 700;
+}
+
+.kts-tpl-tab-pane {
+  display: none;
+}
+
+.kts-tpl-tab-pane.active {
+  display: block;
+}
+
+.kts-tpl-lock-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 14px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+  font-size: 12px;
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.kts-tpl-lock-banner.is-locked {
+  background: #fffbeb;
+  border-color: #fcd34d;
+  color: #78350f;
+}
+
 .kts-tpl-asset-box {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  padding: 10px;
-  border: 1px dashed #cbd5e1;
-  border-radius: 10px;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+
+.kts-tpl-asset-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.kts-tpl-thumb-wrap {
+  width: 78px;
+  height: 50px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
   background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.kts-tpl-thumb-wrap.is-checker {
+  background-color: #ffffff;
+  background-image:
+    linear-gradient(45deg, #e2e8f0 25%, transparent 25%),
+    linear-gradient(-45deg, #e2e8f0 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #e2e8f0 75%),
+    linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
+  background-size: 12px 12px;
+  background-position: 0 0, 0 6px, 6px -6px, -6px 0;
 }
 
 .kts-tpl-thumb {
-  width: 68px;
-  height: 44px;
-  border-radius: 6px;
-  object-fit: cover;
-  background: #e2e8f0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.kts-tpl-thumb-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  color: #94a3b8;
+  font-size: 9.5px;
+  font-weight: 600;
+  text-align: center;
+  padding: 2px;
+}
+
+.kts-tpl-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 700;
+  background: #f1f5f9;
+  color: #475569;
+  margin-left: 6px;
+}
+
+.kts-tpl-status-pill.is-custom {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.kts-tpl-status-pill.is-removed {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.kts-sig-mode-pills {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.kts-sig-mode-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 9px 11px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.16s ease;
+}
+
+.kts-sig-mode-btn strong {
+  font-size: 12px;
+  color: #0f172a;
+}
+
+.kts-sig-mode-btn span {
+  font-size: 10.5px;
+  color: #64748b;
+}
+
+.kts-sig-mode-btn.active {
+  border-color: #16a34a;
+  background: #f0fdf4;
+  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.14);
+}
+
+.kts-sig-mode-btn.active strong {
+  color: #166534;
+}
+
+.kts-sig-assets-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.kts-sig-composer-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  margin-bottom: 14px;
+}
+
+.kts-sig-stage-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+#ktsSigComposerCanvas {
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
   border: 1px solid #cbd5e1;
-  flex-shrink: 0;
+  background: #ffffff;
+  cursor: grab;
+  touch-action: none;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+#ktsSigComposerCanvas:active {
+  cursor: grabbing;
+}
+
+.kts-sig-sliders {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.kts-sig-slider-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.kts-sig-slider-row label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.kts-sig-slider-row input[type="range"] {
+  width: 100%;
+  accent-color: #166534;
+}
+
+.kts-qrgen-panel {
+  border: 1px solid #bbf7d0;
+  background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 36%);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.kts-qrgen-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.kts-checkerboard-bg {
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  background-image:
+    linear-gradient(45deg, #e2e8f0 25%, transparent 25%),
+    linear-gradient(-45deg, #e2e8f0 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #e2e8f0 75%),
+    linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+}
+
+#ktsQrGenPreviewCanvas {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+@media (max-width: 720px) {
+  .kts-tpl-tabs,
+  .kts-sig-mode-pills,
+  .kts-sig-assets-grid,
+  .kts-sig-composer-grid,
+  .kts-qrgen-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 1120px) {

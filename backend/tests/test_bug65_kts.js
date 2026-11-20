@@ -32,6 +32,12 @@ function assertFrontendKtsIntegrity() {
   assert.ok(css.includes('#ktsPreviewCanvas'), 'style.css must style #ktsPreviewCanvas');
   assert.ok(css.includes('.kts-layout-select'), 'style.css must style .kts-layout-select');
   assert.ok(css.includes('.kts-bg-preset-grid'), 'style.css must style .kts-bg-preset-grid');
+  assert.ok(css.includes('.kts-tpl-tabs'), 'style.css must style .kts-tpl-tabs');
+  assert.ok(css.includes('.kts-sig-composer-grid'), 'style.css must style .kts-sig-composer-grid');
+  assert.ok(css.includes('.kts-qrgen-panel'), 'style.css must style .kts-qrgen-panel');
+  assert.ok(css.includes('.kts-btn-outline.is-locked'), 'style.css must style .kts-btn-outline.is-locked');
+  assert.ok(fs.existsSync(path.join(rootDir, 'public/assets/kts_stamp.png')), 'public/assets/kts_stamp.png must exist');
+  assert.ok(fs.existsSync(path.join(rootDir, 'public/assets/kts_signature.png')), 'public/assets/kts_signature.png must exist');
   for (const hiddenSel of [
     '#ktsEditLayoutBtn',
     '#ktsCustomizeTemplateBtn',
@@ -89,6 +95,14 @@ function assertFrontendKtsIntegrity() {
     'simataConfirm',
     'simataPrompt',
     'id="ktsTpl_headerTitle"',
+    'id="ktsTplBgLockBanner"',
+    'id="ktsTpl_stampInput"',
+    'id="ktsSigComposerCanvas"',
+    'id="ktsQrGenPreviewCanvas"',
+    'id="ktsQrGenDownloadBtn"',
+    'isKtsCustomBgLocked',
+    'drawNationalQrSignatureBlock',
+    'drawKtsSignatureBlock',
     'id="ktsBatchPrintModal"',
     'id="f_birthPlace"',
     'id="f_address"',
@@ -353,6 +367,50 @@ async function runBug65KtsTests() {
       body: JSON.stringify({ layout_default_config: '[]' })
     });
     assert.strictEqual(badDefaultRes.status, 400);
+
+    // Stamp image (/assets/..., NONE, invalid URL) & signature_config JSON validation
+    const badStampRes = await fetch(`${baseUrl}/api/v1/students/kts/settings`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stamp_img: 'http://evil.invalid/stamp.png' })
+    });
+    assert.strictEqual(badStampRes.status, 400);
+
+    const badSigCfgRes = await fetch(`${baseUrl}/api/v1/students/kts/settings`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ signature_config: '{invalid-json' })
+    });
+    assert.strictEqual(badSigCfgRes.status, 400);
+
+    const sigCfgStr = JSON.stringify({
+      mode: 'qr_stamp',
+      showStamp: true,
+      sigOffsetX: 6,
+      sigOffsetY: -4,
+      sigScale: 1.05,
+      stampOffsetX: -48,
+      stampOffsetY: -6,
+      stampScale: 0.95,
+      stampOpacity: 0.85,
+      qrSignerName: 'KH. Ahmad Sample',
+      qrSignerTitle: 'Kepala Madrasah',
+      qrStyle: 'tte_compact'
+    });
+    const goodSigRes = await fetch(`${baseUrl}/api/v1/students/kts/settings`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        signature_img: '/assets/kts_signature.png',
+        stamp_img: 'NONE',
+        signature_config: sigCfgStr
+      })
+    });
+    assert.strictEqual(goodSigRes.status, 200);
+    const goodSigJson = await goodSigRes.json();
+    assert.strictEqual(goodSigJson.data.signature_img, '/assets/kts_signature.png');
+    assert.strictEqual(goodSigJson.data.stamp_img, 'NONE');
+    assert.strictEqual(goodSigJson.data.signature_config, sigCfgStr);
 
     console.log('3. PASS: Students KTS fields, Excel Template/Import 2-way sync, layout_config & Settings RBAC verified.');
     console.log('===============================================================');
