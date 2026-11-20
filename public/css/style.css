@@ -6587,6 +6587,21 @@ select.attendance-filter-control {
   padding: 14px;
 }
 
+.kts-qrgen-panel .input-box {
+  height: 36px !important;
+  padding: 0 10px !important;
+  font-size: 12px !important;
+  border-radius: 8px;
+  border: 1.5px solid #e2e8f0;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+.kts-qrgen-panel select.input-box {
+  padding-right: 28px !important;
+  line-height: normal;
+}
+
 .kts-qrgen-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
