@@ -22780,34 +22780,55 @@ function startOrOpenResponder(options) {
 
     function buildQrCanvasSync(qrText) {
         if (!qrText || typeof QRCode === 'undefined') return null;
+        const cleanText = String(qrText).trim();
+        const tempDiv = document.createElement('div');
+        tempDiv.style.position = 'fixed';
+        tempDiv.style.left = '-9999px';
+        tempDiv.style.top = '-9999px';
+        document.body.appendChild(tempDiv);
         try {
-            const tempDiv = document.createElement('div');
-            tempDiv.style.position = 'fixed';
-            tempDiv.style.left = '-9999px';
-            tempDiv.style.top = '-9999px';
-            document.body.appendChild(tempDiv);
-            new QRCode(tempDiv, {
-                text: String(qrText).trim(),
-                width: 256,
-                height: 256,
-                colorDark: '#000000',
-                colorLight: '#ffffff',
-                correctLevel: QRCode.CorrectLevel.H
-            });
-            const qrCanvas = tempDiv.querySelector('canvas');
-            let cloned = null;
-            if (qrCanvas) {
-                cloned = document.createElement('canvas');
-                cloned.width = qrCanvas.width;
-                cloned.height = qrCanvas.height;
-                const cCtx = cloned.getContext('2d');
-                cCtx.drawImage(qrCanvas, 0, 0);
+            const levels = [
+                QRCode.CorrectLevel.H,
+                QRCode.CorrectLevel.Q,
+                QRCode.CorrectLevel.M,
+                QRCode.CorrectLevel.L
+            ];
+            const candidates = [cleanText];
+            if (cleanText.length > 160) {
+                candidates.push(cleanText.slice(0, 157) + '...');
             }
-            document.body.removeChild(tempDiv);
-            return cloned;
+            for (let cIdx = 0; cIdx < candidates.length; cIdx++) {
+                const candidate = candidates[cIdx];
+                for (let i = 0; i < levels.length; i++) {
+                    try {
+                        tempDiv.innerHTML = '';
+                        new QRCode(tempDiv, {
+                            text: candidate,
+                            width: 256,
+                            height: 256,
+                            colorDark: '#000000',
+                            colorLight: '#ffffff',
+                            correctLevel: levels[i]
+                        });
+                        const qrCanvas = tempDiv.querySelector('canvas');
+                        if (qrCanvas) {
+                            const cloned = document.createElement('canvas');
+                            cloned.width = qrCanvas.width;
+                            cloned.height = qrCanvas.height;
+                            cloned.getContext('2d').drawImage(qrCanvas, 0, 0);
+                            return cloned;
+                        }
+                    } catch (_) {
+                        // Retry with lower error correction level (qrcodejs throws code length overflow at H on longer payloads)
+                    }
+                }
+            }
+            return null;
         } catch (err) {
             console.warn('[KTS] Gagal membuat QR Canvas:', err);
             return null;
+        } finally {
+            if (tempDiv.parentNode) tempDiv.parentNode.removeChild(tempDiv);
         }
     }
 
