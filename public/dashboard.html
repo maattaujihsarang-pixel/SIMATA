@@ -24444,6 +24444,29 @@ function startOrOpenResponder(options) {
         }
     }
 
+    function computeTteUniqueCode(opts) {
+        const seed = [
+            '70033117',
+            String((opts && opts.signerName) || 'Kepala Madrasah').trim(),
+            String((opts && opts.signerTitle) || 'Kepala Madrasah').trim(),
+            String((opts && opts.signerNip) || '').trim(),
+            String((opts && opts.cityDate) || '').trim(),
+            String((opts && opts.docNote) || '').trim(),
+            String((opts && opts.verifyUrl) || '').trim()
+        ].join('|');
+        let h1 = 0x811c9dc5;
+        let h2 = 0x9e3779b9;
+        for (let i = 0; i < seed.length; i++) {
+            const c = seed.charCodeAt(i);
+            h1 ^= c;
+            h1 = Math.imul(h1, 0x01000193);
+            h2 = Math.imul(h2 ^ c, 0x85ebca6b);
+        }
+        const hex1 = (h1 >>> 0).toString(16).toUpperCase().padStart(8, '0');
+        const hex2 = (h2 >>> 0).toString(16).toUpperCase().padStart(4, '0').slice(0, 4);
+        return 'TTE-70033117-' + hex1 + hex2;
+    }
+
     function buildNationalTtePayload(opts) {
         if (opts && opts.payloadOverride) return String(opts.payloadOverride);
         const url = String((opts && opts.verifyUrl) || '').trim();
@@ -24452,11 +24475,13 @@ function startOrOpenResponder(options) {
         const id = String((opts && opts.signerNip) || '').trim();
         const dt = String((opts && opts.cityDate) || '').trim();
         const doc = String((opts && opts.docNote) || '').trim();
+        const uniqueCode = computeTteUniqueCode(opts);
         if (url) {
-            return url + (doc ? ' | ' + doc : '') + ' | ' + name;
+            return url + ' | Kode: ' + uniqueCode + (doc ? ' | ' + doc : '') + ' | ' + name;
         }
         const parts = [
             '[TTE-SIMATA UU-ITE-11/2008]',
+            'Kode Unik: ' + uniqueCode,
             'Instansi: Madrasah Aliyah At-Taujih',
             'Yayasan: Yayasan Muwajjihul Ulum Asy Syariyyah',
             'NPSN: 70033117',
@@ -24642,9 +24667,10 @@ function startOrOpenResponder(options) {
             });
         }
 
+        const uniqueCode = computeTteUniqueCode(opts);
         ctx.fillStyle = '#0f766e';
-        ctx.font = '600 ' + Math.round(10 * scaleF) + 'px ' + fontFamily;
-        ctx.fillText('Sesuai UU ITE No. 11 Th. 2008 • Verifikasi Kode QR', tx, y + h - pad, tMaxW);
+        ctx.font = '600 ' + Math.round(9.5 * scaleF) + 'px ' + fontFamily;
+        ctx.fillText('UU ITE No. 11/2008 • ID: ' + uniqueCode, tx, y + h - pad, tMaxW);
         ctx.restore();
         return { x: x, y: y, w: w, h: h };
     }
