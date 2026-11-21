@@ -19,7 +19,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100..900;1,100..900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=bug65_tplstudio2">
+  <link rel="stylesheet" href="/css/style.css?v=bug65_ktsphoto">
   <link rel="stylesheet" href="/css/notifications.css?v=bug65_2">
   <link rel="stylesheet" href="/css/finance.css">
   <style>
@@ -8304,7 +8304,43 @@ function clampEditorCrop(crop, naturalWidth, naturalHeight) {
     crop.crop_position_y = Math.max(-maxPercentY, Math.min(maxPercentY, crop.crop_position_y));
 }
 
-let frameEditorTarget = null; // 'student' or 'teacher'
+function fitKtsRectPhotoElement(imgEl, boxW, boxH) {
+    if (!imgEl) return;
+    const nw = imgEl.naturalWidth || 1;
+    const nh = imgEl.naturalHeight || 1;
+    const baseScale = Math.max(boxW / nw, boxH / nh);
+    imgEl.style.width = (nw * baseScale) + 'px';
+    imgEl.style.height = (nh * baseScale) + 'px';
+}
+
+function clampKtsRectCrop(crop, naturalWidth, naturalHeight, boxW, boxH) {
+    const nw = naturalWidth || 1;
+    const nh = naturalHeight || 1;
+    const bw = boxW || 165;
+    const bh = boxH || 220;
+    const scale = Math.max(1.0, Number(crop.crop_scale) || 1);
+    const baseScale = Math.max(bw / nw, bh / nh);
+    const drawW = nw * baseScale * scale;
+    const drawH = nh * baseScale * scale;
+    const maxPctX = (Math.max(0, (drawW - bw) / 2) / bw) * 100;
+    const maxPctY = (Math.max(0, (drawH - bh) / 2) / bh) * 100;
+    crop.crop_scale = scale;
+    crop.crop_position_x = Math.max(-maxPctX, Math.min(maxPctX, Number(crop.crop_position_x) || 0));
+    crop.crop_position_y = Math.max(-maxPctY, Math.min(maxPctY, Number(crop.crop_position_y) || 0));
+}
+
+function applyKtsRectFraming(imgEl, framing, boxW, boxH) {
+    if (!imgEl) return;
+    const bw = boxW || 165;
+    const bh = boxH || 220;
+    const scale = Math.max(1.0, (framing && framing.crop_scale !== undefined && framing.crop_scale !== null) ? Number(framing.crop_scale) : 1);
+    const xPct = (framing && framing.crop_position_x !== undefined && framing.crop_position_x !== null) ? Number(framing.crop_position_x) : 0;
+    const yPct = (framing && framing.crop_position_y !== undefined && framing.crop_position_y !== null) ? Number(framing.crop_position_y) : 0;
+    imgEl.style.transformOrigin = 'center center';
+    imgEl.style.transform = 'translate(calc(-50% + ' + ((xPct / 100) * bw) + 'px), calc(-50% + ' + ((yPct / 100) * bh) + 'px)) scale(' + scale + ')';
+}
+
+let frameEditorTarget = null; // 'student' or 'teacher' or 'kts-quick'
 let frameEditorCrop = { crop_scale: 1, crop_position_x: 0, crop_position_y: 0 };
 let frameEditorIsDragging = false;
 let frameEditorDragStart = { x: 0, y: 0 };
@@ -8325,16 +8361,30 @@ function openPhotoFrameEditor(target, imageSrc, initialCrop) {
     };
 
     const modal = document.getElementById('photoFrameEditorModal');
+    const viewport = document.getElementById('frameEditorViewport');
     const img = document.getElementById('frameEditorImg');
     const zoom = document.getElementById('frameEditorZoom');
     if (!modal || !img || !zoom) return;
 
+    const isKtsRect = target === 'kts-quick';
+    if (viewport) viewport.classList.toggle('is-kts-rect', isKtsRect);
+    const titleEl = modal.querySelector('.photo-frame-editor-title');
+    if (titleEl) {
+        titleEl.textContent = isKtsRect ? 'Sesuaikan Posisi Pasfoto KTS (3\u00d74)' : 'Sesuaikan Posisi Foto';
+    }
+
     zoom.value = frameEditorCrop.crop_scale;
 
     const onImgReady = function() {
-        fitPhotoElement(img, 180);
-        clampEditorCrop(frameEditorCrop, img.naturalWidth, img.naturalHeight);
-        applyPhotoFraming(img, frameEditorCrop, false);
+        if (frameEditorTarget === 'kts-quick') {
+            fitKtsRectPhotoElement(img, 165, 220);
+            clampKtsRectCrop(frameEditorCrop, img.naturalWidth, img.naturalHeight, 165, 220);
+            applyKtsRectFraming(img, frameEditorCrop, 165, 220);
+        } else {
+            fitPhotoElement(img, 180);
+            clampEditorCrop(frameEditorCrop, img.naturalWidth, img.naturalHeight);
+            applyPhotoFraming(img, frameEditorCrop, false);
+        }
     };
 
     img.onload = onImgReady;
@@ -8348,6 +8398,8 @@ function openPhotoFrameEditor(target, imageSrc, initialCrop) {
 
 function closePhotoFrameEditor() {
     const modal = document.getElementById('photoFrameEditorModal');
+    const viewport = document.getElementById('frameEditorViewport');
+    if (viewport) viewport.classList.remove('is-kts-rect');
     if (modal) modal.style.display = 'none';
     frameEditorTarget = null;
     frameEditorIsDragging = false;
@@ -8429,10 +8481,19 @@ function initPhotoFrameEditorEvents() {
     const img = document.getElementById('frameEditorImg');
     if (!viewport || !zoom || !img) return;
 
+    const applyCurrentTargetFrame = function() {
+        if (frameEditorTarget === 'kts-quick') {
+            clampKtsRectCrop(frameEditorCrop, img.naturalWidth, img.naturalHeight, 165, 220);
+            applyKtsRectFraming(img, frameEditorCrop, 165, 220);
+        } else {
+            clampEditorCrop(frameEditorCrop, img.naturalWidth, img.naturalHeight);
+            applyPhotoFraming(img, frameEditorCrop, false);
+        }
+    };
+
     zoom.addEventListener('input', function() {
         frameEditorCrop.crop_scale = Math.round(parseFloat(this.value) * 100) / 100;
-        clampEditorCrop(frameEditorCrop, img.naturalWidth, img.naturalHeight);
-        applyPhotoFraming(img, frameEditorCrop, false);
+        applyCurrentTargetFrame();
     });
 
     viewport.addEventListener('wheel', function(e) {
@@ -8441,8 +8502,7 @@ function initPhotoFrameEditorEvents() {
         let newScale = Math.min(3.0, Math.max(1.0, frameEditorCrop.crop_scale + delta));
         frameEditorCrop.crop_scale = Math.round(newScale * 100) / 100;
         zoom.value = frameEditorCrop.crop_scale;
-        clampEditorCrop(frameEditorCrop, img.naturalWidth, img.naturalHeight);
-        applyPhotoFraming(img, frameEditorCrop, false);
+        applyCurrentTargetFrame();
     }, { passive: false });
 
     viewport.addEventListener('pointerdown', function(e) {
@@ -8456,13 +8516,13 @@ function initPhotoFrameEditorEvents() {
         if (!frameEditorIsDragging) return;
         const dx = e.clientX - frameEditorDragStart.x;
         const dy = e.clientY - frameEditorDragStart.y;
-        // Viewport circle diameter is 180px -> 1% = 1.8px
-        const percentDx = (dx / 1.8);
-        const percentDy = (dy / 1.8);
+        const divX = frameEditorTarget === 'kts-quick' ? 1.65 : 1.8;
+        const divY = frameEditorTarget === 'kts-quick' ? 2.20 : 1.8;
+        const percentDx = dx / divX;
+        const percentDy = dy / divY;
         frameEditorCrop.crop_position_x = Math.round((frameEditorStartCrop.x + percentDx) * 100) / 100;
         frameEditorCrop.crop_position_y = Math.round((frameEditorStartCrop.y + percentDy) * 100) / 100;
-        clampEditorCrop(frameEditorCrop, img.naturalWidth, img.naturalHeight);
-        applyPhotoFraming(img, frameEditorCrop, false);
+        applyCurrentTargetFrame();
     });
 
     const stopDrag = function(e) {
@@ -22237,6 +22297,7 @@ function startOrOpenResponder(options) {
             signature_img: '/assets/kts_signature.png',
             stamp_img: '/assets/kts_stamp.png',
             signature_config: '',
+            student_photo_crops: '',
             layout_config: '',
             layout_default_config: ''
         },
@@ -22328,6 +22389,50 @@ function startOrOpenResponder(options) {
             if (lbl) {
                 lbl.textContent = locked ? 'Layout Terkunci (Custom BG)' : 'Edit Layout KTS';
             }
+        }
+    }
+
+    function getKtsStudentCropMap(cfgOverride) {
+        const cfg = cfgOverride || ktsState.settings || {};
+        const raw = cfg.student_photo_crops;
+        if (!raw) return {};
+        try {
+            const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                return parsed;
+            }
+        } catch (_) {}
+        return {};
+    }
+
+    function getKtsStudentPhotoCrop(studentId, cfgOverride) {
+        if (!studentId) return { crop_scale: 1, crop_position_x: 0, crop_position_y: 0 };
+        const map = getKtsStudentCropMap(cfgOverride);
+        const entry = map[studentId];
+        if (!entry || typeof entry !== 'object') {
+            return { crop_scale: 1, crop_position_x: 0, crop_position_y: 0 };
+        }
+        return {
+            crop_scale: entry.crop_scale !== undefined ? Math.max(1, Number(entry.crop_scale) || 1) : 1,
+            crop_position_x: entry.crop_position_x !== undefined ? (Number(entry.crop_position_x) || 0) : 0,
+            crop_position_y: entry.crop_position_y !== undefined ? (Number(entry.crop_position_y) || 0) : 0
+        };
+    }
+
+    async function saveKtsStudentPhotoCrop(studentId, cropObj) {
+        if (!studentId) return;
+        const map = Object.assign({}, getKtsStudentCropMap());
+        const normalized = {
+            crop_scale: Math.round(Math.max(1, Number(cropObj && cropObj.crop_scale) || 1) * 100) / 100,
+            crop_position_x: Math.round((Number(cropObj && cropObj.crop_position_x) || 0) * 100) / 100,
+            crop_position_y: Math.round((Number(cropObj && cropObj.crop_position_y) || 0) * 100) / 100
+        };
+        map[studentId] = normalized;
+        const serialized = JSON.stringify(map);
+        ktsState.settings.student_photo_crops = serialized;
+        const res = await simataClient.updateKtsSettings({ student_photo_crops: serialized });
+        if (res && res.data && res.data.student_photo_crops !== undefined) {
+            ktsState.settings.student_photo_crops = res.data.student_photo_crops;
         }
     }
 
@@ -22689,11 +22794,7 @@ function startOrOpenResponder(options) {
                 if (!img) return null;
                 return {
                     img: img,
-                    crop: {
-                        crop_scale: meta.crop_scale !== undefined ? Number(meta.crop_scale) : 1,
-                        crop_position_x: meta.crop_position_x !== undefined ? Number(meta.crop_position_x) : 0,
-                        crop_position_y: meta.crop_position_y !== undefined ? Number(meta.crop_position_y) : 0
-                    }
+                    crop: getKtsStudentPhotoCrop(sid)
                 };
             } catch (_) {
                 return null;
@@ -23284,8 +23385,10 @@ function startOrOpenResponder(options) {
         const baseScale = Math.max(pw / (img.naturalWidth || 1), ph / (img.naturalHeight || 1));
         const drawW = (img.naturalWidth || pw) * baseScale * scale;
         const drawH = (img.naturalHeight || ph) * baseScale * scale;
-        const shiftX = (cxPct / 100) * pw;
-        const shiftY = (cyPct / 100) * ph;
+        const maxShiftX = Math.max(0, (drawW - pw) / 2);
+        const maxShiftY = Math.max(0, (drawH - ph) / 2);
+        const shiftX = Math.max(-maxShiftX, Math.min(maxShiftX, (cxPct / 100) * pw));
+        const shiftY = Math.max(-maxShiftY, Math.min(maxShiftY, (cyPct / 100) * ph));
 
         const dx = px + (pw - drawW) / 2 + shiftX;
         const dy = py + (ph - drawH) / 2 + shiftY;
@@ -24220,13 +24323,17 @@ function startOrOpenResponder(options) {
             return;
         }
         const onReady = function() {
-            if (typeof fitPhotoElement === 'function') fitPhotoElement(img, 90);
-            if (typeof applyPhotoFraming === 'function') {
-                const scale = Number((crop && crop.crop_scale) || 1);
-                const x = Number((crop && crop.crop_position_x) || 0);
-                const y = Number((crop && crop.crop_position_y) || 0);
-                img.style.transformOrigin = 'center center';
-                img.style.transform = 'translate(calc(-50% + ' + (x * 0.9) + 'px), calc(-50% + ' + (y * 0.9) + 'px)) scale(' + scale + ')';
+            if (typeof fitKtsRectPhotoElement === 'function') fitKtsRectPhotoElement(img, 90, 120);
+            if (typeof applyKtsRectFraming === 'function') {
+                const c = {
+                    crop_scale: Number((crop && crop.crop_scale) || 1),
+                    crop_position_x: Number((crop && crop.crop_position_x) || 0),
+                    crop_position_y: Number((crop && crop.crop_position_y) || 0)
+                };
+                if (typeof clampKtsRectCrop === 'function') {
+                    clampKtsRectCrop(c, img.naturalWidth, img.naturalHeight, 90, 120);
+                }
+                applyKtsRectFraming(img, c, 90, 120);
             }
         };
         img.onload = onReady;
@@ -24245,7 +24352,7 @@ function startOrOpenResponder(options) {
         window.stopKtsQuickCameraStream();
         ktsQuickStudentId = st.studentId;
         ktsQuickPhotoFile = null;
-        ktsQuickCrop = { crop_scale: 1, crop_position_x: 0, crop_position_y: 0 };
+        ktsQuickCrop = getKtsStudentPhotoCrop(st.studentId);
         if (ktsQuickPhotoObjectUrl) {
             URL.revokeObjectURL(ktsQuickPhotoObjectUrl);
             ktsQuickPhotoObjectUrl = null;
@@ -24263,7 +24370,7 @@ function startOrOpenResponder(options) {
         document.getElementById('ktsQuick_birthDate').value = st.birthDate || st.birth_date || '';
         document.getElementById('ktsQuick_address').value = st.address || '';
         document.getElementById('ktsQuick_dormitory').value = st.dormitory || '';
-        document.getElementById('ktsQuick_photoHint').textContent = 'Foto dan biodata di sini otomatis tersimpan ke Data Siswa.';
+        document.getElementById('ktsQuick_photoHint').textContent = 'Posisi pasfoto 3\u00d74 KTS diatur terpisah agar tidak mengubah avatar profil Data Siswa.';
 
         applyKtsQuickPhotoVisual('', ktsQuickCrop);
 
@@ -24276,11 +24383,7 @@ function startOrOpenResponder(options) {
                 if (ktsQuickStudentId !== st.studentId) return;
                 const meta = metaRes && metaRes.success ? metaRes.data : null;
                 if (meta) {
-                    ktsQuickCrop = {
-                        crop_scale: meta.crop_scale !== undefined ? Number(meta.crop_scale) : 1,
-                        crop_position_x: meta.crop_position_x !== undefined ? Number(meta.crop_position_x) : 0,
-                        crop_position_y: meta.crop_position_y !== undefined ? Number(meta.crop_position_y) : 0
-                    };
+                    ktsQuickCrop = getKtsStudentPhotoCrop(st.studentId);
                     const blob = await simataClient.getStudentPhotoBlob(st.studentId, { cacheKey: meta.updated_at || meta.photo_id || Date.now() });
                     if (ktsQuickStudentId !== st.studentId || !blob) return;
                     ktsQuickPhotoObjectUrl = URL.createObjectURL(blob);
@@ -24309,16 +24412,16 @@ function startOrOpenResponder(options) {
         }
         if (!ktsQuickPhotoFile && ktsQuickStudentId) {
             try {
-                showModalProcessing(editorModal, 'Menyimpan Posisi Foto...', 'Memperbarui framing pasfoto KTS...');
+                showModalProcessing(editorModal, 'Menyimpan Posisi Foto KTS...', 'Memperbarui framing pasfoto 3\u00d74 KTS tanpa mengubah avatar Data Siswa...');
                 if (saveBtn) saveBtn.textContent = 'Menyimpan...';
-                await simataClient.updateStudentPhotoFraming(ktsQuickStudentId, ktsQuickCrop);
+                await saveKtsStudentPhotoCrop(ktsQuickStudentId, ktsQuickCrop);
                 invalidateKtsPhotoCache(ktsQuickStudentId);
                 await refreshKtsPreviewCanvas();
                 if (typeof showToast === 'function') {
-                    showToast('success', 'Berhasil', 'Posisi foto KTS diperbarui.');
+                    showToast('success', 'Berhasil', 'Posisi foto KTS diperbarui (avatar Data Siswa tetap aman).');
                 }
             } catch (err) {
-                alert('Gagal menyimpan framing foto: ' + (err.message || err));
+                alert('Gagal menyimpan framing foto KTS: ' + (err.message || err));
             } finally {
                 hideModalProcessing(editorModal);
                 if (saveBtn) saveBtn.textContent = 'Simpan Posisi';
@@ -24350,7 +24453,8 @@ function startOrOpenResponder(options) {
                 const compressed = typeof compressProfilePhotoBeforeUpload === 'function'
                     ? await compressProfilePhotoBeforeUpload(ktsQuickPhotoFile)
                     : ktsQuickPhotoFile;
-                await simataClient.uploadStudentPhoto(sid, compressed, ktsQuickCrop);
+                await simataClient.uploadStudentPhoto(sid, compressed, { crop_scale: 1, crop_position_x: 0, crop_position_y: 12 });
+                await saveKtsStudentPhotoCrop(sid, ktsQuickCrop);
                 invalidateKtsPhotoCache(sid);
             }
 

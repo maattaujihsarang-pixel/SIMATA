@@ -3499,6 +3499,12 @@ border-radius:14px;
   z-index: 2;
 }
 
+.photo-frame-editor-viewport.is-kts-rect .photo-frame-editor-circle {
+  width: 165px;
+  height: 220px;
+  border-radius: 10px;
+}
+
 .photo-frame-editor-img {
   position: absolute;
   top: 50%;

@@ -36,6 +36,7 @@ function assertFrontendKtsIntegrity() {
   assert.ok(css.includes('.kts-sig-composer-grid'), 'style.css must style .kts-sig-composer-grid');
   assert.ok(css.includes('.kts-qrgen-panel'), 'style.css must style .kts-qrgen-panel');
   assert.ok(css.includes('.kts-btn-outline.is-locked'), 'style.css must style .kts-btn-outline.is-locked');
+  assert.ok(css.includes('.is-kts-rect'), 'style.css must style .is-kts-rect');
   assert.ok(fs.existsSync(path.join(rootDir, 'public/assets/kts_stamp.png')), 'public/assets/kts_stamp.png must exist');
   assert.ok(fs.existsSync(path.join(rootDir, 'public/assets/kts_signature.png')), 'public/assets/kts_signature.png must exist');
   for (const hiddenSel of [
@@ -103,6 +104,10 @@ function assertFrontendKtsIntegrity() {
     'isKtsCustomBgLocked',
     'drawNationalQrSignatureBlock',
     'drawKtsSignatureBlock',
+    'fitKtsRectPhotoElement',
+    'clampKtsRectCrop',
+    'getKtsStudentPhotoCrop',
+    'saveKtsStudentPhotoCrop',
     'id="ktsBatchPrintModal"',
     'id="f_birthPlace"',
     'id="f_address"',
@@ -411,6 +416,26 @@ async function runBug65KtsTests() {
     assert.strictEqual(goodSigJson.data.signature_img, '/assets/kts_signature.png');
     assert.strictEqual(goodSigJson.data.stamp_img, 'NONE');
     assert.strictEqual(goodSigJson.data.signature_config, sigCfgStr);
+
+    // KTS independent 3:4 student_photo_crops validation & persistence
+    const badCropsRes = await fetch(`${baseUrl}/api/v1/students/kts/settings`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ student_photo_crops: '{not-json' })
+    });
+    assert.strictEqual(badCropsRes.status, 400);
+
+    const cropsStr = JSON.stringify({
+      'STD-K10001': { crop_scale: 1.15, crop_position_x: -2.5, crop_position_y: 4.0 }
+    });
+    const goodCropsRes = await fetch(`${baseUrl}/api/v1/students/kts/settings`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ student_photo_crops: cropsStr })
+    });
+    assert.strictEqual(goodCropsRes.status, 200);
+    const goodCropsJson = await goodCropsRes.json();
+    assert.strictEqual(goodCropsJson.data.student_photo_crops, cropsStr);
 
     console.log('3. PASS: Students KTS fields, Excel Template/Import 2-way sync, layout_config & Settings RBAC verified.');
     console.log('===============================================================');
