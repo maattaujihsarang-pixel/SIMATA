@@ -20,7 +20,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100..900;1,100..900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css?v=bug65_ktsphoto">
-  <link rel="stylesheet" href="/css/notifications.css?v=bug66_notif1">
+  <link rel="stylesheet" href="/css/notifications.css?v=bug66_notif2">
   <link rel="stylesheet" href="/css/finance.css">
   <style>
 /**
@@ -6771,9 +6771,6 @@ html, body {
       <button type="button" id="notifRefreshBtn" class="notif-icon-action-btn" title="Segarkan Notifikasi" aria-label="Segarkan Notifikasi">
         <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
       </button>
-      <button type="button" id="notifMarkAllReadBtn" class="notif-icon-action-btn" title="Tandai Semua Sudah Dibaca">
-        <span>Tandai Dibaca</span>
-      </button>
       <button type="button" id="notifOpenSettingsBtn" class="notif-icon-action-btn" style="display:none;" title="Atur Pengingat &amp; Buat Pengumuman">
         <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-1.7 1.7-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5v.2h-2.4v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1-1.7-1.7.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H6.7v-2.4h.2a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9L8 8.6l1.7-1.7.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.5v-.2h2.4v.2a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1 1.7 1.7-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.5 1h.2V14h-.2a1.7 1.7 0 0 0-1.5 1z"/></svg>
         <span>Atur</span>
@@ -6793,10 +6790,13 @@ html, body {
 
   <div class="notif-subbar">
     <span id="notifStatusMeta">Memuat pembaruan SIMATA...</span>
-    <label class="notif-show-resolved-lbl">
-      <input type="checkbox" id="notifShowResolvedToggle" />
-      <span>Tampilkan Selesai (&#10003;)</span>
-    </label>
+    <div class="notif-subbar-actions">
+      <button type="button" id="notifMarkAllReadBtn" class="notif-mark-read-inline" title="Tandai Semua Sudah Dibaca">&#10003; Tandai Dibaca</button>
+      <label class="notif-show-resolved-lbl">
+        <input type="checkbox" id="notifShowResolvedToggle" />
+        <span>Selesai (&#10003;)</span>
+      </label>
+    </div>
   </div>
 
   <div id="notifListContainer" class="notif-list-body">

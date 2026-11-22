@@ -427,12 +427,24 @@ class NotificationsService {
     }
 
     const populatedClasses = activeClasses.filter((c) => (studentsByClass.get(c.class_id) || []).length > 0);
-    const recordedStudentsByClass = new Map();
+    const recordedByClassPeriod = new Map();
     for (const row of todayStudentAttRows) {
       const cid = row.class_id;
-      if (!cid) continue;
-      if (!recordedStudentsByClass.has(cid)) recordedStudentsByClass.set(cid, new Set());
-      recordedStudentsByClass.get(cid).add(row.student_id);
+      const pNum = Number(row.period || 1);
+      if (!cid || !pNum) continue;
+      if (!recordedByClassPeriod.has(cid)) recordedByClassPeriod.set(cid, new Map());
+      const pMap = recordedByClassPeriod.get(cid);
+      if (!pMap.has(pNum)) pMap.set(pNum, new Set());
+      pMap.get(pNum).add(row.student_id);
+    }
+
+    // Determine expected periods per class today from scheduled KBM slots (fallback to [1] when schedule isn't seeded)
+    const expectedPeriodsByClass = new Map();
+    for (const slot of dayScheduleSlots) {
+      if (!slot.class_id || !slot.period_number) continue;
+      if (slot.subject_category && slot.subject_category !== 'KBM') continue;
+      if (!expectedPeriodsByClass.has(slot.class_id)) expectedPeriodsByClass.set(slot.class_id, new Set());
+      expectedPeriodsByClass.get(slot.class_id).add(Number(slot.period_number));
     }
 
     // Classes relevant for viewer (Admin: all populated classes; Guru: homeroom or scheduled today, falling back to all if unscheduled)
@@ -452,12 +464,26 @@ class NotificationsService {
     const incompleteClasses = [];
     for (const cls of relevantClasses) {
       const totalInClass = (studentsByClass.get(cls.class_id) || []).length;
-      const recordedSet = recordedStudentsByClass.get(cls.class_id) || new Set();
-      if (recordedSet.size < totalInClass) {
+      const periodSet = expectedPeriodsByClass.get(cls.class_id);
+      const expectedPeriods = (periodSet && periodSet.size > 0)
+        ? Array.from(periodSet).sort((a, b) => a - b)
+        : [1];
+      const classRecMap = recordedByClassPeriod.get(cls.class_id) || new Map();
+
+      const missingPeriods = [];
+      for (const pNum of expectedPeriods) {
+        const recSet = classRecMap.get(pNum) || new Set();
+        if (recSet.size < totalInClass) {
+          missingPeriods.push(pNum);
+        }
+      }
+
+      if (missingPeriods.length > 0) {
         incompleteClasses.push({
           class_id: cls.class_id,
           class_name: cls.class_name || cls.class_id,
-          recorded: recordedSet.size,
+          missing_periods: missingPeriods,
+          total_periods: expectedPeriods.length,
           total: totalInClass
         });
       }
@@ -469,7 +495,13 @@ class NotificationsService {
     // 2. Pengingat Jam Pulang — Presensi Kelas Belum Lengkap + Auto-Resolve
     if (!isHoliday && rules.enable_class_incomplete && relevantClasses.length > 0) {
       if (incompleteClasses.length > 0) {
-        const namesPreview = incompleteClasses.slice(0, 3).map((c) => c.class_name).join(', ');
+        const namesPreview = incompleteClasses.slice(0, 3).map((c) => {
+          if (c.total_periods > 1) {
+            const pList = c.missing_periods.slice(0, 5).join(', ') + (c.missing_periods.length > 5 ? '...' : '');
+            return `${c.class_name} (kurang Jam ${pList})`;
+          }
+          return c.class_name;
+        }).join(', ');
         const extraTxt = incompleteClasses.length > 3 ? ` +${incompleteClasses.length - 3} kelas lainnya` : '';
         feed.push({
           id: `class-incomplete-${targetDate}`,
@@ -478,13 +510,16 @@ class NotificationsService {
           title: isPastSchoolEnd
             ? `Pengingat Jam Pulang: ${incompleteClasses.length} Kelas Belum Lengkap Presensi`
             : `${incompleteClasses.length} Kelas Belum Lengkap Presensi Hari Ini`,
-          message: `Kelas ${namesPreview}${extraTxt} belum melengkapi presensi siswa tanggal ${targetDate}. Harap segera dilengkapi.`,
+          message: `${namesPreview}${extraTxt} belum lengkap presensi siswa tanggal ${targetDate}. Harap segera dilengkapi.`,
           timestamp: `${isPastSchoolEnd ? `Batas ${rules.school_end_time} WIB` : `${wib.timeWib} WIB`} • Otomatis`,
           created_at: new Date().toISOString(),
           resolved: false,
           action_label: `Lengkapi ${incompleteClasses[0].class_name} \u2192`,
           action_menu: 'menu-attendance',
-          action_payload: { class_id: incompleteClasses[0].class_id },
+          action_payload: {
+            class_id: incompleteClasses[0].class_id,
+            period: incompleteClasses[0].missing_periods[0]
+          },
           snoozable: true,
           meta: { incomplete_classes: incompleteClasses }
         });
@@ -505,18 +540,29 @@ class NotificationsService {
       }
     }
 
-    // 3. Pengingat Guru Lupa / Belum Presensi + Auto-Resolve
+    // 3. Pengingat Guru Lupa / Belum Presensi (Per Slot Mengajar bila tersedia) + Auto-Resolve
     const recordedTeacherIds = new Set(todayTeacherAttRows.map((r) => r.teacher_id).filter(Boolean));
-    const scheduledTeacherIds = new Set(dayScheduleSlots.map((s) => s.teacher_id).filter(Boolean));
+    const recordedTeacherSlots = new Set(
+      todayTeacherAttRows.map((r) => `${r.teacher_id}|${r.class_id}|${Number(r.period)}`)
+    );
+    const kbmTeacherSlots = dayScheduleSlots.filter(
+      (s) => s.teacher_id && (!s.subject_category || s.subject_category === 'KBM')
+    );
+    const scheduledTeacherIds = new Set(kbmTeacherSlots.map((s) => s.teacher_id));
     const expectedTeachers = scheduledTeacherIds.size > 0
       ? allTeachers.filter((t) => scheduledTeacherIds.has(t.teacher_id))
       : allTeachers;
+    const isTeacherMissingToday = (teacherId) => {
+      const tSlots = kbmTeacherSlots.filter((s) => s.teacher_id === teacherId);
+      if (tSlots.length === 0) return !recordedTeacherIds.has(teacherId);
+      return tSlots.some((s) => !recordedTeacherSlots.has(`${teacherId}|${s.class_id}|${Number(s.period_number)}`));
+    };
     const teacherRemindMin = parseMinutesFromHHMM(rules.teacher_remind_time) ?? 750;
     const isPastTeacherRemind = wib.minutes >= teacherRemindMin;
 
     if (!isHoliday && rules.enable_teacher_forgot) {
       if (isAdmin && expectedTeachers.length > 0) {
-        const missingTeachers = expectedTeachers.filter((t) => !recordedTeacherIds.has(t.teacher_id));
+        const missingTeachers = expectedTeachers.filter((t) => isTeacherMissingToday(t.teacher_id));
         if (missingTeachers.length > 0) {
           const previewNames = missingTeachers.slice(0, 3).map((t) => t.name).join(', ');
           const extra = missingTeachers.length > 3 ? ` +${missingTeachers.length - 3} guru lainnya` : '';
@@ -524,8 +570,8 @@ class NotificationsService {
             id: `teacher-forgot-${targetDate}`,
             category: 'presensi',
             priority: isPastTeacherRemind ? 'urgent' : 'warning',
-            title: `${missingTeachers.length} Guru Belum Presensi Hari Ini`,
-            message: `${previewNames}${extra} belum tercatat presensi mengajar pada ${targetDate}.`,
+            title: `${missingTeachers.length} Guru Belum Lengkap Presensi Hari Ini`,
+            message: `${previewNames}${extra} belum lengkap presensi mengajar pada ${targetDate}.`,
             timestamp: `${wib.timeWib} WIB • Pengingat Guru`,
             created_at: new Date().toISOString(),
             resolved: false,
@@ -552,7 +598,7 @@ class NotificationsService {
       } else if (!isAdmin && viewerTeacherId) {
         const selfExpected = expectedTeachers.some((t) => t.teacher_id === viewerTeacherId);
         if (selfExpected) {
-          if (!recordedTeacherIds.has(viewerTeacherId)) {
+          if (isTeacherMissingToday(viewerTeacherId)) {
             feed.push({
               id: `teacher-self-forgot-${viewerTeacherId}-${targetDate}`,
               category: 'presensi',

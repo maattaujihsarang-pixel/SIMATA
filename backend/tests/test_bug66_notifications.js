@@ -30,10 +30,13 @@ function assertFrontendNotificationsIntegrity() {
     '.notif-center-panel',
     '.notif-card.is-resolved',
     '.notif-settings-tabs',
-    '.notif-holiday-chip'
+    '.notif-holiday-chip',
+    '.notif-subbar-actions',
+    '.notif-mark-read-inline'
   ]) {
     assert.ok(notifCss.includes(cssToken), `notifications.css must define ${cssToken}`);
   }
+  assert.ok(notifCss.includes('flex-wrap: wrap'), 'notifications.css filter/subbar must wrap cleanly');
 
   for (const htmlToken of [
     'id="notifBellWrapper"',
@@ -48,7 +51,7 @@ function assertFrontendNotificationsIntegrity() {
     'initSimataNotificationsEngine',
     'refreshSimataNotifications',
     'logSimataNotifEvent',
-    '/css/notifications.css?v=bug66_notif1'
+    '/css/notifications.css?v=bug66_notif2'
   ]) {
     assert.ok(html.includes(htmlToken), `dashboard.html must contain ${htmlToken}`);
   }
@@ -149,6 +152,28 @@ async function runBug66NotificationsTests() {
     const guruSelfAlert2 = guruJson2.data.feed.find((n) => n.id === `teacher-self-forgot-TCH-0001-${todayIso}`);
     assert.ok(guruSelfAlert2);
     assert.strictEqual(guruSelfAlert2.resolved, true, 'Guru personal reminder must auto-resolve after recording teacher attendance');
+
+    // 4b. Per-period completeness check when day schedule has periods 1 & 2 (only period 1 recorded)
+    const schedulesService = require('../src/services/schedules.service');
+    const origGetActive = schedulesService.getActiveNowForResponder.bind(schedulesService);
+    schedulesService.getActiveNowForResponder = async () => ({
+      day_slots: [
+        { class_id: 'CLS-2627-10', period_number: 1, teacher_id: 'TCH-0001', subject_category: 'KBM' },
+        { class_id: 'CLS-2627-10', period_number: 2, teacher_id: 'TCH-0001', subject_category: 'KBM' }
+      ]
+    });
+    try {
+      const perRes = await fetch(`${baseUrl}/api/v1/notifications?date=${todayIso}&day_of_week=1&time_wib=14:00`, {
+        headers: { Authorization: `Bearer ${adminToken}` }
+      });
+      const perJson = await perRes.json();
+      const perClassAlert = perJson.data.feed.find((n) => n.id === `class-incomplete-${todayIso}`);
+      assert.ok(perClassAlert, 'Class incomplete alert must trigger when period 2 is missing even if period 1 is filled');
+      assert.strictEqual(perClassAlert.resolved, false);
+      assert.ok(perClassAlert.message.includes('Jam 2'), `Alert message should mention missing Jam 2, got: ${perClassAlert.message}`);
+    } finally {
+      schedulesService.getActiveNowForResponder = origGetActive;
+    }
 
     // 5. Early Warning Siswa Alpa >= 3 consecutive days
     testDbEngine.student_attendance.push(
