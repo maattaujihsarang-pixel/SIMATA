@@ -20,7 +20,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100..900;1,100..900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css?v=bug65_ktsphoto">
-  <link rel="stylesheet" href="/css/notifications.css?v=bug66_notif2">
+  <link rel="stylesheet" href="/css/notifications.css?v=bug66_notif3">
   <link rel="stylesheet" href="/css/finance.css">
   <style>
 /**
@@ -33544,6 +33544,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const state = {
         initialized: false,
         open: false,
+        hasOpenedOnce: false,
         filter: 'all',
         showResolved: false,
         muted: false,
@@ -33663,7 +33664,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const badge = document.getElementById('notifUnreadBadge');
         const chip = document.getElementById('notifHeaderNewChip');
 
-        if (redDot) redDot.style.display = count > 0 ? 'block' : 'none';
+        if (redDot) {
+            redDot.style.display = count > 0 ? 'block' : 'none';
+            redDot.classList.toggle('no-pulse', Boolean(state.hasOpenedOnce));
+        }
         if (badge) {
             badge.textContent = count > 99 ? '99+' : String(count);
             badge.style.display = count > 0 ? 'inline-block' : 'none';
@@ -33800,7 +33804,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const panel = document.getElementById('notifCenterPanel');
         const backdrop = document.getElementById('notifSheetBackdrop');
         const btn = document.getElementById('notifBellBtn');
+        const redDot = document.getElementById('notifRedDot');
         state.open = true;
+        state.hasOpenedOnce = true;
+        if (redDot) redDot.classList.add('no-pulse');
         if (panel) {
             panel.classList.add('is-open');
             panel.setAttribute('aria-hidden', 'false');

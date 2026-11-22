@@ -51,7 +51,8 @@ function assertFrontendNotificationsIntegrity() {
     'initSimataNotificationsEngine',
     'refreshSimataNotifications',
     'logSimataNotifEvent',
-    '/css/notifications.css?v=bug66_notif2'
+    '/css/notifications.css?v=bug66_notif3',
+    'no-pulse'
   ]) {
     assert.ok(html.includes(htmlToken), `dashboard.html must contain ${htmlToken}`);
   }
