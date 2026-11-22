@@ -1826,6 +1826,57 @@
         body: JSON.stringify(settings || {})
       });
       return { success: true, message: res.message, data: res.data || {} };
+    },
+
+    // =========================================================================
+    // SMART NOTIFICATION CENTER & ALERTS (BUG 66)
+    // =========================================================================
+    getNotificationsFeed: async function (params = {}) {
+      const qs = new URLSearchParams();
+      if (params && params.date) qs.set('date', params.date);
+      if (params && params.time_wib) qs.set('time_wib', params.time_wib);
+      if (params && params.day_of_week !== undefined && params.day_of_week !== null && params.day_of_week !== '') {
+        qs.set('day_of_week', String(params.day_of_week));
+      }
+      const query = qs.toString() ? `?${qs.toString()}` : '';
+      const res = await apiFetch(`/notifications${query}`);
+      return { success: true, data: res.data || {} };
+    },
+
+    getNotificationSettings: async function () {
+      const res = await apiFetch('/notifications/settings');
+      return { success: true, data: res.data || {} };
+    },
+
+    updateNotificationSettings: async function (settings) {
+      const res = await apiFetch('/notifications/settings', {
+        method: 'PUT',
+        body: JSON.stringify(settings || {})
+      });
+      return { success: true, message: res.message, data: res.data || {} };
+    },
+
+    createNotificationBroadcast: async function (payload) {
+      const res = await apiFetch('/notifications/broadcasts', {
+        method: 'POST',
+        body: JSON.stringify(payload || {})
+      });
+      return { success: true, message: res.message, data: res.data || {} };
+    },
+
+    deleteNotificationBroadcast: async function (broadcastId) {
+      const res = await apiFetch(`/notifications/broadcasts/${encodeURIComponent(broadcastId)}`, {
+        method: 'DELETE'
+      });
+      return { success: true, message: res.message, data: res.data || {} };
+    },
+
+    logNotificationEvent: async function (payload) {
+      const res = await apiFetch('/notifications/events', {
+        method: 'POST',
+        body: JSON.stringify(payload || {})
+      });
+      return { success: true, data: res.data || {} };
     }
   };
 

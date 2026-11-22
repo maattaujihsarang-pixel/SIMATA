@@ -20,7 +20,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100..900;1,100..900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css?v=bug65_ktsphoto">
-  <link rel="stylesheet" href="/css/notifications.css?v=bug65_2">
+  <link rel="stylesheet" href="/css/notifications.css?v=bug66_notif1">
   <link rel="stylesheet" href="/css/finance.css">
   <style>
 /**
@@ -1128,6 +1128,26 @@ html, body {
             --:--:--
           </span>
 
+        </div>
+
+        <!-- SMART NOTIFICATION BELL CENTER (BUG 66) -->
+        <div class="notif-bell-wrapper" id="notifBellWrapper">
+          <button
+            type="button"
+            class="notif-bell-btn"
+            id="notifBellBtn"
+            aria-label="Pusat Notifikasi SIMATA"
+            aria-haspopup="true"
+            aria-expanded="false"
+            title="Pusat Notifikasi SIMATA"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+            <span class="notif-red-dot" id="notifRedDot" style="display:none;" aria-hidden="true"></span>
+            <span class="notif-unread-badge" id="notifUnreadBadge" style="display:none;">0</span>
+          </button>
         </div>
 
 
@@ -6733,6 +6753,231 @@ html, body {
 
 </div>
 
+
+<!-- PUSAT NOTIFIKASI CERDAS SIMATA (BUG 66: POPOVER / MOBILE BOTTOM SHEET + SETTINGS) -->
+<div id="notifSheetBackdrop" class="notif-sheet-backdrop" aria-hidden="true"></div>
+
+<section id="notifCenterPanel" class="notif-center-panel" role="dialog" aria-label="Pusat Notifikasi SIMATA" aria-hidden="true">
+  <div class="notif-drag-handle" aria-hidden="true"></div>
+  <div class="notif-panel-header">
+    <div class="notif-panel-title-wrap">
+      <h3>Pusat Notifikasi</h3>
+      <span id="notifHeaderNewChip" class="notif-header-chip is-zero">0 Baru</span>
+    </div>
+    <div class="notif-panel-actions">
+      <button type="button" id="notifSoundToggleBtn" class="notif-icon-action-btn" title="Aktif/Nonaktifkan Suara Chime Notifikasi" aria-label="Suara Notifikasi">
+        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+      </button>
+      <button type="button" id="notifRefreshBtn" class="notif-icon-action-btn" title="Segarkan Notifikasi" aria-label="Segarkan Notifikasi">
+        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      </button>
+      <button type="button" id="notifMarkAllReadBtn" class="notif-icon-action-btn" title="Tandai Semua Sudah Dibaca">
+        <span>Tandai Dibaca</span>
+      </button>
+      <button type="button" id="notifOpenSettingsBtn" class="notif-icon-action-btn" style="display:none;" title="Atur Pengingat &amp; Buat Pengumuman">
+        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-1.7 1.7-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5v.2h-2.4v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1-1.7-1.7.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H6.7v-2.4h.2a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9L8 8.6l1.7-1.7.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.5v-.2h2.4v.2a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1 1.7 1.7-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.5 1h.2V14h-.2a1.7 1.7 0 0 0-1.5 1z"/></svg>
+        <span>Atur</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="notif-filter-bar" id="notifFilterBar">
+    <button type="button" class="notif-filter-pill active" data-notif-filter="all">Semua</button>
+    <button type="button" class="notif-filter-pill" data-notif-filter="unread">Belum Dibaca</button>
+    <button type="button" class="notif-filter-pill" data-notif-filter="presensi">Presensi</button>
+    <button type="button" class="notif-filter-pill" data-notif-filter="jadwal">Jadwal</button>
+    <button type="button" class="notif-filter-pill" data-notif-filter="responder">Responder</button>
+    <button type="button" class="notif-filter-pill" data-notif-filter="peringatan">Peringatan</button>
+    <button type="button" class="notif-filter-pill" data-notif-filter="info">Info</button>
+  </div>
+
+  <div class="notif-subbar">
+    <span id="notifStatusMeta">Memuat pembaruan SIMATA...</span>
+    <label class="notif-show-resolved-lbl">
+      <input type="checkbox" id="notifShowResolvedToggle" />
+      <span>Tampilkan Selesai (&#10003;)</span>
+    </label>
+  </div>
+
+  <div id="notifListContainer" class="notif-list-body">
+    <div class="notif-empty-state"><strong>Memeriksa notifikasi...</strong>Mohon tunggu sebentar.</div>
+  </div>
+</section>
+
+<!-- MODAL PENGATURAN & PENGUMUMAN NOTIFIKASI (KHUSUS ADMIN) -->
+<div id="notifSettingsModal" class="student-modal-backdrop" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.52);align-items:center;justify-content:center;z-index:10060;">
+  <div class="student-modal-card" style="max-width:740px;width:min(95vw,740px);">
+    <div class="student-modal-header">
+      <div>
+        <h3 style="margin:0;">Pengaturan &amp; Pengumuman Notifikasi</h3>
+        <div style="font-size:11.5px;color:#64748b;margin-top:2px;">Atur jam pengingat otomatis, pengecualian libur, serta kirim pengumuman ke Guru &amp; Operator.</div>
+      </div>
+      <button type="button" onclick="closeNotifSettingsModal()" class="student-modal-close-btn" aria-label="Tutup">&times;</button>
+    </div>
+
+    <div class="student-modal-body">
+      <div class="notif-settings-tabs" role="tablist">
+        <button type="button" class="notif-settings-tab-btn active" data-notif-set-tab="rules">Aturan Pengingat Otomatis</button>
+        <button type="button" class="notif-settings-tab-btn" data-notif-set-tab="broadcast">Kirim Pengumuman (Broadcast)</button>
+      </div>
+
+      <!-- TAB 1: RULES -->
+      <div id="notifSetPaneRules" style="display:flex;flex-direction:column;gap:10px;">
+        <div class="notif-rule-row">
+          <div>
+            <strong>Pengingat Jam Pulang &mdash; Presensi Kelas Belum Lengkap</strong>
+            <small>Otomatis memunculkan pengingat mendesak jika ada kelas belum lengkap presensi melewati jam pulang.</small>
+          </div>
+          <div class="notif-rule-controls">
+            <input type="time" id="notifCfg_schoolEndTime" class="notif-time-input" value="13:00" />
+            <input type="checkbox" id="notifCfg_enableClassIncomplete" checked />
+          </div>
+        </div>
+
+        <div class="notif-rule-row">
+          <div>
+            <strong>Pengingat Guru Lupa / Belum Presensi</strong>
+            <small>Mengingatkan guru bertugas (dan melaporkan rekapnya ke Admin) apabila belum tercatat presensi.</small>
+          </div>
+          <div class="notif-rule-controls">
+            <input type="time" id="notifCfg_teacherRemindTime" class="notif-time-input" value="12:30" />
+            <input type="checkbox" id="notifCfg_enableTeacherForgot" checked />
+          </div>
+        </div>
+
+        <div class="notif-rule-row">
+          <div>
+            <strong>Pengingat Jam Mengajar Berikutnya</strong>
+            <small>Notifikasi menit menjelang jam pelajaran dimulai untuk akun Guru.</small>
+          </div>
+          <div class="notif-rule-controls">
+            <input type="number" id="notifCfg_leadMinutes" class="notif-time-input" style="width:68px;" min="5" max="90" value="15" />
+            <span style="font-size:11px;color:#64748b;">mnt</span>
+            <input type="checkbox" id="notifCfg_enableUpcomingTeaching" checked />
+          </div>
+        </div>
+
+        <div class="notif-rule-row">
+          <div>
+            <strong>Peringatan Dini Siswa Alpa Beruntun</strong>
+            <small>Memperingatkan jika ada siswa tercatat Alpa mencapai ambang hari tertentu.</small>
+          </div>
+          <div class="notif-rule-controls">
+            <input type="number" id="notifCfg_alphaThreshold" class="notif-time-input" style="width:64px;" min="1" max="30" value="3" />
+            <span style="font-size:11px;color:#64748b;">hari</span>
+            <input type="checkbox" id="notifCfg_enableEarlyAlpha" checked />
+          </div>
+        </div>
+
+        <div class="notif-rule-row">
+          <div>
+            <strong>Kartu Ringkasan Penutup Hari (Daily Closing Digest)</strong>
+            <small>Rangkuman kehadiran siswa, guru, dan konflik jadwal setiap selesai jam sekolah.</small>
+          </div>
+          <div class="notif-rule-controls">
+            <input type="time" id="notifCfg_dailyDigestTime" class="notif-time-input" value="14:30" />
+            <input type="checkbox" id="notifCfg_enableDailyDigest" checked />
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;">
+          <label class="notif-rule-row" style="cursor:pointer;">
+            <span><strong>Konflik &amp; Pergantian Jam</strong><small>Pantau bentrok &amp; revisi jadwal</small></span>
+            <input type="checkbox" id="notifCfg_enableScheduleConflict" checked />
+          </label>
+          <label class="notif-rule-row" style="cursor:pointer;">
+            <span><strong>Responder &amp; Bukti Foto</strong><small>Aktivitas scanner &amp; kendala</small></span>
+            <input type="checkbox" id="notifCfg_enableResponder" checked />
+          </label>
+          <label class="notif-rule-row" style="cursor:pointer;">
+            <span><strong>Audit KTS &amp; Biodata</strong><small>Pasfoto &amp; biodata belum siap</small></span>
+            <input type="checkbox" id="notifCfg_enableAcademicKts" checked />
+          </label>
+          <label class="notif-rule-row" style="cursor:pointer;">
+            <span><strong>Info Keuangan &amp; Akademik</strong><small>Tagihan siswa &amp; pengingat</small></span>
+            <input type="checkbox" id="notifCfg_enableFinanceGrades" checked />
+          </label>
+        </div>
+
+        <div class="notif-rule-row" style="flex-direction:column;align-items:stretch;">
+          <div>
+            <strong>Pengecualian Hari Libur / Eksepsi KBM (Smart Holiday Mute)</strong>
+            <small>Tambahkan tanggal libur khusus atau kegiatan luar agar pengingat presensi otomatis dijeda (Hari Jumat libur otomatis).</small>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;">
+            <input type="date" id="notifHolidayDateInput" class="notif-time-input" />
+            <input type="text" id="notifHolidayTitleInput" class="notif-time-input" style="flex:1;min-width:160px;" placeholder="Contoh: Libur Maulid / Classmeeting" />
+            <button type="button" id="notifAddHolidayBtn" class="kts-btn-outline" style="padding:6px 12px;font-size:12px;">+ Tambah Libur</button>
+          </div>
+          <div id="notifHolidayList" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;"></div>
+        </div>
+      </div>
+
+      <!-- TAB 2: BROADCAST MANUAL -->
+      <div id="notifSetPaneBroadcast" style="display:none;flex-direction:column;gap:12px;">
+        <div class="student-form-grid">
+          <div class="student-form-group student-col-span-2">
+            <label for="notifBcTitle" class="student-form-label">Judul Pengumuman</label>
+            <input id="notifBcTitle" class="input-box" placeholder="Contoh: Rapat Evaluasi &amp; Pergantian Jam Mengajar" />
+          </div>
+          <div class="student-form-group student-col-span-2">
+            <label for="notifBcMessage" class="student-form-label">Isi Pesan / Pemberitahuan</label>
+            <textarea id="notifBcMessage" rows="3" class="input-box" style="height:auto;padding:10px;" placeholder="Tuliskan informasi penting untuk guru atau operator..."></textarea>
+          </div>
+          <div class="student-form-group">
+            <label for="notifBcPriority" class="student-form-label">Tingkat Prioritas</label>
+            <select id="notifBcPriority" class="input-box">
+              <option value="info">Informasi Biasa</option>
+              <option value="warning">Peringatan / Penting</option>
+              <option value="urgent">Mendesak / Segera</option>
+            </select>
+          </div>
+          <div class="student-form-group">
+            <label for="notifBcCategory" class="student-form-label">Kategori</label>
+            <select id="notifBcCategory" class="input-box">
+              <option value="info">Info SIMATA</option>
+              <option value="jadwal">Jadwal / Pergantian Jam</option>
+              <option value="presensi">Presensi</option>
+              <option value="responder">Responder</option>
+              <option value="peringatan">Peringatan</option>
+            </select>
+          </div>
+          <div class="student-form-group">
+            <label for="notifBcTargetRole" class="student-form-label">Sasaran Penerima</label>
+            <select id="notifBcTargetRole" class="input-box">
+              <option value="ALL">Semua Pengguna (Admin &amp; Guru)</option>
+              <option value="GURU">Khusus Semua Guru</option>
+              <option value="ADMIN">Khusus Admin / Operator</option>
+            </select>
+          </div>
+          <div class="student-form-group">
+            <label for="notifBcActionMenu" class="student-form-label">Arahkan Tombol Menu (Opsional)</label>
+            <select id="notifBcActionMenu" class="input-box">
+              <option value="">Tanpa Tombol Aksi</option>
+              <option value="menu-attendance">Menu Presensi Siswa</option>
+              <option value="menu-teacher-attendance">Menu Presensi Guru</option>
+              <option value="menu-schedules">Menu Jadwal Pelajaran</option>
+              <option value="menu-responder">Menu Responder</option>
+              <option value="menu-kts">Menu KTS</option>
+              <option value="menu-reports">Menu Laporan</option>
+            </select>
+          </div>
+        </div>
+        <button type="button" id="notifSendBroadcastBtn" class="kts-btn-primary" style="align-self:flex-start;">Kirim Pengumuman Sekarang</button>
+
+        <div style="border-top:1px solid #e2e8f0;padding-top:10px;">
+          <div style="font-size:12px;font-weight:700;color:#0f172a;margin-bottom:8px;">Pengumuman Aktif Terkirim</div>
+          <div id="notifBroadcastActiveList" style="display:flex;flex-direction:column;gap:8px;max-height:200px;overflow-y:auto;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="student-modal-footer">
+      <button type="button" onclick="closeNotifSettingsModal()" class="login-button student-btn-cancel">Tutup</button>
+      <button type="button" id="notifCfgSaveBtn" class="login-button student-btn-save">Simpan Aturan Notifikasi</button>
+    </div>
+  </div>
+</div>
 
 <!-- TOAST NOTIFICATION -->
 <div id="toast" class="toast">
@@ -14328,6 +14573,16 @@ function showSchedulesView(opts) {
                         if (dlg && dlg.open) dlg.close();
                         toast('success', 'Tersimpan', (res && res.message) || 'Jadwal berhasil diperbarui.');
                         loadSchedulesData();
+                        if (typeof window.logSimataNotifEvent === 'function' && state.editingSlot) {
+                            window.logSimataNotifEvent({
+                                category: 'jadwal',
+                                priority: 'info',
+                                title: 'Perubahan / Pergantian Jam Jadwal',
+                                message: 'Jadwal kelas ' + (state.editingSlot.className || state.editingSlot.classId || '') + ' diperbarui oleh ' + (document.getElementById('userName') ? document.getElementById('userName').textContent.trim() : 'Admin') + '.',
+                                action_menu: 'menu-schedules',
+                                action_label: 'Lihat Jadwal \u2192'
+                            });
+                        }
                     })
                     .withFailureHandler(function(err) {
                         if (saveBtn) saveBtn.disabled = false;
@@ -14335,6 +14590,16 @@ function showSchedulesView(opts) {
                         const msg = (err && err.message) || 'Gagal menyimpan slot jadwal.';
                         if (warn) { warn.textContent = msg; warn.style.display = 'block'; }
                         else toast('error', 'Gagal', msg);
+                        if (typeof window.logSimataNotifEvent === 'function' && ((err && err.status === 409) || /konflik|bentrok/i.test(msg))) {
+                            window.logSimataNotifEvent({
+                                category: 'jadwal',
+                                priority: 'warning',
+                                title: 'Peringatan Bentrok / Konflik Jadwal',
+                                message: msg,
+                                action_menu: 'menu-schedules',
+                                action_label: 'Periksa Jadwal \u2192'
+                            });
+                        }
                     })
                     .upsertScheduleSlot({
                         academic_year_id: state.academicYearId,
@@ -16065,6 +16330,7 @@ function saveAttendanceFromModal() {
             if (uRes && uRes.success) {
                 closeAttendanceModal();
                 loadStudentAttendance();
+                if (typeof window.refreshSimataNotifications === 'function') window.refreshSimataNotifications({ silent: true });
                 alert('Presensi siswa berhasil diperbarui.');
             } else {
                 alert((uRes && uRes.message) || 'Gagal memperbarui presensi siswa.');
@@ -16089,6 +16355,7 @@ function saveAttendanceFromModal() {
                 setButtonLoading(saveBtn, false, '', 'Simpan');
                 closeAttendanceModal();
                 loadStudentAttendance();
+                if (typeof window.refreshSimataNotifications === 'function') window.refreshSimataNotifications({ silent: true });
                 if (successCount > 0) {
                     alert('Presensi berhasil dicatat untuk ' + successCount + ' jam pelajaran.');
                 }
@@ -17609,6 +17876,7 @@ function saveTeacherAttendanceFromModal() {
         if (uRes && uRes.success) {
             closeTeacherAttendanceModal();
             loadTeacherAttendance();
+            if (typeof window.refreshSimataNotifications === 'function') window.refreshSimataNotifications({ silent: true });
             alert('Presensi guru berhasil diperbarui.');
         } else {
             alert((uRes && uRes.message) || 'Gagal memperbarui presensi guru.');
@@ -21472,6 +21740,9 @@ function executeTeacherAttendanceSubmit({ teacherId, classId, periods, status, s
             try {
                 if (typeof loadTeacherAttendance === 'function') {
                     loadTeacherAttendance();
+                }
+                if (typeof window.refreshSimataNotifications === 'function') {
+                    window.refreshSimataNotifications({ silent: true });
                 }
             } catch (e) {}
         })
@@ -28237,6 +28508,10 @@ function onDashboardLoaded(data) {
         syncSidebarNavGroups();
     }
 
+    if (typeof window.initSimataNotificationsEngine === 'function') {
+        window.initSimataNotificationsEngine();
+    }
+
     hideGlobalLoading();
 
 }
@@ -33257,6 +33532,671 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     setTimeout(handleAppRouting, 100);
 });
+
+// =========================================================================
+// BUG 66: MENU LONCENG / PUSAT NOTIFIKASI CERDAS SIMATA
+// =========================================================================
+(function() {
+    const LS_READ_KEY = 'simata_notif_read_ids_v1';
+    const LS_SNOOZE_KEY = 'simata_notif_snooze_v1';
+    const LS_MUTE_KEY = 'simata_notif_muted_v1';
+
+    const state = {
+        initialized: false,
+        open: false,
+        filter: 'all',
+        showResolved: false,
+        muted: false,
+        feed: [],
+        rules: null,
+        broadcasts: [],
+        holidaysDraft: [],
+        lastMeta: null,
+        knownUrgentIds: new Set(),
+        pollTimer: null
+    };
+
+    try {
+        state.muted = localStorage.getItem(LS_MUTE_KEY) === '1';
+    } catch (_) {}
+
+    function loadJsonMap(key) {
+        try {
+            const raw = localStorage.getItem(key);
+            const parsed = raw ? JSON.parse(raw) : {};
+            return (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) ? parsed : {};
+        } catch (_) {
+            return {};
+        }
+    }
+
+    function saveJsonMap(key, mapObj) {
+        try {
+            const entries = Object.entries(mapObj || {}).slice(-120);
+            localStorage.setItem(key, JSON.stringify(Object.fromEntries(entries)));
+        } catch (_) {}
+    }
+
+    function playGentleNotifChime() {
+        if (state.muted) return;
+        try {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return;
+            const ctx = new AudioCtx();
+            const now = ctx.currentTime;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(659.25, now); // E5
+            osc.frequency.setValueAtTime(880.0, now + 0.09); // A5
+            gain.gain.setValueAtTime(0.001, now);
+            gain.gain.exponentialRampToValueAtTime(0.06, now + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.34);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.35);
+            setTimeout(function() {
+                if (ctx && typeof ctx.close === 'function') ctx.close().catch(function() {});
+            }, 500);
+        } catch (_) {}
+    }
+
+    function isSnoozed(id, snoozeMap) {
+        const until = Number(snoozeMap[id] || 0);
+        return until > Date.now();
+    }
+
+    function isRead(id, readMap) {
+        return Boolean(readMap[id]);
+    }
+
+    function getCategoryLabel(cat) {
+        const labels = {
+            presensi: 'Presensi',
+            jadwal: 'Jadwal',
+            responder: 'Responder',
+            peringatan: 'Peringatan',
+            info: 'Info'
+        };
+        return labels[cat] || 'Info';
+    }
+
+    function navigateByNotifAction(actionMenu, payload) {
+        closeNotifCenter();
+        if (actionMenu === 'notif-settings') {
+            if (isCurrentUserAdmin) openNotifSettingsModal();
+            return;
+        }
+        if (actionMenu === 'menu-finance') {
+            if (typeof openFinanceApp === 'function') openFinanceApp('dashboard');
+            return;
+        }
+        if (actionMenu === 'menu-kts' && typeof window.showKtsView === 'function') {
+            window.showKtsView();
+            return;
+        }
+        const menuEl = actionMenu ? document.getElementById(actionMenu) : null;
+        if (menuEl && typeof menuEl.click === 'function') {
+            menuEl.click();
+        }
+        if (actionMenu === 'menu-attendance' && payload && payload.class_id) {
+            setTimeout(function() {
+                const clsFilter = document.getElementById('attendanceClassFilter');
+                if (clsFilter) {
+                    clsFilter.value = payload.class_id;
+                    if (typeof loadStudentAttendance === 'function') loadStudentAttendance();
+                }
+            }, 120);
+        }
+    }
+
+    function updateBellBadges() {
+        const readMap = loadJsonMap(LS_READ_KEY);
+        const snoozeMap = loadJsonMap(LS_SNOOZE_KEY);
+        const activeUnread = state.feed.filter(function(item) {
+            return !item.resolved && !isRead(item.id, readMap) && !isSnoozed(item.id, snoozeMap);
+        });
+        const count = activeUnread.length;
+
+        const redDot = document.getElementById('notifRedDot');
+        const badge = document.getElementById('notifUnreadBadge');
+        const chip = document.getElementById('notifHeaderNewChip');
+
+        if (redDot) redDot.style.display = count > 0 ? 'block' : 'none';
+        if (badge) {
+            badge.textContent = count > 99 ? '99+' : String(count);
+            badge.style.display = count > 0 ? 'inline-block' : 'none';
+        }
+        if (chip) {
+            chip.textContent = count + ' Baru';
+            chip.classList.toggle('is-zero', count === 0);
+        }
+
+        const adminBtn = document.getElementById('notifOpenSettingsBtn');
+        if (adminBtn) adminBtn.style.display = isCurrentUserAdmin ? 'inline-flex' : 'none';
+
+        const soundBtn = document.getElementById('notifSoundToggleBtn');
+        if (soundBtn) {
+            soundBtn.classList.toggle('is-muted', state.muted);
+            soundBtn.title = state.muted ? 'Suara Notifikasi Nonaktif (Klik untuk aktifkan)' : 'Suara Notifikasi Aktif (Klik untuk senyapkan)';
+        }
+    }
+
+    function renderNotifList() {
+        updateBellBadges();
+        const container = document.getElementById('notifListContainer');
+        const metaEl = document.getElementById('notifStatusMeta');
+        if (!container) return;
+
+        const readMap = loadJsonMap(LS_READ_KEY);
+        const snoozeMap = loadJsonMap(LS_SNOOZE_KEY);
+
+        if (metaEl && state.lastMeta) {
+            const m = state.lastMeta;
+            metaEl.textContent = (m.day_label || 'Hari Ini') + ', ' + (m.server_time_wib || '--:--') + ' WIB' + (m.is_holiday ? ' \u2022 Libur/Eksepsi' : '');
+        }
+
+        const filtered = state.feed.filter(function(item) {
+            if (!state.showResolved && item.resolved) return false;
+            if (!item.resolved && isSnoozed(item.id, snoozeMap)) return false;
+            if (state.filter === 'unread') {
+                return !item.resolved && !isRead(item.id, readMap);
+            }
+            if (state.filter !== 'all') {
+                return item.category === state.filter;
+            }
+            return true;
+        });
+
+        if (filtered.length === 0) {
+            container.innerHTML = '<div class="notif-empty-state"><strong>Semua Terkendali</strong>Tidak ada notifikasi ' +
+                (state.filter === 'all' ? 'yang perlu ditindaklanjuti saat ini.' : 'pada kategori ini.') + '</div>';
+            return;
+        }
+
+        container.innerHTML = filtered.map(function(item) {
+            const itemRead = item.resolved || isRead(item.id, readMap);
+            const prioCls = 'prio-' + (item.priority || 'info');
+            const stateCls = item.resolved ? 'is-resolved' : (itemRead ? 'is-read' : 'is-unread');
+            const catCls = 'cat-' + (item.category || 'info');
+            const safeId = escapeAttr(item.id);
+            const actionBtnHtml = item.action_menu
+                ? '<button type="button" class="notif-act-btn is-primary js-notif-action-btn" data-nid="' + safeId + '">' + escapeHtml(item.action_label || 'Buka Menu \u2192') + '</button>'
+                : '';
+            const snoozeBtnHtml = (item.snoozable && !item.resolved)
+                ? '<button type="button" class="notif-act-btn js-notif-snooze-btn" data-nid="' + safeId + '">Tunda 30m</button>'
+                : '';
+            const readBtnHtml = (!itemRead && !item.resolved)
+                ? '<button type="button" class="notif-act-btn js-notif-read-btn" data-nid="' + safeId + '">Dibaca</button>'
+                : '';
+
+            return '<article class="notif-card ' + prioCls + ' ' + stateCls + '" data-nid="' + safeId + '">' +
+                '<div class="notif-card-top">' +
+                  '<div class="notif-card-title">' +
+                    (!itemRead && !item.resolved ? '<span class="notif-card-unread-dot" aria-hidden="true"></span>' : '') +
+                    '<span>' + escapeHtml(item.title || 'Notifikasi SIMATA') + '</span>' +
+                  '</div>' +
+                  '<span class="notif-card-badge ' + catCls + '">' + escapeHtml(getCategoryLabel(item.category)) + '</span>' +
+                '</div>' +
+                '<div class="notif-card-msg">' + escapeHtml(item.message || '') + '</div>' +
+                '<div class="notif-card-footer">' +
+                  '<span class="notif-card-time">' + escapeHtml(item.timestamp || '') + '</span>' +
+                  '<div class="notif-card-actions">' + actionBtnHtml + snoozeBtnHtml + readBtnHtml + '</div>' +
+                '</div>' +
+            '</article>';
+        }).join('');
+    }
+
+    async function refreshSimataNotifications(opts) {
+        const silent = Boolean(opts && opts.silent);
+        if (!window.simataClient || !window.SIMATA_CLIENT || !window.SIMATA_CLIENT.getStoredToken || !window.SIMATA_CLIENT.getStoredToken()) {
+            return;
+        }
+        try {
+            const res = await window.simataClient.getNotificationsFeed();
+            if (!res || !res.data) return;
+            const d = res.data;
+            const nextFeed = Array.isArray(d.feed) ? d.feed : [];
+
+            // Auto-resolve check & subtle toast/chime for newly appearing urgent alerts
+            const readMap = loadJsonMap(LS_READ_KEY);
+            const snoozeMap = loadJsonMap(LS_SNOOZE_KEY);
+            let hasNewUrgent = false;
+            nextFeed.forEach(function(item) {
+                if (!item.resolved && item.priority === 'urgent' && !isRead(item.id, readMap) && !isSnoozed(item.id, snoozeMap)) {
+                    if (!state.knownUrgentIds.has(item.id)) {
+                        hasNewUrgent = true;
+                        state.knownUrgentIds.add(item.id);
+                    }
+                }
+            });
+
+            state.feed = nextFeed;
+            state.rules = d.rules || state.rules;
+            state.broadcasts = Array.isArray(d.broadcasts) ? d.broadcasts : [];
+            state.lastMeta = {
+                date: d.date,
+                server_time_wib: d.server_time_wib,
+                day_label: d.day_label,
+                is_holiday: Boolean(d.is_holiday),
+                holiday_title: d.holiday_title || null
+            };
+
+            renderNotifList();
+            if (hasNewUrgent && state.initialized) {
+                playGentleNotifChime();
+                const firstUrgent = nextFeed.find(function(n) { return !n.resolved && n.priority === 'urgent' && !isRead(n.id, readMap); });
+                if (firstUrgent && typeof window.showToast === 'function' && !silent) {
+                    window.showToast('warning', firstUrgent.title, firstUrgent.message);
+                }
+            }
+        } catch (err) {
+            console.warn('[NOTIF] Gagal memuat feed notifikasi:', err);
+        }
+    }
+
+    function openNotifCenter() {
+        const panel = document.getElementById('notifCenterPanel');
+        const backdrop = document.getElementById('notifSheetBackdrop');
+        const btn = document.getElementById('notifBellBtn');
+        state.open = true;
+        if (panel) {
+            panel.classList.add('is-open');
+            panel.setAttribute('aria-hidden', 'false');
+        }
+        if (backdrop) backdrop.classList.add('is-open');
+        if (btn) {
+            btn.classList.add('is-open');
+            btn.setAttribute('aria-expanded', 'true');
+        }
+        refreshSimataNotifications({ silent: true });
+    }
+
+    function closeNotifCenter() {
+        const panel = document.getElementById('notifCenterPanel');
+        const backdrop = document.getElementById('notifSheetBackdrop');
+        const btn = document.getElementById('notifBellBtn');
+        state.open = false;
+        if (panel) {
+            panel.classList.remove('is-open');
+            panel.setAttribute('aria-hidden', 'true');
+        }
+        if (backdrop) backdrop.classList.remove('is-open');
+        if (btn) {
+            btn.classList.remove('is-open');
+            btn.setAttribute('aria-expanded', 'false');
+        }
+    }
+
+    function renderHolidayChips() {
+        const listEl = document.getElementById('notifHolidayList');
+        if (!listEl) return;
+        if (!state.holidaysDraft.length) {
+            listEl.innerHTML = '<span style="font-size:11px;color:#94a3b8;">Belum ada tanggal libur khusus ditambahkan.</span>';
+            return;
+        }
+        listEl.innerHTML = state.holidaysDraft.map(function(h, idx) {
+            return '<span class="notif-holiday-chip">' +
+                '<span>' + escapeHtml(h.date) + ' \u2022 ' + escapeHtml(h.title) + '</span>' +
+                '<button type="button" data-h-idx="' + idx + '" aria-label="Hapus libur">&times;</button>' +
+            '</span>';
+        }).join('');
+    }
+
+    function renderBroadcastActiveList() {
+        const listEl = document.getElementById('notifBroadcastActiveList');
+        if (!listEl) return;
+        if (!state.broadcasts.length) {
+            listEl.innerHTML = '<div style="font-size:12px;color:#64748b;padding:8px 0;">Belum ada pengumuman aktif saat ini.</div>';
+            return;
+        }
+        listEl.innerHTML = state.broadcasts.map(function(bc) {
+            return '<div class="notif-broadcast-item">' +
+                '<div style="min-width:0;">' +
+                  '<div style="font-size:12.5px;font-weight:700;color:#0f172a;">' + escapeHtml(bc.title) + '</div>' +
+                  '<div style="font-size:11.5px;color:#475569;margin-top:2px;">' + escapeHtml(bc.message) + '</div>' +
+                  '<div style="font-size:10.5px;color:#64748b;margin-top:4px;">Target: ' + escapeHtml(bc.target_role || 'ALL') + ' \u2022 Prioritas: ' + escapeHtml(bc.priority || 'info') + '</div>' +
+                '</div>' +
+                '<button type="button" class="notif-act-btn js-del-bc-btn" data-bc-id="' + escapeAttr(bc.id) + '" style="color:#b91c1c;border-color:#fecaca;">Hapus</button>' +
+            '</div>';
+        }).join('');
+    }
+
+    async function openNotifSettingsModal() {
+        if (!isCurrentUserAdmin) return;
+        closeNotifCenter();
+        try {
+            const res = await window.simataClient.getNotificationsFeed();
+            if (res && res.data) {
+                state.rules = res.data.rules || state.rules;
+                state.broadcasts = Array.isArray(res.data.broadcasts) ? res.data.broadcasts : state.broadcasts;
+            }
+        } catch (_) {}
+
+        const r = state.rules || {};
+        const sv = function(id, v) { const el = document.getElementById(id); if (el) el.value = v; };
+        const sc = function(id, v) { const el = document.getElementById(id); if (el) el.checked = Boolean(v); };
+
+        sv('notifCfg_schoolEndTime', r.school_end_time || '13:00');
+        sv('notifCfg_teacherRemindTime', r.teacher_remind_time || '12:30');
+        sv('notifCfg_dailyDigestTime', r.daily_digest_time || '14:30');
+        sv('notifCfg_leadMinutes', r.upcoming_class_lead_minutes || 15);
+        sv('notifCfg_alphaThreshold', r.consecutive_alpha_threshold || 3);
+
+        sc('notifCfg_enableClassIncomplete', r.enable_class_incomplete !== false);
+        sc('notifCfg_enableTeacherForgot', r.enable_teacher_forgot !== false);
+        sc('notifCfg_enableUpcomingTeaching', r.enable_upcoming_teaching !== false);
+        sc('notifCfg_enableEarlyAlpha', r.enable_early_warning_alpha !== false);
+        sc('notifCfg_enableDailyDigest', r.enable_daily_digest !== false);
+        sc('notifCfg_enableScheduleConflict', r.enable_schedule_conflict !== false);
+        sc('notifCfg_enableResponder', r.enable_responder !== false);
+        sc('notifCfg_enableAcademicKts', r.enable_academic_kts !== false);
+        sc('notifCfg_enableFinanceGrades', r.enable_finance_grades !== false);
+
+        state.holidaysDraft = Array.isArray(r.custom_holidays) ? r.custom_holidays.slice() : [];
+        renderHolidayChips();
+        renderBroadcastActiveList();
+
+        // Reset active settings tab to Rules
+        document.querySelectorAll('#notifSettingsModal .notif-settings-tab-btn').forEach(function(b) {
+            b.classList.toggle('active', b.dataset.notifSetTab === 'rules');
+        });
+        const rulesPane = document.getElementById('notifSetPaneRules');
+        const bcPane = document.getElementById('notifSetPaneBroadcast');
+        const saveBtn = document.getElementById('notifCfgSaveBtn');
+        if (rulesPane) rulesPane.style.display = 'flex';
+        if (bcPane) bcPane.style.display = 'none';
+        if (saveBtn) saveBtn.style.display = '';
+
+        const modal = document.getElementById('notifSettingsModal');
+        if (modal) modal.style.display = 'flex';
+    }
+
+    function closeNotifSettingsModal() {
+        const modal = document.getElementById('notifSettingsModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    function bindNotifEvents() {
+        const bellBtn = document.getElementById('notifBellBtn');
+        const backdrop = document.getElementById('notifSheetBackdrop');
+        if (bellBtn) {
+            bellBtn.addEventListener('click', function(ev) {
+                ev.stopPropagation();
+                if (state.open) closeNotifCenter();
+                else openNotifCenter();
+            });
+        }
+        if (backdrop) backdrop.addEventListener('click', closeNotifCenter);
+
+        document.addEventListener('click', function(ev) {
+            if (!state.open) return;
+            const panel = document.getElementById('notifCenterPanel');
+            const wrapper = document.getElementById('notifBellWrapper');
+            if (panel && !panel.contains(ev.target) && wrapper && !wrapper.contains(ev.target)) {
+                closeNotifCenter();
+            }
+        });
+
+        const filterBar = document.getElementById('notifFilterBar');
+        if (filterBar) {
+            filterBar.addEventListener('click', function(ev) {
+                const btn = ev.target.closest('.notif-filter-pill[data-notif-filter]');
+                if (!btn) return;
+                state.filter = btn.dataset.notifFilter || 'all';
+                filterBar.querySelectorAll('.notif-filter-pill').forEach(function(b) {
+                    b.classList.toggle('active', b === btn);
+                });
+                renderNotifList();
+            });
+        }
+
+        const resolvedToggle = document.getElementById('notifShowResolvedToggle');
+        if (resolvedToggle) {
+            resolvedToggle.addEventListener('change', function() {
+                state.showResolved = Boolean(this.checked);
+                renderNotifList();
+            });
+        }
+
+        const soundBtn = document.getElementById('notifSoundToggleBtn');
+        if (soundBtn) {
+            soundBtn.addEventListener('click', function() {
+                state.muted = !state.muted;
+                try { localStorage.setItem(LS_MUTE_KEY, state.muted ? '1' : '0'); } catch (_) {}
+                updateBellBadges();
+                if (!state.muted) playGentleNotifChime();
+            });
+        }
+
+        const refreshBtn = document.getElementById('notifRefreshBtn');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', function() {
+                refreshSimataNotifications({ silent: false });
+            });
+        }
+
+        const markAllBtn = document.getElementById('notifMarkAllReadBtn');
+        if (markAllBtn) {
+            markAllBtn.addEventListener('click', function() {
+                const readMap = loadJsonMap(LS_READ_KEY);
+                state.feed.forEach(function(it) { readMap[it.id] = Date.now(); });
+                saveJsonMap(LS_READ_KEY, readMap);
+                renderNotifList();
+            });
+        }
+
+        const openSetBtn = document.getElementById('notifOpenSettingsBtn');
+        if (openSetBtn) openSetBtn.addEventListener('click', openNotifSettingsModal);
+
+        const listContainer = document.getElementById('notifListContainer');
+        if (listContainer) {
+            listContainer.addEventListener('click', function(ev) {
+                const actBtn = ev.target.closest('.js-notif-action-btn');
+                if (actBtn) {
+                    const nid = actBtn.dataset.nid;
+                    const item = state.feed.find(function(n) { return n.id === nid; });
+                    if (item) {
+                        const readMap = loadJsonMap(LS_READ_KEY);
+                        readMap[item.id] = Date.now();
+                        saveJsonMap(LS_READ_KEY, readMap);
+                        renderNotifList();
+                        navigateByNotifAction(item.action_menu, item.action_payload);
+                    }
+                    return;
+                }
+                const snoozeBtn = ev.target.closest('.js-notif-snooze-btn');
+                if (snoozeBtn) {
+                    const nid = snoozeBtn.dataset.nid;
+                    const snoozeMap = loadJsonMap(LS_SNOOZE_KEY);
+                    snoozeMap[nid] = Date.now() + 30 * 60 * 1000;
+                    saveJsonMap(LS_SNOOZE_KEY, snoozeMap);
+                    renderNotifList();
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('info', 'Notifikasi Ditunda', 'Pengingat akan muncul kembali 30 menit lagi.');
+                    }
+                    return;
+                }
+                const readBtn = ev.target.closest('.js-notif-read-btn');
+                if (readBtn) {
+                    const nid = readBtn.dataset.nid;
+                    const readMap = loadJsonMap(LS_READ_KEY);
+                    readMap[nid] = Date.now();
+                    saveJsonMap(LS_READ_KEY, readMap);
+                    renderNotifList();
+                }
+            });
+        }
+
+        // Settings Modal Tabs
+        document.querySelectorAll('#notifSettingsModal .notif-settings-tab-btn').forEach(function(tabBtn) {
+            tabBtn.addEventListener('click', function() {
+                const tab = this.dataset.notifSetTab;
+                document.querySelectorAll('#notifSettingsModal .notif-settings-tab-btn').forEach(function(b) {
+                    b.classList.toggle('active', b === tabBtn);
+                });
+                const rulesPane = document.getElementById('notifSetPaneRules');
+                const bcPane = document.getElementById('notifSetPaneBroadcast');
+                const saveBtn = document.getElementById('notifCfgSaveBtn');
+                if (rulesPane) rulesPane.style.display = tab === 'rules' ? 'flex' : 'none';
+                if (bcPane) bcPane.style.display = tab === 'broadcast' ? 'flex' : 'none';
+                if (saveBtn) saveBtn.style.display = tab === 'rules' ? '' : 'none';
+            });
+        });
+
+        // Holiday Add / Remove
+        const addHolBtn = document.getElementById('notifAddHolidayBtn');
+        if (addHolBtn) {
+            addHolBtn.addEventListener('click', function() {
+                const dIn = document.getElementById('notifHolidayDateInput');
+                const tIn = document.getElementById('notifHolidayTitleInput');
+                const dt = dIn ? dIn.value.trim() : '';
+                const ttl = tIn ? tIn.value.trim() : 'Hari Libur Khusus';
+                if (!dt) {
+                    alert('Silakan pilih tanggal libur terlebih dahulu.');
+                    return;
+                }
+                if (!state.holidaysDraft.some(function(h) { return h.date === dt; })) {
+                    state.holidaysDraft.push({ date: dt, title: ttl || 'Hari Libur Khusus' });
+                }
+                if (tIn) tIn.value = '';
+                renderHolidayChips();
+            });
+        }
+
+        const holList = document.getElementById('notifHolidayList');
+        if (holList) {
+            holList.addEventListener('click', function(ev) {
+                const btn = ev.target.closest('button[data-h-idx]');
+                if (!btn) return;
+                const idx = parseInt(btn.dataset.hIdx, 10);
+                if (!isNaN(idx)) {
+                    state.holidaysDraft.splice(idx, 1);
+                    renderHolidayChips();
+                }
+            });
+        }
+
+        // Save Rules
+        const saveRulesBtn = document.getElementById('notifCfgSaveBtn');
+        if (saveRulesBtn) {
+            saveRulesBtn.addEventListener('click', async function() {
+                const gv = function(id, def) { const el = document.getElementById(id); return el ? el.value : def; };
+                const gc = function(id) { const el = document.getElementById(id); return el ? Boolean(el.checked) : true; };
+                const payload = {
+                    school_end_time: gv('notifCfg_schoolEndTime', '13:00'),
+                    teacher_remind_time: gv('notifCfg_teacherRemindTime', '12:30'),
+                    daily_digest_time: gv('notifCfg_dailyDigestTime', '14:30'),
+                    upcoming_class_lead_minutes: Number(gv('notifCfg_leadMinutes', 15)) || 15,
+                    consecutive_alpha_threshold: Number(gv('notifCfg_alphaThreshold', 3)) || 3,
+                    enable_class_incomplete: gc('notifCfg_enableClassIncomplete'),
+                    enable_teacher_forgot: gc('notifCfg_enableTeacherForgot'),
+                    enable_upcoming_teaching: gc('notifCfg_enableUpcomingTeaching'),
+                    enable_early_warning_alpha: gc('notifCfg_enableEarlyAlpha'),
+                    enable_daily_digest: gc('notifCfg_enableDailyDigest'),
+                    enable_schedule_conflict: gc('notifCfg_enableScheduleConflict'),
+                    enable_responder: gc('notifCfg_enableResponder'),
+                    enable_academic_kts: gc('notifCfg_enableAcademicKts'),
+                    enable_finance_grades: gc('notifCfg_enableFinanceGrades'),
+                    custom_holidays: state.holidaysDraft
+                };
+                showModalProcessing('notifSettingsModal', 'Menyimpan Aturan Notifikasi...', 'Memperbarui jadwal pengingat otomatis...');
+                try {
+                    const res = await window.simataClient.updateNotificationSettings(payload);
+                    if (res && res.data) state.rules = res.data;
+                    hideModalProcessing('notifSettingsModal');
+                    closeNotifSettingsModal();
+                    await refreshSimataNotifications({ silent: true });
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('success', 'Aturan Disimpan', 'Pengaturan pusat notifikasi SIMATA berhasil diperbarui.');
+                    }
+                } catch (err) {
+                    hideModalProcessing('notifSettingsModal');
+                    alert('Gagal menyimpan aturan notifikasi: ' + (err.message || err));
+                }
+            });
+        }
+
+        // Send & Delete Broadcasts
+        const sendBcBtn = document.getElementById('notifSendBroadcastBtn');
+        if (sendBcBtn) {
+            sendBcBtn.addEventListener('click', async function() {
+                const ttl = (document.getElementById('notifBcTitle') || {}).value || '';
+                const msg = (document.getElementById('notifBcMessage') || {}).value || '';
+                if (!ttl.trim() || !msg.trim()) {
+                    alert('Judul dan isi pengumuman wajib diisi.');
+                    return;
+                }
+                showModalProcessing('notifSettingsModal', 'Mengirim Pengumuman...', 'Menyiarkan notifikasi ke target penerima...');
+                try {
+                    await window.simataClient.createNotificationBroadcast({
+                        title: ttl.trim(),
+                        message: msg.trim(),
+                        priority: (document.getElementById('notifBcPriority') || {}).value || 'info',
+                        category: (document.getElementById('notifBcCategory') || {}).value || 'info',
+                        target_role: (document.getElementById('notifBcTargetRole') || {}).value || 'ALL',
+                        action_menu: (document.getElementById('notifBcActionMenu') || {}).value || ''
+                    });
+                    if (document.getElementById('notifBcTitle')) document.getElementById('notifBcTitle').value = '';
+                    if (document.getElementById('notifBcMessage')) document.getElementById('notifBcMessage').value = '';
+                    await refreshSimataNotifications({ silent: true });
+                    renderBroadcastActiveList();
+                    hideModalProcessing('notifSettingsModal');
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('success', 'Pengumuman Terkirim', 'Notifikasi langsung muncul di lonceng penerima.');
+                    }
+                } catch (err) {
+                    hideModalProcessing('notifSettingsModal');
+                    alert('Gagal mengirim pengumuman: ' + (err.message || err));
+                }
+            });
+        }
+
+        const bcListEl = document.getElementById('notifBroadcastActiveList');
+        if (bcListEl) {
+            bcListEl.addEventListener('click', async function(ev) {
+                const delBtn = ev.target.closest('.js-del-bc-btn[data-bc-id]');
+                if (!delBtn) return;
+                const id = delBtn.dataset.bcId;
+                try {
+                    await window.simataClient.deleteNotificationBroadcast(id);
+                    await refreshSimataNotifications({ silent: true });
+                    renderBroadcastActiveList();
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('success', 'Dihapus', 'Pengumuman notifikasi telah dihapus.');
+                    }
+                } catch (err) {
+                    alert('Gagal menghapus pengumuman: ' + (err.message || err));
+                }
+            });
+        }
+    }
+
+    window.refreshSimataNotifications = refreshSimataNotifications;
+    window.openNotifCenter = openNotifCenter;
+    window.closeNotifCenter = closeNotifCenter;
+    window.openNotifSettingsModal = openNotifSettingsModal;
+    window.closeNotifSettingsModal = closeNotifSettingsModal;
+    window.logSimataNotifEvent = async function(payload) {
+        try {
+            if (window.simataClient && typeof window.simataClient.logNotificationEvent === 'function') {
+                await window.simataClient.logNotificationEvent(payload);
+                refreshSimataNotifications({ silent: true });
+            }
+        } catch (_) {}
+    };
+    window.initSimataNotificationsEngine = function() {
+        if (!state.initialized) {
+            state.initialized = true;
+            bindNotifEvents();
+            state.pollTimer = window.setInterval(function() {
+                refreshSimataNotifications({ silent: false });
+            }, 60000);
+        }
+        refreshSimataNotifications({ silent: true });
+    };
+})();
 
 </script>
 
