@@ -172,45 +172,50 @@
   justify-content: center;
   width: 38px;
   height: 38px;
-  border-radius: 11px;
-  border: 1px solid #e2e8f0;
-  background: #f8fafc;
-  color: #334155;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #526258;
   cursor: pointer;
-  transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
+  transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
   padding: 0;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .notif-bell-btn:hover,
 .notif-bell-btn.is-open {
-  background: #f0fdf4;
-  border-color: #86efac;
+  background: rgba(22, 101, 52, 0.08);
+  border-color: rgba(22, 101, 52, 0.16);
   color: #166534;
-  box-shadow: 0 2px 8px rgba(22, 101, 52, 0.12);
 }
 
 .notif-bell-btn svg {
-  width: 19px;
-  height: 19px;
+  width: 20px;
+  height: 20px;
   stroke: currentColor;
   fill: none;
-  stroke-width: 2;
+  stroke-width: 1.9;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
 .notif-red-dot {
   position: absolute;
-  top: 6px;
+  top: 7px;
   right: 7px;
-  width: 9px;
-  height: 9px;
+  width: 8.5px;
+  height: 8.5px;
   border-radius: 50%;
   background: #ef4444;
-  border: 2px solid #ffffff;
+  border: 1.5px solid #ffffff;
   pointer-events: none;
   z-index: 2;
-  animation: notifPulseDot 1.8s infinite;
+  animation: notifPulseDot 1.6s ease-out 3;
+}
+
+.notif-red-dot.no-pulse {
+  animation: none;
 }
 
 .notif-unread-badge {
@@ -241,7 +246,7 @@
   position: fixed;
   top: 66px;
   right: 22px;
-  width: min(440px, calc(100vw - 24px));
+  width: min(492px, calc(100vw - 24px));
   max-height: min(78vh, 660px);
   background: #ffffff;
   border: 1px solid #e2e8f0;
@@ -354,17 +359,23 @@
 
 .notif-filter-bar {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 6px;
-  padding: 10px 14px;
+  gap: 5px;
+  padding: 9px 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
   border-bottom: 1px solid #f1f5f9;
   background: #f8fafc;
 }
 
+.notif-filter-bar::-webkit-scrollbar {
+  display: none;
+}
+
 .notif-filter-pill {
   flex-shrink: 0;
-  padding: 4px 10px;
+  padding: 4px 8.5px;
   border-radius: 999px;
   border: 1px solid #e2e8f0;
   background: #ffffff;
@@ -704,11 +715,19 @@
   .notif-bell-btn {
     width: 36px;
     height: 36px;
-    border-radius: 10px;
+    border-radius: 9999px;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: #166534;
+  }
+
+  .notif-bell-btn:hover {
+    background: rgba(22, 101, 52, 0.08) !important;
   }
 
   .notif-red-dot {
-    top: 5px;
+    top: 6px;
     right: 6px;
   }
 
