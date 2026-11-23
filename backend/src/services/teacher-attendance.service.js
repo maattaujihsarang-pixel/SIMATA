@@ -405,7 +405,9 @@ class TeacherAttendanceService {
     }
 
     const wasAutoAlpa = String(existing.method || '').toLowerCase().includes('auto-alpa');
-    const nextMethod = (wasAutoAlpa && effectiveStatus !== 'Alpa')
+    const wasAlpaOrAuto = existing.status === 'Alpa' || wasAutoAlpa || String(existing.method || '').toLowerCase().includes('koreksi admin');
+    const applySiblings = data.apply_to_same_day_auto_alpa === true || data.apply_to_same_day_auto_alpa === 'true';
+    const nextMethod = ((wasAutoAlpa || (existing.status === 'Alpa' && applySiblings)) && effectiveStatus !== 'Alpa')
       ? 'Koreksi Admin (Eks Auto-Alpa)'
       : (data.method ? String(data.method).trim().slice(0, 30) : existing.method);
 
@@ -421,19 +423,18 @@ class TeacherAttendanceService {
       method: nextMethod
     });
 
-    const applySiblings = data.apply_to_same_day_auto_alpa === true || data.apply_to_same_day_auto_alpa === 'true';
-    if (applySiblings && String(updaterRole || 'ADMIN').toUpperCase() === 'ADMIN') {
+    if (applySiblings && wasAlpaOrAuto && String(updaterRole || 'ADMIN').toUpperCase() === 'ADMIN') {
       const sameDayRows = await teacherAttendanceRepository.findByFilters({
         date: targetDate,
         teacherId: existing.teacher_id
       });
       const siblingAutoAlpa = sameDayRows.filter((r) =>
         r.attendance_id !== attendanceId &&
-        r.status === 'Alpa' &&
-        String(r.method || '').toLowerCase().includes('auto-alpa')
+        r.status === 'Alpa'
       );
       let siblingsUpdated = 0;
       for (const sib of siblingAutoAlpa) {
+        const sibMethod = effectiveStatus !== 'Alpa' ? 'Koreksi Admin (Eks Auto-Alpa)' : sib.method;
         await teacherAttendanceRepository.update(sib.attendance_id, {
           status: effectiveStatus,
           subject: sib.subject,
@@ -443,7 +444,7 @@ class TeacherAttendanceService {
           class_id: sib.class_id,
           attendance_date: targetDate,
           recorded_by_user_id: updatedByUserId,
-          method: nextMethod
+          method: sibMethod
         });
         siblingsUpdated += 1;
       }
@@ -497,15 +498,60 @@ class TeacherAttendanceService {
         } catch (_) {}
       }
 
+      const resolvedCutoff = parseMinutesHHMM(parsedAuto.cutoff_time) !== null ? String(parsedAuto.cutoff_time).trim() : DEFAULT_AUTO_ALPHA_CUTOFF;
+      const cutoffMinutes = parseMinutesHHMM(resolvedCutoff) ?? (23 * 60 + 30);
       return {
         enabled: parsedAuto.enabled === undefined ? true : Boolean(parsedAuto.enabled),
-        cutoff_time: parseMinutesHHMM(parsedAuto.cutoff_time) !== null ? String(parsedAuto.cutoff_time).trim() : DEFAULT_AUTO_ALPHA_CUTOFF,
+        cutoff_time: resolvedCutoff,
+        cutoff_mode: cutoffMinutes < 12 * 60 ? 'next_day_early' : 'same_day_night',
         effective_from: /^\d{4}-\d{2}-\d{2}$/.test(String(parsedAuto.effective_from || '')) ? String(parsedAuto.effective_from) : todayIso,
         holidayDates
       };
     } catch (_) {
-      return { ...defaults, holidayDates: new Set() };
+      return { ...defaults, cutoff_mode: 'same_day_night', holidayDates: new Set() };
     }
+  }
+
+  async updateAutoAlpaConfig(payload = {}, userId = null) {
+    const current = await this.getAutoAlpaRuntimeConfig();
+    const nextEnabled = payload.enabled !== undefined ? Boolean(payload.enabled) : current.enabled;
+
+    let nextCutoff = current.cutoff_time;
+    if (payload.cutoff_time !== undefined) {
+      const trimmedCutoff = String(payload.cutoff_time || '').trim();
+      if (!/^\d{2}:\d{2}$/.test(trimmedCutoff) || parseMinutesHHMM(trimmedCutoff) === null) {
+        throw new BadRequestError('Format jam batas (cutoff_time) harus HH:MM');
+      }
+      nextCutoff = trimmedCutoff;
+    }
+
+    let nextEffectiveFrom = current.effective_from;
+    if (payload.effective_from !== undefined) {
+      const trimmedEff = String(payload.effective_from || '').trim();
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmedEff)) {
+        throw new BadRequestError('Format tanggal efektif (effective_from) harus YYYY-MM-DD');
+      }
+      nextEffectiveFrom = trimmedEff;
+    }
+
+    const toSave = {
+      enabled: nextEnabled,
+      cutoff_time: nextCutoff,
+      effective_from: nextEffectiveFrom
+    };
+
+    await attendanceEvidenceRepository.upsertSystemSetting(
+      KEY_AUTO_ALPHA_CONFIG,
+      JSON.stringify(toSave),
+      'Konfigurasi Auto-Alpa Presensi Guru harian (BUG 68)',
+      userId
+    );
+
+    const cutoffMin = parseMinutesHHMM(nextCutoff) ?? (23 * 60 + 30);
+    return {
+      ...toSave,
+      cutoff_mode: cutoffMin < 12 * 60 ? 'next_day_early' : 'same_day_night'
+    };
   }
 
   async runAutoAlpaForDate({ date = null, time_wib = null, force = false, operatorUserId = null } = {}) {
@@ -534,17 +580,41 @@ class TeacherAttendanceService {
       return { date: targetDate, skipped: true, reason: 'custom_holiday', message: `Tanggal ${targetDate} tercatat hari libur / eksepsi.`, created_count: 0, records: [] };
     }
 
-    if (!force && targetDate === todayIso) {
+    if (!force) {
       const effectiveTime = time_wib || getCurrentWibHHMM();
       const curMin = parseMinutesHHMM(effectiveTime) ?? 0;
       const cutoffMin = parseMinutesHHMM(cfg.cutoff_time) ?? (23 * 60 + 30);
-      if (curMin < cutoffMin) {
+      const isNextDayEarly = cutoffMin < 12 * 60;
+      if (targetDate === todayIso) {
+        if (isNextDayEarly) {
+          return {
+            date: targetDate,
+            skipped: true,
+            reason: 'before_cutoff_next_day',
+            cutoff_time: cfg.cutoff_time,
+            message: `Cutoff pergantian hari dijadwalkan besok pukul ${cfg.cutoff_time} WIB.`,
+            created_count: 0,
+            records: []
+          };
+        }
+        if (curMin < cutoffMin) {
+          return {
+            date: targetDate,
+            skipped: true,
+            reason: 'before_cutoff',
+            cutoff_time: cfg.cutoff_time,
+            message: `Belum melewati batas cutoff harian (${cfg.cutoff_time} WIB).`,
+            created_count: 0,
+            records: []
+          };
+        }
+      } else if (isNextDayEarly && targetDate === addDaysISOUtc(todayIso, -1) && curMin < cutoffMin) {
         return {
           date: targetDate,
           skipped: true,
           reason: 'before_cutoff',
           cutoff_time: cfg.cutoff_time,
-          message: `Belum melewati batas cutoff harian (${cfg.cutoff_time} WIB).`,
+          message: `Belum melewati batas cutoff H+1 (${cfg.cutoff_time} WIB).`,
           created_count: 0,
           records: []
         };

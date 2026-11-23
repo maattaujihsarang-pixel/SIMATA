@@ -64,6 +64,13 @@ async function runBug68Tests() {
   assert.ok(html.includes('handleRunTeacherAutoAlpa'), 'dashboard.html must define handleRunTeacherAutoAlpa');
   assert.ok(html.includes('id="ta_autoAlpaSiblingWrap"'), 'Teacher modal must include ta_autoAlpaSiblingWrap');
   assert.ok(html.includes('id="ta_applySiblingAutoAlpa"'), 'Teacher modal must include ta_applySiblingAutoAlpa');
+  assert.ok(html.includes('id="ta_autoAlpaSiblingCountHint"'), 'Teacher modal must include ta_autoAlpaSiblingCountHint');
+  assert.ok(html.includes('id="settingsTab_auto_alpa"'), 'Settings menu must include Auto-Alpa Guru tab');
+  assert.ok(html.includes('id="settingsPanel_auto_alpa"'), 'Settings view must include settingsPanel_auto_alpa');
+  assert.ok(html.includes('id="aa_enabled"'), 'Auto-Alpa settings panel must include aa_enabled toggle');
+  assert.ok(html.includes('id="aa_cutoffTime"'), 'Auto-Alpa settings panel must include aa_cutoffTime input');
+  assert.ok(html.includes('id="aa_effectiveFrom"'), 'Auto-Alpa settings panel must include aa_effectiveFrom input');
+  assert.ok(html.includes('id="aa_runNowBtn"'), 'Auto-Alpa settings panel must include aa_runNowBtn button');
   assert.ok(html.includes('syncResponderStatusMode'), 'Responder must define syncResponderStatusMode for optional photo on Izin/Sakit');
   assert.ok(!/\b(?:window\.)?(?:confirm|prompt)\s*\(/.test(html), 'dashboard.html must not contain native confirm/prompt calls');
 
@@ -86,6 +93,8 @@ async function runBug68Tests() {
   assert.ok(clientJs.includes('createTeacherAttendance'), 'simata-client.js must expose createTeacherAttendance');
   assert.ok(clientJs.includes('is_admin_manual'), 'simata-client.js must support is_admin_manual flag');
   assert.ok(clientJs.includes('runTeacherAutoAlpa'), 'simata-client.js must expose runTeacherAutoAlpa');
+  assert.ok(clientJs.includes('getTeacherAutoAlpaConfig'), 'simata-client.js must expose getTeacherAutoAlpaConfig');
+  assert.ok(clientJs.includes('updateTeacherAutoAlpaConfig'), 'simata-client.js must expose updateTeacherAutoAlpaConfig');
   assert.ok(clientJs.includes('apply_to_same_day_auto_alpa'), 'simata-client.js must forward apply_to_same_day_auto_alpa');
 
   const scriptRegex = /<script\b(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi;
@@ -474,6 +483,75 @@ async function runBug68Tests() {
     );
     assert.strictEqual(adminAutoHttp.status, 200, `Expected 200 for ADMIN /auto-alpa, got ${adminAutoHttp.status}: ${adminAutoHttp.text}`);
     assert.ok(adminAutoHttp.body?.data?.created_count >= 1, 'HTTP ADMIN /auto-alpa must create Auto-Alpa records');
+
+    // 4f. HTTP GET & PUT /api/v1/attendance/teachers/auto-alpa/config RBAC & H+1 early morning cutoff support
+    const guruCfgGet = await requestJson(
+      httpServer2,
+      'GET',
+      '/api/v1/attendance/teachers/auto-alpa/config',
+      null,
+      { Authorization: `Bearer ${guruLogin.token}` }
+    );
+    assert.strictEqual(guruCfgGet.status, 403, 'GURU calling GET /auto-alpa/config must receive 403');
+
+    const guruCfgPut = await requestJson(
+      httpServer2,
+      'PUT',
+      '/api/v1/attendance/teachers/auto-alpa/config',
+      { enabled: false },
+      { Authorization: `Bearer ${guruLogin.token}` }
+    );
+    assert.strictEqual(guruCfgPut.status, 403, 'GURU calling PUT /auto-alpa/config must receive 403');
+
+    const adminCfgGet = await requestJson(
+      httpServer2,
+      'GET',
+      '/api/v1/attendance/teachers/auto-alpa/config',
+      null,
+      { Authorization: `Bearer ${adminLogin.token}` }
+    );
+    assert.strictEqual(adminCfgGet.status, 200, 'ADMIN calling GET /auto-alpa/config must receive 200');
+    assert.strictEqual(adminCfgGet.body?.data?.enabled, true);
+
+    const adminCfgPutH1 = await requestJson(
+      httpServer2,
+      'PUT',
+      '/api/v1/attendance/teachers/auto-alpa/config',
+      { enabled: true, cutoff_time: '00:15', effective_from: today },
+      { Authorization: `Bearer ${adminLogin.token}` }
+    );
+    assert.strictEqual(adminCfgPutH1.status, 200, `Expected 200 for ADMIN PUT /auto-alpa/config, got ${adminCfgPutH1.text}`);
+    assert.strictEqual(adminCfgPutH1.body?.data?.cutoff_time, '00:15');
+    assert.strictEqual(adminCfgPutH1.body?.data?.cutoff_mode, 'next_day_early');
+    assert.strictEqual(adminCfgPutH1.body?.data?.effective_from, today);
+
+    if (getDayOfWeek(today) !== 5) {
+      const h1TodaySkip = await teacherAttendanceService.runAutoAlpaForDate({ date: today, time_wib: '23:45', force: false });
+      assert.strictEqual(h1TodaySkip.skipped, true);
+      assert.strictEqual(h1TodaySkip.reason, 'before_cutoff_next_day');
+    }
+
+    const adminCfgRestore = await requestJson(
+      httpServer2,
+      'PUT',
+      '/api/v1/attendance/teachers/auto-alpa/config',
+      { enabled: false, cutoff_time: '23:30', effective_from: '2026-11-23' },
+      { Authorization: `Bearer ${adminLogin.token}` }
+    );
+    assert.strictEqual(adminCfgRestore.status, 200);
+    assert.strictEqual(adminCfgRestore.body?.data?.enabled, false);
+    assert.strictEqual(adminCfgRestore.body?.data?.cutoff_mode, 'same_day_night');
+
+    const adminCfgVerify = await requestJson(
+      httpServer2,
+      'GET',
+      '/api/v1/attendance/teachers/auto-alpa/config',
+      null,
+      { Authorization: `Bearer ${adminLogin.token}` }
+    );
+    assert.strictEqual(adminCfgVerify.body?.data?.enabled, false);
+    assert.strictEqual(adminCfgVerify.body?.data?.cutoff_time, '23:30');
+    assert.strictEqual(adminCfgVerify.body?.data?.effective_from, '2026-11-23');
   } finally {
     await new Promise((resolve) => httpServer2.close(resolve));
     schedulesService.getActiveNowForResponder = origGetActiveSched;
