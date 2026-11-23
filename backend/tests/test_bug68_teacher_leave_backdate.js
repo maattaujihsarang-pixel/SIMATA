@@ -70,7 +70,8 @@ async function runBug68Tests() {
   assert.ok(html.includes('id="aa_enabled"'), 'Auto-Alpa settings panel must include aa_enabled toggle');
   assert.ok(html.includes('id="aa_cutoffTime"'), 'Auto-Alpa settings panel must include aa_cutoffTime input');
   assert.ok(html.includes('id="aa_effectiveFrom"'), 'Auto-Alpa settings panel must include aa_effectiveFrom input');
-  assert.ok(html.includes('id="aa_runNowBtn"'), 'Auto-Alpa settings panel must include aa_runNowBtn button');
+  assert.ok(!html.includes('id="aa_runNowBtn"'), 'Auto-Alpa settings panel must NOT duplicate manual execute button (#aa_runNowBtn)');
+  assert.ok(html.includes('att-status-stack'), 'Teacher table must use stacked att-status-stack for mobile status & subtag');
   assert.ok(html.includes('syncResponderStatusMode'), 'Responder must define syncResponderStatusMode for optional photo on Izin/Sakit');
   assert.ok(!/\b(?:window\.)?(?:confirm|prompt)\s*\(/.test(html), 'dashboard.html must not contain native confirm/prompt calls');
 
