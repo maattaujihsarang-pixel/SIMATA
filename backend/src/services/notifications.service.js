@@ -329,7 +329,7 @@ class NotificationsService {
         [targetDate]
       ),
       this.safeQuery(
-        `SELECT ta.attendance_id, ta.teacher_id, ta.class_id, ta.attendance_date, ta.period, ta.subject, ta.status,
+        `SELECT ta.attendance_id, ta.teacher_id, ta.class_id, ta.attendance_date, ta.period, ta.subject, ta.status, ta.method,
                 t.name AS teacher_name, c.class_name
          FROM teacher_attendance ta
          JOIN teachers t ON ta.teacher_id = t.teacher_id
@@ -629,6 +629,52 @@ class NotificationsService {
               snoozable: false
             });
           }
+        }
+      }
+    }
+
+    // 3b. Notifikasi Guru Auto-Alpa (Ringkasan Admin & Peringatan Guru Ybs untuk Konfirmasi Koreksi)
+    const autoAlpaRows = todayTeacherAttRows.filter(
+      (r) => String(r.status || '') === 'Alpa' && String(r.method || '').toLowerCase().includes('auto-alpa')
+    );
+    if (autoAlpaRows.length > 0) {
+      if (isAdmin) {
+        const autoTeachersMap = new Map();
+        for (const r of autoAlpaRows) {
+          if (!autoTeachersMap.has(r.teacher_id)) autoTeachersMap.set(r.teacher_id, r.teacher_name || r.teacher_id);
+        }
+        const tNames = Array.from(autoTeachersMap.values());
+        const tPreview = tNames.slice(0, 3).join(', ') + (tNames.length > 3 ? ` +${tNames.length - 3} lainnya` : '');
+        feed.push({
+          id: `auto-alpa-summary-${targetDate}`,
+          category: 'peringatan',
+          priority: 'warning',
+          title: `${autoAlpaRows.length} Sesi (${tNames.length} Guru) Tercatat Auto-Alpa`,
+          message: `${tPreview} ditandai Auto-Alpa pada ${targetDate}. Jika guru konfirmasi hadir/izin, silakan edit di menu Presensi Guru.`,
+          timestamp: `${wib.timeWib} WIB • Auto-Alpa Sistem`,
+          created_at: new Date().toISOString(),
+          resolved: false,
+          action_label: 'Tinjau & Koreksi \u2192',
+          action_menu: 'menu-teacher-attendance',
+          snoozable: true
+        });
+      } else if (viewerTeacherId) {
+        const selfAutoAlpa = autoAlpaRows.filter((r) => r.teacher_id === viewerTeacherId);
+        if (selfAutoAlpa.length > 0) {
+          const pNums = [...new Set(selfAutoAlpa.map((r) => Number(r.period)))].sort((a, b) => a - b).join(', ');
+          feed.push({
+            id: `teacher-self-auto-alpa-${viewerTeacherId}-${targetDate}`,
+            category: 'peringatan',
+            priority: 'urgent',
+            title: `Presensi Anda Tercatat Auto-Alpa (${targetDate})`,
+            message: `Sistem menandai Jam ke-${pNums} sebagai Alpa karena tidak ada presensi/laporan izin. Jika Anda hadir atau izin, harap segera konfirmasi ke Admin/Piket untuk koreksi.`,
+            timestamp: `${wib.timeWib} WIB • Auto-Alpa Sistem`,
+            created_at: new Date().toISOString(),
+            resolved: false,
+            action_label: 'Lihat Presensi Guru \u2192',
+            action_menu: 'menu-teacher-attendance',
+            snoozable: true
+          });
         }
       }
     }

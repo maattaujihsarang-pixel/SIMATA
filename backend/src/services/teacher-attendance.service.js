@@ -2,7 +2,9 @@ const teacherAttendanceRepository = require('../repositories/teacher-attendance.
 const teacherRepository = require('../repositories/teacher.repository');
 const classRepository = require('../repositories/class.repository');
 const academicYearRepository = require('../repositories/academic-year.repository');
+const attendanceEvidenceRepository = require('../repositories/attendance-evidence.repository');
 const evidenceService = require('./evidence.service');
+const schedulesService = require('./schedules.service');
 const { withTransaction } = require('../config/database');
 const { generateUUID } = require('../utils/id-generator.util');
 const { getTodayISODate, getCurrentISOTime } = require('../utils/date.util');
@@ -10,6 +12,37 @@ const { BadRequestError, NotFoundError, ConflictError, ForbiddenError } = requir
 const logger = require('../utils/logger.util');
 
 const VALID_STATUSES = ['Hadir', 'Izin', 'Sakit', 'Alpa', 'TugasLuar'];
+const KEY_NOTIFICATION_RULES = 'notification_rules_config';
+const KEY_AUTO_ALPHA_CONFIG = 'teacher_auto_alpa_config';
+const DEFAULT_AUTO_ALPHA_CUTOFF = '23:30';
+const AUTO_ALPHA_INTERVAL_MS = 15 * 60 * 1000;
+
+function getCurrentWibHHMM() {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Jakarta',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  }).formatToParts(new Date());
+  const hh = (parts.find((p) => p.type === 'hour') || { value: '07' }).value;
+  const mm = (parts.find((p) => p.type === 'minute') || { value: '00' }).value;
+  return `${hh}:${mm}`;
+}
+
+function parseMinutesHHMM(val) {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(String(val || '').trim());
+  if (!m) return null;
+  const hh = Number(m[1]);
+  const mm = Number(m[2]);
+  if (hh < 0 || hh > 23 || mm < 0 || mm > 59) return null;
+  return hh * 60 + mm;
+}
+
+function addDaysISOUtc(isoDate, deltaDays) {
+  const [y, m, d] = String(isoDate).split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d + deltaDays));
+  return dt.toISOString().slice(0, 10);
+}
 
 function generateTeacherAttendanceId(attendanceDate, period) {
   const dateCompact = attendanceDate.replace(/-/g, '');
@@ -19,6 +52,11 @@ function generateTeacherAttendanceId(attendanceDate, period) {
 }
 
 class TeacherAttendanceService {
+  constructor() {
+    this._autoAlpaTimer = null;
+    this._autoAlpaStartupTimer = null;
+    this._autoAlpaInFlight = false;
+  }
   /**
    * Multi-Hour Teacher Attendance with Single Photo Evidence (F-P5-005 & BUG 68)
    * Photo is required for live 'Hadir' submissions, and optional for 'Izin'/'Sakit'/'Alpa' or Admin Manual/Susulan.
@@ -366,7 +404,12 @@ class TeacherAttendanceService {
       );
     }
 
-    return teacherAttendanceRepository.update(attendanceId, {
+    const wasAutoAlpa = String(existing.method || '').toLowerCase().includes('auto-alpa');
+    const nextMethod = (wasAutoAlpa && effectiveStatus !== 'Alpa')
+      ? 'Koreksi Admin (Eks Auto-Alpa)'
+      : (data.method ? String(data.method).trim().slice(0, 30) : existing.method);
+
+    const updated = await teacherAttendanceRepository.update(attendanceId, {
       status: effectiveStatus,
       subject: subject !== undefined ? String(subject).trim() : existing.subject,
       materi: nextMateri,
@@ -374,8 +417,263 @@ class TeacherAttendanceService {
       period: parsedPeriod,
       class_id: targetClassId,
       attendance_date: targetDate,
-      recorded_by_user_id: updatedByUserId
+      recorded_by_user_id: updatedByUserId,
+      method: nextMethod
     });
+
+    const applySiblings = data.apply_to_same_day_auto_alpa === true || data.apply_to_same_day_auto_alpa === 'true';
+    if (applySiblings && String(updaterRole || 'ADMIN').toUpperCase() === 'ADMIN') {
+      const sameDayRows = await teacherAttendanceRepository.findByFilters({
+        date: targetDate,
+        teacherId: existing.teacher_id
+      });
+      const siblingAutoAlpa = sameDayRows.filter((r) =>
+        r.attendance_id !== attendanceId &&
+        r.status === 'Alpa' &&
+        String(r.method || '').toLowerCase().includes('auto-alpa')
+      );
+      let siblingsUpdated = 0;
+      for (const sib of siblingAutoAlpa) {
+        await teacherAttendanceRepository.update(sib.attendance_id, {
+          status: effectiveStatus,
+          subject: sib.subject,
+          materi: nextMateri,
+          note: note !== undefined ? (note ? String(note).trim() : null) : sib.note,
+          period: sib.period,
+          class_id: sib.class_id,
+          attendance_date: targetDate,
+          recorded_by_user_id: updatedByUserId,
+          method: nextMethod
+        });
+        siblingsUpdated += 1;
+      }
+      if (updated) {
+        updated.updated_siblings_count = siblingsUpdated;
+      }
+    }
+
+    return updated;
+  }
+
+  async getAutoAlpaRuntimeConfig() {
+    const todayIso = getTodayISODate();
+    const defaults = {
+      enabled: true,
+      cutoff_time: DEFAULT_AUTO_ALPHA_CUTOFF,
+      effective_from: todayIso
+    };
+    try {
+      const settingsMap = await attendanceEvidenceRepository.getSystemSettings([
+        KEY_AUTO_ALPHA_CONFIG,
+        KEY_NOTIFICATION_RULES
+      ]);
+      const rawAuto = settingsMap[KEY_AUTO_ALPHA_CONFIG]?.setting_value;
+      let parsedAuto = {};
+      if (rawAuto) {
+        try {
+          parsedAuto = JSON.parse(rawAuto);
+        } catch (_) {
+          parsedAuto = {};
+        }
+      } else {
+        // Initialize effective_from lazily to today so older historical dates aren't bulk-marked Alpa
+        try {
+          await attendanceEvidenceRepository.upsertSystemSetting(
+            KEY_AUTO_ALPHA_CONFIG,
+            JSON.stringify(defaults),
+            'Konfigurasi Auto-Alpa Presensi Guru harian (BUG 68)',
+            null
+          );
+        } catch (_) {}
+      }
+
+      let holidayDates = new Set();
+      const rawNotif = settingsMap[KEY_NOTIFICATION_RULES]?.setting_value;
+      if (rawNotif) {
+        try {
+          const parsedNotif = JSON.parse(rawNotif);
+          const list = Array.isArray(parsedNotif?.custom_holidays) ? parsedNotif.custom_holidays : [];
+          holidayDates = new Set(list.map((h) => String(h?.date || '').trim()).filter(Boolean));
+        } catch (_) {}
+      }
+
+      return {
+        enabled: parsedAuto.enabled === undefined ? true : Boolean(parsedAuto.enabled),
+        cutoff_time: parseMinutesHHMM(parsedAuto.cutoff_time) !== null ? String(parsedAuto.cutoff_time).trim() : DEFAULT_AUTO_ALPHA_CUTOFF,
+        effective_from: /^\d{4}-\d{2}-\d{2}$/.test(String(parsedAuto.effective_from || '')) ? String(parsedAuto.effective_from) : todayIso,
+        holidayDates
+      };
+    } catch (_) {
+      return { ...defaults, holidayDates: new Set() };
+    }
+  }
+
+  async runAutoAlpaForDate({ date = null, time_wib = null, force = false, operatorUserId = null } = {}) {
+    const todayIso = getTodayISODate();
+    const targetDate = date ? String(date).trim() : todayIso;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(targetDate)) {
+      throw new BadRequestError('Format tanggal harus YYYY-MM-DD');
+    }
+
+    if (targetDate > todayIso) {
+      return { date: targetDate, skipped: true, reason: 'future_date', message: 'Tanggal masa depan dilewati.', created_count: 0, records: [] };
+    }
+
+    const cfg = await this.getAutoAlpaRuntimeConfig();
+    if (!force && !cfg.enabled) {
+      return { date: targetDate, skipped: true, reason: 'disabled', message: 'Auto-Alpa sedang dinonaktifkan.', created_count: 0, records: [] };
+    }
+
+    const [yy, mm, dd] = targetDate.split('-').map(Number);
+    const utcDate = new Date(Date.UTC(yy, mm - 1, dd));
+    const dayOfWeek = utcDate.getUTCDay();
+    if (dayOfWeek === 5) {
+      return { date: targetDate, skipped: true, reason: 'friday_holiday', message: 'Hari Jumat (libur rutin) dilewati.', created_count: 0, records: [] };
+    }
+    if (cfg.holidayDates.has(targetDate)) {
+      return { date: targetDate, skipped: true, reason: 'custom_holiday', message: `Tanggal ${targetDate} tercatat hari libur / eksepsi.`, created_count: 0, records: [] };
+    }
+
+    if (!force && targetDate === todayIso) {
+      const effectiveTime = time_wib || getCurrentWibHHMM();
+      const curMin = parseMinutesHHMM(effectiveTime) ?? 0;
+      const cutoffMin = parseMinutesHHMM(cfg.cutoff_time) ?? (23 * 60 + 30);
+      if (curMin < cutoffMin) {
+        return {
+          date: targetDate,
+          skipped: true,
+          reason: 'before_cutoff',
+          cutoff_time: cfg.cutoff_time,
+          message: `Belum melewati batas cutoff harian (${cfg.cutoff_time} WIB).`,
+          created_count: 0,
+          records: []
+        };
+      }
+    }
+
+    const schedOverview = await schedulesService.getActiveNowForResponder({
+      date: targetDate,
+      time_wib: '12:00'
+    });
+    const kbmSlots = (Array.isArray(schedOverview?.day_slots) ? schedOverview.day_slots : []).filter(
+      (s) => s && s.teacher_id && s.class_id && s.period_number && (!s.subject_category || s.subject_category === 'KBM')
+    );
+
+    if (kbmSlots.length === 0) {
+      return { date: targetDate, skipped: true, reason: 'no_kbm_slots', message: `Tidak ada slot mengajar KBM terjadwal pada ${targetDate}.`, created_count: 0, records: [] };
+    }
+
+    const existingRows = await teacherAttendanceRepository.findByFilters({ date: targetDate });
+    const teacherPeriodSet = new Set(existingRows.map((r) => `${r.teacher_id}|${Number(r.period)}`));
+    const classPeriodSet = new Set(existingRows.map((r) => `${r.class_id}|${Number(r.period)}`));
+    const activeYear = await academicYearRepository.getActiveYear();
+    const fallbackYearId = activeYear?.academic_year_id || '2026/2027';
+
+    const createdRecords = [];
+    const nowIso = new Date().toISOString();
+
+    for (const slot of kbmSlots) {
+      const pNum = Number(slot.period_number);
+      if (pNum < 1 || pNum > 10) continue;
+      const teacherKey = `${slot.teacher_id}|${pNum}`;
+      const classKey = `${slot.class_id}|${pNum}`;
+
+      // Guard 4: Skip if teacher already has attendance OR another substitute teacher already filled the class slot
+      if (teacherPeriodSet.has(teacherKey) || classPeriodSet.has(classKey)) {
+        continue;
+      }
+
+      const attendanceId = generateTeacherAttendanceId(targetDate, pNum);
+      try {
+        const inserted = await teacherAttendanceRepository.insertSingle({
+          attendance_id: attendanceId,
+          teacher_id: slot.teacher_id,
+          class_id: slot.class_id,
+          academic_year_id: slot.academic_year_id || fallbackYearId,
+          attendance_date: targetDate,
+          period: pNum,
+          subject: slot.subject_name || slot.subject_code || 'Mata Pelajaran',
+          materi: 'Alpa otomatis (tidak ada presensi/laporan hingga batas waktu)',
+          status: 'Alpa',
+          method: 'Auto-Alpa (Sistem)',
+          recorded_at: nowIso,
+          note: `Ditandai Alpa otomatis oleh sistem (${targetDate}). Hubungi Admin untuk koreksi bila ada konfirmasi kehadiran/izin.`,
+          recorded_by_user_id: operatorUserId || null
+        });
+        teacherPeriodSet.add(teacherKey);
+        classPeriodSet.add(classKey);
+        createdRecords.push(inserted);
+      } catch (err) {
+        if (err && err.code === '23505') {
+          teacherPeriodSet.add(teacherKey);
+          classPeriodSet.add(classKey);
+        } else {
+          throw err;
+        }
+      }
+    }
+
+    return {
+      date: targetDate,
+      skipped: false,
+      reason: 'completed',
+      total_kbm_slots: kbmSlots.length,
+      created_count: createdRecords.length,
+      records: createdRecords
+    };
+  }
+
+  async runScheduledAutoAlpaSweep() {
+    if (this._autoAlpaInFlight) return;
+    this._autoAlpaInFlight = true;
+    try {
+      const cfg = await this.getAutoAlpaRuntimeConfig();
+      if (!cfg.enabled) return;
+
+      const todayIso = getTodayISODate();
+      const yesterdayIso = addDaysISOUtc(todayIso, -1);
+
+      if (yesterdayIso >= cfg.effective_from) {
+        const resYesterday = await this.runAutoAlpaForDate({ date: yesterdayIso, force: false });
+        if (resYesterday.created_count > 0) {
+          logger.info(`[AUTO-ALPA] Marked ${resYesterday.created_count} teacher sessions as Alpa for ${yesterdayIso}.`);
+        }
+      }
+
+      if (todayIso >= cfg.effective_from) {
+        const resToday = await this.runAutoAlpaForDate({ date: todayIso, force: false });
+        if (resToday.created_count > 0) {
+          logger.info(`[AUTO-ALPA] Marked ${resToday.created_count} teacher sessions as Alpa for ${todayIso}.`);
+        }
+      }
+    } catch (err) {
+      logger.warn(`[AUTO-ALPA] Scheduler sweep error: ${err.message}`);
+    } finally {
+      this._autoAlpaInFlight = false;
+    }
+  }
+
+  startAutoAlpaScheduler() {
+    if (this._autoAlpaTimer || this._autoAlpaStartupTimer) return;
+    this._autoAlpaStartupTimer = setTimeout(() => {
+      this._autoAlpaStartupTimer = null;
+      this.runScheduledAutoAlpaSweep();
+    }, 30000);
+    this._autoAlpaTimer = setInterval(() => {
+      this.runScheduledAutoAlpaSweep();
+    }, AUTO_ALPHA_INTERVAL_MS);
+    logger.info('[AUTO-ALPA] Daily teacher Auto-Alpa scheduler started (15m interval).');
+  }
+
+  stopAutoAlpaScheduler() {
+    if (this._autoAlpaStartupTimer) {
+      clearTimeout(this._autoAlpaStartupTimer);
+      this._autoAlpaStartupTimer = null;
+    }
+    if (this._autoAlpaTimer) {
+      clearInterval(this._autoAlpaTimer);
+      this._autoAlpaTimer = null;
+    }
   }
 }
 

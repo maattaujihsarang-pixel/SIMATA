@@ -1036,7 +1036,8 @@
         note: data.note,
         period: data.period !== undefined ? parseInt(data.period, 10) : undefined,
         class_id: data.classId || data.class_id,
-        attendance_date: data.date || data.attendance_date
+        attendance_date: data.date || data.attendance_date,
+        apply_to_same_day_auto_alpa: Boolean(data.apply_to_same_day_auto_alpa || data.applyToSameDayAutoAlpa)
       };
       const res = await apiFetch(`/attendance/teachers/${encodeURIComponent(id)}`, {
         method: 'PUT',
@@ -1109,6 +1110,15 @@
     // 35b. TeacherAttendance: createTeacherAttendance (Admin Susulan / Manual & Guru Leave)
     createTeacherAttendance: async function (data) {
       return this.recordTeacherAttendanceFromResponder(data);
+    },
+
+    // 35c. TeacherAttendance: runTeacherAutoAlpa (Admin on-demand Auto-Alpa sweep)
+    runTeacherAutoAlpa: async function (payload = {}) {
+      const res = await apiFetch('/attendance/teachers/auto-alpa', {
+        method: 'POST',
+        body: JSON.stringify(payload || {})
+      });
+      return { success: true, message: res.message, data: res.data };
     },
 
     // 36. Responder: createResponderSession

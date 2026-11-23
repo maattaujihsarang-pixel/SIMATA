@@ -166,7 +166,7 @@ class TeacherAttendanceRepository {
     return res.rows[0] || null;
   }
 
-  async update(attendanceId, { status, subject, materi, note, period, class_id, attendance_date, recorded_by_user_id } = {}) {
+  async update(attendanceId, { status, subject, materi, note, period, class_id, attendance_date, recorded_by_user_id, method = null } = {}) {
     await ensureStatusConstraint((q, p) => db.query(q, p));
     const res = await db.query(
       `UPDATE teacher_attendance
@@ -177,10 +177,11 @@ class TeacherAttendanceRepository {
            period = COALESCE($5, period),
            class_id = COALESCE($6, class_id),
            attendance_date = COALESCE($7, attendance_date),
-           recorded_by_user_id = COALESCE($8, recorded_by_user_id)
+           recorded_by_user_id = COALESCE($8, recorded_by_user_id),
+           method = COALESCE($10, method)
        WHERE attendance_id = $9
        RETURNING *`,
-      [status, subject, materi, note, period, class_id, attendance_date, recorded_by_user_id, attendanceId]
+      [status, subject, materi, note, period, class_id, attendance_date, recorded_by_user_id, attendanceId, method]
     );
     return res.rows[0] || null;
   }

@@ -737,6 +737,7 @@ class TestDbEngine {
         if (params[5]) att.class_id = params[5];
         if (params[6]) att.attendance_date = params[6];
         if (params[7]) att.recorded_by_user_id = params[7];
+        if (params[9]) att.method = params[9];
       }
       return { rows: att ? [{ ...att }] : [], rowCount: att ? 1 : 0 };
     }

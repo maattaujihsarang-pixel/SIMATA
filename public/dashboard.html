@@ -2522,7 +2522,14 @@ html, body {
               <span class="section-label">PRESENSI GURU</span>
               <h2>Daftar Presensi Guru</h2>
             </div>
-            <div class="section-actions">
+            <div class="section-actions" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+              <button id="runAutoAlpaTeacherBtn" type="button" class="login-button" style="margin-top:0;background:#b91c1c;display:none;" title="Tandai otomatis guru yang tidak ada presensi/izin KBM pada tanggal terpilih sebagai Alpa">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9"></circle>
+                  <polyline points="12 7 12 12 15 15"></polyline>
+                </svg>
+                <span>Cek Auto-Alpa</span>
+              </button>
               <button id="addTeacherAttendanceButton" class="login-button" style="margin-top:0;">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M12 5v14M5 12h14"/>
@@ -2823,6 +2830,12 @@ html, body {
                 <div class="student-form-group">
                   <label for="ta_note" class="student-form-label">Catatan <span class="field-hint">(Opsional)</span></label>
                   <textarea id="ta_note" class="input-box" rows="2" placeholder="Catatan kegiatan belajar mengajar (opsional)..." style="height:auto;padding:10px 14px;resize:vertical;"></textarea>
+                </div>
+                <div id="ta_autoAlpaSiblingWrap" style="display:none;margin-top:10px;padding:10px 12px;border-radius:8px;background:#fef2f2;border:1px solid #fecaca;">
+                  <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;font-size:12px;color:#7f1d1d;line-height:1.45;">
+                    <input type="checkbox" id="ta_applySiblingAutoAlpa" style="margin-top:2px;width:15px;height:15px;accent-color:#166534;flex-shrink:0;" />
+                    <span><strong>Koreksi Serentak Auto-Alpa:</strong> Terapkan perubahan status &amp; catatan ini ke seluruh jam <em>Auto-Alpa (Sistem)</em> milik guru ini pada tanggal yang sama.</span>
+                  </label>
                 </div>
               </div>
             </div>
@@ -17393,7 +17406,16 @@ function renderTeacherAttendanceTbody() {
         const teacherName = escapeHtml(attendanceTeacherLookup[a.teacherId] || a.teacherName || a.teacherId || 'Nama tidak tersedia');
         const className = escapeHtml(attendanceClassLookup[a.classId] || a.classId || '-');
         const periodText = formatAttendancePeriod(a.period);
-        const statusBadge = renderAttendanceStatusBadge(a.status);
+        const methodStr = String(a.method || '').toLowerCase();
+        let methodSubTag = '';
+        if (methodStr.includes('auto-alpa')) {
+            methodSubTag = '<div style="font-size:10px;color:#b91c1c;font-weight:700;margin-top:2px;">Otomatis Sistem</div>';
+        } else if (methodStr.includes('koreksi admin')) {
+            methodSubTag = '<div style="font-size:10px;color:#1d4ed8;font-weight:700;margin-top:2px;">Koreksi Admin</div>';
+        } else if (methodStr.includes('susulan')) {
+            methodSubTag = '<div style="font-size:10px;color:#0f766e;font-weight:700;margin-top:2px;">Susulan Admin</div>';
+        }
+        const statusBadge = renderAttendanceStatusBadge(a.status) + methodSubTag;
         const timeText = formatAttendanceTime(a.timestamp || a.recorded_at);
         const editBtnHtml = isCurrentUserAdmin
             ? ('<button type="button" class="btn-action btn-action-edit" onclick="openTeacherAttendanceModal(\'edit\', \'' + escapeAttr(a.attendanceId) + '\')" title="Edit Presensi Guru">' +
@@ -17695,6 +17717,10 @@ function initTeacherAttendanceModule() {
         if (addBtn) {
             addBtn.addEventListener('click', function() { openTeacherAttendanceModal('create'); });
         }
+        const autoAlpaBtn = document.getElementById('runAutoAlpaTeacherBtn');
+        if (autoAlpaBtn) {
+            autoAlpaBtn.addEventListener('click', handleRunTeacherAutoAlpa);
+        }
         const cancelBtn = document.getElementById('teacherAttendanceCancelBtn'); if (cancelBtn) cancelBtn.addEventListener('click', closeTeacherAttendanceModal);
         const saveBtn = document.getElementById('teacherAttendanceSaveBtn'); if (saveBtn) saveBtn.addEventListener('click', saveTeacherAttendanceFromModal);
 
@@ -17731,6 +17757,10 @@ function initTeacherAttendanceModule() {
         if (btnSpan) {
             btnSpan.textContent = isCurrentUserAdmin ? 'Tambah / Susulan Guru' : 'Lapor Izin / Sakit Hari Ini';
         }
+    }
+    const autoAlpaBtn = document.getElementById('runAutoAlpaTeacherBtn');
+    if (autoAlpaBtn) {
+        autoAlpaBtn.style.display = isCurrentUserAdmin ? '' : 'none';
     }
 
     // Toolbar Entries & Search
@@ -17807,6 +17837,46 @@ function initTeacherAttendanceModule() {
             return '<option value="' + escapeAttr(cid) + '">' + escapeHtml(attendanceClassLookup[cid]) + '</option>';
         }).join('');
     }
+}
+
+async function handleRunTeacherAutoAlpa() {
+    if (!isCurrentUserAdmin) return;
+    const dateFilter = document.getElementById('teacherAttendanceDateFilter');
+    const selectedDate = dateFilter && dateFilter.value ? String(dateFilter.value).trim() : '';
+    const targetDate = selectedDate || (typeof getWibTodayISODate === 'function'
+        ? getWibTodayISODate()
+        : new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()));
+
+    const ok = await window.simataConfirm(
+        'Jalankan pemeriksaan Auto-Alpa Presensi Guru untuk tanggal ' + targetDate + '?\nGuru terjadwal KBM yang belum memiliki presensi atau laporan izin/sakit pada jam tersebut akan otomatis ditandai Alpa.',
+        { title: 'Cek Auto-Alpa Guru', confirmText: 'Ya, Jalankan' }
+    );
+    if (!ok) return;
+
+    const btn = document.getElementById('runAutoAlpaTeacherBtn');
+    if (btn) btn.disabled = true;
+
+    simataClient.withSuccessHandler(function(res) {
+        if (btn) btn.disabled = false;
+        if (res && res.success) {
+            const data = res.data || {};
+            const msg = res.message || ('Auto-Alpa selesai: ' + (data.created_count || 0) + ' sesi ditandai Alpa.');
+            if (typeof showToast === 'function') {
+                showToast('success', 'Auto-Alpa Guru', msg);
+            } else {
+                alert(msg);
+            }
+            loadTeacherAttendance();
+            if (typeof window.refreshSimataNotifications === 'function') {
+                window.refreshSimataNotifications({ silent: true });
+            }
+        } else {
+            alert((res && res.message) || 'Gagal menjalankan pemeriksaan Auto-Alpa.');
+        }
+    }).withFailureHandler(function(err) {
+        if (btn) btn.disabled = false;
+        alert((err && err.message) || 'Gagal menjalankan pemeriksaan Auto-Alpa.');
+    }).runTeacherAutoAlpa({ date: targetDate, force: true });
 }
 
 function showTeacherAttendanceView() {
@@ -18088,6 +18158,11 @@ function openTeacherAttendanceModal(mode, attendanceId) {
             cancelBtn.textContent = 'Batal';
         }
 
+        const createSiblingWrap = document.getElementById('ta_autoAlpaSiblingWrap');
+        const createSiblingCb = document.getElementById('ta_applySiblingAutoAlpa');
+        if (createSiblingWrap) createSiblingWrap.style.display = 'none';
+        if (createSiblingCb) createSiblingCb.checked = false;
+
         syncTeacherAttendanceModalStatusUI();
         loadTaModalScheduleAssist();
         modal.style.display = 'flex';
@@ -18187,6 +18262,11 @@ function openTeacherAttendanceModal(mode, attendanceId) {
                 cancelBtn.textContent = 'Batal';
             }
         }
+        const siblingWrap = document.getElementById('ta_autoAlpaSiblingWrap');
+        const siblingCb = document.getElementById('ta_applySiblingAutoAlpa');
+        const isEditAutoAlpa = (mode !== 'view' && isCurrentUserAdmin && String(a.method || '').toLowerCase().includes('auto-alpa'));
+        if (siblingWrap) siblingWrap.style.display = isEditAutoAlpa ? 'block' : 'none';
+        if (siblingCb) siblingCb.checked = isEditAutoAlpa;
         syncTeacherAttendanceModalStatusUI();
         modal.style.display = 'flex';
     }).withFailureHandler(function(){ alert('Gagal memuat data presensi guru.'); }).getTeacherAttendanceById(attendanceId);
@@ -18327,6 +18407,10 @@ function saveTeacherAttendanceFromModal() {
         return;
     }
 
+    const siblingWrap = document.getElementById('ta_autoAlpaSiblingWrap');
+    const siblingCb = document.getElementById('ta_applySiblingAutoAlpa');
+    const applySameDayAutoAlpa = Boolean(siblingWrap && siblingWrap.style.display !== 'none' && siblingCb && siblingCb.checked);
+
     const payload = {
         attendanceId: id,
         date: targetDateNorm,
@@ -18337,7 +18421,8 @@ function saveTeacherAttendanceFromModal() {
         materi: effectiveMateri,
         status: status,
         method: method || 'Manual',
-        note: note
+        note: note,
+        apply_to_same_day_auto_alpa: applySameDayAutoAlpa
     };
 
     setButtonLoading(saveBtn, true, 'Menyimpan...', 'Simpan');
@@ -18350,7 +18435,14 @@ function saveTeacherAttendanceFromModal() {
             closeTeacherAttendanceModal();
             loadTeacherAttendance();
             if (typeof window.refreshSimataNotifications === 'function') window.refreshSimataNotifications({ silent: true });
-            alert('Presensi guru berhasil diperbarui.');
+            const sibCount = Number(uRes.data && uRes.data.updated_siblings_count ? uRes.data.updated_siblings_count : 0);
+            const okMsg = sibCount > 0
+                ? ('Presensi guru berhasil diperbarui (+' + sibCount + ' jam Auto-Alpa lain pada hari yang sama ikut dikoreksi).')
+                : 'Presensi guru berhasil diperbarui.';
+            if (typeof showToast === 'function') {
+                showToast('success', 'Presensi Guru Diperbarui', okMsg);
+            }
+            alert(okMsg);
         } else {
             alert((uRes && uRes.message) || 'Gagal memperbarui presensi guru.');
         }

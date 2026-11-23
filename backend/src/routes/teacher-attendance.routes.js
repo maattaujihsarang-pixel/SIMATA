@@ -43,6 +43,7 @@ router.post('/', upload.single('photo'), (req, res, next) => {
 });
 
 router.get('/', (req, res, next) => teacherAttendanceController.list(req, res, next));
+router.post('/auto-alpa', (req, res, next) => teacherAttendanceController.runAutoAlpa(req, res, next));
 router.get('/:id', (req, res, next) => teacherAttendanceController.get(req, res, next));
 router.put('/:id', (req, res, next) => teacherAttendanceController.update(req, res, next));
 
