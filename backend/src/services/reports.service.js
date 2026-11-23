@@ -535,23 +535,24 @@ class ReportsService {
         currParams
       ),
 
-      // 5. Teacher Daily Breakdown
-      db.query(
-        `/* REPORTS: TEACHER_DAILY */
-         SELECT
-           ta.attendance_date::text AS date_str,
-           COUNT(*)::int AS total,
-           COUNT(*) FILTER (WHERE ta.status = 'Hadir')::int AS hadir,
-           COUNT(*) FILTER (WHERE ta.status = 'TugasLuar')::int AS tugas_luar,
-           COUNT(*) FILTER (WHERE ta.status = 'Izin')::int AS izin,
-           COUNT(*) FILTER (WHERE ta.status = 'Sakit')::int AS sakit
-         FROM teacher_attendance ta
-         WHERE ta.attendance_date BETWEEN $1 AND $2
-         ${taClassClause}
-         GROUP BY ta.attendance_date
-         ORDER BY ta.attendance_date ASC`,
-        currParams
-      ),
+       // 5. Teacher Daily Breakdown
+       db.query(
+         `/* REPORTS: TEACHER_DAILY */
+          SELECT
+            ta.attendance_date::text AS date_str,
+            COUNT(*)::int AS total,
+            COUNT(*) FILTER (WHERE ta.status = 'Hadir')::int AS hadir,
+            COUNT(*) FILTER (WHERE ta.status = 'TugasLuar')::int AS tugas_luar,
+            COUNT(*) FILTER (WHERE ta.status = 'Izin')::int AS izin,
+            COUNT(*) FILTER (WHERE ta.status = 'Sakit')::int AS sakit,
+            COUNT(*) FILTER (WHERE ta.status = 'Alpa')::int AS alpa
+          FROM teacher_attendance ta
+          WHERE ta.attendance_date BETWEEN $1 AND $2
+          ${taClassClause}
+          GROUP BY ta.attendance_date
+          ORDER BY ta.attendance_date ASC`,
+         currParams
+       ),
 
       // 6. Per-Class Attendance Comparison (Always show all active classes for comparison bar, marking selected)
       db.query(
@@ -691,9 +692,10 @@ class ReportsService {
            COALESCE(t.teaching_hours, 0)::int AS target_weekly_hours,
            COUNT(ta.attendance_id)::int AS total_logs,
            COUNT(ta.attendance_id) FILTER (WHERE ta.status = 'Hadir')::int AS hadir_logs,
-           COUNT(ta.attendance_id) FILTER (WHERE ta.status = 'Izin')::int AS izin_logs,
-           COUNT(ta.attendance_id) FILTER (WHERE ta.status = 'Sakit')::int AS sakit_logs,
-           COUNT(ta.attendance_id) FILTER (WHERE ta.status = 'TugasLuar')::int AS tugas_luar_logs,
+            COUNT(ta.attendance_id) FILTER (WHERE ta.status = 'Izin')::int AS izin_logs,
+            COUNT(ta.attendance_id) FILTER (WHERE ta.status = 'Sakit')::int AS sakit_logs,
+            COUNT(ta.attendance_id) FILTER (WHERE ta.status = 'Alpa')::int AS alpa_logs,
+            COUNT(ta.attendance_id) FILTER (WHERE ta.status = 'TugasLuar')::int AS tugas_luar_logs,
            COUNT(ae.evidence_id)::int AS verified_evidence_count,
            COUNT(DISTINCT ta.attendance_date)::int AS active_days,
            COUNT(DISTINCT ta.class_id)::int AS classes_taught_count,
@@ -1038,6 +1040,7 @@ class ReportsService {
       const hadirLogs = Number(t.hadir_logs || 0);
       const izinLogs = Number(t.izin_logs || 0);
       const sakitLogs = Number(t.sakit_logs || 0);
+      const alpaLogs = Number(t.alpa_logs || 0);
       const tugasLuarLogs = Number(t.tugas_luar_logs || 0);
       const verifiedCount = Number(t.verified_evidence_count || 0);
 
@@ -1062,6 +1065,7 @@ class ReportsService {
         hadir_logs: hadirLogs,
         izin_logs: izinLogs,
         sakit_logs: sakitLogs,
+        alpa_logs: alpaLogs,
         tugas_luar_logs: tugasLuarLogs,
         execution_pct: computeRatePct(hadirLogs + tugasLuarLogs, totalLogs),
         verified_evidence_count: verifiedCount,

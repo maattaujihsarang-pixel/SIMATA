@@ -1,5 +1,19 @@
 const db = require('../config/database');
 
+let statusConstraintEnsured = false;
+
+async function ensureStatusConstraint(queryFn) {
+  if (statusConstraintEnsured) return;
+  statusConstraintEnsured = true;
+  try {
+    await queryFn(
+      `ALTER TABLE teacher_attendance DROP CONSTRAINT IF EXISTS teacher_attendance_status_check;
+       ALTER TABLE teacher_attendance ADD CONSTRAINT teacher_attendance_status_check CHECK (status IN ('Hadir', 'Izin', 'Sakit', 'Alpa', 'TugasLuar'));`,
+      []
+    );
+  } catch (_) {}
+}
+
 class TeacherAttendanceRepository {
   async findByBusinessKey(teacherId, attendanceDate, period, client = null) {
     const queryFn = client ? (q, p) => client.query(q, p) : (q, p) => db.query(q, p);
@@ -67,6 +81,7 @@ class TeacherAttendanceRepository {
 
   async insertSingle(data, client = null) {
     const queryFn = client ? (q, p) => client.query(q, p) : (q, p) => db.query(q, p);
+    await ensureStatusConstraint(queryFn);
     const res = await queryFn(
       `INSERT INTO teacher_attendance (
         attendance_id, teacher_id, class_id, academic_year_id,
@@ -152,6 +167,7 @@ class TeacherAttendanceRepository {
   }
 
   async update(attendanceId, { status, subject, materi, note, period, class_id, attendance_date, recorded_by_user_id } = {}) {
+    await ensureStatusConstraint((q, p) => db.query(q, p));
     const res = await db.query(
       `UPDATE teacher_attendance
        SET status = COALESCE($1, status),

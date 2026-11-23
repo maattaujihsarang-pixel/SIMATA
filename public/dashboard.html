@@ -2603,7 +2603,6 @@ html, body {
                   <option value="Izin">Izin</option>
                   <option value="Sakit">Sakit</option>
                   <option value="Alpa">Alpa</option>
-                  <option value="TugasLuar">Tugas Luar</option>
                 </select>
               </div>
               <div class="attendance-filter-actions">
@@ -2722,6 +2721,8 @@ html, body {
               <input type="hidden" id="ta_attendanceId" />
               <input type="hidden" id="ta_method" value="Manual" />
 
+              <div id="ta_roleInfoBanner" style="display:none;margin-bottom:14px;padding:10px 13px;border-radius:10px;background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;font-size:12px;line-height:1.45;"></div>
+
               <!-- Section 1: Guru & Kelas -->
               <div class="student-form-section">
                 <div class="student-section-title">
@@ -2733,12 +2734,20 @@ html, body {
                     <select id="ta_teacherId" class="input-box"></select>
                   </div>
                   <div class="student-form-group">
+                    <label for="ta_date" class="student-form-label">Tanggal Presensi <span class="field-required">*</span></label>
+                    <input id="ta_date" type="date" class="input-box" />
+                  </div>
+                  <div class="student-form-group">
                     <label for="ta_classId" class="student-form-label">Kelas yang Diajar <span class="field-required">*</span></label>
                     <select id="ta_classId" class="input-box"></select>
                   </div>
-                  <div class="student-form-group">
-                    <label for="ta_date" class="student-form-label">Tanggal Presensi <span class="field-required">*</span></label>
-                    <input id="ta_date" type="date" class="input-box" />
+                  <div id="ta_scheduleAssistBox" class="student-form-group student-col-span-2" style="display:none;">
+                    <div class="rg-sched-banner" style="margin-bottom:0;">
+                      <div class="rg-sched-head">
+                        <span class="rg-sched-title" id="ta_scheduleAssistTitle">Jadwal Mengajar di Tanggal Ini (Klik untuk isi cepat):</span>
+                      </div>
+                      <div id="ta_scheduleAssistPills" class="rg-sched-pills"></div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2750,6 +2759,15 @@ html, body {
                 </div>
                 <div class="student-form-grid">
                   <div class="student-form-group">
+                    <label for="ta_status" class="student-form-label">Status Kehadiran <span class="field-required">*</span></label>
+                    <select id="ta_status" class="input-box">
+                      <option value="Hadir">Hadir</option>
+                      <option value="Izin">Izin</option>
+                      <option value="Sakit">Sakit</option>
+                      <option value="Alpa">Alpa</option>
+                    </select>
+                  </div>
+                  <div class="student-form-group" id="ta_period_single_wrap">
                     <label for="ta_period" class="student-form-label">Jam ke- <span class="field-required">*</span></label>
                     <select id="ta_period" class="input-box">
                       <option value="">(Pilih Jam)</option>
@@ -2765,21 +2783,33 @@ html, body {
                       <option value="10">Jam ke-10</option>
                     </select>
                   </div>
-                  <div class="student-form-group">
-                    <label for="ta_status" class="student-form-label">Status Kehadiran <span class="field-required">*</span></label>
-                    <select id="ta_status" class="input-box">
-                      <option value="Hadir">Hadir</option>
-                      <option value="Izin">Izin</option>
-                      <option value="Sakit">Sakit</option>
-                      <option value="TugasLuar">Tugas Luar</option>
-                    </select>
+                  <div class="student-form-group student-col-span-2" id="ta_period_multi_wrap" style="display:none;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
+                      <label class="student-form-label" style="margin-bottom:0;">Jam ke- (Bisa pilih lebih dari satu) <span class="field-required">*</span></label>
+                      <div style="display:flex;gap:6px;">
+                        <button type="button" onclick="toggleAllTaModalPeriods(true)" class="login-button" style="background:#e2e8f0;color:#334155;font-size:11px;padding:3px 8px;height:auto;font-weight:600;box-shadow:none;">Pilih Semua</button>
+                        <button type="button" onclick="toggleAllTaModalPeriods(false)" class="login-button" style="background:#f1f5f9;color:#64748b;font-size:11px;padding:3px 8px;height:auto;font-weight:600;border:1px solid #cbd5e1;box-shadow:none;">Hapus Semua</button>
+                      </div>
+                    </div>
+                    <div id="ta_period_container" class="period-checkbox-container">
+                      <label class="period-checkbox-label"><input type="checkbox" name="ta_period_cb" class="ta-period-checkbox" value="1" style="width:15px;height:15px;accent-color:#166534;cursor:pointer;" /><span>Jam ke-1</span></label>
+                      <label class="period-checkbox-label"><input type="checkbox" name="ta_period_cb" class="ta-period-checkbox" value="2" style="width:15px;height:15px;accent-color:#166534;cursor:pointer;" /><span>Jam ke-2</span></label>
+                      <label class="period-checkbox-label"><input type="checkbox" name="ta_period_cb" class="ta-period-checkbox" value="3" style="width:15px;height:15px;accent-color:#166534;cursor:pointer;" /><span>Jam ke-3</span></label>
+                      <label class="period-checkbox-label"><input type="checkbox" name="ta_period_cb" class="ta-period-checkbox" value="4" style="width:15px;height:15px;accent-color:#166534;cursor:pointer;" /><span>Jam ke-4</span></label>
+                      <label class="period-checkbox-label"><input type="checkbox" name="ta_period_cb" class="ta-period-checkbox" value="5" style="width:15px;height:15px;accent-color:#166534;cursor:pointer;" /><span>Jam ke-5</span></label>
+                      <label class="period-checkbox-label"><input type="checkbox" name="ta_period_cb" class="ta-period-checkbox" value="6" style="width:15px;height:15px;accent-color:#166534;cursor:pointer;" /><span>Jam ke-6</span></label>
+                      <label class="period-checkbox-label"><input type="checkbox" name="ta_period_cb" class="ta-period-checkbox" value="7" style="width:15px;height:15px;accent-color:#166534;cursor:pointer;" /><span>Jam ke-7</span></label>
+                      <label class="period-checkbox-label"><input type="checkbox" name="ta_period_cb" class="ta-period-checkbox" value="8" style="width:15px;height:15px;accent-color:#166534;cursor:pointer;" /><span>Jam ke-8</span></label>
+                      <label class="period-checkbox-label"><input type="checkbox" name="ta_period_cb" class="ta-period-checkbox" value="9" style="width:15px;height:15px;accent-color:#166534;cursor:pointer;" /><span>Jam ke-9</span></label>
+                      <label class="period-checkbox-label"><input type="checkbox" name="ta_period_cb" class="ta-period-checkbox" value="10" style="width:15px;height:15px;accent-color:#166534;cursor:pointer;" /><span>Jam ke-10</span></label>
+                    </div>
                   </div>
                   <div class="student-form-group student-col-span-2">
                     <label for="ta_subject" class="student-form-label">Mata Pelajaran <span class="field-required">*</span></label>
                     <input id="ta_subject" class="input-box" placeholder="Contoh: Fiqih, Bahasa Arab, Al-Qur'an Hadits" />
                   </div>
                   <div class="student-form-group student-col-span-2">
-                    <label for="ta_materi" class="student-form-label">Materi Pembelajaran <span class="field-required">*</span></label>
+                    <label for="ta_materi" id="ta_materi_label" class="student-form-label">Materi Pembelajaran <span class="field-required">*</span></label>
                     <input id="ta_materi" class="input-box" placeholder="Contoh: Bab Sholat Berjamaah dan Ketentuannya" />
                   </div>
                 </div>
@@ -12512,7 +12542,9 @@ function showReportsView() {
                     const topicText = t.latest_materi
                         ? (t.latest_class_name ? t.latest_class_name + ': ' : '') + t.latest_materi
                         : 'Belum ada jurnal di periode ini';
-                    const breakdown = 'H: ' + fmtNum(t.hadir_logs) + ' • TL: ' + fmtNum(t.tugas_luar_logs) + ' • I/S: ' + fmtNum(t.izin_logs + t.sakit_logs);
+                    const izinTotal = Number(t.izin_logs || 0) + Number(t.tugas_luar_logs || 0);
+                    const alpaTotal = Number(t.alpa_logs || 0);
+                    const breakdown = 'H: ' + fmtNum(t.hadir_logs) + ' • I: ' + fmtNum(izinTotal) + ' • S: ' + fmtNum(t.sakit_logs) + ' • A: ' + fmtNum(alpaTotal);
                     return '<tr>' +
                         '<th scope="row">' +
                             '<div class="rpt-cell-main">' + esc(t.name) + '</div>' +
@@ -12740,9 +12772,10 @@ function showReportsView() {
         }
         if (state.activeTab === 'teachers') {
             const rows = getFilteredTeacherRows().map(function(t) {
-                return [t.name, t.position || '-', t.subject || '-', t.target_weekly_hours, t.total_logs, t.hadir_logs, t.tugas_luar_logs, t.izin_logs, t.sakit_logs, t.verified_evidence_count, t.latest_materi || '-'];
+                const izinTotal = Number(t.izin_logs || 0) + Number(t.tugas_luar_logs || 0);
+                return [t.name, t.position || '-', t.subject || '-', t.target_weekly_hours, t.total_logs, t.hadir_logs, izinTotal, t.sakit_logs, Number(t.alpa_logs || 0), t.verified_evidence_count, t.latest_materi || '-'];
             });
-            exportCsvFile('laporan-kinerja-guru_' + suffix + '.csv', ['Nama Guru', 'Jabatan', 'Mapel', 'Target JP/Mg', 'Sesi Jurnal', 'Hadir', 'Tugas Luar', 'Izin', 'Sakit', 'Bukti Foto', 'Materi Terakhir'], rows);
+            exportCsvFile('laporan-kinerja-guru_' + suffix + '.csv', ['Nama Guru', 'Jabatan', 'Mapel', 'Target JP/Mg', 'Sesi Jurnal', 'Hadir', 'Izin', 'Sakit', 'Alpa', 'Bukti Foto', 'Materi Terakhir'], rows);
             return;
         }
         if (state.activeTab === 'audit') {
@@ -15433,7 +15466,7 @@ function renderAttendanceStatusBadge(status) {
     const s = String(status || '').trim().toLowerCase();
     if (s === 'hadir') {
         return '<span class="status-badge status-badge-active">Hadir</span>';
-    } else if (s === 'izin') {
+    } else if (s === 'izin' || s === 'tugasluar' || s === 'tugas luar') {
         return '<span class="status-badge status-badge-izin">Izin</span>';
     } else if (s === 'sakit') {
         return '<span class="status-badge status-badge-sakit">Sakit</span>';
@@ -17191,8 +17224,8 @@ function getFilteredTeacherAttendanceList() {
         if (status) {
             let sA = String(a.status || '').toLowerCase();
             let sF = String(status).toLowerCase();
-            if (sF === 'tugasluar') {
-                if (sA !== 'tugasluar' && sA !== 'tugas luar') return false;
+            if (sF === 'izin') {
+                if (sA !== 'izin' && sA !== 'tugasluar' && sA !== 'tugas luar') return false;
             } else {
                 if (sA !== sF) return false;
             }
@@ -17362,11 +17395,14 @@ function renderTeacherAttendanceTbody() {
         const periodText = formatAttendancePeriod(a.period);
         const statusBadge = renderAttendanceStatusBadge(a.status);
         const timeText = formatAttendanceTime(a.timestamp || a.recorded_at);
+        const editBtnHtml = isCurrentUserAdmin
+            ? ('<button type="button" class="btn-action btn-action-edit" onclick="openTeacherAttendanceModal(\'edit\', \'' + escapeAttr(a.attendanceId) + '\')" title="Edit Presensi Guru">' +
+                 '<svg viewBox="0 0 24 24" class="btn-action-icon"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' +
+                 '<span>Edit</span>' +
+               '</button>')
+            : '';
         const actionButtons = '<div class="student-action-group" style="justify-content:center;">' +
-            '<button type="button" class="btn-action btn-action-edit" onclick="openTeacherAttendanceModal(\'edit\', \'' + escapeAttr(a.attendanceId) + '\')" title="Edit Presensi Guru">' +
-              '<svg viewBox="0 0 24 24" class="btn-action-icon"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' +
-              '<span>Edit</span>' +
-            '</button>' +
+            editBtnHtml +
             '<button type="button" class="btn-action btn-action-detail" onclick="openTeacherAttendanceModal(\'view\', \'' + escapeAttr(a.attendanceId) + '\')" title="Detail Presensi Guru">' +
               '<svg viewBox="0 0 24 24" class="btn-action-icon"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>' +
               '<span>Detail</span>' +
@@ -17640,20 +17676,62 @@ function exportTeacherAttendanceData(format) {
     exportCsvFile(filename, headers, rows);
 }
 
+let currentTeacherAttendanceModalMode = 'edit';
+let isTeacherAttendanceModuleInitialized = false;
+
 function initTeacherAttendanceModule() {
-    const menu = document.getElementById('menu-teacher-attendance'); if (menu) menu.addEventListener('click', function(){ showTeacherAttendanceView(); });
-    const filterBtn = document.getElementById('filterTeacherAttendanceButton'); if (filterBtn) filterBtn.addEventListener('click', function(){ loadTeacherAttendance(); collapseMobileFilterOnApply('teacherAttendanceFilterCard'); });
-    const resetBtn = document.getElementById('resetTeacherAttendanceButton');
-    if (resetBtn) resetBtn.addEventListener('click', resetAllTeacherAttendanceFilters);
+    if (!isTeacherAttendanceModuleInitialized) {
+        isTeacherAttendanceModuleInitialized = true;
+        const menu = document.getElementById('menu-teacher-attendance'); if (menu) menu.addEventListener('click', function(){ showTeacherAttendanceView(); });
+        const filterBtn = document.getElementById('filterTeacherAttendanceButton'); if (filterBtn) filterBtn.addEventListener('click', function(){ loadTeacherAttendance(); collapseMobileFilterOnApply('teacherAttendanceFilterCard'); });
+        const resetBtn = document.getElementById('resetTeacherAttendanceButton');
+        if (resetBtn) resetBtn.addEventListener('click', resetAllTeacherAttendanceFilters);
 
-    const periodFilter = document.getElementById('teacherAttendancePeriodFilter'); if (periodFilter) periodFilter.addEventListener('change', function(){ loadTeacherAttendance(); });
-    const classFilter = document.getElementById('teacherAttendanceClassFilter'); if (classFilter) classFilter.addEventListener('change', function(){ loadTeacherAttendance(); });
-    const subjectFilter = document.getElementById('teacherAttendanceSubjectFilter'); if (subjectFilter) subjectFilter.addEventListener('change', function(){ loadTeacherAttendance(); });
+        const periodFilter = document.getElementById('teacherAttendancePeriodFilter'); if (periodFilter) periodFilter.addEventListener('change', function(){ loadTeacherAttendance(); });
+        const classFilter = document.getElementById('teacherAttendanceClassFilter'); if (classFilter) classFilter.addEventListener('change', function(){ loadTeacherAttendance(); });
+        const subjectFilter = document.getElementById('teacherAttendanceSubjectFilter'); if (subjectFilter) subjectFilter.addEventListener('change', function(){ loadTeacherAttendance(); });
 
-    // hide create button - Responder workflow not implemented
-    const addBtn = document.getElementById('addTeacherAttendanceButton'); if (addBtn) addBtn.style.display = 'none';
-    const cancelBtn = document.getElementById('teacherAttendanceCancelBtn'); if (cancelBtn) cancelBtn.addEventListener('click', closeTeacherAttendanceModal);
-    const saveBtn = document.getElementById('teacherAttendanceSaveBtn'); if (saveBtn) saveBtn.addEventListener('click', saveTeacherAttendanceFromModal);
+        const addBtn = document.getElementById('addTeacherAttendanceButton');
+        if (addBtn) {
+            addBtn.addEventListener('click', function() { openTeacherAttendanceModal('create'); });
+        }
+        const cancelBtn = document.getElementById('teacherAttendanceCancelBtn'); if (cancelBtn) cancelBtn.addEventListener('click', closeTeacherAttendanceModal);
+        const saveBtn = document.getElementById('teacherAttendanceSaveBtn'); if (saveBtn) saveBtn.addEventListener('click', saveTeacherAttendanceFromModal);
+
+        const taStatusEl = document.getElementById('ta_status');
+        if (taStatusEl) taStatusEl.addEventListener('change', syncTeacherAttendanceModalStatusUI);
+        const taTeacherEl = document.getElementById('ta_teacherId');
+        if (taTeacherEl) {
+            taTeacherEl.addEventListener('change', function() {
+                if (currentTeacherAttendanceModalMode === 'create') loadTaModalScheduleAssist();
+            });
+        }
+        const taDateEl = document.getElementById('ta_date');
+        if (taDateEl) {
+            taDateEl.addEventListener('change', function() {
+                loadTaModalScheduleAssist();
+            });
+        }
+        const taClassEl = document.getElementById('ta_classId');
+        if (taClassEl) {
+            taClassEl.addEventListener('change', function() {
+                const dVal = (document.getElementById('ta_date') || {}).value || '';
+                if (window.simataNonKbmHelper && dVal) {
+                    window.simataNonKbmHelper.decoratePeriodContainer('#ta_period_container', dVal, taClassEl.value || '', 'ta_nonKbmNotice');
+                    window.simataNonKbmHelper.decoratePeriodSelect('ta_period', dVal, taClassEl.value || '');
+                }
+            });
+        }
+    }
+
+    const addBtn = document.getElementById('addTeacherAttendanceButton');
+    if (addBtn) {
+        addBtn.style.display = (isCurrentUserAdmin || (currentResponderUser && String(currentResponderUser.role || '').toUpperCase() === 'GURU')) ? '' : 'none';
+        const btnSpan = addBtn.querySelector('span');
+        if (btnSpan) {
+            btnSpan.textContent = isCurrentUserAdmin ? 'Tambah / Susulan Guru' : 'Lapor Izin / Sakit Hari Ini';
+        }
+    }
 
     // Toolbar Entries & Search
     const entriesSelect = document.getElementById('teacherEntriesSelect');
@@ -17787,13 +17865,241 @@ function loadTeacherAttendance() {
     }).getTeacherAttendance(filters);
 }
 
+let taScheduleAssistReqSeq = 0;
+
+function toggleAllTaModalPeriods(selectAll) {
+    const cbs = Array.from(document.querySelectorAll('input[name="ta_period_cb"], .ta-period-checkbox'));
+    const hasKbmChoices = cbs.some(function(cb) { return !cb.disabled && cb.dataset.nonKbm !== '1'; });
+    cbs.forEach(function(cb) {
+        if (cb.disabled) return;
+        if (selectAll && hasKbmChoices && cb.dataset.nonKbm === '1') {
+            cb.checked = false;
+        } else {
+            cb.checked = !!selectAll;
+        }
+    });
+}
+
+function syncTeacherAttendanceModalStatusUI() {
+    const statusEl = document.getElementById('ta_status');
+    const statusVal = statusEl ? statusEl.value : 'Hadir';
+    const materiLbl = document.getElementById('ta_materi_label');
+    const materiEl = document.getElementById('ta_materi');
+    const isHadir = (statusVal === 'Hadir');
+
+    if (materiLbl) {
+        materiLbl.innerHTML = isHadir
+            ? 'Materi Pembelajaran <span class="field-required">*</span>'
+            : 'Alasan Izin / Keterangan <span class="field-hint">(Opsional)</span>';
+    }
+    if (materiEl) {
+        if (statusVal === 'Izin') materiEl.placeholder = 'Contoh: Izin keperluan keluarga / tugas dinas luar';
+        else if (statusVal === 'Sakit') materiEl.placeholder = 'Contoh: Sakit (surat keterangan / info ke piket)';
+        else if (statusVal === 'Alpa') materiEl.placeholder = 'Contoh: Tidak hadir tanpa keterangan';
+        else materiEl.placeholder = 'Contoh: Bab Sholat Berjamaah dan Ketentuannya';
+    }
+}
+
+function loadTaModalScheduleAssist() {
+    const box = document.getElementById('ta_scheduleAssistBox');
+    const titleEl = document.getElementById('ta_scheduleAssistTitle');
+    const pillsWrap = document.getElementById('ta_scheduleAssistPills');
+    const tId = (document.getElementById('ta_teacherId') || {}).value || '';
+    const dVal = (document.getElementById('ta_date') || {}).value || '';
+    const cVal = (document.getElementById('ta_classId') || {}).value || '';
+
+    if (window.simataNonKbmHelper && dVal) {
+        window.simataNonKbmHelper.ensureDate(dVal).then(function() {
+            if (window.simataNonKbmHelper) {
+                window.simataNonKbmHelper.decoratePeriodContainer('#ta_period_container', dVal, cVal, 'ta_nonKbmNotice');
+                window.simataNonKbmHelper.decoratePeriodSelect('ta_period', dVal, cVal);
+            }
+        });
+    }
+
+    if (!box || !pillsWrap || currentTeacherAttendanceModalMode !== 'create' || !tId || !dVal) {
+        if (box) box.style.display = 'none';
+        return;
+    }
+
+    const reqSeq = ++taScheduleAssistReqSeq;
+    simataClient.withSuccessHandler(function(res) {
+        if (reqSeq !== taScheduleAssistReqSeq) return;
+        const d = res && res.success ? res.data : null;
+        if (window.simataNonKbmHelper && d) {
+            window.simataNonKbmHelper.hydrateFromDayPayload(dVal, d);
+            window.simataNonKbmHelper.decoratePeriodContainer('#ta_period_container', dVal, cVal, 'ta_nonKbmNotice');
+        }
+        const blocks = d && Array.isArray(d.today_teacher_blocks) ? d.today_teacher_blocks : [];
+        if (!d || !d.is_school_day || blocks.length === 0) {
+            box.style.display = 'none';
+            pillsWrap.innerHTML = '';
+            return;
+        }
+        if (titleEl) {
+            titleEl.textContent = 'Jadwal Guru Hari ' + (d.day_label || 'Ini') + ' (Klik untuk isi kelas & jam):';
+        }
+        pillsWrap.innerHTML = '';
+        blocks.forEach(function(blk) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'rg-sched-pill' + (blk.is_ongoing ? ' is-current' : '');
+            const pText = blk.periods.length > 1
+                ? ('Jam ' + blk.periods[0] + '–' + blk.periods[blk.periods.length - 1])
+                : ('Jam ' + blk.periods[0]);
+            btn.textContent = pText + ' • ' + (blk.class_name || blk.class_id) + ' (' + (blk.subject_name || '-') + ')';
+            btn.addEventListener('click', function() {
+                const cSel = document.getElementById('ta_classId');
+                if (cSel && blk.class_id) cSel.value = blk.class_id;
+                const sInp = document.getElementById('ta_subject');
+                if (sInp && blk.subject_name) sInp.value = blk.subject_name;
+                const targetSet = new Set((blk.periods || []).map(Number));
+                document.querySelectorAll('input[name="ta_period_cb"], .ta-period-checkbox').forEach(function(cb) {
+                    cb.checked = targetSet.has(Number(cb.value));
+                });
+                if (window.simataNonKbmHelper) {
+                    window.simataNonKbmHelper.decoratePeriodContainer('#ta_period_container', dVal, blk.class_id || '', 'ta_nonKbmNotice');
+                }
+            });
+            pillsWrap.appendChild(btn);
+        });
+        box.style.display = '';
+    }).withFailureHandler(function() {
+        if (box) box.style.display = 'none';
+    }).getScheduleActiveNow({ teacher_id: tId, date: dVal });
+}
+
 function openTeacherAttendanceModal(mode, attendanceId) {
     const modal = document.getElementById('teacherAttendanceModal'); if (!modal) return;
     const title = document.getElementById('teacherAttendanceModalTitle');
     const saveBtn = document.getElementById('teacherAttendanceSaveBtn');
     const cancelBtn = document.getElementById('teacherAttendanceCancelBtn');
     const idField = document.getElementById('ta_attendanceId');
+    const singleWrap = document.getElementById('ta_period_single_wrap');
+    const multiWrap = document.getElementById('ta_period_multi_wrap');
+    const assistBox = document.getElementById('ta_scheduleAssistBox');
+    const roleBanner = document.getElementById('ta_roleInfoBanner');
+    const statusField = document.getElementById('ta_status');
+
+    currentTeacherAttendanceModalMode = mode || 'edit';
+
+    // Populate classes dropdown if not yet populated
+    const cField = document.getElementById('ta_classId');
+    if (cField && cField.options.length <= 1) {
+        if (Object.keys(attendanceClassLookup).length > 0) {
+            cField.innerHTML = '<option value="">(Pilih Kelas)</option>' + Object.keys(attendanceClassLookup).map(function(cid) {
+                return '<option value="' + escapeAttr(cid) + '">' + escapeHtml(attendanceClassLookup[cid]) + '</option>';
+            }).join('');
+        } else if (typeof rptState !== 'undefined' && rptState && rptState.classesMaster && rptState.classesMaster.length > 0) {
+            cField.innerHTML = '<option value="">(Pilih Kelas)</option>' + rptState.classesMaster.map(function(c) {
+                return '<option value="' + escapeAttr(c.classId) + '">' + escapeHtml(c.className || c.classId) + '</option>';
+            }).join('');
+        }
+    }
+
+    if (mode === 'create') {
+        const isAdmin = Boolean(isCurrentUserAdmin);
+        const todayIso = (typeof getWibTodayISODate === 'function') ? getWibTodayISODate() : '';
+        if (title) {
+            title.textContent = isAdmin ? 'Tambah / Susulan Presensi Guru' : 'Lapor Izin / Sakit Guru Hari Ini';
+        }
+        if (idField) idField.value = '';
+        if (singleWrap) singleWrap.style.display = 'none';
+        if (multiWrap) multiWrap.style.display = '';
+        if (assistBox) assistBox.style.display = 'none';
+
+        Array.from(modal.querySelectorAll('input,select,textarea')).forEach(function(el) { el.disabled = false; });
+        document.querySelectorAll('input[name="ta_period_cb"], .ta-period-checkbox').forEach(function(cb) {
+            cb.checked = false;
+            cb.disabled = false;
+        });
+
+        const dateField = document.getElementById('ta_date');
+        if (dateField) {
+            dateField.value = todayIso;
+            dateField.disabled = !isAdmin;
+        }
+        if (cField) cField.value = '';
+        const sField = document.getElementById('ta_subject');
+        if (sField) sField.value = '';
+        const mField = document.getElementById('ta_materi');
+        if (mField) mField.value = '';
+        const noteField = document.getElementById('ta_note');
+        if (noteField) noteField.value = '';
+        const methodField = document.getElementById('ta_method');
+        if (methodField) methodField.value = isAdmin ? 'Manual (Admin)' : 'Manual (Guru)';
+
+        if (statusField) {
+            Array.from(statusField.options).forEach(function(opt) {
+                if (!isAdmin && (opt.value === 'Hadir' || opt.value === 'Alpa')) {
+                    opt.hidden = true;
+                    opt.disabled = true;
+                } else {
+                    opt.hidden = false;
+                    opt.disabled = false;
+                }
+            });
+            statusField.value = isAdmin ? 'Hadir' : 'Izin';
+        }
+
+        const teacherField = document.getElementById('ta_teacherId');
+        if (teacherField) {
+            teacherField.value = '';
+            if (!isAdmin && typeof currentResponderUser !== 'undefined' && currentResponderUser) {
+                const uTid = currentResponderUser.teacher_id || currentResponderUser.teacherId || '';
+                const uName = String(currentResponderUser.full_name || currentResponderUser.name || '').trim().toLowerCase();
+                const matchedOpt = Array.from(teacherField.options).find(function(o) {
+                    if (uTid && String(o.value) === String(uTid)) return true;
+                    return uName && String(o.textContent || '').trim().toLowerCase() === uName;
+                });
+                if (matchedOpt) {
+                    teacherField.value = matchedOpt.value;
+                    teacherField.disabled = true;
+                }
+                if (sField && !sField.value && Array.isArray(responderTeachersList)) {
+                    const foundT = responderTeachersList.find(function(t) { return String(t.teacherId) === String(teacherField.value); });
+                    if (foundT && foundT.subject) sField.value = foundT.subject;
+                }
+            }
+        }
+
+        if (roleBanner) {
+            roleBanner.style.display = 'block';
+            if (isAdmin) {
+                roleBanner.style.background = '#f0fdf4';
+                roleBanner.style.borderColor = '#bbf7d0';
+                roleBanner.style.color = '#166534';
+                roleBanner.innerHTML = '<strong>Mode Admin / Operator:</strong> Anda dapat menginput presensi guru hari ini maupun <strong>susulan (tanggal lewat)</strong> untuk status Hadir, Izin, Sakit, atau Alpa tanpa kamera.';
+            } else {
+                roleBanner.style.background = '#eff6ff';
+                roleBanner.style.borderColor = '#bfdbfe';
+                roleBanner.style.color = '#1e40af';
+                roleBanner.innerHTML = '<strong>Mode Lapor Izin / Sakit Guru:</strong> Tidak memerlukan kamera. Untuk presensi <em>Hadir</em> gunakan menu <strong>Responder</strong>, dan jika lupa absen di hari sebelumnya silakan konfirmasi ke <strong>Admin / Piket</strong>.';
+            }
+        }
+
+        if (saveBtn) {
+            saveBtn.style.display = '';
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Simpan';
+        }
+        if (cancelBtn) {
+            cancelBtn.disabled = false;
+            cancelBtn.textContent = 'Batal';
+        }
+
+        syncTeacherAttendanceModalStatusUI();
+        loadTaModalScheduleAssist();
+        modal.style.display = 'flex';
+        return;
+    }
+
     if (!attendanceId) return;
+
+    if (singleWrap) singleWrap.style.display = '';
+    if (multiWrap) multiWrap.style.display = 'none';
+    if (assistBox) assistBox.style.display = 'none';
+    if (roleBanner) roleBanner.style.display = 'none';
 
     title.textContent = mode === 'edit' ? 'Edit Presensi Guru' : 'Detail Presensi Guru';
 
@@ -17811,19 +18117,7 @@ function openTeacherAttendanceModal(mode, attendanceId) {
         const teacherField = document.getElementById('ta_teacherId');
         if (teacherField) teacherField.value = a.teacherId || '';
 
-        const cField = document.getElementById('ta_classId');
         if (cField) {
-            if (cField.options.length <= 1) {
-                if (Object.keys(attendanceClassLookup).length > 0) {
-                    cField.innerHTML = '<option value="">(Pilih Kelas)</option>' + Object.keys(attendanceClassLookup).map(function(cid) {
-                        return '<option value="' + escapeAttr(cid) + '">' + escapeHtml(attendanceClassLookup[cid]) + '</option>';
-                    }).join('');
-                } else if (rptState && rptState.classesMaster && rptState.classesMaster.length > 0) {
-                    cField.innerHTML = '<option value="">(Pilih Kelas)</option>' + rptState.classesMaster.map(function(c) {
-                        return '<option value="' + escapeAttr(c.classId) + '">' + escapeHtml(c.className || c.classId) + '</option>';
-                    }).join('');
-                }
-            }
             cField.value = a.classId || '';
         }
 
@@ -17841,10 +18135,20 @@ function openTeacherAttendanceModal(mode, attendanceId) {
 
         let statusVal = a.status || 'Hadir';
         if (statusVal.toLowerCase() === 'tugas luar' || statusVal.toLowerCase() === 'tugasluar') {
-            statusVal = 'TugasLuar';
+            statusVal = 'Izin';
         }
-        const statusField = document.getElementById('ta_status');
-        if (statusField) statusField.value = statusVal;
+        if (statusField) {
+            Array.from(statusField.options).forEach(function(opt) {
+                if (!isCurrentUserAdmin && opt.value === 'Alpa') {
+                    opt.hidden = true;
+                    opt.disabled = true;
+                } else {
+                    opt.hidden = false;
+                    opt.disabled = false;
+                }
+            });
+            statusField.value = statusVal;
+        }
 
         const sField = document.getElementById('ta_subject');
         if (sField) sField.value = a.subject || '';
@@ -17876,12 +18180,14 @@ function openTeacherAttendanceModal(mode, attendanceId) {
             if (saveBtn) {
                 saveBtn.style.display = '';
                 saveBtn.disabled = false;
+                saveBtn.textContent = 'Simpan';
             }
             if (cancelBtn) {
                 cancelBtn.disabled = false;
                 cancelBtn.textContent = 'Batal';
             }
         }
+        syncTeacherAttendanceModalStatusUI();
         modal.style.display = 'flex';
     }).withFailureHandler(function(){ alert('Gagal memuat data presensi guru.'); }).getTeacherAttendanceById(attendanceId);
 }
@@ -17894,6 +18200,7 @@ function closeTeacherAttendanceModal() {
 
 function saveTeacherAttendanceFromModal() {
     const saveBtn = document.getElementById('teacherAttendanceSaveBtn');
+    const isCreate = (currentTeacherAttendanceModalMode === 'create');
     const id = document.getElementById('ta_attendanceId') ? document.getElementById('ta_attendanceId').value.trim() : '';
     const date = document.getElementById('ta_date') ? document.getElementById('ta_date').value : '';
     const teacherId = document.getElementById('ta_teacherId') ? document.getElementById('ta_teacherId').value : '';
@@ -17912,16 +18219,91 @@ function saveTeacherAttendanceFromModal() {
     const noteEl = document.getElementById('ta_note');
     const note = noteEl ? noteEl.value.trim() : '';
 
-    if (!id) { alert('Data ID presensi tidak valid.'); return; }
+    if (!isCreate && !id) { alert('Data ID presensi tidak valid.'); return; }
     if (!teacherId) { alert('Nama Guru wajib dipilih.'); return; }
-    if (!classId) { alert('Kelas yang Diajar wajib dipilih.'); return; }
     if (!date) { alert('Tanggal Presensi wajib diisi.'); return; }
-    if (!period) { alert('Jam ke- wajib dipilih.'); return; }
+    if (!classId) { alert('Kelas yang Diajar wajib dipilih.'); return; }
     if (!status) { alert('Status Kehadiran wajib dipilih.'); return; }
     if (!subject) { alert('Mata Pelajaran wajib diisi.'); return; }
-    if (!materi) { alert('Materi Pembelajaran wajib diisi.'); return; }
+    if (status === 'Hadir' && !materi) { alert('Materi Pembelajaran wajib diisi untuk status Hadir.'); return; }
 
+    const effectiveMateri = materi || (note || (status === 'Izin' ? 'Izin (Tanpa Tatap Muka)' : status === 'Sakit' ? 'Sakit (Tanpa Tatap Muka)' : status === 'Alpa' ? 'Alpa (Tanpa Keterangan)' : ''));
     const targetDateNorm = (typeof normalizeDateValue === 'function' ? normalizeDateValue(date) : '') || date;
+
+    if (isCreate) {
+        const checkedPeriods = Array.from(document.querySelectorAll('input[name="ta_period_cb"]:checked, .ta-period-checkbox:checked'))
+            .map(function(cb) { return parseInt(cb.value, 10); })
+            .filter(function(n) { return !isNaN(n) && n >= 1 && n <= 10; });
+
+        if (checkedPeriods.length === 0) {
+            alert('Pilih minimal 1 Jam ke- terlebih dahulu.');
+            return;
+        }
+
+        const cachedDup = (Array.isArray(teacherAttendanceMasterList) ? teacherAttendanceMasterList : []).find(function(a) {
+            const aDate = (typeof normalizeDateValue === 'function' ? normalizeDateValue(a.date) : '') || a.date;
+            return aDate === targetDateNorm &&
+                checkedPeriods.includes(Number(a.period)) &&
+                (a.teacherId === teacherId || a.classId === classId);
+        });
+        if (cachedDup) {
+            const classLabel = (attendanceClassLookup && attendanceClassLookup[classId]) || cachedDup.className || classId;
+            const teacherLabel = (attendanceTeacherLookup && attendanceTeacherLookup[cachedDup.teacherId]) || cachedDup.teacherName || cachedDup.teacherId;
+            const conflictMsg = (cachedDup.teacherId === teacherId)
+                ? ('Data ganda diblokir: Presensi guru ' + teacherLabel + ' pada tanggal ' + targetDateNorm + ' untuk Jam ke-' + cachedDup.period + ' sudah tercatat.')
+                : ('Data ganda diblokir: Presensi pada kelas ' + classLabel + ' tanggal ' + targetDateNorm + ' untuk Jam ke-' + cachedDup.period + ' sudah terisi oleh ' + teacherLabel + '.');
+            if (typeof showToast === 'function') showToast('warning', 'Data Ganda Diblokir', conflictMsg);
+            alert(conflictMsg);
+            return;
+        }
+
+        const todayIso = (typeof getWibTodayISODate === 'function') ? getWibTodayISODate() : targetDateNorm;
+        const effectiveMethod = isCurrentUserAdmin
+            ? (targetDateNorm < todayIso ? 'Susulan (Admin)' : 'Manual (Admin)')
+            : 'Manual (Guru)';
+
+        setButtonLoading(saveBtn, true, 'Menyimpan...', 'Simpan');
+        showModalProcessing('teacherAttendanceModal', 'Menyimpan Presensi Guru...', 'Mohon tunggu sebentar...');
+
+        simataClient.withSuccessHandler(function(cRes) {
+            hideModalProcessing('teacherAttendanceModal');
+            setButtonLoading(saveBtn, false, '', 'Simpan');
+            if (cRes && cRes.success) {
+                closeTeacherAttendanceModal();
+                loadTeacherAttendance();
+                if (typeof window.refreshSimataNotifications === 'function') window.refreshSimataNotifications({ silent: true });
+                if (typeof showToast === 'function') {
+                    showToast('success', 'Presensi Guru Dicatat', cRes.message || 'Presensi guru berhasil disimpan.');
+                } else {
+                    alert(cRes.message || 'Presensi guru berhasil disimpan.');
+                }
+            } else {
+                alert((cRes && cRes.message) || 'Gagal mencatat presensi guru.');
+            }
+        }).withFailureHandler(function(err) {
+            hideModalProcessing('teacherAttendanceModal');
+            setButtonLoading(saveBtn, false, '', 'Simpan');
+            const errMsg = (err && err.message) ? err.message : 'Gagal mencatat presensi guru.';
+            if (typeof showToast === 'function' && err && err.status === 409) {
+                showToast('warning', 'Data Ganda Diblokir', errMsg);
+            }
+            alert(errMsg);
+        }).createTeacherAttendance({
+            teacherId: teacherId,
+            classId: classId,
+            attendance_date: targetDateNorm,
+            periods: checkedPeriods,
+            status: status,
+            subject: subject,
+            materi: effectiveMateri,
+            note: note,
+            method: effectiveMethod,
+            is_admin_manual: Boolean(isCurrentUserAdmin)
+        });
+        return;
+    }
+
+    if (!period) { alert('Jam ke- wajib dipilih.'); return; }
     const targetPeriod = parseInt(period, 10);
 
     const cachedConflict = (Array.isArray(teacherAttendanceMasterList) ? teacherAttendanceMasterList : []).find(function(a) {
@@ -17952,7 +18334,7 @@ function saveTeacherAttendanceFromModal() {
         classId: classId,
         period: period,
         subject: subject,
-        materi: materi,
+        materi: effectiveMateri,
         status: status,
         method: method || 'Manual',
         note: note
@@ -20667,7 +21049,74 @@ function initTeacherAttendanceInResponder() {
         });
     });
 
+    const statusGuard = document.getElementById('rg_status');
+    if (statusGuard) {
+        statusGuard.addEventListener('change', function() {
+            syncResponderStatusMode();
+        });
+    }
+
     initResponderCompactPickers();
+    syncResponderStatusMode();
+}
+
+function syncResponderStatusMode() {
+    const statusSel = document.getElementById('rg_status');
+    const roleUpper = (typeof currentResponderUser !== 'undefined' && currentResponderUser && currentResponderUser.role)
+        ? String(currentResponderUser.role).trim().toUpperCase()
+        : (isCurrentUserAdmin ? 'ADMIN' : 'GURU');
+    const isAdminUser = (roleUpper === 'ADMIN');
+
+    if (statusSel) {
+        const alpaOpt = Array.from(statusSel.options).find(function(o) { return o.value === 'Alpa'; });
+        if (alpaOpt) {
+            alpaOpt.hidden = !isAdminUser;
+            alpaOpt.disabled = !isAdminUser;
+            if (!isAdminUser && statusSel.value === 'Alpa') {
+                statusSel.value = 'Hadir';
+                syncResponderPickerLabel('rg_status');
+            }
+        }
+    }
+
+    const st = statusSel ? statusSel.value : 'Hadir';
+    const isHadir = (st === 'Hadir');
+    const materiEl = document.getElementById('rg_materi');
+    const materiLbl = document.querySelector('label[for="rg_materi"]');
+    const idleBox = document.getElementById('teacherCameraIdleView');
+
+    if (materiLbl) {
+        materiLbl.innerHTML = isHadir
+            ? 'Materi Pembelajaran <span class="responder-required">*</span>'
+            : 'Alasan Izin / Keterangan <span style="font-weight:500;color:#64748b;font-size:11px;">(Opsional)</span>';
+    }
+    if (materiEl) {
+        materiEl.placeholder = isHadir
+            ? 'Pokok bahasan / materi yang diajarkan'
+            : (st === 'Sakit'
+                ? 'Contoh: Sakit (tugas / keterangan tambahan bila ada)'
+                : st === 'Alpa'
+                ? 'Contoh: Tidak hadir tanpa keterangan'
+                : 'Contoh: Izin keperluan keluarga / tugas kelas mandiri');
+    }
+
+    if (idleBox) {
+        const titleEl = idleBox.querySelector('.responder-box-title');
+        const descEl = idleBox.querySelector('.responder-box-desc');
+        if (isHadir) {
+            if (titleEl) titleEl.textContent = 'Foto Langsung dari Kamera';
+            if (descEl) descEl.textContent = 'Buka kamera perangkat untuk verifikasi kehadiran guru secara langsung (tanpa upload galeri).';
+            if (!currentTeacherPhotoDataUrl) {
+                setTeacherCameraBadge('Siap Presensi', 'neutral');
+            }
+        } else {
+            if (titleEl) titleEl.textContent = 'Foto Opsional (' + st + ')';
+            if (descEl) descEl.textContent = 'Untuk status ' + st + ', foto kamera TIDAK WAJIB. Anda dapat langsung mengisi data di samping lalu tekan Simpan.';
+            if (!currentTeacherPhotoDataUrl) {
+                setTeacherCameraBadge('Foto Opsional (' + st + ')', 'info');
+            }
+        }
+    }
 }
 
 let responderScheduleGuardState = {
@@ -21283,6 +21732,9 @@ function syncResponderPickerLabel(selectId) {
     } else {
         textSpan.classList.add('is-placeholder');
     }
+    if (selectId === 'rg_status' && typeof syncResponderStatusMode === 'function') {
+        syncResponderStatusMode();
+    }
 }
 
 function openResponderSelectDialog(selectId) {
@@ -21306,7 +21758,9 @@ function openResponderSelectDialog(selectId) {
     function renderOptions(filterTerm) {
         const q = (filterTerm || '').trim().toLowerCase();
         const currentVal = sel.value;
-        const opts = Array.from(sel.options).map(function(opt) {
+        const opts = Array.from(sel.options).filter(function(opt) {
+            return !opt.hidden && !opt.disabled;
+        }).map(function(opt) {
             return {
                 value: opt.value,
                 title: opt.getAttribute('data-title') || opt.textContent || '',
@@ -21766,11 +22220,6 @@ function openResponderScheduleConfirmDialog(evalRes, submitData) {
 }
 
 function submitTeacherAttendance() {
-    if (!currentResponderSession || !currentResponderSession.sessionId || currentResponderSession.status !== "ACTIVE") {
-        alert("Sesi responder aktif diperlukan.");
-        return;
-    }
-
     const teacherSel = document.getElementById('rg_teacherId');
     const teacherId = teacherSel ? teacherSel.value.trim() : "";
     const classSel = document.getElementById('rg_classId');
@@ -21787,7 +22236,15 @@ function submitTeacherAttendance() {
     const noteEl = document.getElementById('rg_note');
     const note = noteEl ? noteEl.value.trim() : "";
 
-    // 1. Validation checks
+    const isHadir = (status === 'Hadir');
+    const hasSession = Boolean(currentResponderSession && currentResponderSession.sessionId && currentResponderSession.status === "ACTIVE");
+
+    // 1. Validation checks (BUG 68: Izin/Sakit do not require live camera photo or active Responder session)
+    if (isHadir && !hasSession) {
+        alert("Sesi responder aktif diperlukan untuk presensi Hadir dengan kamera.");
+        return;
+    }
+
     if (!teacherId) {
         alert("Pilih nama guru terlebih dahulu.");
         focusResponderSelectOrPicker('rg_teacherId');
@@ -21809,17 +22266,18 @@ function submitTeacherAttendance() {
         if (subjectEl) subjectEl.focus();
         return;
     }
-    if (!materi) {
-        alert("Materi pembelajaran wajib diisi.");
+    if (isHadir && !materi) {
+        alert("Materi pembelajaran wajib diisi untuk status Hadir.");
         if (materiEl) materiEl.focus();
         return;
     }
-    if (!currentTeacherPhotoDataUrl) {
-        alert("Foto verifikasi langsung dari kamera wajib diambil terlebih dahulu.");
+    if (isHadir && !currentTeacherPhotoDataUrl) {
+        alert("Foto verifikasi langsung dari kamera wajib diambil terlebih dahulu untuk status Hadir.");
         return;
     }
 
-    const submitData = { teacherId, classId, periods, status, subject, materi, note };
+    const effectiveMateri = materi || (note || (status === 'Izin' ? 'Izin (Tanpa Tatap Muka)' : status === 'Sakit' ? 'Sakit (Tanpa Tatap Muka)' : 'Alpa (Tanpa Keterangan)'));
+    const submitData = { teacherId, classId, periods, status, subject, materi: effectiveMateri, note };
 
     // 2. Soft-Guard Schedule Verification (BUG 64): warn cleanly if mismatched, allow conscious substitute override
     const evalRes = evaluateResponderScheduleMatch();
@@ -21854,8 +22312,10 @@ function executeTeacherAttendanceSubmit({ teacherId, classId, periods, status, s
         subject: subject,
         materi: materi,
         note: note,
-        photoDataUrl: currentTeacherPhotoDataUrl
+        photoDataUrl: currentTeacherPhotoDataUrl || null
     };
+
+    const sessionIdForApi = (currentResponderSession && currentResponderSession.sessionId) ? currentResponderSession.sessionId : '';
 
     simataClient
         .withSuccessHandler(function(result) {
@@ -21928,7 +22388,7 @@ function executeTeacherAttendanceSubmit({ teacherId, classId, periods, status, s
             }
             alert(errMsg);
         })
-        .recordTeacherAttendanceFromResponder(token, currentResponderSession.sessionId, payload);
+        .recordTeacherAttendanceFromResponder(token, sessionIdForApi, payload);
 }
 
 function resetTeacherAttendanceForm() {
@@ -21951,6 +22411,11 @@ function resetTeacherAttendanceForm() {
         cb.checked = false;
     });
 
+    const statusSelReset = document.getElementById('rg_status');
+    if (statusSelReset) {
+        statusSelReset.value = 'Hadir';
+        syncResponderPickerLabel('rg_status');
+    }
     currentTeacherPhotoDataUrl = null;
     const preview = document.getElementById('teacherCapturedPreview');
     if (preview) preview.src = "";
@@ -21960,6 +22425,7 @@ function resetTeacherAttendanceForm() {
     stopTeacherCameraStream();
     setTeacherCameraMode("idle");
     setTeacherCameraBadge("Siap Presensi", "neutral");
+    if (typeof syncResponderStatusMode === 'function') syncResponderStatusMode();
 }
 
 // Backward-compatible wrappers for session management
@@ -28348,6 +28814,7 @@ function showResponderView() {
 
     populateResponderTeachers();
     populateResponderClasses();
+    if (typeof syncResponderStatusMode === 'function') syncResponderStatusMode();
     if (window.simataNonKbmHelper && typeof getWibTodayISODate === 'function') {
         const todayIso = getWibTodayISODate();
         window.simataNonKbmHelper.ensureDate(todayIso).then(function() {
@@ -28598,11 +29065,11 @@ function onDashboardLoaded(data) {
         console.error('Error processing role for responder', e);
     }
 
-    // Role-based visibility and init for Teacher Attendance (ADMIN only)
+    // Role-based visibility and init for Teacher Attendance (Admin + Guru Lapor Izin/Sakit)
     try {
         const taMenu = document.getElementById('menu-teacher-attendance');
         if (taMenu) {
-            if (isAdmin) {
+            if (isAdmin || isGuru) {
                 taMenu.style.display = '';
                 try { initTeacherAttendanceModule(); } catch (e) { console.error('initTeacherAttendanceModule failed', e); }
             } else {
@@ -28628,10 +29095,10 @@ function onDashboardLoaded(data) {
         console.error('Error processing role for journal', e);
     }
 
-    // Sync Mobile Bottom Sheet & Quick Access RBAC (Feature 003)
+    // Sync Mobile Bottom Sheet & Quick Access RBAC (Feature 003 & BUG 68)
     try {
         const sheetTeacherAtt = document.getElementById('sheetMenuTeacherAttendance');
-        if (sheetTeacherAtt) sheetTeacherAtt.style.display = isAdmin ? '' : 'none';
+        if (sheetTeacherAtt) sheetTeacherAtt.style.display = (isAdmin || isGuru) ? '' : 'none';
 
         const sheetTeachers = document.getElementById('sheetMenuTeachers');
         if (sheetTeachers) sheetTeachers.style.display = (isAdmin || isGuru) ? '' : 'none';

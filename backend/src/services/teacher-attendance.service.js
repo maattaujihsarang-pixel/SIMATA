@@ -6,10 +6,10 @@ const evidenceService = require('./evidence.service');
 const { withTransaction } = require('../config/database');
 const { generateUUID } = require('../utils/id-generator.util');
 const { getTodayISODate, getCurrentISOTime } = require('../utils/date.util');
-const { BadRequestError, NotFoundError, ConflictError } = require('../errors');
+const { BadRequestError, NotFoundError, ConflictError, ForbiddenError } = require('../errors');
 const logger = require('../utils/logger.util');
 
-const VALID_STATUSES = ['Hadir', 'Izin', 'Sakit', 'TugasLuar'];
+const VALID_STATUSES = ['Hadir', 'Izin', 'Sakit', 'Alpa', 'TugasLuar'];
 
 function generateTeacherAttendanceId(attendanceDate, period) {
   const dateCompact = attendanceDate.replace(/-/g, '');
@@ -20,23 +20,65 @@ function generateTeacherAttendanceId(attendanceDate, period) {
 
 class TeacherAttendanceService {
   /**
-   * Multi-Hour Teacher Attendance with Single Photo Evidence (F-P5-005)
+   * Multi-Hour Teacher Attendance with Single Photo Evidence (F-P5-005 & BUG 68)
+   * Photo is required for live 'Hadir' submissions, and optional for 'Izin'/'Sakit'/'Alpa' or Admin Manual/Susulan.
    */
-  async recordTeacherAttendanceWithEvidence(payload, file, operatorUserId) {
+  async recordTeacherAttendanceWithEvidence(payload, file, operatorUserId, operatorRole = 'ADMIN', operatorTeacherId = null) {
     const {
       teacher_id, class_id, subject, materi, periods,
-      attendance_date, session_id, status = 'Hadir', note
+      attendance_date, session_id, status = 'Hadir', note,
+      method, is_admin_manual
     } = payload;
 
-    if (!teacher_id || !class_id || !subject || !materi || !session_id) {
-      throw new BadRequestError('teacher_id, class_id, subject, materi, dan session_id wajib diisi');
+    const todayIso = getTodayISODate();
+    const targetDate = attendance_date ? String(attendance_date).trim() : todayIso;
+    const cleanRole = String(operatorRole || 'ADMIN').toUpperCase();
+    const isGuru = cleanRole === 'GURU';
+    const isAdminManual = (is_admin_manual === true || is_admin_manual === 'true') && !isGuru;
+
+    if (!VALID_STATUSES.includes(status)) {
+      throw new BadRequestError(`Status tidak valid. Nilai yang diperbolehkan: ${VALID_STATUSES.join(', ')}`);
     }
 
-    if (!file || !file.buffer) {
-      throw new BadRequestError('Foto bukti verifikasi presensi guru wajib diunggah');
+    if (isGuru) {
+      if (status === 'Alpa') {
+        throw new ForbiddenError('Status Alpa hanya dapat diinput oleh Admin / Operator');
+      }
+      if (is_admin_manual === true || is_admin_manual === 'true') {
+        throw new ForbiddenError('Input presensi manual/susulan tanpa kamera hanya dapat dilakukan oleh Admin');
+      }
+      if (targetDate < todayIso) {
+        throw new ForbiddenError('Presensi guru susulan (tanggal lewat) hanya dapat diinput oleh Admin / Piket');
+      }
     }
 
-    const targetDate = attendance_date || getTodayISODate();
+    if (!teacher_id || !class_id || !subject) {
+      throw new BadRequestError('teacher_id, class_id, dan subject wajib diisi');
+    }
+
+    const hasPhoto = Boolean(file && file.buffer);
+    const isNonTeachingStatus = ['Izin', 'Sakit', 'Alpa', 'TugasLuar'].includes(status);
+
+    if (status === 'Hadir' && !hasPhoto && !isAdminManual) {
+      throw new BadRequestError('Foto bukti verifikasi kamera wajib diambil untuk status Hadir');
+    }
+
+    if (hasPhoto && !session_id) {
+      throw new BadRequestError('session_id wajib diisi bila mengunggah bukti foto presensi guru');
+    }
+
+    const cleanMateri = materi ? String(materi).trim() : '';
+    const cleanNote = note ? String(note).trim() : '';
+    const defaultMateriByStatus = {
+      Izin: 'Izin (Tanpa Tatap Muka)',
+      Sakit: 'Sakit (Tanpa Tatap Muka)',
+      Alpa: 'Alpa (Tanpa Keterangan)',
+      TugasLuar: 'Izin / Tugas Kedinasan'
+    };
+    const effectiveMateri = cleanMateri || (isNonTeachingStatus ? (cleanNote || defaultMateriByStatus[status] || status) : '');
+    if (!effectiveMateri) {
+      throw new BadRequestError('materi pembelajaran wajib diisi untuk status Hadir');
+    }
 
     // Parse periods
     let parsedPeriods = [];
@@ -122,12 +164,18 @@ class TeacherAttendanceService {
       );
     }
 
-    // 2. Storage Write (1 physical file for all requested periods)
-    const savedFile = await evidenceService.uploadFile({
-      buffer: file.buffer,
-      originalName: file.originalname || 'teacher_attendance.jpg',
-      mimeType: file.mimetype || 'image/jpeg'
-    });
+    // 2. Storage Write (1 physical file for all requested periods when photo is provided)
+    const savedFile = hasPhoto
+      ? await evidenceService.uploadFile({
+          buffer: file.buffer,
+          originalName: file.originalname || 'teacher_attendance.jpg',
+          mimeType: file.mimetype || 'image/jpeg'
+        })
+      : null;
+
+    const effectiveMethod = method
+      ? String(method).trim().slice(0, 30)
+      : (hasPhoto ? 'Camera' : (isAdminManual ? (targetDate < todayIso ? 'Susulan (Admin)' : 'Manual (Admin)') : 'Manual'));
 
     // 3. Database Transaction with Compensating Cleanup Guard
     try {
@@ -183,27 +231,29 @@ class TeacherAttendanceService {
             attendance_date: targetDate,
             period: p,
             subject,
-            materi,
+            materi: effectiveMateri,
             status,
-            method: 'Camera',
+            method: effectiveMethod,
             recorded_at: new Date().toISOString(),
-            note: note || null,
+            note: cleanNote || null,
             recorded_by_user_id: operatorUserId
           }, client);
           attendanceRecords.push(att);
 
-          // Insert evidence metadata pointing to the same file_id
-          const evid = await evidenceService.createEvidenceRecord({
-            sessionId: session_id,
-            operatorUserId,
-            fileId: savedFile.fileId,
-            fileUrl: savedFile.fileUrl,
-            attendanceId: att.attendance_id,
-            storageProvider: savedFile.storageProvider,
-            mimeType: file.mimetype || 'image/jpeg',
-            capturedAt: new Date().toISOString()
-          }, client);
-          evidenceRecords.push(evid);
+          // Insert evidence metadata pointing to the same file_id if photo provided
+          if (hasPhoto && savedFile) {
+            const evid = await evidenceService.createEvidenceRecord({
+              sessionId: session_id,
+              operatorUserId,
+              fileId: savedFile.fileId,
+              fileUrl: savedFile.fileUrl,
+              attendanceId: att.attendance_id,
+              storageProvider: savedFile.storageProvider,
+              mimeType: file.mimetype || 'image/jpeg',
+              capturedAt: new Date().toISOString()
+            }, client);
+            evidenceRecords.push(evid);
+          }
         }
 
         return {
@@ -212,6 +262,7 @@ class TeacherAttendanceService {
           class_id,
           attendance_date: targetDate,
           periods: parsedPeriods,
+          method: effectiveMethod,
           file: savedFile,
           attendances: attendanceRecords,
           evidences: evidenceRecords
@@ -221,8 +272,10 @@ class TeacherAttendanceService {
       return result;
     } catch (dbError) {
       // 4. Compensating Cleanup: Delete physical file if database transaction fails
-      logger.warn(`Compensating cleanup triggered for file ${savedFile.fileId} due to DB error: ${dbError.message}`);
-      await evidenceService.deleteFile(savedFile.fileId);
+      if (savedFile && savedFile.fileId) {
+        logger.warn(`Compensating cleanup triggered for file ${savedFile.fileId} due to DB error: ${dbError.message}`);
+        await evidenceService.deleteFile(savedFile.fileId);
+      }
       throw dbError;
     }
   }
@@ -239,7 +292,7 @@ class TeacherAttendanceService {
     return att;
   }
 
-  async updateAttendance(attendanceId, data, updatedByUserId) {
+  async updateAttendance(attendanceId, data, updatedByUserId, updaterRole = 'ADMIN') {
     const { status, subject, materi, note, period, class_id, attendance_date } = data;
 
     const existing = await teacherAttendanceRepository.findById(attendanceId);
@@ -247,9 +300,15 @@ class TeacherAttendanceService {
       throw new NotFoundError(`Presensi guru dengan ID '${attendanceId}' tidak ditemukan`);
     }
 
+    if (String(updaterRole || 'ADMIN').toUpperCase() === 'GURU' && status === 'Alpa') {
+      throw new ForbiddenError('Status Alpa hanya dapat diatur oleh Admin / Operator');
+    }
+
     if (status && !VALID_STATUSES.includes(status)) {
       throw new BadRequestError(`Status tidak valid. Nilai yang diperbolehkan: ${VALID_STATUSES.join(', ')}`);
     }
+
+    const effectiveStatus = status || existing.status;
 
     let parsedPeriod = existing.period;
     if (period !== undefined && period !== null && period !== '') {
@@ -263,7 +322,8 @@ class TeacherAttendanceService {
       throw new BadRequestError('Mata pelajaran tidak boleh kosong');
     }
 
-    if (materi !== undefined && !String(materi).trim()) {
+    let nextMateri = materi !== undefined ? String(materi).trim() : existing.materi;
+    if (materi !== undefined && !nextMateri) {
       throw new BadRequestError('Materi pelajaran tidak boleh kosong');
     }
 
@@ -307,9 +367,9 @@ class TeacherAttendanceService {
     }
 
     return teacherAttendanceRepository.update(attendanceId, {
-      status: status || existing.status,
+      status: effectiveStatus,
       subject: subject !== undefined ? String(subject).trim() : existing.subject,
-      materi: materi !== undefined ? String(materi).trim() : existing.materi,
+      materi: nextMateri,
       note: note !== undefined ? (note ? String(note).trim() : null) : existing.note,
       period: parsedPeriod,
       class_id: targetClassId,

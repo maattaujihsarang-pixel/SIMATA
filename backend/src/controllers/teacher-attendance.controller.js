@@ -6,11 +6,17 @@ class TeacherAttendanceController {
       const result = await teacherAttendanceService.recordTeacherAttendanceWithEvidence(
         req.body,
         req.file,
-        req.user.user_id
+        req.user.user_id,
+        req.user?.role || 'ADMIN',
+        req.user?.teacher_id || null
       );
+      const statusLabel = req.body.status || 'Hadir';
+      const msg = result.file
+        ? `Presensi guru untuk ${result.total_periods} jam berhasil dicatat dengan bukti foto`
+        : `Presensi guru (${statusLabel}) untuk ${result.total_periods} jam berhasil dicatat`;
       return res.status(201).json({
         status: 'success',
-        message: `Presensi guru untuk ${result.total_periods} jam berhasil dicatat dengan bukti foto`,
+        message: msg,
         data: result
       });
     } catch (error) {
@@ -53,7 +59,12 @@ class TeacherAttendanceController {
 
   async update(req, res, next) {
     try {
-      const result = await teacherAttendanceService.updateAttendance(req.params.id, req.body, req.user.user_id);
+      const result = await teacherAttendanceService.updateAttendance(
+        req.params.id,
+        req.body,
+        req.user.user_id,
+        req.user?.role || 'ADMIN'
+      );
       return res.status(200).json({
         status: 'success',
         message: 'Presensi guru berhasil diperbarui',

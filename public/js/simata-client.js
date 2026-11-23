@@ -1045,24 +1045,27 @@
       return { success: true, message: res.message, data: res.data };
     },
 
-    // 35. TeacherAttendance: recordTeacherAttendanceFromResponder (Multi-Hour + Single Photo)
+    // 35. TeacherAttendance: recordTeacherAttendanceFromResponder (Multi-Hour + Optional Photo for Leave/Admin Manual)
     recordTeacherAttendanceFromResponder: async function (...args) {
       const p = args.find((a) => a && typeof a === 'object' && (a.teacherId || a.teacher_id || a.photoDataUrl || a.photo)) || {};
       const teacherId = p.teacher_id || p.teacherId;
       const classId = p.class_id || p.classId;
       const periods = p.periods;
       const subject = p.subject;
-      const materi = p.materi;
+      const materi = p.materi || '';
       const note = p.note || '';
       const status = p.status || 'Hadir';
       const attendanceDate = p.attendance_date || p.attendanceDate;
-      let sessionId = p.session_id || p.sessionId;
+      const isAdminManual = Boolean(p.is_admin_manual || p.isAdminManual);
+      const photoVal = p.photo || p.photoDataUrl;
+      let sessionId = p.session_id || p.sessionId || '';
 
       if (!sessionId && window.currentResponderSession) {
-        sessionId = window.currentResponderSession.sessionId || window.currentResponderSession.session_id;
+        sessionId = window.currentResponderSession.sessionId || window.currentResponderSession.session_id || '';
       }
 
-      if (!sessionId) {
+      const needsAutoSession = Boolean(photoVal) || (!isAdminManual && status === 'Hadir');
+      if (!sessionId && needsAutoSession) {
         try {
           const sessRes = await apiFetch('/responder/sessions', { method: 'POST' });
           sessionId = sessRes.data.session_id;
@@ -1078,6 +1081,8 @@
       if (note) formData.append('note', note);
       if (attendanceDate) formData.append('attendance_date', attendanceDate);
       if (sessionId) formData.append('session_id', sessionId);
+      if (p.method) formData.append('method', p.method);
+      if (isAdminManual) formData.append('is_admin_manual', 'true');
 
       if (Array.isArray(periods)) {
         formData.append('periods', JSON.stringify(periods));
@@ -1085,7 +1090,6 @@
         formData.append('periods', String(periods));
       }
 
-      const photoVal = p.photo || p.photoDataUrl;
       if (photoVal instanceof Blob) {
         formData.append('photo', photoVal, 'evidence.jpg');
       } else if (typeof photoVal === 'string' && photoVal.startsWith('data:image/')) {
@@ -1100,6 +1104,11 @@
         body: formData
       });
       return { success: true, message: res.message, data: res.data };
+    },
+
+    // 35b. TeacherAttendance: createTeacherAttendance (Admin Susulan / Manual & Guru Leave)
+    createTeacherAttendance: async function (data) {
+      return this.recordTeacherAttendanceFromResponder(data);
     },
 
     // 36. Responder: createResponderSession
