@@ -2523,8 +2523,8 @@ html, body {
               <h2>Daftar Presensi Guru</h2>
             </div>
             <div class="section-actions" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-              <button id="runAutoAlpaTeacherBtn" type="button" class="login-button" style="margin-top:0;background:#b91c1c;display:none;" title="Tandai otomatis guru yang tidak ada presensi/izin KBM pada tanggal terpilih sebagai Alpa">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
+              <button id="runAutoAlpaTeacherBtn" type="button" class="btn-auto-alpa-pill" style="display:none;width:auto;min-height:36px;height:36px;padding:0 15px;margin:0;border-radius:9999px;border:1px solid #fca5a5;background:#fef2f2;color:#b91c1c;font-size:13px;font-weight:600;line-height:1;white-space:nowrap;align-items:center;justify-content:center;gap:6px;cursor:pointer;" title="Tandai otomatis guru yang tidak ada presensi/izin KBM pada tanggal terpilih sebagai Alpa">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;flex-shrink:0;display:block;" aria-hidden="true">
                   <circle cx="12" cy="12" r="9"></circle>
                   <polyline points="12 7 12 12 15 15"></polyline>
                 </svg>
@@ -17760,7 +17760,7 @@ function initTeacherAttendanceModule() {
     }
     const autoAlpaBtn = document.getElementById('runAutoAlpaTeacherBtn');
     if (autoAlpaBtn) {
-        autoAlpaBtn.style.display = isCurrentUserAdmin ? '' : 'none';
+        autoAlpaBtn.style.display = isCurrentUserAdmin ? 'inline-flex' : 'none';
     }
 
     // Toolbar Entries & Search
