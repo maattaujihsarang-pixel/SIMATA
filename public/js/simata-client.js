@@ -1675,6 +1675,7 @@
       if (params && params.teacher_id) qs.set('teacher_id', params.teacher_id);
       if (params && params.day_of_week !== undefined && params.day_of_week !== null && params.day_of_week !== '') qs.set('day_of_week', String(params.day_of_week));
       if (params && params.time_wib) qs.set('time_wib', params.time_wib);
+      if (params && params.date) qs.set('date', params.date);
       const qStr = qs.toString();
       const res = await apiFetch('/schedules/now' + (qStr ? '?' + qStr : ''));
       return { success: true, data: res.data };

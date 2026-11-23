@@ -438,10 +438,12 @@ class NotificationsService {
       pMap.get(pNum).add(row.student_id);
     }
 
-    // Determine expected periods per class today from scheduled KBM slots (fallback to [1] when schedule isn't seeded)
+    // Determine expected periods per class today from scheduled KBM slots (fallback to [1] only if schedule isn't seeded for that class)
     const expectedPeriodsByClass = new Map();
+    const classesWithAnySchedule = new Set();
     for (const slot of dayScheduleSlots) {
       if (!slot.class_id || !slot.period_number) continue;
+      classesWithAnySchedule.add(slot.class_id);
       if (slot.subject_category && slot.subject_category !== 'KBM') continue;
       if (!expectedPeriodsByClass.has(slot.class_id)) expectedPeriodsByClass.set(slot.class_id, new Set());
       expectedPeriodsByClass.get(slot.class_id).add(Number(slot.period_number));
@@ -467,7 +469,7 @@ class NotificationsService {
       const periodSet = expectedPeriodsByClass.get(cls.class_id);
       const expectedPeriods = (periodSet && periodSet.size > 0)
         ? Array.from(periodSet).sort((a, b) => a - b)
-        : [1];
+        : (classesWithAnySchedule.has(cls.class_id) ? [] : [1]);
       const classRecMap = recordedByClassPeriod.get(cls.class_id) || new Map();
 
       const missingPeriods = [];

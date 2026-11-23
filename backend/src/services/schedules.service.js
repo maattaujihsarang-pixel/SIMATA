@@ -180,10 +180,19 @@ class SchedulesService {
     };
   }
 
-  async getActiveNowForResponder({ teacher_id = null, day_of_week = null, time_wib = null } = {}) {
+  async getActiveNowForResponder({ teacher_id = null, day_of_week = null, time_wib = null, date = null } = {}) {
+    let resolvedDayOverride = day_of_week;
+    if ((resolvedDayOverride === null || resolvedDayOverride === undefined || resolvedDayOverride === '') && date && /^\d{4}-\d{2}-\d{2}$/.test(String(date).trim())) {
+      const [y, m, d] = String(date).trim().split('-').map(Number);
+      const dt = new Date(Date.UTC(y, m - 1, d));
+      if (dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d) {
+        resolvedDayOverride = dt.getUTCDay();
+      }
+    }
+
     const years = await schedulesRepo.getAcademicYears();
     const activeYear = years.find((y) => y.is_active) || years[0] || { academic_year_id: '2026/2027', name: 'Tahun Ajaran 2026/2027' };
-    const wib = getWibClock(day_of_week, time_wib);
+    const wib = getWibClock(resolvedDayOverride, time_wib);
     const semester = await schedulesRepo.detectBestSemesterForYear(activeYear.academic_year_id, wib.autoSemester);
 
     const periods = await schedulesRepo.getPeriods(activeYear.academic_year_id, semester);
@@ -202,7 +211,10 @@ class SchedulesService {
         suggested_fill: null,
         today_teacher_blocks: [],
         active_class_slots: [],
-        day_slots: []
+        day_slots: [],
+        non_kbm_slots: [],
+        non_kbm_by_class: {},
+        global_non_kbm_periods: {}
       };
     }
 
@@ -215,6 +227,57 @@ class SchedulesService {
     const activeDaySlots = teacher_id
       ? allDaySlots.filter((s) => s.teacher_id === teacher_id)
       : allDaySlots;
+
+    // Build canonical Non-KBM (PB, UPACARA, etc.) map per class and per shared period
+    const nonKbmSlots = allDaySlots.filter((s) => s.subject_category && s.subject_category !== 'KBM');
+    const nonKbmByClass = {};
+    const periodSummaryMap = new Map();
+    for (const s of allDaySlots) {
+      const pNum = Number(s.period_number);
+      if (!pNum) continue;
+      if (!periodSummaryMap.has(pNum)) {
+        periodSummaryMap.set(pNum, { total: 0, nonKbm: 0, sample: null, sameCode: true });
+      }
+      const stat = periodSummaryMap.get(pNum);
+      stat.total += 1;
+      if (s.subject_category && s.subject_category !== 'KBM') {
+        stat.nonKbm += 1;
+        const code = String(s.subject_code || 'NON_KBM').toUpperCase();
+        const shortBadge = code === 'PB' ? 'PB' : (code === 'UPACARA' ? 'UP' : code.slice(0, 6));
+        const info = {
+          subject_id: s.subject_id || null,
+          subject_code: code,
+          subject_name: s.subject_name || code,
+          subject_category: s.subject_category,
+          short_badge: shortBadge,
+          note: s.note || null
+        };
+        if (s.class_id) {
+          if (!nonKbmByClass[s.class_id]) nonKbmByClass[s.class_id] = {};
+          nonKbmByClass[s.class_id][pNum] = info;
+        }
+        if (!stat.sample) {
+          stat.sample = info;
+        } else if (stat.sample.subject_code !== info.subject_code) {
+          stat.sameCode = false;
+        }
+      }
+    }
+
+    const globalNonKbmPeriods = {};
+    for (const [pNum, stat] of periodSummaryMap.entries()) {
+      if (stat.total > 0 && stat.nonKbm === stat.total && stat.sample) {
+        globalNonKbmPeriods[pNum] = stat.sameCode
+          ? stat.sample
+          : {
+              subject_code: 'NON_KBM',
+              subject_name: 'Kegiatan Non-KBM',
+              subject_category: 'NON_KBM',
+              short_badge: 'NON-KBM',
+              note: null
+            };
+      }
+    }
 
     // Group consecutive periods for the selected teacher (same class + same subject)
     const blocks = [];
@@ -281,7 +344,10 @@ class SchedulesService {
       suggested_fill: suggestedFill,
       today_teacher_blocks: enrichedBlocks,
       active_class_slots: activeClassSlots,
-      day_slots: allDaySlots
+      day_slots: allDaySlots,
+      non_kbm_slots: nonKbmSlots,
+      non_kbm_by_class: nonKbmByClass,
+      global_non_kbm_periods: globalNonKbmPeriods
     };
   }
 

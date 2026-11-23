@@ -19,7 +19,8 @@ class SchedulesController {
       const data = await schedulesService.getActiveNowForResponder({
         teacher_id: req.query.teacher_id || null,
         day_of_week: req.query.day_of_week !== undefined ? req.query.day_of_week : null,
-        time_wib: req.query.time_wib || null
+        time_wib: req.query.time_wib || null,
+        date: req.query.date || null
       });
       res.status(200).json({ success: true, data });
     } catch (err) {

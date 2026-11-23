@@ -19,7 +19,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100..900;1,100..900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=bug65_ktsphoto">
+  <link rel="stylesheet" href="/css/style.css?v=bug67pb">
   <link rel="stylesheet" href="/css/notifications.css?v=bug66_notif3">
   <link rel="stylesheet" href="/css/finance.css">
   <style>
@@ -815,7 +815,7 @@ html, body {
   }
 }
 </style>
-  <link rel="stylesheet" href="/css/dashboard.css?v=bug64">
+  <link rel="stylesheet" href="/css/dashboard.css?v=bug67pb">
   <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
   <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
@@ -11566,9 +11566,15 @@ function setBatchPeriodCheckboxes(periods) {
 }
 
 function toggleAllBatchPeriods(selectAll) {
-    const cbs = document.querySelectorAll('input[name="batch_period"], .batch-period-checkbox');
+    const cbs = Array.from(document.querySelectorAll('input[name="batch_period"], .batch-period-checkbox'));
+    const hasKbmChoices = cbs.some(function(cb) { return !cb.disabled && cb.dataset.nonKbm !== '1'; });
     cbs.forEach(function(cb) {
-        cb.checked = !!selectAll;
+        if (cb.disabled) return;
+        if (selectAll && hasKbmChoices && cb.dataset.nonKbm === '1') {
+            cb.checked = false;
+        } else {
+            cb.checked = !!selectAll;
+        }
     });
     updateBatchPeriodDisplay();
 }
@@ -11612,7 +11618,12 @@ function renderBatchClassAttendanceRoster(data) {
     const modalTitle = document.getElementById('batchAttModalTitle');
     if (modalTitle) modalTitle.textContent = 'Presensi ' + (data.class.className || data.class.classId);
 
-    // Initial periods: priority to active responder session, else data.periods, else fallback ["1"]
+    const batchDate = (data.date && /^\d{4}-\d{2}-\d{2}$/.test(String(data.date)))
+        ? String(data.date)
+        : (typeof getWibTodayISODate === 'function' ? getWibTodayISODate() : '');
+    const batchClassId = (data.class && data.class.classId) || '';
+
+    // Initial periods: priority to active responder session, else data.periods, else smart KBM period fallback (skip PB/Non-KBM)
     let initialPeriods = [];
     if (typeof responderLockedPeriods !== 'undefined' && responderLockedPeriods && responderLockedPeriods.length > 0) {
         initialPeriods = responderLockedPeriods;
@@ -11626,12 +11637,29 @@ function renderBatchClassAttendanceRoster(data) {
     if (!initialPeriods || initialPeriods.length === 0) {
         if (data.periods && Array.isArray(data.periods) && data.periods.length > 0) {
             initialPeriods = data.periods;
+        } else if (window.simataNonKbmHelper) {
+            initialPeriods = [String(window.simataNonKbmHelper.getDefaultKbmPeriod(batchDate, batchClassId) || '1')];
         } else {
             initialPeriods = ["1"];
         }
     }
 
     setBatchPeriodCheckboxes(initialPeriods);
+    if (window.simataNonKbmHelper && batchDate) {
+        window.simataNonKbmHelper.ensureDate(batchDate).then(function() {
+            if (!window.simataNonKbmHelper) return;
+            window.simataNonKbmHelper.decoratePeriodContainer('#batchPeriodContainer .period-checkbox-container', batchDate, batchClassId, 'batchNonKbmNotice');
+            if (typeof responderLockedPeriods === 'undefined' || !responderLockedPeriods || responderLockedPeriods.length === 0) {
+                const curChecked = getSelectedBatchPeriods();
+                if (curChecked.length === 1 && curChecked[0] === '1' && window.simataNonKbmHelper.getNonKbmInfo(batchDate, 1, batchClassId)) {
+                    const fallbackPeriod = String(window.simataNonKbmHelper.getDefaultKbmPeriod(batchDate, batchClassId) || '2');
+                    if (fallbackPeriod !== '1') {
+                        setBatchPeriodCheckboxes([fallbackPeriod]);
+                    }
+                }
+            }
+        });
+    }
 
     const totalCountEl = document.getElementById('batchAttTotalCount');
     if (totalCountEl) totalCountEl.textContent = data.totalStudents || (data.students ? data.students.length : 0);
@@ -16079,6 +16107,28 @@ function initAttendanceModule() {
             if (sInfo && sInfo.classId && modalClassSel) {
                 modalClassSel.value = sInfo.classId;
             }
+            const dateVal = (document.getElementById('a_date') || {}).value || (typeof getWibTodayISODate === 'function' ? getWibTodayISODate() : '');
+            if (window.simataNonKbmHelper && dateVal) {
+                window.simataNonKbmHelper.ensureDate(dateVal).then(function() {
+                    if (window.simataNonKbmHelper) {
+                        window.simataNonKbmHelper.decoratePeriodContainer('#sa_period_container', dateVal, (modalClassSel && modalClassSel.value) || '', 'sa_nonKbmNotice');
+                    }
+                });
+            }
+        });
+    }
+    const modalAttDateEl = document.getElementById('a_date');
+    if (modalAttDateEl) {
+        modalAttDateEl.addEventListener('change', function() {
+            const dateVal = this.value || (typeof getWibTodayISODate === 'function' ? getWibTodayISODate() : '');
+            const modalClassSel = document.getElementById('a_classId');
+            if (window.simataNonKbmHelper && dateVal) {
+                window.simataNonKbmHelper.ensureDate(dateVal).then(function() {
+                    if (window.simataNonKbmHelper) {
+                        window.simataNonKbmHelper.decoratePeriodContainer('#sa_period_container', dateVal, (modalClassSel && modalClassSel.value) || '', 'sa_nonKbmNotice');
+                    }
+                });
+            }
         });
     }
 
@@ -16200,6 +16250,13 @@ function openAttendanceModal(mode, attendanceId) {
         if (periodHint) periodHint.textContent = '(Pilih 1 atau lebih jam)';
         if (saveBtn) { saveBtn.style.removeProperty('display'); saveBtn.disabled = false; saveBtn.textContent = 'Simpan'; }
         if (cancelBtn) { cancelBtn.textContent = 'Batal'; cancelBtn.disabled = false; }
+        if (window.simataNonKbmHelper && todayIso) {
+            window.simataNonKbmHelper.ensureDate(todayIso).then(function() {
+                if (window.simataNonKbmHelper) {
+                    window.simataNonKbmHelper.decoratePeriodContainer('#sa_period_container', todayIso, (cEl && cEl.value) || '', 'sa_nonKbmNotice');
+                }
+            });
+        }
         modal.style.display = 'flex';
         return;
     }
@@ -16240,6 +16297,14 @@ function openAttendanceModal(mode, attendanceId) {
         if (cancelBtn) {
             cancelBtn.textContent = isView ? 'Tutup' : 'Batal';
             cancelBtn.disabled = false;
+        }
+
+        if (window.simataNonKbmHelper && a.date) {
+            window.simataNonKbmHelper.ensureDate(a.date).then(function() {
+                if (window.simataNonKbmHelper) {
+                    window.simataNonKbmHelper.decoratePeriodContainer('#sa_period_container', a.date, a.classId || '', 'sa_nonKbmNotice');
+                }
+            });
         }
 
         modal.style.display = 'flex';
@@ -16744,6 +16809,16 @@ function generateStudentAttendancePrintHtml(matrixData, meta) {
     const formattedDate = meta.formattedDate || '-';
     const academicYear = meta.academicYear || '-';
     const isSingleStudent = meta.isSingleStudent || false;
+    const rawDate = meta.rawDate || '';
+    const classId = meta.classId || '';
+    const nonKbmHelper = window.simataNonKbmHelper || null;
+    const headerNonKbmTags = {};
+    let hasNonKbmInPrint = false;
+
+    for (let i = 1; i <= 10; i++) {
+        const nk = (nonKbmHelper && rawDate) ? nonKbmHelper.getNonKbmInfo(rawDate, i, classId) : null;
+        if (nk) headerNonKbmTags[i] = nk;
+    }
 
     let rowsHtml = '';
     if (!matrixData || matrixData.length === 0) {
@@ -16752,14 +16827,20 @@ function generateStudentAttendancePrintHtml(matrixData, meta) {
         rowsHtml = matrixData.map(function(row) {
             let periodCells = '';
             for (let i = 1; i <= 10; i++) {
-                const val = row.periods[i] || '-';
-                let cls = '';
-                if (val === '✓') cls = 'col-status-hadir';
-                else if (val === 'S') cls = 'col-status-sakit';
-                else if (val === 'I') cls = 'col-status-izin';
-                else if (val === 'A') cls = 'col-status-alpa';
+                const rawVal = row.periods[i] || '-';
+                const nk = headerNonKbmTags[i] || null;
+                if (rawVal === '-' && nk) {
+                    hasNonKbmInPrint = true;
+                    periodCells += '<td class="col-status-nonkbm" title="' + escapeAttr(nk.subject_name) + '">' + escapeHtml(nk.short_badge) + '</td>';
+                } else {
+                    let cls = '';
+                    if (rawVal === '✓') cls = 'col-status-hadir';
+                    else if (rawVal === 'S') cls = 'col-status-sakit';
+                    else if (rawVal === 'I') cls = 'col-status-izin';
+                    else if (rawVal === 'A') cls = 'col-status-alpa';
 
-                periodCells += '<td class="' + cls + '">' + escapeHtml(val) + '</td>';
+                    periodCells += '<td class="' + cls + '">' + escapeHtml(rawVal) + '</td>';
+                }
             }
 
             return '<tr>' +
@@ -16773,6 +16854,14 @@ function generateStudentAttendancePrintHtml(matrixData, meta) {
     }
 
     const titleText = isSingleStudent ? 'PRESENSI SISWA INDIVIDU' : 'DAFTAR PRESENSI SISWA';
+    let periodHeadersHtml = '';
+    for (let i = 1; i <= 10; i++) {
+        const nk = headerNonKbmTags[i];
+        periodHeadersHtml += '<th style="width:42px;">JAM KE-' + i + (nk ? '<br><span style="font-size:7.5pt;color:#3730a3;">(' + escapeHtml(nk.short_badge) + ')</span>' : '') + '</th>';
+    }
+    const nonKbmLegendHtml = hasNonKbmInPrint
+        ? '<div style="font-size:8.5pt;color:#312e81;background:#eef2ff;border:1px solid #c7d2fe;padding:5px 8px;border-radius:4px;margin-bottom:12px;"><strong>Keterangan Non-KBM:</strong> PB = Pembelajaran Bahasa (dikelola Pengurus Bahasa secara terpisah, otomatis terpenuhi), UP = Upacara Bendera.</div>'
+        : '';
 
     return '<!DOCTYPE html>' +
         '<html><head><meta charset="utf-8">' +
@@ -16798,6 +16887,7 @@ function generateStudentAttendancePrintHtml(matrixData, meta) {
         '.report-table td.col-status-sakit { font-weight: 700; color: #b45309; }' +
         '.report-table td.col-status-izin { font-weight: 700; color: #1d4ed8; }' +
         '.report-table td.col-status-alpa { font-weight: 700; color: #b91c1c; }' +
+        '.report-table td.col-status-nonkbm { font-weight: 800; font-size: 8.5pt; color: #3730a3; background-color: #eef2ff !important; }' +
         '.report-signatures { display: flex; justify-content: space-between; margin-top: 24px; font-size: 10pt; break-inside: avoid; page-break-inside: avoid; }' +
         '.sig-block { text-align: center; width: 220px; }' +
         '.sig-space { height: 55px; }' +
@@ -16822,22 +16912,14 @@ function generateStudentAttendancePrintHtml(matrixData, meta) {
                   '<th style="width:110px;">NO INDUK</th>' +
                   '<th>NAMA</th>' +
                   '<th style="width:45px;">L/P</th>' +
-                  '<th style="width:42px;">JAM KE-1</th>' +
-                  '<th style="width:42px;">JAM KE-2</th>' +
-                  '<th style="width:42px;">JAM KE-3</th>' +
-                  '<th style="width:42px;">JAM KE-4</th>' +
-                  '<th style="width:42px;">JAM KE-5</th>' +
-                  '<th style="width:42px;">JAM KE-6</th>' +
-                  '<th style="width:42px;">JAM KE-7</th>' +
-                  '<th style="width:42px;">JAM KE-8</th>' +
-                  '<th style="width:42px;">JAM KE-9</th>' +
-                  '<th style="width:42px;">JAM KE-10</th>' +
+                  periodHeadersHtml +
                 '</tr>' +
               '</thead>' +
               '<tbody>' +
                 rowsHtml +
               '</tbody>' +
             '</table>' +
+            nonKbmLegendHtml +
             '<div class="report-signatures">' +
               '<div class="sig-block">' +
                 '<div>Mengetahui,</div>' +
@@ -17746,7 +17828,16 @@ function openTeacherAttendanceModal(mode, attendanceId) {
         }
 
         const pField = document.getElementById('ta_period');
-        if (pField) pField.value = String(a.period || '');
+        if (pField) {
+            pField.value = String(a.period || '');
+            if (window.simataNonKbmHelper && a.date) {
+                window.simataNonKbmHelper.ensureDate(a.date).then(function() {
+                    if (window.simataNonKbmHelper) {
+                        window.simataNonKbmHelper.decoratePeriodSelect(pField, a.date, a.classId || '');
+                    }
+                });
+            }
+        }
 
         let statusVal = a.status || 'Hadir';
         if (statusVal.toLowerCase() === 'tugas luar' || statusVal.toLowerCase() === 'tugasluar') {
@@ -18680,36 +18771,39 @@ function showReportingPreview(html) {
 // 1. SISWA HARIAN PER ANAK
 // ==========================================
 function loadReportStudentDailyPerStudent(date, studentId) {
+    const schedReady = (window.simataNonKbmHelper && date) ? window.simataNonKbmHelper.ensureDate(date) : Promise.resolve();
     simataClient.withSuccessHandler(function(res) {
-        hideReportingLoading();
-        try {
-            if (!res || !res.success) {
-                showReportingError(res && res.message ? res.message : 'Gagal memuat presensi siswa dari server.');
-                return;
+        schedReady.finally(function() {
+            hideReportingLoading();
+            try {
+                if (!res || !res.success) {
+                    showReportingError(res && res.message ? res.message : 'Gagal memuat presensi siswa dari server.');
+                    return;
+                }
+                const attendances = res.attendances || [];
+                const student = (rptState.studentsMaster || []).find(function(s) { return String(s.studentId) === String(studentId); }) || 
+                                attendanceStudentLookup[studentId] || { studentId: studentId, name: studentId, nis: '-', gender: '-' };
+
+                const matrixData = buildStudentAttendanceMatrix([student], attendances, date);
+                const singleRow = (matrixData && matrixData[0]) ? matrixData[0] : {
+                    periods: { 1: '-', 2: '-', 3: '-', 4: '-', 5: '-', 6: '-', 7: '-', 8: '-', 9: '-', 10: '-' },
+                    h: 0, i: 0, s: 0, a: 0
+                };
+
+                rptState.lastResult = {
+                    mode: 'SISWA_HARIAN_ANAK',
+                    date: date,
+                    student: student,
+                    periodSlots: singleRow.periods,
+                    stats: { hadir: singleRow.h, izin: singleRow.i, sakit: singleRow.s, alpa: singleRow.a }
+                };
+
+                renderPreviewStudentDailyPerStudent(rptState.lastResult);
+            } catch (err) {
+                console.error('Error in loadReportStudentDailyPerStudent:', err);
+                showReportingError('Terjadi kesalahan saat memproses laporan siswa: ' + err.message);
             }
-            const attendances = res.attendances || [];
-            const student = (rptState.studentsMaster || []).find(function(s) { return String(s.studentId) === String(studentId); }) || 
-                            attendanceStudentLookup[studentId] || { studentId: studentId, name: studentId, nis: '-', gender: '-' };
-
-            const matrixData = buildStudentAttendanceMatrix([student], attendances, date);
-            const singleRow = (matrixData && matrixData[0]) ? matrixData[0] : {
-                periods: { 1: '-', 2: '-', 3: '-', 4: '-', 5: '-', 6: '-', 7: '-', 8: '-', 9: '-', 10: '-' },
-                h: 0, i: 0, s: 0, a: 0
-            };
-
-            rptState.lastResult = {
-                mode: 'SISWA_HARIAN_ANAK',
-                date: date,
-                student: student,
-                periodSlots: singleRow.periods,
-                stats: { hadir: singleRow.h, izin: singleRow.i, sakit: singleRow.s, alpa: singleRow.a }
-            };
-
-            renderPreviewStudentDailyPerStudent(rptState.lastResult);
-        } catch (err) {
-            console.error('Error in loadReportStudentDailyPerStudent:', err);
-            showReportingError('Terjadi kesalahan saat memproses laporan siswa: ' + err.message);
-        }
+        });
     }).withFailureHandler(function(err) {
         hideReportingLoading();
         showReportingError('Gagal menghubungi server untuk memuat presensi siswa: ' + (err && err.message ? err.message : 'Koneksi terputus'));
@@ -18722,6 +18816,8 @@ function renderPreviewStudentDailyPerStudent(data) {
     const stats = data.stats;
     const formattedDate = formatAttendanceIndonesianDate(data.date);
     const className = (attendanceClassLookup && attendanceClassLookup[s.classId]) || s.classId || '-';
+    const nonKbmHelper = window.simataNonKbmHelper || null;
+    let hasNonKbmLegend = false;
 
     let html = 
       '<div class="rpt-table-header-block">' +
@@ -18740,7 +18836,8 @@ function renderPreviewStudentDailyPerStudent(data) {
               '<th style="padding:10px;text-align:left;">Nama Siswa</th>' +
               '<th style="padding:10px;text-align:center;width:45px;">L/P</th>';
     for (let i = 1; i <= 10; i++) {
-        html += '<th style="padding:10px 4px;text-align:center;width:42px;">Jam ' + i + '</th>';
+        const nk = nonKbmHelper ? nonKbmHelper.getNonKbmInfo(data.date, i, s.classId) : null;
+        html += '<th style="padding:10px 4px;text-align:center;width:46px;">Jam ' + i + (nk ? '<span class="rpt-nonkbm-th-tag">' + escapeHtml(nk.short_badge) + '</span>' : '') + '</th>';
     }
     html += '<th style="padding:10px;text-align:center;width:110px;">Rekap Kehadiran</th>' +
             '</tr>' +
@@ -18752,7 +18849,14 @@ function renderPreviewStudentDailyPerStudent(data) {
               '<td style="padding:10px;text-align:left;font-weight:600;">' + escapeHtml(s.name) + '</td>' +
               '<td style="padding:10px;text-align:center;">' + escapeHtml(normalizeGenderForPrint(s.gender)) + '</td>';
     for (let i = 1; i <= 10; i++) {
-        html += '<td style="padding:10px 4px;text-align:center;font-weight:700;">' + escapeHtml(p[i]) + '</td>';
+        const val = p[i] || '-';
+        const nk = nonKbmHelper ? nonKbmHelper.getNonKbmInfo(data.date, i, s.classId) : null;
+        if (val === '-' && nk) {
+            hasNonKbmLegend = true;
+            html += '<td class="rpt-nonkbm-cell' + (nk.isPb ? '' : ' is-other-nonkbm') + '" style="padding:10px 4px;text-align:center;" title="' + escapeAttr(nk.subject_name + ' (Non-KBM)') + '"><span class="rpt-nonkbm-badge">' + escapeHtml(nk.short_badge) + '</span></td>';
+        } else {
+            html += '<td style="padding:10px 4px;text-align:center;font-weight:700;">' + escapeHtml(val) + '</td>';
+        }
     }
     html += '<td style="padding:10px;text-align:center;font-weight:700;font-size:12px;">' +
               '<span style="color:#15803d;">' + stats.hadir + 'H</span> / ' +
@@ -18763,7 +18867,8 @@ function renderPreviewStudentDailyPerStudent(data) {
             '</tr>' +
           '</tbody>' +
         '</table>' +
-      '</div>';
+      '</div>' +
+      (hasNonKbmLegend ? '<div class="rpt-nonkbm-legend-note"><span class="rpt-nonkbm-badge">PB</span><span><strong>Pembelajaran Bahasa (Non-KBM):</strong> Dikelola terpisah oleh Pengurus Bahasa, otomatis terpenuhi tanpa wajib presensi &amp; ta\'zir KBM. <strong>UP</strong> = Upacara Bendera.</span></div>' : '');
 
     showReportingPreview(html);
 }
@@ -18772,64 +18877,67 @@ function renderPreviewStudentDailyPerStudent(data) {
 // 2. SISWA HARIAN PER KELAS
 // ==========================================
 function loadReportStudentDailyPerClass(date, classId) {
+    const schedReady = (window.simataNonKbmHelper && date) ? window.simataNonKbmHelper.ensureDate(date) : Promise.resolve();
     simataClient.withSuccessHandler(function(res) {
-        hideReportingLoading();
-        try {
-            if (!res || !res.success) {
-                showReportingError(res && res.message ? res.message : 'Gagal memuat presensi kelas dari server.');
-                return;
-            }
-            const attendances = res.attendances || [];
-            const studentsList = (rptState.studentsMaster && rptState.studentsMaster.length > 0)
-                ? rptState.studentsMaster
-                : (typeof attendanceStudentsMasterList !== 'undefined' && attendanceStudentsMasterList && attendanceStudentsMasterList.length > 0
-                    ? attendanceStudentsMasterList
-                    : []);
-            let targetStudents = studentsList.filter(function(s) {
-                return String(s.classId) === String(classId);
-            });
-
-            // Fallback: if student master is not yet loaded but attendance records exist for this class
-            if (targetStudents.length === 0 && attendances.length > 0) {
-                const seenStudentIds = {};
-                attendances.forEach(function(att) {
-                    if (att.studentId && !seenStudentIds[att.studentId]) {
-                        seenStudentIds[att.studentId] = true;
-                        const lkp = (typeof attendanceStudentLookup !== 'undefined' && attendanceStudentLookup && attendanceStudentLookup[att.studentId]) || {};
-                        targetStudents.push({
-                            studentId: att.studentId,
-                            name: lkp.name || att.studentId,
-                            nis: lkp.nis || '-',
-                            gender: lkp.gender || '-',
-                            classId: att.classId || classId
-                        });
-                    }
+        schedReady.finally(function() {
+            hideReportingLoading();
+            try {
+                if (!res || !res.success) {
+                    showReportingError(res && res.message ? res.message : 'Gagal memuat presensi kelas dari server.');
+                    return;
+                }
+                const attendances = res.attendances || [];
+                const studentsList = (rptState.studentsMaster && rptState.studentsMaster.length > 0)
+                    ? rptState.studentsMaster
+                    : (typeof attendanceStudentsMasterList !== 'undefined' && attendanceStudentsMasterList && attendanceStudentsMasterList.length > 0
+                        ? attendanceStudentsMasterList
+                        : []);
+                let targetStudents = studentsList.filter(function(s) {
+                    return String(s.classId) === String(classId);
                 });
+
+                // Fallback: if student master is not yet loaded but attendance records exist for this class
+                if (targetStudents.length === 0 && attendances.length > 0) {
+                    const seenStudentIds = {};
+                    attendances.forEach(function(att) {
+                        if (att.studentId && !seenStudentIds[att.studentId]) {
+                            seenStudentIds[att.studentId] = true;
+                            const lkp = (typeof attendanceStudentLookup !== 'undefined' && attendanceStudentLookup && attendanceStudentLookup[att.studentId]) || {};
+                            targetStudents.push({
+                                studentId: att.studentId,
+                                name: lkp.name || att.studentId,
+                                nis: lkp.nis || '-',
+                                gender: lkp.gender || '-',
+                                classId: att.classId || classId
+                            });
+                        }
+                    });
+                }
+
+                targetStudents.sort(function(a, b) {
+                    return (a.name || '').localeCompare(b.name || '');
+                });
+
+                const matrixData = buildStudentAttendanceMatrix(targetStudents, attendances, date);
+                const classObj = (rptState.classesMaster || []).find(function(c) { return String(c.classId) === String(classId); });
+                const className = (classObj && classObj.className) || (typeof attendanceClassLookup !== 'undefined' && attendanceClassLookup && attendanceClassLookup[classId]) || classId || 'Kelas Terpilih';
+                const academicYear = (attendances && attendances.length > 0 && attendances[0].academicYear) ? attendances[0].academicYear : '-';
+
+                rptState.lastResult = {
+                    mode: 'SISWA_HARIAN_KELAS',
+                    date: date,
+                    classId: classId,
+                    className: className,
+                    academicYear: academicYear,
+                    matrixData: matrixData
+                };
+
+                renderPreviewStudentDailyPerClass(rptState.lastResult);
+            } catch (err) {
+                console.error('Error in loadReportStudentDailyPerClass:', err);
+                showReportingError('Terjadi kesalahan saat memproses laporan: ' + err.message);
             }
-
-            targetStudents.sort(function(a, b) {
-                return (a.name || '').localeCompare(b.name || '');
-            });
-
-            const matrixData = buildStudentAttendanceMatrix(targetStudents, attendances, date);
-            const classObj = (rptState.classesMaster || []).find(function(c) { return String(c.classId) === String(classId); });
-            const className = (classObj && classObj.className) || (typeof attendanceClassLookup !== 'undefined' && attendanceClassLookup && attendanceClassLookup[classId]) || classId || 'Kelas Terpilih';
-            const academicYear = (attendances && attendances.length > 0 && attendances[0].academicYear) ? attendances[0].academicYear : '-';
-
-            rptState.lastResult = {
-                mode: 'SISWA_HARIAN_KELAS',
-                date: date,
-                classId: classId,
-                className: className,
-                academicYear: academicYear,
-                matrixData: matrixData
-            };
-
-            renderPreviewStudentDailyPerClass(rptState.lastResult);
-        } catch (err) {
-            console.error('Error in loadReportStudentDailyPerClass:', err);
-            showReportingError('Terjadi kesalahan saat memproses laporan: ' + err.message);
-        }
+        });
     }).withFailureHandler(function(err) {
         hideReportingLoading();
         showReportingError('Gagal menghubungi server untuk memuat presensi kelas: ' + (err && err.message ? err.message : 'Koneksi terputus'));
@@ -18839,6 +18947,8 @@ function loadReportStudentDailyPerClass(date, classId) {
 function renderPreviewStudentDailyPerClass(data) {
     const matrix = data.matrixData || [];
     const formattedDate = formatAttendanceIndonesianDate(data.date);
+    const nonKbmHelper = window.simataNonKbmHelper || null;
+    let hasNonKbmLegend = false;
 
     let rowsHtml = '';
     if (matrix.length === 0) {
@@ -18853,7 +18963,14 @@ function renderPreviewStudentDailyPerClass(data) {
                 '<td style="padding:10px;text-align:left;font-weight:600;">' + escapeHtml(item.name) + '</td>' +
                 '<td style="padding:10px;text-align:center;">' + escapeHtml(item.gender || '-') + '</td>';
             for (let i = 1; i <= 10; i++) {
-                rowsHtml += '<td style="padding:10px 4px;text-align:center;font-weight:700;">' + escapeHtml(p[i] || '-') + '</td>';
+                const val = p[i] || '-';
+                const nk = nonKbmHelper ? nonKbmHelper.getNonKbmInfo(data.date, i, data.classId) : null;
+                if (val === '-' && nk) {
+                    hasNonKbmLegend = true;
+                    rowsHtml += '<td class="rpt-nonkbm-cell' + (nk.isPb ? '' : ' is-other-nonkbm') + '" style="padding:10px 4px;text-align:center;" title="' + escapeAttr(nk.subject_name + ' (Non-KBM)') + '"><span class="rpt-nonkbm-badge">' + escapeHtml(nk.short_badge) + '</span></td>';
+                } else {
+                    rowsHtml += '<td style="padding:10px 4px;text-align:center;font-weight:700;">' + escapeHtml(val) + '</td>';
+                }
             }
             rowsHtml += '<td style="padding:10px;text-align:center;font-size:12px;font-weight:700;">' +
                           '<span style="color:#15803d;">' + item.h + 'H</span> / ' +
@@ -18882,7 +18999,8 @@ function renderPreviewStudentDailyPerClass(data) {
               '<th style="padding:10px;text-align:left;">Nama Siswa</th>' +
               '<th style="padding:10px;text-align:center;width:45px;">L/P</th>';
     for (let i = 1; i <= 10; i++) {
-        html += '<th style="padding:10px 4px;text-align:center;width:38px;">' + i + '</th>';
+        const nk = nonKbmHelper ? nonKbmHelper.getNonKbmInfo(data.date, i, data.classId) : null;
+        html += '<th style="padding:10px 4px;text-align:center;width:42px;">' + i + (nk ? '<span class="rpt-nonkbm-th-tag">' + escapeHtml(nk.short_badge) + '</span>' : '') + '</th>';
     }
     html += '<th style="padding:10px;text-align:center;width:100px;">Total</th>' +
             '</tr>' +
@@ -18891,7 +19009,8 @@ function renderPreviewStudentDailyPerClass(data) {
             rowsHtml +
           '</tbody>' +
         '</table>' +
-      '</div>';
+      '</div>' +
+      (hasNonKbmLegend ? '<div class="rpt-nonkbm-legend-note"><span class="rpt-nonkbm-badge">PB</span><span><strong>Pembelajaran Bahasa (Non-KBM):</strong> Dikelola terpisah oleh Pengurus Bahasa, otomatis terpenuhi tanpa wajib presensi &amp; ta\'zir KBM. <strong>UP</strong> = Upacara Bendera.</span></div>' : '');
 
     showReportingPreview(html);
 }
@@ -18900,66 +19019,71 @@ function renderPreviewStudentDailyPerClass(data) {
 // 3. SISWA BULANAN PER ANAK
 // ==========================================
 function loadReportStudentMonthlyPerStudent(month, year, studentId) {
+    const overviewReady = (window.simataNonKbmHelper && typeof window.simataNonKbmHelper.ensureOverview === 'function')
+        ? window.simataNonKbmHelper.ensureOverview()
+        : Promise.resolve();
     simataClient.withSuccessHandler(function(res) {
-        hideReportingLoading();
-        if (!res || !res.success) {
-            showReportingError('Gagal memuat presensi bulanan siswa.');
-            return;
-        }
-        const attendances = (res.attendances || []).filter(function(a) {
-            return a.date && a.date.startsWith(year + '-' + month);
+        overviewReady.finally(function() {
+            hideReportingLoading();
+            if (!res || !res.success) {
+                showReportingError('Gagal memuat presensi bulanan siswa.');
+                return;
+            }
+            const attendances = (res.attendances || []).filter(function(a) {
+                return a.date && a.date.startsWith(year + '-' + month);
+            });
+
+            const student = (rptState.studentsMaster || []).find(function(s) { return String(s.studentId) === String(studentId); }) || 
+                            attendanceStudentLookup[studentId] || { studentId: studentId, name: studentId, nis: '-', gender: '-' };
+
+            const daysInMonth = new Date(parseInt(year, 10), parseInt(month, 10), 0).getDate();
+            const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+
+            const dayRows = [];
+            let grandHadir = 0, grandIzin = 0, grandSakit = 0, grandAlpa = 0;
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateStr = year + '-' + month + '-' + String(d).padStart(2, '0');
+                const dayOfWeek = new Date(parseInt(year, 10), parseInt(month, 10) - 1, d).getDay();
+                const dayName = dayNames[dayOfWeek];
+
+                const periods = {};
+                for (let p = 1; p <= 10; p++) periods[p] = '-';
+                let dHadir = 0, dIzin = 0, dSakit = 0, dAlpa = 0;
+
+                attendances.filter(function(a) { return a.date === dateStr; }).forEach(function(a) {
+                    const p = parseInt(a.period, 10);
+                    if (p >= 1 && p <= 10) {
+                        periods[p] = mapAttendanceStatusToSymbol(a.status);
+                        if (a.status === 'Hadir') { dHadir++; grandHadir++; }
+                        else if (a.status === 'Izin') { dIzin++; grandIzin++; }
+                        else if (a.status === 'Sakit') { dSakit++; grandSakit++; }
+                        else if (a.status === 'Alpa') { dAlpa++; grandAlpa++; }
+                    }
+                });
+
+                dayRows.push({
+                    dayNum: d,
+                    dateStr: dateStr,
+                    dayName: dayName,
+                    isFriday: dayOfWeek === 5,
+                    isSunday: false,
+                    periods: periods,
+                    stats: { hadir: dHadir, izin: dIzin, sakit: dSakit, alpa: dAlpa }
+                });
+            }
+
+            rptState.lastResult = {
+                mode: 'SISWA_BULANAN_ANAK',
+                month: month,
+                year: year,
+                student: student,
+                dayRows: dayRows,
+                grandStats: { hadir: grandHadir, izin: grandIzin, sakit: grandSakit, alpa: grandAlpa }
+            };
+
+            renderPreviewStudentMonthlyPerStudent(rptState.lastResult);
         });
-
-        const student = (rptState.studentsMaster || []).find(function(s) { return String(s.studentId) === String(studentId); }) || 
-                        attendanceStudentLookup[studentId] || { studentId: studentId, name: studentId, nis: '-', gender: '-' };
-
-        const daysInMonth = new Date(parseInt(year, 10), parseInt(month, 10), 0).getDate();
-        const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-
-        const dayRows = [];
-        let grandHadir = 0, grandIzin = 0, grandSakit = 0, grandAlpa = 0;
-
-        for (let d = 1; d <= daysInMonth; d++) {
-            const dateStr = year + '-' + month + '-' + String(d).padStart(2, '0');
-            const dayOfWeek = new Date(parseInt(year, 10), parseInt(month, 10) - 1, d).getDay();
-            const dayName = dayNames[dayOfWeek];
-
-            const periods = {};
-            for (let p = 1; p <= 10; p++) periods[p] = '-';
-            let dHadir = 0, dIzin = 0, dSakit = 0, dAlpa = 0;
-
-            attendances.filter(function(a) { return a.date === dateStr; }).forEach(function(a) {
-                const p = parseInt(a.period, 10);
-                if (p >= 1 && p <= 10) {
-                    periods[p] = mapAttendanceStatusToSymbol(a.status);
-                    if (a.status === 'Hadir') { dHadir++; grandHadir++; }
-                    else if (a.status === 'Izin') { dIzin++; grandIzin++; }
-                    else if (a.status === 'Sakit') { dSakit++; grandSakit++; }
-                    else if (a.status === 'Alpa') { dAlpa++; grandAlpa++; }
-                }
-            });
-
-            dayRows.push({
-                dayNum: d,
-                dateStr: dateStr,
-                dayName: dayName,
-                isFriday: dayOfWeek === 5,
-                isSunday: false,
-                periods: periods,
-                stats: { hadir: dHadir, izin: dIzin, sakit: dSakit, alpa: dAlpa }
-            });
-        }
-
-        rptState.lastResult = {
-            mode: 'SISWA_BULANAN_ANAK',
-            month: month,
-            year: year,
-            student: student,
-            dayRows: dayRows,
-            grandStats: { hadir: grandHadir, izin: grandIzin, sakit: grandSakit, alpa: grandAlpa }
-        };
-
-        renderPreviewStudentMonthlyPerStudent(rptState.lastResult);
     }).withFailureHandler(function() {
         hideReportingLoading();
         showReportingError('Gagal menghubungi server untuk memuat presensi bulanan.');
@@ -18971,6 +19095,8 @@ function renderPreviewStudentMonthlyPerStudent(data) {
     const monthNames = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
     const monthLabel = monthNames[parseInt(data.month, 10)] + ' ' + data.year;
     const className = (attendanceClassLookup && attendanceClassLookup[s.classId]) || s.classId || '-';
+    const nonKbmHelper = window.simataNonKbmHelper || null;
+    let hasNonKbmLegend = false;
 
     let rowsHtml = '';
     data.dayRows.forEach(function(d) {
@@ -18982,7 +19108,14 @@ function renderPreviewStudentMonthlyPerStudent(data) {
             '<td style="padding:8px 10px;text-align:center;">' + escapeHtml(d.dateStr) + '</td>' +
             '<td style="padding:8px 10px;text-align:center;' + (d.isFriday ? 'color:#ef4444;font-weight:700;' : '') + '">' + escapeHtml(d.dayName) + '</td>';
         for (let i = 1; i <= 10; i++) {
-            rowsHtml += '<td style="padding:8px 4px;text-align:center;font-weight:700;">' + escapeHtml(p[i]) + '</td>';
+            const val = p[i] || '-';
+            const nk = (!d.isFriday && nonKbmHelper) ? nonKbmHelper.getNonKbmInfo(d.dateStr, i, s.classId) : null;
+            if (val === '-' && nk) {
+                hasNonKbmLegend = true;
+                rowsHtml += '<td class="rpt-nonkbm-cell' + (nk.isPb ? '' : ' is-other-nonkbm') + '" style="padding:8px 4px;text-align:center;" title="' + escapeAttr(nk.subject_name + ' (Non-KBM)') + '"><span class="rpt-nonkbm-badge">' + escapeHtml(nk.short_badge) + '</span></td>';
+            } else {
+                rowsHtml += '<td style="padding:8px 4px;text-align:center;font-weight:700;">' + escapeHtml(val) + '</td>';
+            }
         }
         rowsHtml += '<td style="padding:8px 10px;text-align:center;font-size:12px;font-weight:700;">' +
                       '<span style="color:#15803d;">' + d.stats.hadir + 'H</span> / ' +
@@ -19018,7 +19151,8 @@ function renderPreviewStudentMonthlyPerStudent(data) {
             rowsHtml +
           '</tbody>' +
         '</table>' +
-      '</div>';
+      '</div>' +
+      (hasNonKbmLegend ? '<div class="rpt-nonkbm-legend-note"><span class="rpt-nonkbm-badge">PB</span><span><strong>Pembelajaran Bahasa (Non-KBM):</strong> Dikelola terpisah oleh Pengurus Bahasa, otomatis terpenuhi di luar presensi KBM. <strong>UP</strong> = Upacara Bendera.</span></div>' : '');
 
     showReportingPreview(html);
 }
@@ -19714,6 +19848,8 @@ function printCurrentReportingDocument() {
         const formattedDate = formatAttendanceIndonesianDate(data.date);
         const p = data.periodSlots;
         const st = data.stats;
+        const nonKbmHelper = window.simataNonKbmHelper || null;
+        let hasNonKbmNote = false;
 
         let rowHtml = 
           '<tr>' +
@@ -19722,7 +19858,14 @@ function printCurrentReportingDocument() {
             '<td style="font-weight:700;">' + escapeHtml(s.name) + '</td>' +
             '<td style="text-align:center;">' + escapeHtml(normalizeGenderForPrint(s.gender)) + '</td>';
         for (let i = 1; i <= 10; i++) {
-            rowHtml += '<td style="text-align:center;font-weight:700;">' + escapeHtml(p[i]) + '</td>';
+            const val = p[i] || '-';
+            const nk = nonKbmHelper ? nonKbmHelper.getNonKbmInfo(data.date, i, s.classId) : null;
+            if (val === '-' && nk) {
+                hasNonKbmNote = true;
+                rowHtml += '<td style="text-align:center;font-weight:800;color:#3730a3;background:#eef2ff !important;">' + escapeHtml(nk.short_badge) + '</td>';
+            } else {
+                rowHtml += '<td style="text-align:center;font-weight:700;">' + escapeHtml(val) + '</td>';
+            }
         }
         rowHtml += '</tr>';
 
@@ -19744,12 +19887,15 @@ function printCurrentReportingDocument() {
                 '<th style="width:40px;">JAM 6</th><th style="width:40px;">JAM 7</th><th style="width:40px;">JAM 8</th><th style="width:40px;">JAM 9</th><th style="width:40px;">JAM 10</th>' +
               '</tr>',
             tableBody: rowHtml,
-            summaryNote: 'Rekap Kehadiran Hari Ini: Hadir: ' + st.hadir + ', Izin: ' + st.izin + ', Sakit: ' + st.sakit + ', Alpa: ' + st.alpa
+            summaryNote: 'Rekap Kehadiran Hari Ini: Hadir: ' + st.hadir + ', Izin: ' + st.izin + ', Sakit: ' + st.sakit + ', Alpa: ' + st.alpa +
+                (hasNonKbmNote ? ' | Keterangan: PB = Pembelajaran Bahasa (Non-KBM, dikelola Pengurus Bahasa).' : '')
         });
 
     } else if (data.mode === 'SISWA_HARIAN_KELAS') {
         const meta = {
+            classId: data.classId || '',
             className: data.className,
+            rawDate: data.date || '',
             formattedDate: formatAttendanceIndonesianDate(data.date),
             academicYear: data.academicYear || '-',
             isSingleStudent: false
@@ -19760,6 +19906,8 @@ function printCurrentReportingDocument() {
         const s = data.student;
         const className = (attendanceClassLookup && attendanceClassLookup[s.classId]) || s.classId || '-';
         const monthLabel = monthNames[parseInt(data.month, 10)] + ' ' + data.year;
+        const nonKbmHelper = window.simataNonKbmHelper || null;
+        let hasNonKbmNote = false;
 
         let rowsHtml = '';
         data.dayRows.forEach(function(d) {
@@ -19770,7 +19918,14 @@ function printCurrentReportingDocument() {
                 '<td style="text-align:center;">' + escapeHtml(d.dateStr) + '</td>' +
                 '<td style="text-align:center;' + (d.isFriday ? 'color:#ef4444;font-weight:700;' : '') + '">' + escapeHtml(d.dayName) + '</td>';
             for (let i = 1; i <= 10; i++) {
-                rowsHtml += '<td style="text-align:center;font-weight:700;">' + escapeHtml(p[i]) + '</td>';
+                const val = p[i] || '-';
+                const nk = (!d.isFriday && nonKbmHelper) ? nonKbmHelper.getNonKbmInfo(d.dateStr, i, s.classId) : null;
+                if (val === '-' && nk) {
+                    hasNonKbmNote = true;
+                    rowsHtml += '<td style="text-align:center;font-weight:800;font-size:8pt;color:#3730a3;background:#eef2ff !important;">' + escapeHtml(nk.short_badge) + '</td>';
+                } else {
+                    rowsHtml += '<td style="text-align:center;font-weight:700;">' + escapeHtml(val) + '</td>';
+                }
             }
             rowsHtml += '<td style="text-align:center;font-size:9pt;font-weight:700;">' +
                           d.stats.hadir + 'H/' + d.stats.izin + 'I/' + d.stats.sakit + 'S/' + d.stats.alpa + 'A' +
@@ -19797,7 +19952,8 @@ function printCurrentReportingDocument() {
                 '<th style="width:95px;">REKAP</th>' +
               '</tr>',
             tableBody: rowsHtml,
-            summaryNote: 'Akumulasi Bulanan: Hadir: ' + gs.hadir + ' Jam, Izin: ' + gs.izin + ' Jam, Sakit: ' + gs.sakit + ' Jam, Alpa: ' + gs.alpa + ' Jam'
+            summaryNote: 'Akumulasi Bulanan: Hadir: ' + gs.hadir + ' Jam, Izin: ' + gs.izin + ' Jam, Sakit: ' + gs.sakit + ' Jam, Alpa: ' + gs.alpa + ' Jam' +
+                (hasNonKbmNote ? ' | Keterangan: PB = Pembelajaran Bahasa (Non-KBM, dikelola Pengurus Bahasa).' : '')
         });
 
     } else if (data.mode === 'SISWA_BULANAN_KELAS') {
@@ -20181,9 +20337,13 @@ function lockResponderPeriods(periods) {
 
 function toggleAllStudentPeriods(selectAll) {
     if (responderLockedPeriods && responderLockedPeriods.length > 0) return;
-    const cbs = document.querySelectorAll('input[name="rq_period"], .rq-period-checkbox');
+    const cbs = Array.from(document.querySelectorAll('input[name="rq_period"], .rq-period-checkbox'));
+    const hasKbmChoices = cbs.some(function(cb) { return !cb.disabled && cb.dataset.nonKbm !== '1'; });
     cbs.forEach(function(cb) {
-        if (!cb.disabled) {
+        if (cb.disabled) return;
+        if (selectAll && hasKbmChoices && cb.dataset.nonKbm === '1') {
+            cb.checked = false;
+        } else {
             cb.checked = !!selectAll;
         }
     });
@@ -20487,6 +20647,9 @@ function initTeacherAttendanceInResponder() {
     const classSelGuard = document.getElementById('rg_classId');
     if (classSelGuard) {
         classSelGuard.addEventListener('change', function() {
+            if (window.simataNonKbmHelper && typeof getWibTodayISODate === 'function') {
+                window.simataNonKbmHelper.decoratePeriodContainer('#rg_period', getWibTodayISODate(), classSelGuard.value || '', 'rg_nonKbmNotice');
+            }
             updateResponderScheduleMatchIndicator();
         });
     }
@@ -20600,6 +20763,11 @@ function evaluateResponderScheduleMatch() {
                 warnings.push(
                     'Jam ke-' + pNum + ' guru ini terjadwal di ' + (teacherOwnSlot.class_name || teacherOwnSlot.class_id) +
                     ' (' + (teacherOwnSlot.subject_name || '-') + '), bukan di ' + className + '.'
+                );
+            } else if (classSlot && classSlot.subject_category === 'NON_KBM') {
+                warnings.push(
+                    'Jam ke-' + pNum + ' di ' + className + ' berjadwal ' + (classSlot.subject_name || 'Non-KBM') +
+                    ' (Non-KBM — otomatis tidak mewajibkan presensi guru mapel).'
                 );
             } else {
                 const slotTypeHint = classSlot && classSlot.subject_name ? ' (' + classSlot.subject_name + ')' : '';
@@ -28180,6 +28348,12 @@ function showResponderView() {
 
     populateResponderTeachers();
     populateResponderClasses();
+    if (window.simataNonKbmHelper && typeof getWibTodayISODate === 'function') {
+        const todayIso = getWibTodayISODate();
+        window.simataNonKbmHelper.ensureDate(todayIso).then(function() {
+            if (window.simataNonKbmHelper) window.simataNonKbmHelper.refreshAllVisibleInputs();
+        });
+    }
     const selT = document.getElementById('rg_teacherId');
     if (selT && selT.value) {
         loadResponderScheduleAssist(selT.value);
@@ -28510,6 +28684,12 @@ function onDashboardLoaded(data) {
 
     if (typeof window.initSimataNotificationsEngine === 'function') {
         window.initSimataNotificationsEngine();
+    }
+
+    if (window.simataNonKbmHelper && typeof getWibTodayISODate === 'function') {
+        window.simataNonKbmHelper.ensureDate(getWibTodayISODate()).then(function() {
+            if (window.simataNonKbmHelper) window.simataNonKbmHelper.refreshAllVisibleInputs();
+        });
     }
 
     hideGlobalLoading();
@@ -34202,6 +34382,271 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 60000);
         }
         refreshSimataNotifications({ silent: true });
+    };
+})();
+
+/* ============================================================================
+   BUG 67: PEMBELAJARAN BAHASA (PB) & NON-KBM HIGHLIGHT / AUTO-EXEMPT HELPER
+   ============================================================================ */
+(function initSimataNonKbmHelperModule() {
+    if (window.simataNonKbmHelper) return;
+
+    const byDateCache = new Map();
+    const inFlightDate = new Map();
+    let overviewCache = null;
+    let inFlightOverview = null;
+
+    function getDayOfWeekFromIso(dateIso) {
+        if (!dateIso || !/^\d{4}-\d{2}-\d{2}$/.test(String(dateIso).trim())) return null;
+        const parts = String(dateIso).trim().split('-').map(Number);
+        const dt = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+        if (dt.getUTCFullYear() !== parts[0] || dt.getUTCMonth() !== parts[1] - 1 || dt.getUTCDate() !== parts[2]) return null;
+        return dt.getUTCDay();
+    }
+
+    function normalizeInfo(raw) {
+        if (!raw) return null;
+        const code = String(raw.subject_code || 'NON_KBM').toUpperCase();
+        const shortBadge = raw.short_badge || (code === 'PB' ? 'PB' : (code === 'UPACARA' ? 'UP' : code.slice(0, 6)));
+        return {
+            subject_id: raw.subject_id || null,
+            subject_code: code,
+            subject_name: raw.subject_name || (code === 'PB' ? 'Pembelajaran Bahasa (Pembina)' : code),
+            subject_category: raw.subject_category || 'NON_KBM',
+            short_badge: shortBadge,
+            isPb: code === 'PB',
+            isUpacara: code === 'UPACARA',
+            note: raw.note || null
+        };
+    }
+
+    function hydrateFromDayPayload(dateIso, data) {
+        if (!dateIso || !data) return null;
+        const entry = {
+            date: dateIso,
+            is_school_day: Boolean(data.is_school_day),
+            day_label: data.day_label || '',
+            current_period: data.current_period || null,
+            non_kbm_by_class: {},
+            global_non_kbm_periods: {}
+        };
+        const rawByClass = data.non_kbm_by_class || {};
+        Object.keys(rawByClass).forEach(function(cid) {
+            entry.non_kbm_by_class[cid] = {};
+            Object.keys(rawByClass[cid] || {}).forEach(function(p) {
+                entry.non_kbm_by_class[cid][Number(p)] = normalizeInfo(rawByClass[cid][p]);
+            });
+        });
+        const rawGlobal = data.global_non_kbm_periods || {};
+        Object.keys(rawGlobal).forEach(function(p) {
+            entry.global_non_kbm_periods[Number(p)] = normalizeInfo(rawGlobal[p]);
+        });
+        byDateCache.set(dateIso, entry);
+        return entry;
+    }
+
+    async function ensureDate(dateIso) {
+        const cleanDate = String(dateIso || '').trim();
+        if (!cleanDate) return null;
+        if (byDateCache.has(cleanDate)) return byDateCache.get(cleanDate);
+        if (inFlightDate.has(cleanDate)) return inFlightDate.get(cleanDate);
+
+        const p = (async function() {
+            try {
+                if (!window.simataClient || typeof window.simataClient.getScheduleActiveNow !== 'function') return null;
+                const res = await window.simataClient.getScheduleActiveNow({ date: cleanDate });
+                if (res && res.success && res.data) {
+                    return hydrateFromDayPayload(cleanDate, res.data);
+                }
+            } catch (_) {}
+            return null;
+        })().finally(function() {
+            inFlightDate.delete(cleanDate);
+        });
+        inFlightDate.set(cleanDate, p);
+        return p;
+    }
+
+    async function ensureOverview() {
+        if (overviewCache) return overviewCache;
+        if (inFlightOverview) return inFlightOverview;
+        inFlightOverview = (async function() {
+            try {
+                if (!window.simataClient || typeof window.simataClient.getScheduleOverview !== 'function') return null;
+                const res = await window.simataClient.getScheduleOverview();
+                if (!res || !res.success || !res.data || !Array.isArray(res.data.slots)) return null;
+                const byDayByClass = {};
+                const dayPeriodStats = {};
+                res.data.slots.forEach(function(s) {
+                    const dow = Number(s.day_of_week);
+                    const pNum = Number(s.period_number);
+                    if (!pNum || Number.isNaN(dow)) return;
+                    if (!dayPeriodStats[dow]) dayPeriodStats[dow] = {};
+                    if (!dayPeriodStats[dow][pNum]) dayPeriodStats[dow][pNum] = { total: 0, nonKbm: 0, sample: null, sameCode: true };
+                    const stat = dayPeriodStats[dow][pNum];
+                    stat.total += 1;
+                    if (s.subject_category && s.subject_category !== 'KBM') {
+                        stat.nonKbm += 1;
+                        const info = normalizeInfo(s);
+                        if (!byDayByClass[dow]) byDayByClass[dow] = {};
+                        if (s.class_id) {
+                            if (!byDayByClass[dow][s.class_id]) byDayByClass[dow][s.class_id] = {};
+                            byDayByClass[dow][s.class_id][pNum] = info;
+                        }
+                        if (!stat.sample) stat.sample = info;
+                        else if (stat.sample.subject_code !== info.subject_code) stat.sameCode = false;
+                    }
+                });
+                const globalByDay = {};
+                Object.keys(dayPeriodStats).forEach(function(dow) {
+                    globalByDay[dow] = {};
+                    Object.keys(dayPeriodStats[dow]).forEach(function(pNum) {
+                        const st = dayPeriodStats[dow][pNum];
+                        if (st.total > 0 && st.nonKbm === st.total && st.sample) {
+                            globalByDay[dow][pNum] = st.sameCode ? st.sample : normalizeInfo({ subject_code: 'NON_KBM', subject_name: 'Kegiatan Non-KBM', short_badge: 'NON-KBM' });
+                        }
+                    });
+                });
+                overviewCache = { byDayByClass: byDayByClass, globalByDay: globalByDay };
+                return overviewCache;
+            } catch (_) {
+                return null;
+            } finally {
+                inFlightOverview = null;
+            }
+        })();
+        return inFlightOverview;
+    }
+
+    function getNonKbmInfo(dateIso, periodNumber, classId) {
+        const pNum = Number(periodNumber);
+        if (!pNum) return null;
+        const cleanDate = String(dateIso || '').trim();
+        const cid = classId ? String(classId).trim() : '';
+
+        const entry = cleanDate ? byDateCache.get(cleanDate) : null;
+        if (entry) {
+            if (cid && entry.non_kbm_by_class[cid] && entry.non_kbm_by_class[cid][pNum]) {
+                return entry.non_kbm_by_class[cid][pNum];
+            }
+            if (entry.global_non_kbm_periods && entry.global_non_kbm_periods[pNum]) {
+                return entry.global_non_kbm_periods[pNum];
+            }
+        }
+
+        if (overviewCache && cleanDate) {
+            const dow = getDayOfWeekFromIso(cleanDate);
+            if (dow !== null) {
+                if (cid && overviewCache.byDayByClass[dow] && overviewCache.byDayByClass[dow][cid] && overviewCache.byDayByClass[dow][cid][pNum]) {
+                    return overviewCache.byDayByClass[dow][cid][pNum];
+                }
+                if (overviewCache.globalByDay[dow] && overviewCache.globalByDay[dow][pNum]) {
+                    return overviewCache.globalByDay[dow][pNum];
+                }
+            }
+        }
+        return null;
+    }
+
+    function getDefaultKbmPeriod(dateIso, classId) {
+        const entry = dateIso ? byDateCache.get(String(dateIso).trim()) : null;
+        if (entry && entry.current_period && entry.current_period.period_number) {
+            const curP = Number(entry.current_period.period_number);
+            if (!getNonKbmInfo(dateIso, curP, classId)) return curP;
+        }
+        for (let p = 1; p <= 10; p++) {
+            if (!getNonKbmInfo(dateIso, p, classId)) return p;
+        }
+        return 1;
+    }
+
+    function decoratePeriodContainer(containerOrId, dateIso, classId, noticeElId) {
+        const container = typeof containerOrId === 'string' ? document.querySelector(containerOrId) : containerOrId;
+        if (!container) return;
+
+        const labels = Array.from(container.querySelectorAll('.period-checkbox-label'));
+        const nonKbmFound = [];
+
+        labels.forEach(function(lbl) {
+            const cb = lbl.querySelector('input[type="checkbox"]');
+            if (!cb) return;
+            const pNum = Number(cb.value);
+            const oldBadge = lbl.querySelector('.period-nonkbm-badge');
+            if (oldBadge) oldBadge.remove();
+
+            const nk = getNonKbmInfo(dateIso, pNum, classId);
+            if (nk) {
+                lbl.classList.add('is-nonkbm-period');
+                lbl.classList.toggle('is-pb-period', Boolean(nk.isPb));
+                cb.dataset.nonKbm = '1';
+                lbl.title = nk.subject_name + ' (Non-KBM — otomatis terpenuhi, tidak wajib presensi/ta\'zir KBM)';
+                const badge = document.createElement('span');
+                badge.className = 'period-nonkbm-badge';
+                badge.textContent = nk.short_badge;
+                lbl.appendChild(badge);
+                nonKbmFound.push({ period: pNum, info: nk });
+            } else {
+                lbl.classList.remove('is-nonkbm-period', 'is-pb-period');
+                delete cb.dataset.nonKbm;
+                lbl.removeAttribute('title');
+            }
+        });
+
+        let noticeEl = noticeElId ? document.getElementById(noticeElId) : container.parentElement && container.parentElement.querySelector('.simata-nonkbm-notice-bar');
+        if (!noticeEl && noticeElId && container.parentElement) {
+            noticeEl = document.createElement('div');
+            noticeEl.id = noticeElId;
+            noticeEl.className = 'simata-nonkbm-notice-bar';
+            noticeEl.style.display = 'none';
+            container.insertAdjacentElement('afterend', noticeEl);
+        }
+
+        if (noticeEl) {
+            if (nonKbmFound.length > 0) {
+                const descList = nonKbmFound.map(function(item) {
+                    const sName = typeof escapeHtml === 'function' ? escapeHtml(item.info.subject_name) : item.info.subject_name;
+                    return 'Jam ke-' + item.period + ' (' + sName + ')';
+                }).join(', ');
+                noticeEl.innerHTML =
+                    '<span class="simata-nonkbm-notice-dot">Non-KBM</span>' +
+                    '<span><strong>Otomatis Terpenuhi:</strong> ' + descList + ' dikelola terpisah (Pengurus Bahasa/Kegiatan) &amp; dikecualikan dari wajib presensi KBM. Tetap dapat dicentang manual bila ada jadwal khusus.</span>';
+                noticeEl.style.display = 'flex';
+            } else {
+                noticeEl.style.display = 'none';
+                noticeEl.innerHTML = '';
+            }
+        }
+    }
+
+    function decoratePeriodSelect(selectElOrId, dateIso, classId) {
+        const sel = typeof selectElOrId === 'string' ? document.querySelector(selectElOrId) : selectElOrId;
+        if (!sel || !sel.options) return;
+        Array.from(sel.options).forEach(function(opt) {
+            const pNum = Number(opt.value);
+            if (!pNum || pNum < 1 || pNum > 10) return;
+            const nk = getNonKbmInfo(dateIso, pNum, classId);
+            opt.textContent = nk ? ('Jam ke-' + pNum + ' (' + nk.short_badge + ' • Non-KBM)') : ('Jam ke-' + pNum);
+        });
+    }
+
+    function refreshAllVisibleInputs() {
+        const todayIso = (typeof getWibTodayISODate === 'function') ? getWibTodayISODate() : '';
+        if (!todayIso) return;
+        const rgClassId = (document.getElementById('rg_classId') || {}).value || '';
+        decoratePeriodContainer('#rg_period', todayIso, rgClassId, 'rg_nonKbmNotice');
+        decoratePeriodContainer('#rq_student_periods', todayIso, '', 'rq_nonKbmNotice');
+        decoratePeriodSelect('#attendancePeriodFilter', todayIso, (document.getElementById('attendanceClassFilter') || {}).value || '');
+    }
+
+    window.simataNonKbmHelper = {
+        ensureDate: ensureDate,
+        ensureOverview: ensureOverview,
+        hydrateFromDayPayload: hydrateFromDayPayload,
+        getNonKbmInfo: getNonKbmInfo,
+        getDefaultKbmPeriod: getDefaultKbmPeriod,
+        decoratePeriodContainer: decoratePeriodContainer,
+        decoratePeriodSelect: decoratePeriodSelect,
+        refreshAllVisibleInputs: refreshAllVisibleInputs
     };
 })();
 
