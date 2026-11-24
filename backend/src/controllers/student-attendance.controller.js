@@ -16,7 +16,11 @@ class StudentAttendanceController {
 
   async recordBatch(req, res, next) {
     try {
-      const result = await studentAttendanceService.recordBatchAttendance(req.body, req.user.user_id);
+      const result = await studentAttendanceService.recordBatchAttendance(
+        req.body,
+        req.user.user_id,
+        req.user?.role || 'ADMIN'
+      );
       return res.status(201).json({
         status: 'success',
         message: `Presensi batch berhasil dicatat (${result.total_inserted} rekaman tersimpan)`,

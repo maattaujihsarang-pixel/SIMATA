@@ -552,17 +552,31 @@
       return { success: true, message: res.message, class: res.data };
     },
 
-    // 18. Classes: getClassAttendanceRoster (BUG 29)
+    // 18. Classes: getClassAttendanceRoster (BUG 29 & BUG 72 optional date)
     getClassAttendanceRoster: async function (...args) {
       let classId = null;
+      let explicitDate = null;
       if (args.length >= 2) {
         classId = args[1];
+        if (args.length >= 4 && typeof args[3] === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(args[3].trim())) {
+          explicitDate = args[3].trim();
+        }
       } else if (args.length === 1) {
-        classId = typeof args[0] === 'object' ? (args[0].class_id || args[0].classId) : args[0];
+        if (typeof args[0] === 'object' && args[0] !== null) {
+          classId = args[0].class_id || args[0].classId;
+          if (args[0].date && /^\d{4}-\d{2}-\d{2}$/.test(String(args[0].date).trim())) {
+            explicitDate = String(args[0].date).trim();
+          }
+        } else {
+          classId = args[0];
+        }
       }
+      const rosterUrl = explicitDate
+        ? `/classes/${encodeURIComponent(classId)}/roster?date=${encodeURIComponent(explicitDate)}`
+        : `/classes/${encodeURIComponent(classId)}/roster`;
       const [clsRes, rosterRes] = await Promise.all([
         apiFetch(`/classes/${encodeURIComponent(classId)}`),
-        apiFetch(`/classes/${encodeURIComponent(classId)}/roster`)
+        apiFetch(rosterUrl)
       ]);
       const cls = clsRes.data || {};
       const rosterRaw = rosterRes.data || [];
@@ -572,7 +586,7 @@
         seenStudentIds.add(r.student_id);
         return true;
       });
-      const today = getWibTodayISODate();
+      const targetDate = explicitDate || getWibTodayISODate();
       const students = roster.map((r) => ({
         studentId: r.student_id,
         name: r.name,
@@ -581,7 +595,7 @@
       }));
       return {
         success: true,
-        date: today,
+        date: targetDate,
         class: {
           classId: cls.class_id || classId,
           className: cls.class_name || classId,

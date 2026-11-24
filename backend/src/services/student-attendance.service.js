@@ -5,7 +5,7 @@ const academicYearRepository = require('../repositories/academic-year.repository
 const { withTransaction } = require('../config/database');
 const { generateUUID } = require('../utils/id-generator.util');
 const { getTodayISODate, getCurrentISOTime } = require('../utils/date.util');
-const { BadRequestError, NotFoundError, ConflictError } = require('../errors');
+const { BadRequestError, NotFoundError, ConflictError, ForbiddenError } = require('../errors');
 
 const VALID_STATUSES = ['Hadir', 'Izin', 'Sakit', 'Alpa'];
 
@@ -69,11 +69,23 @@ class StudentAttendanceService {
     });
   }
 
-  async recordBatchAttendance(payload, recordedByUserId) {
+  async recordBatchAttendance(payload, recordedByUserId, operatorRole = 'ADMIN') {
     const { class_id, attendance_date, periods, attendances, method } = payload;
 
     if (!class_id || !attendance_date || !Array.isArray(periods) || periods.length === 0 || !Array.isArray(attendances)) {
       throw new BadRequestError('class_id, attendance_date, periods (array), dan attendances (array) wajib diisi');
+    }
+
+    const cleanDate = String(attendance_date).trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(cleanDate)) {
+      throw new BadRequestError('Format attendance_date harus YYYY-MM-DD');
+    }
+    const todayIso = getTodayISODate();
+    if (cleanDate > todayIso) {
+      throw new BadRequestError('Tidak dapat mencatat presensi batch untuk tanggal di masa depan');
+    }
+    if (cleanDate < todayIso && String(operatorRole || 'ADMIN').toUpperCase() !== 'ADMIN') {
+      throw new ForbiddenError('Hanya Admin / Operator yang dapat mencatat presensi batch susulan (tanggal lampau)');
     }
 
     const cls = await classRepository.findById(class_id);

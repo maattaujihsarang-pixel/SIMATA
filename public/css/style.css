@@ -5293,7 +5293,8 @@ select.attendance-filter-control {
     margin-bottom: 12px !important;
   }
 
-  .dashboard-layout #teacherAttendanceContent .section-heading {
+  .dashboard-layout #teacherAttendanceContent .section-heading,
+  .dashboard-layout #attendanceContent .section-heading {
     flex-direction: column !important;
     align-items: stretch !important;
     gap: 10px !important;
@@ -5310,7 +5311,8 @@ select.attendance-filter-control {
     display: block !important;
   }
 
-  .dashboard-layout #teacherAttendanceContent .section-heading > div:first-child {
+  .dashboard-layout #teacherAttendanceContent .section-heading > div:first-child,
+  .dashboard-layout #attendanceContent .section-heading > div:first-child {
     width: 100% !important;
     flex: 0 0 auto !important;
   }
@@ -5338,7 +5340,8 @@ select.attendance-filter-control {
     justify-content: flex-end !important;
   }
 
-  .dashboard-layout #teacherAttendanceContent .section-heading .section-actions {
+  .dashboard-layout #teacherAttendanceContent .section-heading .section-actions,
+  .dashboard-layout #attendanceContent .section-heading .section-actions {
     width: 100% !important;
     flex: 0 0 auto !important;
     display: flex !important;
@@ -5348,7 +5351,8 @@ select.attendance-filter-control {
     gap: 8px !important;
   }
 
-  .dashboard-layout #teacherAttendanceContent .section-heading .section-actions > button {
+  .dashboard-layout #teacherAttendanceContent .section-heading .section-actions > button,
+  .dashboard-layout #attendanceContent .section-heading .section-actions > button {
     flex: 1 1 auto !important;
     justify-content: center !important;
   }
@@ -5556,6 +5560,59 @@ select.attendance-filter-control {
   transform: scale(0.98);
 }
 
+.dashboard-layout .section-heading .section-actions button#openBatchStudentSusulanBtn {
+  width: auto;
+  min-height: 36px;
+  height: 36px;
+  padding: 0 15px;
+  margin: 0;
+  border-radius: 9999px;
+  border: 1px solid #93c5fd;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 1px 2px rgba(29, 78, 216, 0.06);
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.dashboard-layout .section-heading .section-actions button#openBatchStudentSusulanBtn:hover,
+.dashboard-layout .section-heading .section-actions button#openBatchStudentSusulanBtn:focus-visible {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+  color: #ffffff !important;
+  box-shadow: 0 3px 10px rgba(37, 99, 235, 0.22);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.period-checkbox-label.is-filled-period {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #64748b !important;
+  opacity: 0.85;
+  cursor: not-allowed !important;
+}
+
+.period-filled-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #166534;
+  font-size: 9.5px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
 .att-status-stack {
   display: inline-flex;
   flex-direction: column;
@@ -5698,7 +5755,8 @@ select.attendance-filter-control {
     color: #ffffff !important;
   }
 
-  .dashboard-layout .section-heading .section-actions button#runAutoAlpaTeacherBtn {
+  .dashboard-layout .section-heading .section-actions button#runAutoAlpaTeacherBtn,
+  .dashboard-layout .section-heading .section-actions button#openBatchStudentSusulanBtn {
     min-height: 34px !important;
     height: 34px !important;
     padding: 0 13px !important;
@@ -5706,7 +5764,8 @@ select.attendance-filter-control {
     gap: 5px !important;
   }
 
-  .dashboard-layout .section-heading .section-actions button#runAutoAlpaTeacherBtn svg {
+  .dashboard-layout .section-heading .section-actions button#runAutoAlpaTeacherBtn svg,
+  .dashboard-layout .section-heading .section-actions button#openBatchStudentSusulanBtn svg {
     width: 13px !important;
     height: 13px !important;
   }

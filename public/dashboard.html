@@ -2211,7 +2211,17 @@ html, body {
               <span class="section-label">PRESENSI SISWA</span>
               <h2>Daftar Presensi Siswa</h2>
             </div>
-            <div class="section-actions">
+            <div class="section-actions" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+              <button id="openBatchStudentSusulanBtn" type="button" class="btn-batch-susulan-pill" style="display:none;width:auto;min-height:36px;height:36px;padding:0 15px;margin:0;border-radius:9999px;border:1px solid #93c5fd;background:#eff6ff;color:#1d4ed8;font-size:13px;font-weight:600;line-height:1;white-space:nowrap;align-items:center;justify-content:center;gap:6px;cursor:pointer;" title="Input presensi siswa sekaligus satu kelas untuk hari ini maupun susulan tanggal lampau (Khusus Admin)">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;flex-shrink:0;display:block;" aria-hidden="true">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                  <path d="M9 16l2 2 4-4"></path>
+                </svg>
+                <span>Presensi Batch / Susulan</span>
+              </button>
               <button id="addAttendanceButton" class="login-button" style="margin-top:0;">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M12 5v14M5 12h14"/>
@@ -5582,6 +5592,21 @@ html, body {
                 <div id="batchAttModalSubtitle" class="batch-att-modal-subtitle"></div>
               </div>
               <button type="button" class="student-modal-close-btn" onclick="closeBatchClassAttendanceModal()" aria-label="Tutup">&times;</button>
+            </div>
+
+            <!-- Admin Batch / Susulan Class & Date Selector Bar (BUG 72) -->
+            <div id="batchSusulanPickerBar" style="display:none;padding:12px 18px;background:#f8fafc;border-bottom:1px solid #e2e8f0;">
+              <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(min(100%, 200px), 1fr));gap:12px;align-items:end;">
+                <div>
+                  <label for="batchSusulanClassSelect" style="display:block;font-size:11.5px;font-weight:700;color:#334155;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.03em;">Pilih Kelas</label>
+                  <select id="batchSusulanClassSelect" class="input-box" onchange="onBatchSusulanSelectionChange()" style="width:100%;height:38px;margin:0;"></select>
+                </div>
+                <div>
+                  <label for="batchSusulanDateInput" style="display:block;font-size:11.5px;font-weight:700;color:#334155;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.03em;">Tanggal Presensi (Bisa Susulan)</label>
+                  <input type="date" id="batchSusulanDateInput" class="input-box" onchange="onBatchSusulanSelectionChange()" style="width:100%;height:38px;margin:0;" />
+                </div>
+              </div>
+              <div id="batchSusulanStatusHint" style="margin-top:8px;font-size:12px;font-weight:600;color:#1e40af;line-height:1.45;"></div>
             </div>
 
             <!-- Jam Pelajaran Section (BUG 16 Canonical Pattern) -->
@@ -11693,9 +11718,196 @@ function openBatchClassAttendanceFromQrModal() {
     openBatchClassAttendance(targetClassId);
 }
 
+let currentBatchModalMode = 'standard';
+let batchSusulanReqSeq = 0;
+
+function resetBatchFilledPeriodStates() {
+    const cbs = document.querySelectorAll('#batchPeriodContainer input[name="batch_period"], #batchPeriodContainer .batch-period-checkbox');
+    cbs.forEach(function(cb) {
+        cb.disabled = false;
+        cb.dataset.filled = '0';
+        const lbl = cb.closest('.period-checkbox-label');
+        if (lbl) {
+            lbl.classList.remove('is-filled-period');
+            lbl.removeAttribute('title');
+            const oldBadge = lbl.querySelector('.period-filled-badge');
+            if (oldBadge) oldBadge.remove();
+        }
+    });
+}
+
+function markBatchFilledPeriods(filledPeriodList) {
+    const filledSet = new Set((Array.isArray(filledPeriodList) ? filledPeriodList : []).map(function(p) { return String(p).trim(); }));
+    const cbs = document.querySelectorAll('#batchPeriodContainer input[name="batch_period"], #batchPeriodContainer .batch-period-checkbox');
+    cbs.forEach(function(cb) {
+        const pVal = cb.value.trim();
+        if (!filledSet.has(pVal)) return;
+        cb.checked = false;
+        cb.disabled = true;
+        cb.dataset.filled = '1';
+        const lbl = cb.closest('.period-checkbox-label');
+        if (lbl) {
+            lbl.classList.add('is-filled-period');
+            lbl.title = 'Jam ke-' + pVal + ' sudah memiliki data presensi siswa pada tanggal ini';
+            if (!lbl.querySelector('.period-filled-badge')) {
+                const badge = document.createElement('span');
+                badge.className = 'period-filled-badge';
+                badge.textContent = 'Terisi';
+                lbl.appendChild(badge);
+            }
+        }
+    });
+}
+
+function populateBatchSusulanClassOptions(preferredClassId) {
+    const sel = document.getElementById('batchSusulanClassSelect');
+    if (!sel) return [];
+    const entries = Object.keys(attendanceClassLookup || {}).map(function(cid) {
+        return { classId: cid, className: attendanceClassLookup[cid] || cid };
+    });
+    if (entries.length === 0) return [];
+    sel.innerHTML = entries.map(function(c) {
+        return '<option value="' + escapeAttr(c.classId) + '">' + escapeHtml(c.className) + '</option>';
+    }).join('');
+    if (preferredClassId && entries.some(function(c) { return c.classId === preferredClassId; })) {
+        sel.value = preferredClassId;
+    } else if (entries[0]) {
+        sel.value = entries[0].classId;
+    }
+    return entries;
+}
+
+function openAdminBatchStudentAttendance() {
+    if (!isCurrentUserAdmin) {
+        alert('Fitur Presensi Batch / Susulan khusus untuk Admin / Operator.');
+        return;
+    }
+    const token = sessionStorage.getItem('SIMATA_TOKEN');
+    if (!token) {
+        alert('Sesi login telah berakhir. Silakan login kembali.');
+        return;
+    }
+
+    currentBatchModalMode = 'admin_susulan';
+    resetBatchFilledPeriodStates();
+
+    const modal = document.getElementById('batchClassAttendanceModal');
+    const pickerBar = document.getElementById('batchSusulanPickerBar');
+    const dateInput = document.getElementById('batchSusulanDateInput');
+    const hintEl = document.getElementById('batchSusulanStatusHint');
+    const todayIso = (typeof getWibTodayISODate === 'function')
+        ? getWibTodayISODate()
+        : new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
+
+    if (pickerBar) pickerBar.style.display = 'block';
+    if (dateInput) {
+        dateInput.max = todayIso;
+        const activeDateFilter = document.getElementById('attendanceDateFilter');
+        const filterDate = activeDateFilter && activeDateFilter.value ? String(activeDateFilter.value).trim() : '';
+        dateInput.value = (filterDate && filterDate <= todayIso) ? filterDate : todayIso;
+    }
+    if (hintEl) hintEl.textContent = 'Memuat daftar kelas dan status jam pelajaran...';
+
+    if (modal) {
+        modal.style.display = 'flex';
+        const modalCard = modal.querySelector('.student-modal-card');
+        if (modalCard) modalCard.scrollTop = 0;
+    }
+
+    const activeClsFilter = document.getElementById('attendanceClassFilter');
+    const preferredClassId = activeClsFilter && activeClsFilter.value ? String(activeClsFilter.value).trim() : '';
+    const existingEntries = populateBatchSusulanClassOptions(preferredClassId);
+
+    if (existingEntries.length > 0) {
+        onBatchSusulanSelectionChange();
+    } else {
+        simataClient.withSuccessHandler(function(cRes) {
+            if (cRes && cRes.success && Array.isArray(cRes.classes) && cRes.classes.length > 0) {
+                cRes.classes.forEach(function(c) {
+                    attendanceClassLookup[c.classId] = c.className || c.classId;
+                });
+                populateBatchSusulanClassOptions(preferredClassId);
+                onBatchSusulanSelectionChange();
+            } else {
+                alert('Data kelas belum tersedia.');
+                closeBatchClassAttendanceModal();
+            }
+        }).withFailureHandler(function() {
+            alert('Gagal memuat daftar kelas.');
+            closeBatchClassAttendanceModal();
+        }).getClasses();
+    }
+}
+
+async function onBatchSusulanSelectionChange() {
+    const sel = document.getElementById('batchSusulanClassSelect');
+    const dateInput = document.getElementById('batchSusulanDateInput');
+    const hintEl = document.getElementById('batchSusulanStatusHint');
+    const loadingEl = document.getElementById('batchAttLoading');
+    const tableContainer = document.getElementById('batchAttTableContainer');
+    const searchInput = document.getElementById('batchAttSearch');
+    const noMatchEl = document.getElementById('batchAttNoMatch');
+
+    const classId = sel ? String(sel.value || '').trim() : '';
+    const todayIso = (typeof getWibTodayISODate === 'function')
+        ? getWibTodayISODate()
+        : new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
+    let targetDate = dateInput ? String(dateInput.value || '').trim() : todayIso;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(targetDate)) targetDate = todayIso;
+    if (targetDate > todayIso) {
+        targetDate = todayIso;
+        if (dateInput) dateInput.value = todayIso;
+        alert('Tanggal presensi tidak boleh melebihi hari ini.');
+    }
+    if (!classId) return;
+
+    const token = sessionStorage.getItem('SIMATA_TOKEN');
+    if (!token) return;
+    const reqSeq = ++batchSusulanReqSeq;
+
+    if (loadingEl) loadingEl.style.display = 'block';
+    if (tableContainer) tableContainer.style.display = 'none';
+    if (searchInput) searchInput.value = '';
+    if (noMatchEl) noMatchEl.style.display = 'none';
+    if (hintEl) hintEl.textContent = 'Memeriksa daftar siswa dan jam pelajaran pada ' + targetDate + '...';
+
+    try {
+        const [rosterRes, attRes] = await Promise.all([
+            simataClient.getClassAttendanceRoster(token, classId, '', targetDate),
+            simataClient.getStudentAttendance({ classId: classId, date: targetDate }).catch(function() { return { attendances: [] }; })
+        ]);
+        if (reqSeq !== batchSusulanReqSeq) return;
+        if (!rosterRes || !rosterRes.success) {
+            alert((rosterRes && rosterRes.message) || 'Gagal memuat daftar siswa kelas.');
+            return;
+        }
+        const existingRows = Array.isArray(attRes && attRes.attendances) ? attRes.attendances : [];
+        const filledPeriodSet = new Set();
+        existingRows.forEach(function(r) {
+            const p = Number(r && r.period);
+            if (p >= 1 && p <= 10) filledPeriodSet.add(String(p));
+        });
+        rosterRes.date = targetDate;
+        renderBatchClassAttendanceRoster(rosterRes, {
+            isAdminSusulan: true,
+            date: targetDate,
+            filledPeriods: Array.from(filledPeriodSet),
+            autoSelectEmptyKbm: true
+        });
+    } catch (err) {
+        if (reqSeq !== batchSusulanReqSeq) return;
+        if (hintEl) hintEl.textContent = 'Gagal memuat data kelas: ' + ((err && err.message) ? err.message : err);
+        alert('Gagal memuat presensi kelas: ' + ((err && err.message) ? err.message : err));
+    }
+}
+
 function openBatchClassAttendance(classId, options) {
     if (!classId) return;
     const batchOpts = (options && typeof options === 'object') ? options : {};
+    currentBatchModalMode = 'standard';
+    resetBatchFilledPeriodStates();
+    const pickerBar = document.getElementById('batchSusulanPickerBar');
+    if (pickerBar) pickerBar.style.display = 'none';
 
     const token = sessionStorage.getItem("SIMATA_TOKEN");
     if (!token) {
@@ -11737,7 +11949,7 @@ function openBatchClassAttendance(classId, options) {
             alert('Gagal memuat presensi kelas: ' + ((err && err.message) ? err.message : err));
             closeBatchClassAttendanceModal();
         })
-        .getClassAttendanceRoster(token, classId, sessionId);
+        .getClassAttendanceRoster(token, classId, sessionId, batchOpts.date || undefined);
 }
 
 function closeBatchClassAttendanceModal() {
@@ -11814,6 +12026,7 @@ function updateBatchPeriodDisplay() {
 function renderBatchClassAttendanceRoster(data, options) {
     currentBatchRosterData = data;
     const batchOpts = (options && typeof options === 'object') ? options : {};
+    resetBatchFilledPeriodStates();
 
     const modalTitle = document.getElementById('batchAttModalTitle');
     if (modalTitle) modalTitle.textContent = 'Presensi ' + (data.class.className || data.class.classId);
@@ -11823,41 +12036,80 @@ function renderBatchClassAttendanceRoster(data, options) {
         : (typeof getWibTodayISODate === 'function' ? getWibTodayISODate() : '');
     const batchClassId = (data.class && data.class.classId) || '';
 
+    const filledPeriods = Array.isArray(batchOpts.filledPeriods) ? batchOpts.filledPeriods.map(function(p) { return String(p).trim(); }) : [];
+    const filledSet = new Set(filledPeriods);
+    if (filledPeriods.length > 0) {
+        markBatchFilledPeriods(filledPeriods);
+    }
+
     const preselectPeriods = Array.isArray(batchOpts.preselectPeriods)
         ? batchOpts.preselectPeriods
             .map(function(p) { return String(p).trim(); })
-            .filter(function(v) { return /^(?:[1-9]|10)$/.test(v); })
+            .filter(function(v) { return /^(?:[1-9]|10)$/.test(v) && !filledSet.has(v); })
         : [];
 
-    // Initial periods: priority to notification missing_periods preselect, else responder session, else data.periods, else smart KBM fallback
-    let initialPeriods = [];
-    if (preselectPeriods.length > 0) {
-        initialPeriods = preselectPeriods;
-    } else if (typeof responderLockedPeriods !== 'undefined' && responderLockedPeriods && responderLockedPeriods.length > 0) {
-        initialPeriods = responderLockedPeriods;
-    } else if (typeof currentResponderSession !== 'undefined' && currentResponderSession) {
-        if (Array.isArray(currentResponderSession.periods) && currentResponderSession.periods.length > 0) {
-            initialPeriods = currentResponderSession.periods;
-        } else if (currentResponderSession.period) {
-            initialPeriods = [String(currentResponderSession.period)];
+    const applyAdminSusulanAutoSelect = function() {
+        const cbs = Array.from(document.querySelectorAll('#batchPeriodContainer input[name="batch_period"], #batchPeriodContainer .batch-period-checkbox'));
+        const emptyKbm = [];
+        cbs.forEach(function(cb) {
+            const pVal = cb.value.trim();
+            if (cb.disabled || filledSet.has(pVal) || cb.dataset.nonKbm === '1') {
+                cb.checked = false;
+            } else {
+                cb.checked = true;
+                emptyKbm.push(pVal);
+            }
+        });
+        updateBatchPeriodDisplay();
+        const hintEl = document.getElementById('batchSusulanStatusHint');
+        if (hintEl) {
+            const todayIso = (typeof getWibTodayISODate === 'function') ? getWibTodayISODate() : batchDate;
+            const modeTag = (batchDate < todayIso) ? 'Mode Susulan (Tanggal Lampau)' : 'Mode Batch Hari Ini';
+            if (emptyKbm.length === 0) {
+                hintEl.style.color = '#166534';
+                hintEl.textContent = modeTag + ' • Seluruh jam KBM kelas ini pada ' + batchDate + ' sudah terisi (' + filledPeriods.length + ' jam terisi).';
+            } else {
+                hintEl.style.color = '#1e40af';
+                hintEl.textContent = modeTag + ' • ' + filledPeriods.length + ' jam sudah terisi, ' + emptyKbm.length + ' jam KBM kosong otomatis dicentang.';
+            }
         }
-    }
-    if (!initialPeriods || initialPeriods.length === 0) {
-        if (data.periods && Array.isArray(data.periods) && data.periods.length > 0) {
-            initialPeriods = data.periods;
-        } else if (window.simataNonKbmHelper) {
-            initialPeriods = [String(window.simataNonKbmHelper.getDefaultKbmPeriod(batchDate, batchClassId) || '1')];
-        } else {
-            initialPeriods = ["1"];
+    };
+
+    // Initial periods: priority to adminSusulan auto-empty-KBM, notification preselect, responder session, data.periods, else smart KBM fallback
+    if (batchOpts.autoSelectEmptyKbm) {
+        applyAdminSusulanAutoSelect();
+    } else {
+        let initialPeriods = [];
+        if (preselectPeriods.length > 0) {
+            initialPeriods = preselectPeriods;
+        } else if (typeof responderLockedPeriods !== 'undefined' && responderLockedPeriods && responderLockedPeriods.length > 0) {
+            initialPeriods = responderLockedPeriods;
+        } else if (typeof currentResponderSession !== 'undefined' && currentResponderSession) {
+            if (Array.isArray(currentResponderSession.periods) && currentResponderSession.periods.length > 0) {
+                initialPeriods = currentResponderSession.periods;
+            } else if (currentResponderSession.period) {
+                initialPeriods = [String(currentResponderSession.period)];
+            }
         }
+        if (!initialPeriods || initialPeriods.length === 0) {
+            if (data.periods && Array.isArray(data.periods) && data.periods.length > 0) {
+                initialPeriods = data.periods;
+            } else if (window.simataNonKbmHelper) {
+                initialPeriods = [String(window.simataNonKbmHelper.getDefaultKbmPeriod(batchDate, batchClassId) || '1')];
+            } else {
+                initialPeriods = ["1"];
+            }
+        }
+        setBatchPeriodCheckboxes(initialPeriods);
     }
 
-    setBatchPeriodCheckboxes(initialPeriods);
     if (window.simataNonKbmHelper && batchDate) {
         window.simataNonKbmHelper.ensureDate(batchDate).then(function() {
             if (!window.simataNonKbmHelper) return;
             window.simataNonKbmHelper.decoratePeriodContainer('#batchPeriodContainer .period-checkbox-container', batchDate, batchClassId, 'batchNonKbmNotice');
-            if (preselectPeriods.length === 0 && (typeof responderLockedPeriods === 'undefined' || !responderLockedPeriods || responderLockedPeriods.length === 0)) {
+            if (batchOpts.autoSelectEmptyKbm) {
+                applyAdminSusulanAutoSelect();
+            } else if (preselectPeriods.length === 0 && (typeof responderLockedPeriods === 'undefined' || !responderLockedPeriods || responderLockedPeriods.length === 0)) {
                 const curChecked = getSelectedBatchPeriods();
                 if (curChecked.length === 1 && curChecked[0] === '1' && window.simataNonKbmHelper.getNonKbmInfo(batchDate, 1, batchClassId)) {
                     const fallbackPeriod = String(window.simataNonKbmHelper.getDefaultKbmPeriod(batchDate, batchClassId) || '2');
@@ -12043,12 +12295,20 @@ function submitBatchClassAttendance() {
         });
     });
 
+    const todayIsoSave = (typeof getWibTodayISODate === 'function')
+        ? getWibTodayISODate()
+        : new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
+    const batchMethod = (currentBatchModalMode === 'admin_susulan')
+        ? ((currentBatchRosterData.date && currentBatchRosterData.date < todayIsoSave) ? 'Susulan Batch (Admin)' : 'Manual Batch')
+        : 'QR_BATCH';
+
     const payload = {
         classId: currentBatchRosterData.class.classId,
         academicYear: currentBatchRosterData.class.academicYear,
         date: currentBatchRosterData.date,
         periods: selectedPeriods,
-        attendances: attendances
+        attendances: attendances,
+        method: batchMethod
     };
 
     simataClient
@@ -12069,6 +12329,10 @@ function submitBatchClassAttendance() {
             }
             closeBatchClassAttendanceModal();
             if (typeof loadRecentAttendances === 'function') loadRecentAttendances();
+            if (typeof loadStudentAttendance === 'function') {
+                const attSec = document.getElementById('attendanceContent');
+                if (attSec && attSec.style.display !== 'none') loadStudentAttendance();
+            }
             if (typeof loadStudentAttendanceView === 'function') loadStudentAttendanceView();
             if (typeof window.refreshSimataNotifications === 'function') window.refreshSimataNotifications({ silent: true });
         })
@@ -16268,6 +16532,11 @@ function exportStudentAttendanceData(format) {
 function initAttendanceModule() {
     const menu = document.getElementById('menu-attendance'); if (menu) menu.addEventListener('click', function(){ showAttendanceView(); });
     const addBtn = document.getElementById('addAttendanceButton'); if (addBtn) addBtn.addEventListener('click', function(){ openAttendanceModal('create'); });
+    const batchSusulanBtn = document.getElementById('openBatchStudentSusulanBtn');
+    if (batchSusulanBtn) {
+        batchSusulanBtn.style.display = isCurrentUserAdmin ? 'inline-flex' : 'none';
+        batchSusulanBtn.addEventListener('click', openAdminBatchStudentAttendance);
+    }
     const filterBtn = document.getElementById('filterAttendanceButton'); if (filterBtn) filterBtn.addEventListener('click', function(){ loadStudentAttendance(); collapseMobileFilterOnApply('studentAttendanceFilterCard'); });
     const resetBtn = document.getElementById('resetAttendanceButton');
     if (resetBtn) resetBtn.addEventListener('click', resetAllStudentAttendanceFilters);
@@ -16389,6 +16658,8 @@ function initAttendanceModule() {
 function showAttendanceView() {
     hideAllViews();
     document.getElementById('attendanceContent').style.display = '';
+    const batchSusulanBtn = document.getElementById('openBatchStudentSusulanBtn');
+    if (batchSusulanBtn) batchSusulanBtn.style.display = isCurrentUserAdmin ? 'inline-flex' : 'none';
     document.querySelectorAll('.sidebar-menu li').forEach(function(li){ li.classList.remove('active'); });
     const menu = document.getElementById('menu-attendance'); if (menu) menu.classList.add('active');
     updatePageContext('attendance', 'PRESENSI SISWA', 'Presensi Siswa');
