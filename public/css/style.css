@@ -4916,7 +4916,7 @@ select.attendance-filter-control {
     flex-direction: column;
     align-items: flex-end;
     justify-content: center;
-    gap: 3px;
+    gap: 4px;
     min-inline-size: 0;
     max-inline-size: calc(100% - 20px);
   }
@@ -5344,8 +5344,13 @@ select.attendance-filter-control {
     display: flex !important;
     flex-wrap: wrap !important;
     flex-wrap: balance !important;
-    justify-content: flex-start !important;
+    justify-content: space-between !important;
     gap: 8px !important;
+  }
+
+  .dashboard-layout #teacherAttendanceContent .section-heading .section-actions > button {
+    flex: 1 1 auto !important;
+    justify-content: center !important;
   }
 
   .dashboard-layout .section-heading button#addStudentButton,
@@ -5555,7 +5560,7 @@ select.attendance-filter-control {
   display: inline-flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 6px;
 }
 
 .att-method-subtag {
