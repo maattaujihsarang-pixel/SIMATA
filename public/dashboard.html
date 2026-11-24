@@ -8340,40 +8340,86 @@ function printMasterStudentReport() {
         return;
     }
 
+    const activePrintCols = masterStudentColumnDefs.filter(function(c) {
+        return c.key !== 'action' && masterStudentTableState.visibleColumns[c.key];
+    });
+    if (activePrintCols.length === 0) {
+        alert('Pilih minimal satu kolom pada menu Kolom untuk dicetak.');
+        return;
+    }
+
+    const studentPrintColMeta = {
+        no: { label: 'NO', width: '36px' },
+        studentId: { label: 'STUDENT ID', width: '105px' },
+        nis: { label: 'NIS', width: '95px' },
+        nisn: { label: 'NISN', width: '105px' },
+        name: { label: 'NAMA LENGKAP', width: '' },
+        gender: { label: 'L/P', width: '45px' },
+        class: { label: 'KELAS', width: '85px' },
+        birthPlace: { label: 'TEMPAT LAHIR', width: '105px' },
+        birthDate: { label: 'TANGGAL LAHIR', width: '95px' },
+        address: { label: 'ALAMAT LENGKAP', width: '' },
+        dormitory: { label: 'PONDOK / ASRAMA', width: '120px' },
+        status: { label: 'STATUS', width: '75px' }
+    };
+
     const className = classVal ? ((studentClassMap && studentClassMap[classVal]) || classVal) : 'Semua Kelas';
     let statusLabel = 'Semua Status';
     if (statusVal) {
         statusLabel = (statusVal === 'Active' || statusVal === 'Aktif') ? 'Aktif' : 'Tidak Aktif';
     }
     const today = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    const useLandscape = activePrintCols.length >= 8 || (activePrintCols.length >= 6 && masterStudentTableState.visibleColumns.address);
+    const pageOrientation = useLandscape ? 'A4 landscape' : 'A4 portrait';
+
+    const theadColsHtml = activePrintCols.map(function(c) {
+        const meta = studentPrintColMeta[c.key] || { label: String(c.label || c.key).toUpperCase(), width: '' };
+        const styleAttr = meta.width ? (' style="width:' + meta.width + ';"') : '';
+        return '<th' + styleAttr + '>' + escapeHtml(meta.label) + '</th>';
+    }).join('');
 
     const rowsHtml = sorted.map(function(s, idx) {
         const no = idx + 1;
+        const studentId = escapeHtml(s.studentId || '-');
         const nis = escapeHtml(s.nis || '-');
         const nisn = escapeHtml(s.nisn || '-');
         const name = escapeHtml(s.name || '-');
         const gender = escapeHtml(s.gender || '-');
         const cName = escapeHtml(resolveStudentClassName(s));
+        const birthPlace = escapeHtml(s.birthPlace || s.birth_place || '-');
+        const birthDate = escapeHtml(formatBirthDateIndoShort(s.birthDate || s.birth_date));
+        const address = escapeHtml(s.address || '-');
+        const dormitory = escapeHtml(s.dormitory || '-');
         const isAktif = (s.status || 'Active').toLowerCase() === 'active' || (s.status || '').toLowerCase() === 'aktif';
         const statusText = isAktif ? 'Aktif' : 'Tidak Aktif';
         const statusColor = isAktif ? '#15803d' : '#b91c1c';
 
-        return '<tr>' +
-            '<td style="text-align:center;">' + no + '</td>' +
-            '<td class="col-nis">' + nis + '</td>' +
-            '<td class="col-nis">' + nisn + '</td>' +
-            '<td class="col-name">' + name + '</td>' +
-            '<td style="text-align:center;">' + gender + '</td>' +
-            '<td style="text-align:center;">' + cName + '</td>' +
-            '<td style="text-align:center;font-weight:700;color:' + statusColor + ';">' + statusText + '</td>' +
-        '</tr>';
+        const tds = activePrintCols.map(function(c) {
+            switch (c.key) {
+                case 'no': return '<td style="text-align:center;">' + no + '</td>';
+                case 'studentId': return '<td class="col-nis">' + studentId + '</td>';
+                case 'nis': return '<td class="col-nis">' + nis + '</td>';
+                case 'nisn': return '<td class="col-nis">' + nisn + '</td>';
+                case 'name': return '<td class="col-name">' + name + '</td>';
+                case 'gender': return '<td style="text-align:center;">' + gender + '</td>';
+                case 'class': return '<td style="text-align:center;">' + cName + '</td>';
+                case 'birthPlace': return '<td style="text-align:left;padding-left:8px;">' + birthPlace + '</td>';
+                case 'birthDate': return '<td style="text-align:center;white-space:nowrap;">' + birthDate + '</td>';
+                case 'address': return '<td style="text-align:left;padding-left:8px;">' + address + '</td>';
+                case 'dormitory': return '<td style="text-align:left;padding-left:8px;">' + dormitory + '</td>';
+                case 'status': return '<td style="text-align:center;font-weight:700;color:' + statusColor + ';">' + statusText + '</td>';
+                default: return '<td>-</td>';
+            }
+        }).join('');
+
+        return '<tr>' + tds + '</tr>';
     }).join('');
 
     const printHtml = '<!DOCTYPE html>' +
         '<html><head><meta charset="utf-8">' +
         '<title>Cetak Data Siswa - ' + escapeHtml(className) + '</title>' +
         '<style>' +
-        '@page { size: A4 portrait; margin: 12mm 15mm; }' +
+        '@page { size: ' + pageOrientation + '; margin: 12mm 15mm; }' +
         'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; margin: 0; padding: 0; color: #0f172a; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }' +
         '.print-container { width: 100%; }' +
         '.report-header { text-align: center; margin-bottom: 14px; border-bottom: 2px solid #0f172a; padding-bottom: 6px; }' +
@@ -8404,15 +8450,7 @@ function printMasterStudentReport() {
           '</div>' +
           '<table class="report-table">' +
             '<thead>' +
-              '<tr>' +
-                '<th style="width:36px;">NO</th>' +
-                '<th style="width:95px;">NIS</th>' +
-                '<th style="width:105px;">NISN</th>' +
-                '<th>NAMA LENGKAP</th>' +
-                '<th style="width:45px;">L/P</th>' +
-                '<th style="width:85px;">KELAS</th>' +
-                '<th style="width:75px;">STATUS</th>' +
-              '</tr>' +
+              '<tr>' + theadColsHtml + '</tr>' +
             '</thead>' +
             '<tbody>' +
               rowsHtml +
@@ -10403,6 +10441,28 @@ function printMasterTeacherReport() {
         return;
     }
 
+    const activePrintCols = masterTeacherColumnDefs.filter(function(c) {
+        return c.key !== 'action' && masterTeacherTableState.visibleColumns[c.key];
+    });
+    if (activePrintCols.length === 0) {
+        alert('Pilih minimal satu kolom pada menu Kolom untuk dicetak.');
+        return;
+    }
+
+    const teacherPrintColMeta = {
+        no: { label: 'NO', width: '36px' },
+        teacherId: { label: 'TEACHER ID', width: '105px' },
+        nik: { label: 'NIK', width: '125px' },
+        nip: { label: 'NIP', width: '120px' },
+        nuptk: { label: 'NUPTK', width: '120px' },
+        name: { label: 'NAMA LENGKAP', width: '' },
+        gender: { label: 'L/P', width: '45px' },
+        position: { label: 'JABATAN', width: '115px' },
+        subject: { label: 'MATA PELAJARAN', width: '125px' },
+        birthDate: { label: 'TANGGAL LAHIR', width: '95px' },
+        status: { label: 'STATUS', width: '75px' }
+    };
+
     const posLabel = posVal || 'Semua Jabatan';
     const subjLabel = subjVal || 'Semua Mapel';
     let statusLabel = 'Semua Status';
@@ -10410,11 +10470,20 @@ function printMasterTeacherReport() {
         statusLabel = (statusVal === 'Active' || statusVal === 'Aktif') ? 'Aktif' : 'Tidak Aktif';
     }
     const today = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    const pageOrientation = activePrintCols.length >= 7 ? 'A4 landscape' : 'A4 portrait';
+
+    const theadColsHtml = activePrintCols.map(function(c) {
+        const meta = teacherPrintColMeta[c.key] || { label: String(c.label || c.key).toUpperCase(), width: '' };
+        const styleAttr = meta.width ? (' style="width:' + meta.width + ';"') : '';
+        return '<th' + styleAttr + '>' + escapeHtml(meta.label) + '</th>';
+    }).join('');
 
     const rowsHtml = sorted.map(function(t, idx) {
         const no = idx + 1;
+        const teacherId = escapeHtml(t.teacherId || '-');
         const nik = escapeHtml(t.nik || '-');
         const nip = escapeHtml(t.nip || '-');
+        const nuptk = escapeHtml(t.nuptk || '-');
         const name = escapeHtml(t.name || '-');
         let genderText = '-';
         if (t.gender) {
@@ -10425,27 +10494,36 @@ function printMasterTeacherReport() {
         }
         const position = escapeHtml(t.position || '-');
         const subject = escapeHtml(t.subject || '-');
+        const birthDate = escapeHtml(formatBirthDateIndoShort(t.birthDate || t.birth_date));
         const isAktif = (t.status || 'Active').toLowerCase() === 'active' || (t.status || '').toLowerCase() === 'aktif';
         const statusText = isAktif ? 'Aktif' : 'Tidak Aktif';
         const statusColor = isAktif ? '#15803d' : '#b91c1c';
 
-        return '<tr>' +
-            '<td style="text-align:center;">' + no + '</td>' +
-            '<td class="col-nik">' + nik + '</td>' +
-            '<td class="col-nik">' + nip + '</td>' +
-            '<td class="col-name">' + name + '</td>' +
-            '<td style="text-align:center;">' + genderText + '</td>' +
-            '<td style="text-align:center;">' + position + '</td>' +
-            '<td style="text-align:center;">' + subject + '</td>' +
-            '<td style="text-align:center;font-weight:700;color:' + statusColor + ';">' + statusText + '</td>' +
-        '</tr>';
+        const tds = activePrintCols.map(function(c) {
+            switch (c.key) {
+                case 'no': return '<td style="text-align:center;">' + no + '</td>';
+                case 'teacherId': return '<td class="col-nik">' + teacherId + '</td>';
+                case 'nik': return '<td class="col-nik">' + nik + '</td>';
+                case 'nip': return '<td class="col-nik">' + nip + '</td>';
+                case 'nuptk': return '<td class="col-nik">' + nuptk + '</td>';
+                case 'name': return '<td class="col-name">' + name + '</td>';
+                case 'gender': return '<td style="text-align:center;">' + genderText + '</td>';
+                case 'position': return '<td style="text-align:center;">' + position + '</td>';
+                case 'subject': return '<td style="text-align:center;">' + subject + '</td>';
+                case 'birthDate': return '<td style="text-align:center;white-space:nowrap;">' + birthDate + '</td>';
+                case 'status': return '<td style="text-align:center;font-weight:700;color:' + statusColor + ';">' + statusText + '</td>';
+                default: return '<td>-</td>';
+            }
+        }).join('');
+
+        return '<tr>' + tds + '</tr>';
     }).join('');
 
     const printHtml = '<!DOCTYPE html>' +
         '<html><head><meta charset="utf-8">' +
         '<title>Cetak Data Guru - SIMATA</title>' +
         '<style>' +
-        '@page { size: A4 landscape; margin: 12mm 15mm; }' +
+        '@page { size: ' + pageOrientation + '; margin: 12mm 15mm; }' +
         'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; margin: 0; padding: 0; color: #0f172a; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }' +
         '.print-container { width: 100%; }' +
         '.report-header { text-align: center; margin-bottom: 14px; border-bottom: 2px solid #0f172a; padding-bottom: 6px; }' +
@@ -10476,16 +10554,7 @@ function printMasterTeacherReport() {
           '</div>' +
           '<table class="report-table">' +
             '<thead>' +
-              '<tr>' +
-                '<th style="width:36px;">NO</th>' +
-                '<th style="width:125px;">NIK</th>' +
-                '<th style="width:120px;">NIP</th>' +
-                '<th>NAMA LENGKAP</th>' +
-                '<th style="width:45px;">L/P</th>' +
-                '<th style="width:120px;">JABATAN</th>' +
-                '<th style="width:130px;">MATA PELAJARAN</th>' +
-                '<th style="width:75px;">STATUS</th>' +
-              '</tr>' +
+              '<tr>' + theadColsHtml + '</tr>' +
             '</thead>' +
             '<tbody>' +
               rowsHtml +
