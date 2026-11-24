@@ -38,6 +38,21 @@ function parseMinutesHHMM(val) {
   return hh * 60 + mm;
 }
 
+function normalizeHHMMStrict(val) {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(String(val || '').trim());
+  if (!m) return null;
+  const hh = Number(m[1]);
+  const mm = Number(m[2]);
+  if (hh < 0 || hh > 23 || mm < 0 || mm > 59) return null;
+  return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+}
+
+function resolveAutoAlpaCutoffMode(cutoffTime) {
+  if (cutoffTime === '23:30') return 'same_day_2330';
+  if (cutoffTime === '00:15') return 'next_day_0015';
+  return 'custom';
+}
+
 function addDaysISOUtc(isoDate, deltaDays) {
   const [y, m, d] = String(isoDate).split('-').map(Number);
   const dt = new Date(Date.UTC(y, m - 1, d + deltaDays));
@@ -460,7 +475,9 @@ class TeacherAttendanceService {
     const defaults = {
       enabled: true,
       cutoff_time: DEFAULT_AUTO_ALPHA_CUTOFF,
-      effective_from: todayIso
+      cutoff_mode: 'same_day_2330',
+      effective_from: todayIso,
+      skip_friday: true
     };
     try {
       const settingsMap = await attendanceEvidenceRepository.getSystemSettings([
@@ -497,15 +514,72 @@ class TeacherAttendanceService {
         } catch (_) {}
       }
 
+      const normalizedCutoff = normalizeHHMMStrict(parsedAuto.cutoff_time) || DEFAULT_AUTO_ALPHA_CUTOFF;
+      const cutoffMode = ['same_day_2330', 'next_day_0015', 'custom'].includes(parsedAuto.cutoff_mode)
+        ? parsedAuto.cutoff_mode
+        : resolveAutoAlpaCutoffMode(normalizedCutoff);
+
       return {
         enabled: parsedAuto.enabled === undefined ? true : Boolean(parsedAuto.enabled),
-        cutoff_time: parseMinutesHHMM(parsedAuto.cutoff_time) !== null ? String(parsedAuto.cutoff_time).trim() : DEFAULT_AUTO_ALPHA_CUTOFF,
+        cutoff_time: normalizedCutoff,
+        cutoff_mode: cutoffMode,
         effective_from: /^\d{4}-\d{2}-\d{2}$/.test(String(parsedAuto.effective_from || '')) ? String(parsedAuto.effective_from) : todayIso,
+        skip_friday: parsedAuto.skip_friday === undefined ? true : Boolean(parsedAuto.skip_friday),
         holidayDates
       };
     } catch (_) {
       return { ...defaults, holidayDates: new Set() };
     }
+  }
+
+  async updateAutoAlpaConfig(data = {}, userId = null) {
+    const current = await this.getAutoAlpaRuntimeConfig();
+    const enabled = data.enabled !== undefined ? Boolean(data.enabled) : current.enabled;
+    const skipFriday = data.skip_friday !== undefined ? Boolean(data.skip_friday) : current.skip_friday;
+
+    let cutoffMode = ['same_day_2330', 'next_day_0015', 'custom'].includes(data.cutoff_mode)
+      ? data.cutoff_mode
+      : null;
+
+    let cutoffTime = current.cutoff_time || DEFAULT_AUTO_ALPHA_CUTOFF;
+    if (cutoffMode === 'same_day_2330') {
+      cutoffTime = '23:30';
+    } else if (cutoffMode === 'next_day_0015') {
+      cutoffTime = '00:15';
+    } else if (data.cutoff_time !== undefined) {
+      const normalized = normalizeHHMMStrict(data.cutoff_time);
+      if (!normalized) {
+        throw new BadRequestError('Format jam batas cutoff harus HH:MM (00:00 - 23:59)');
+      }
+      cutoffTime = normalized;
+      cutoffMode = resolveAutoAlpaCutoffMode(cutoffTime);
+    } else {
+      cutoffMode = resolveAutoAlpaCutoffMode(cutoffTime);
+    }
+
+    const effectiveFrom = data.effective_from !== undefined
+      ? String(data.effective_from || '').trim()
+      : current.effective_from;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(effectiveFrom)) {
+      throw new BadRequestError('Format tanggal efektif mulai berlaku harus YYYY-MM-DD');
+    }
+
+    const nextConfig = {
+      enabled,
+      cutoff_time: cutoffTime,
+      cutoff_mode: cutoffMode,
+      effective_from: effectiveFrom,
+      skip_friday: skipFriday
+    };
+
+    await attendanceEvidenceRepository.upsertSystemSetting(
+      KEY_AUTO_ALPHA_CONFIG,
+      JSON.stringify(nextConfig),
+      'Konfigurasi Auto-Alpa Presensi Guru harian (BUG 68)',
+      userId || null
+    );
+
+    return nextConfig;
   }
 
   async runAutoAlpaForDate({ date = null, time_wib = null, force = false, operatorUserId = null } = {}) {
@@ -527,24 +601,40 @@ class TeacherAttendanceService {
     const [yy, mm, dd] = targetDate.split('-').map(Number);
     const utcDate = new Date(Date.UTC(yy, mm - 1, dd));
     const dayOfWeek = utcDate.getUTCDay();
-    if (dayOfWeek === 5) {
+    if (cfg.skip_friday && dayOfWeek === 5) {
       return { date: targetDate, skipped: true, reason: 'friday_holiday', message: 'Hari Jumat (libur rutin) dilewati.', created_count: 0, records: [] };
     }
     if (cfg.holidayDates.has(targetDate)) {
       return { date: targetDate, skipped: true, reason: 'custom_holiday', message: `Tanggal ${targetDate} tercatat hari libur / eksepsi.`, created_count: 0, records: [] };
     }
 
-    if (!force && targetDate === todayIso) {
+    const cutoffMin = parseMinutesHHMM(cfg.cutoff_time) ?? (23 * 60 + 30);
+    const isNextDayCutoff = cutoffMin < 12 * 60;
+    if (!force) {
       const effectiveTime = time_wib || getCurrentWibHHMM();
       const curMin = parseMinutesHHMM(effectiveTime) ?? 0;
-      const cutoffMin = parseMinutesHHMM(cfg.cutoff_time) ?? (23 * 60 + 30);
-      if (curMin < cutoffMin) {
+      const yesterdayIso = addDaysISOUtc(todayIso, -1);
+
+      if (targetDate === todayIso && (isNextDayCutoff || curMin < cutoffMin)) {
         return {
           date: targetDate,
           skipped: true,
           reason: 'before_cutoff',
           cutoff_time: cfg.cutoff_time,
-          message: `Belum melewati batas cutoff harian (${cfg.cutoff_time} WIB).`,
+          message: isNextDayCutoff
+            ? `Cutoff harian diatur pada H+1 pukul ${cfg.cutoff_time} WIB.`
+            : `Belum melewati batas cutoff harian (${cfg.cutoff_time} WIB).`,
+          created_count: 0,
+          records: []
+        };
+      }
+      if (isNextDayCutoff && targetDate === yesterdayIso && curMin < cutoffMin) {
+        return {
+          date: targetDate,
+          skipped: true,
+          reason: 'before_cutoff',
+          cutoff_time: cfg.cutoff_time,
+          message: `Belum melewati batas cutoff H+1 (${cfg.cutoff_time} WIB).`,
           created_count: 0,
           records: []
         };

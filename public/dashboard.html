@@ -5802,6 +5802,17 @@ html, body {
                   <small>Verifikasi foto guru</small>
                 </span>
               </button>
+
+              <!-- Tab 5: Auto-Alpa Guru (Admin Only - BUG 68) -->
+              <button id="settingsTab_auto_alpa" class="settings-nav-item" type="button" onclick="switchSettingsCategory('auto_alpa')" style="display:none;">
+                <span class="settings-nav-icon">
+                  <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </span>
+                <span class="settings-nav-text">
+                  <strong>Auto-Alpa Guru</strong>
+                  <small>Scheduler &amp; batas waktu</small>
+                </span>
+              </button>
             </nav>
 
             <!-- Settings Content Panels -->
@@ -6103,6 +6114,76 @@ html, body {
                   </div>
                 </div>
               </div>
+
+              <!-- PANEL E: SCHEDULER OTOMATIS HARIAN / AUTO-ALPA GURU (Admin Only - BUG 68) -->
+              <div id="settingsPanel_auto_alpa" class="settings-panel" style="display:none;">
+                <div class="settings-panel-card">
+                  <div class="settings-panel-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:18px;">
+                    <div style="min-width:0;flex:1 1 260px;">
+                      <h3 style="font-size:16px;font-weight:700;color:#0f172a;margin:0 0 4px 0;">Scheduler Otomatis Harian (Auto-Alpa Guru)</h3>
+                      <p style="font-size:13px;color:#64748b;margin:0;">Berjalan otomatis setiap 15 menit di server untuk menandai guru terjadwal KBM yang tidak memiliki presensi maupun laporan Izin/Sakit hingga batas waktu harian.</p>
+                    </div>
+                    <span id="aa_statusBadge" class="simata-badge simata-badge-success" style="font-size:12px;flex-shrink:0;">Memuat...</span>
+                  </div>
+
+                  <div style="display:flex;flex-direction:column;gap:16px;">
+                    <div style="padding:14px 16px;border-radius:10px;background:#f8fafc;border:1px solid #e2e8f0;">
+                      <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;">
+                        <input type="checkbox" id="aa_enabled" onchange="syncAutoAlpaStatusBadge()" style="margin-top:3px;width:17px;height:17px;accent-color:#166534;flex-shrink:0;" />
+                        <span>
+                          <strong style="display:block;font-size:13.5px;color:#0f172a;">Aktifkan Scheduler Auto-Alpa Otomatis</strong>
+                          <small style="display:block;font-size:12px;color:#64748b;margin-top:2px;line-height:1.45;">Jika aktif, slot KBM kosong otomatis menjadi <em>Alpa (Auto-Alpa Sistem)</em> setelah melewati jam batas cutoff. Slot <strong>Pembelajaran Bahasa (PB) / Upacara (Non-KBM)</strong>, hari libur kalender, serta kelas yang sudah diisi guru pengganti tetap dilewati otomatis.</small>
+                        </span>
+                      </label>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(min(100%, 220px), 1fr));gap:16px;">
+                      <div>
+                        <label for="aa_cutoffMode" style="display:block;font-size:12.5px;font-weight:600;color:#334155;margin-bottom:6px;">Mode Penutupan Harian</label>
+                        <select id="aa_cutoffMode" class="input-box" onchange="onAutoAlpaCutoffModeChange()">
+                          <option value="same_day_2330">Malam Hari yang Sama (23:30 WIB)</option>
+                          <option value="next_day_0015">Pergantian Hari / H+1 (00:15 WIB)</option>
+                          <option value="custom">Jam Kustom (WIB)</option>
+                        </select>
+                        <small style="display:block;font-size:11.5px;color:#64748b;margin-top:5px;">Pilih apakah sistem menutup absensi di malam hari yang sama atau dini hari keesokan harinya (H+1).</small>
+                      </div>
+
+                      <div>
+                        <label for="aa_cutoffTime" style="display:block;font-size:12.5px;font-weight:600;color:#334155;margin-bottom:6px;">Jam Batas Cutoff (WIB)</label>
+                        <input type="time" id="aa_cutoffTime" class="input-box" value="23:30" oninput="onAutoAlpaCutoffTimeInput()" />
+                        <small id="aa_cutoffHint" style="display:block;font-size:11.5px;color:#64748b;margin-top:5px;">Jam sebelum 12:00 WIB dijalankan sebagai batas H+1 dini hari.</small>
+                      </div>
+
+                      <div>
+                        <label for="aa_effectiveFrom" style="display:block;font-size:12.5px;font-weight:600;color:#334155;margin-bottom:6px;">Tanggal Efektif Mulai Berlaku</label>
+                        <input type="date" id="aa_effectiveFrom" class="input-box" />
+                        <small style="display:block;font-size:11.5px;color:#64748b;margin-top:5px;">Tanggal sebelum batas ini tidak diproses otomatis oleh scheduler harian.</small>
+                      </div>
+                    </div>
+
+                    <div style="padding:12px 16px;border-radius:10px;background:#f8fafc;border:1px solid #e2e8f0;">
+                      <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;">
+                        <input type="checkbox" id="aa_skipFriday" checked style="margin-top:2px;width:16px;height:16px;accent-color:#166534;flex-shrink:0;" />
+                        <span>
+                          <strong style="display:block;font-size:13px;color:#0f172a;">Lewati Hari Jumat (Libur Rutin Madrasah)</strong>
+                          <small style="display:block;font-size:11.5px;color:#64748b;margin-top:2px;">Jika dicentang, scheduler tidak pernah menandai Alpa pada hari Jumat.</small>
+                        </span>
+                      </label>
+                    </div>
+
+                    <div style="padding:12px 14px;border-radius:10px;background:#f0fdf4;border:1px solid #bbf7d0;font-size:12px;color:#166534;line-height:1.5;">
+                      <strong>Info Terhubung:</strong> Hari libur khusus (tanggal merah / eksepsi madrasah) otomatis mengikuti pengaturan <strong>Kalender Libur</strong> di menu Notifikasi. Untuk menjalankan pemeriksaan manual sewaktu-waktu pada tanggal tertentu, gunakan tombol <strong>Cek Auto-Alpa</strong> di menu <strong>Presensi Guru</strong>.
+                    </div>
+
+                    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding-top:6px;border-top:1px solid #f1f5f9;">
+                      <span id="aa_configFeedback" style="font-size:12.5px;font-weight:600;color:#166534;"></span>
+                      <button type="button" id="aa_saveBtn" class="login-button" onclick="saveTeacherAutoAlpaSettings()" style="margin:0;width:auto;padding:10px 22px;">
+                        Simpan Pengaturan Auto-Alpa
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -6134,6 +6215,11 @@ html, body {
               background: #e0f2fe;
               color: #0369a1;
               border: 1px solid #bae6fd;
+            }
+            #settingsContent .simata-badge-muted {
+              background: #f1f5f9;
+              color: #475569;
+              border: 1px solid #cbd5e1;
             }
             .settings-container {
               display: flex;
@@ -29289,16 +29375,19 @@ function showSettingsView(initialCategory) {
     const tabBuktiFoto = document.getElementById('settingsTab_bukti_foto');
     if (tabBuktiFoto) tabBuktiFoto.style.display = isCurrentUserAdmin ? '' : 'none';
 
+    const tabAutoAlpa = document.getElementById('settingsTab_auto_alpa');
+    if (tabAutoAlpa) tabAutoAlpa.style.display = isCurrentUserAdmin ? '' : 'none';
+
     // Default to 'akun' or requested category (guarantees NO BLANK STATE)
     switchSettingsCategory(initialCategory || 'akun');
 }
 
 function switchSettingsCategory(catKey) {
-    const tabs = ['akun', 'akses', 'keamanan', 'bukti_foto'];
+    const tabs = ['akun', 'akses', 'keamanan', 'bukti_foto', 'auto_alpa'];
     let target = (tabs.indexOf(catKey) !== -1) ? catKey : 'akun';
 
-    // Role security check: Non-admin cannot access 'keamanan' or 'bukti_foto'
-    if (!isCurrentUserAdmin && (target === 'keamanan' || target === 'bukti_foto')) {
+    // Role security check: Non-admin cannot access admin-only tabs
+    if (!isCurrentUserAdmin && (target === 'keamanan' || target === 'bukti_foto' || target === 'auto_alpa')) {
         target = 'akun';
     }
 
@@ -29328,6 +29417,147 @@ function switchSettingsCategory(catKey) {
     if (target === 'bukti_foto' && isCurrentUserAdmin) {
         initTeacherPhotoEvidence();
     }
+
+    // Auto-load Auto-Alpa Scheduler settings when Admin switches to 'auto_alpa'
+    if (target === 'auto_alpa' && isCurrentUserAdmin) {
+        loadTeacherAutoAlpaSettings();
+    }
+}
+
+function syncAutoAlpaStatusBadge() {
+    const cb = document.getElementById('aa_enabled');
+    const badge = document.getElementById('aa_statusBadge');
+    if (!badge) return;
+    const active = cb ? Boolean(cb.checked) : true;
+    badge.textContent = active ? 'Aktif (Otomatis)' : 'Nonaktif';
+    badge.className = 'simata-badge ' + (active ? 'simata-badge-success' : 'simata-badge-muted');
+}
+
+function updateAutoAlpaCutoffHint(cutoffTime) {
+    const hintEl = document.getElementById('aa_cutoffHint');
+    if (!hintEl) return;
+    const parts = String(cutoffTime || '23:30').split(':').map(Number);
+    const hh = parts[0];
+    if (!isNaN(hh) && hh < 12) {
+        hintEl.textContent = 'Pukul ' + cutoffTime + ' WIB dijalankan sebagai batas H+1 dini hari (esok harinya).';
+    } else {
+        hintEl.textContent = 'Pukul ' + cutoffTime + ' WIB dijalankan pada malam di hari yang sama.';
+    }
+}
+
+function onAutoAlpaCutoffModeChange() {
+    const modeEl = document.getElementById('aa_cutoffMode');
+    const timeEl = document.getElementById('aa_cutoffTime');
+    if (!modeEl || !timeEl) return;
+    if (modeEl.value === 'same_day_2330') {
+        timeEl.value = '23:30';
+    } else if (modeEl.value === 'next_day_0015') {
+        timeEl.value = '00:15';
+    }
+    updateAutoAlpaCutoffHint(timeEl.value || '23:30');
+}
+
+function onAutoAlpaCutoffTimeInput() {
+    const modeEl = document.getElementById('aa_cutoffMode');
+    const timeEl = document.getElementById('aa_cutoffTime');
+    if (!timeEl) return;
+    const val = String(timeEl.value || '').trim();
+    if (modeEl) {
+        if (val === '23:30') modeEl.value = 'same_day_2330';
+        else if (val === '00:15') modeEl.value = 'next_day_0015';
+        else modeEl.value = 'custom';
+    }
+    updateAutoAlpaCutoffHint(val || '23:30');
+}
+
+function loadTeacherAutoAlpaSettings() {
+    if (!isCurrentUserAdmin) return;
+    const fbEl = document.getElementById('aa_configFeedback');
+    if (fbEl) fbEl.textContent = '';
+
+    simataClient.withSuccessHandler(function(res) {
+        const cfg = (res && res.data) || {};
+        const enabledEl = document.getElementById('aa_enabled');
+        const modeEl = document.getElementById('aa_cutoffMode');
+        const timeEl = document.getElementById('aa_cutoffTime');
+        const effEl = document.getElementById('aa_effectiveFrom');
+        const friEl = document.getElementById('aa_skipFriday');
+
+        if (enabledEl) enabledEl.checked = (cfg.enabled === undefined ? true : Boolean(cfg.enabled));
+        if (friEl) friEl.checked = (cfg.skip_friday === undefined ? true : Boolean(cfg.skip_friday));
+
+        const cutoffTime = String(cfg.cutoff_time || '23:30');
+        if (timeEl) timeEl.value = cutoffTime;
+        if (modeEl) {
+            modeEl.value = cfg.cutoff_mode || (cutoffTime === '23:30' ? 'same_day_2330' : (cutoffTime === '00:15' ? 'next_day_0015' : 'custom'));
+        }
+        const todayIso = (typeof getWibTodayISODate === 'function')
+            ? getWibTodayISODate()
+            : new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
+        if (effEl) effEl.value = cfg.effective_from || todayIso;
+
+        syncAutoAlpaStatusBadge();
+        updateAutoAlpaCutoffHint(cutoffTime);
+    }).withFailureHandler(function(err) {
+        if (fbEl) {
+            fbEl.style.color = '#b91c1c';
+            fbEl.textContent = (err && err.message) || 'Gagal memuat konfigurasi Auto-Alpa.';
+        }
+    }).getTeacherAutoAlpaConfig();
+}
+
+function saveTeacherAutoAlpaSettings() {
+    if (!isCurrentUserAdmin) return;
+    const enabledEl = document.getElementById('aa_enabled');
+    const modeEl = document.getElementById('aa_cutoffMode');
+    const timeEl = document.getElementById('aa_cutoffTime');
+    const effEl = document.getElementById('aa_effectiveFrom');
+    const friEl = document.getElementById('aa_skipFriday');
+    const btn = document.getElementById('aa_saveBtn');
+    const fbEl = document.getElementById('aa_configFeedback');
+
+    const payload = {
+        enabled: enabledEl ? Boolean(enabledEl.checked) : true,
+        cutoff_mode: modeEl ? modeEl.value : 'custom',
+        cutoff_time: timeEl ? String(timeEl.value || '23:30').trim() : '23:30',
+        effective_from: effEl ? String(effEl.value || '').trim() : '',
+        skip_friday: friEl ? Boolean(friEl.checked) : true
+    };
+    if (!payload.cutoff_time) {
+        alert('Jam batas cutoff wajib diisi.');
+        return;
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(payload.effective_from)) {
+        alert('Tanggal efektif mulai berlaku tidak valid.');
+        return;
+    }
+
+    if (fbEl) fbEl.textContent = '';
+    setButtonLoading(btn, true, 'Menyimpan...', 'Simpan Pengaturan Auto-Alpa');
+
+    simataClient.withSuccessHandler(function(res) {
+        setButtonLoading(btn, false, '', 'Simpan Pengaturan Auto-Alpa');
+        const saved = (res && res.data) || payload;
+        if (timeEl && saved.cutoff_time) timeEl.value = saved.cutoff_time;
+        if (modeEl && saved.cutoff_mode) modeEl.value = saved.cutoff_mode;
+        syncAutoAlpaStatusBadge();
+        updateAutoAlpaCutoffHint(saved.cutoff_time || payload.cutoff_time);
+
+        const msg = (res && res.message) || 'Pengaturan Auto-Alpa Guru berhasil disimpan.';
+        if (fbEl) {
+            fbEl.style.color = '#166534';
+            fbEl.textContent = msg;
+        }
+        if (typeof showToast === 'function') showToast('success', 'Pengaturan Disimpan', msg);
+    }).withFailureHandler(function(err) {
+        setButtonLoading(btn, false, '', 'Simpan Pengaturan Auto-Alpa');
+        const msg = (err && err.message) || 'Gagal menyimpan pengaturan Auto-Alpa.';
+        if (fbEl) {
+            fbEl.style.color = '#b91c1c';
+            fbEl.textContent = msg;
+        }
+        alert(msg);
+    }).updateTeacherAutoAlpaConfig(payload);
 }
 
 function saveAccountFromForm() {

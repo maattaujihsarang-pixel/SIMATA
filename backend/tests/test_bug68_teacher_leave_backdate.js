@@ -474,6 +474,58 @@ async function runBug68Tests() {
     );
     assert.strictEqual(adminAutoHttp.status, 200, `Expected 200 for ADMIN /auto-alpa, got ${adminAutoHttp.status}: ${adminAutoHttp.text}`);
     assert.ok(adminAutoHttp.body?.data?.created_count >= 1, 'HTTP ADMIN /auto-alpa must create Auto-Alpa records');
+
+    // 4f. Pengaturan Auto-Alpa Fleksibel (UI checks + HTTP GET/PUT /auto-alpa/config RBAC + H+1 overnight cutoff)
+    assert.ok(html.includes('id="settingsTab_auto_alpa"'), 'dashboard.html must render settingsTab_auto_alpa');
+    assert.ok(html.includes('id="settingsPanel_auto_alpa"'), 'dashboard.html must render settingsPanel_auto_alpa');
+    assert.ok(html.includes('id="aa_cutoffMode"') && html.includes('id="aa_cutoffTime"') && html.includes('id="aa_effectiveFrom"') && html.includes('id="aa_skipFriday"'), 'Settings panel must expose flexible Auto-Alpa controls');
+    assert.ok(!html.includes('id="aa_manualRunDate"'), 'Settings panel must NOT duplicate manual Auto-Alpa card');
+    assert.ok(clientJs.includes('getTeacherAutoAlpaConfig') && clientJs.includes('updateTeacherAutoAlpaConfig'), 'simata-client.js must expose Auto-Alpa config endpoints');
+
+    const guruGetCfg = await requestJson(httpServer2, 'GET', '/api/v1/attendance/teachers/auto-alpa/config', null, { Authorization: `Bearer ${guruLogin.token}` });
+    assert.strictEqual(guruGetCfg.status, 403, 'GURU GET /auto-alpa/config must return 403');
+    const guruPutCfg = await requestJson(httpServer2, 'PUT', '/api/v1/attendance/teachers/auto-alpa/config', { enabled: false }, { Authorization: `Bearer ${guruLogin.token}` });
+    assert.strictEqual(guruPutCfg.status, 403, 'GURU PUT /auto-alpa/config must return 403');
+
+    const adminGetCfg = await requestJson(httpServer2, 'GET', '/api/v1/attendance/teachers/auto-alpa/config', null, { Authorization: `Bearer ${adminLogin.token}` });
+    assert.strictEqual(adminGetCfg.status, 200);
+    assert.strictEqual(adminGetCfg.body?.data?.cutoff_mode, 'same_day_2330');
+    assert.strictEqual(adminGetCfg.body?.data?.cutoff_time, '23:30');
+    assert.strictEqual(adminGetCfg.body?.data?.skip_friday, true);
+
+    const adminPutNextDay = await requestJson(
+      httpServer2,
+      'PUT',
+      '/api/v1/attendance/teachers/auto-alpa/config',
+      { enabled: true, cutoff_mode: 'next_day_0015', effective_from: httpAutoAlpaDate, skip_friday: true },
+      { Authorization: `Bearer ${adminLogin.token}` }
+    );
+    assert.strictEqual(adminPutNextDay.status, 200);
+    assert.strictEqual(adminPutNextDay.body?.data?.cutoff_time, '00:15');
+    assert.strictEqual(adminPutNextDay.body?.data?.cutoff_mode, 'next_day_0015');
+
+    if (getDayOfWeek(today) !== 5) {
+      const overnightTodayGuard = await teacherAttendanceService.runAutoAlpaForDate({ date: today, time_wib: '23:50', force: false });
+      assert.strictEqual(overnightTodayGuard.skipped, true, 'Today must wait until H+1 00:15 when cutoff_mode is next_day_0015');
+      assert.strictEqual(overnightTodayGuard.reason, 'before_cutoff');
+    }
+    if (getDayOfWeek(yesterday) !== 5 && !holidayTestDate.includes(yesterday)) {
+      const overnightYestEarly = await teacherAttendanceService.runAutoAlpaForDate({ date: yesterday, time_wib: '00:05', force: false });
+      assert.strictEqual(overnightYestEarly.skipped, true, 'Yesterday at 00:05 must wait before 00:15 cutoff');
+      assert.strictEqual(overnightYestEarly.reason, 'before_cutoff');
+    }
+
+    const adminPutCustom = await requestJson(
+      httpServer2,
+      'PUT',
+      '/api/v1/attendance/teachers/auto-alpa/config',
+      { enabled: true, cutoff_mode: 'custom', cutoff_time: '21:45', effective_from: httpAutoAlpaDate, skip_friday: false },
+      { Authorization: `Bearer ${adminLogin.token}` }
+    );
+    assert.strictEqual(adminPutCustom.status, 200);
+    assert.strictEqual(adminPutCustom.body?.data?.cutoff_mode, 'custom');
+    assert.strictEqual(adminPutCustom.body?.data?.cutoff_time, '21:45');
+    assert.strictEqual(adminPutCustom.body?.data?.skip_friday, false);
   } finally {
     await new Promise((resolve) => httpServer2.close(resolve));
     schedulesService.getActiveNowForResponder = origGetActiveSched;

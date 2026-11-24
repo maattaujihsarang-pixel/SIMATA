@@ -1121,6 +1121,23 @@
       return { success: true, message: res.message, data: res.data };
     },
 
+    // 35d. TeacherAttendance: getTeacherAutoAlpaConfig
+    getTeacherAutoAlpaConfig: async function () {
+      const res = await apiFetch('/attendance/teachers/auto-alpa/config', {
+        method: 'GET'
+      });
+      return { success: true, data: res.data };
+    },
+
+    // 35e. TeacherAttendance: updateTeacherAutoAlpaConfig
+    updateTeacherAutoAlpaConfig: async function (payload = {}) {
+      const res = await apiFetch('/attendance/teachers/auto-alpa/config', {
+        method: 'PUT',
+        body: JSON.stringify(payload || {})
+      });
+      return { success: true, message: res.message, data: res.data };
+    },
+
     // 36. Responder: createResponderSession
     createResponderSession: async function (token) {
       const res = await apiFetch('/responder/sessions', { method: 'POST' });
