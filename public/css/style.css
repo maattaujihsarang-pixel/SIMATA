@@ -4896,7 +4896,7 @@ select.attendance-filter-control {
     display: flex !important;
     align-items: center !important;
     justify-content: flex-end !important;
-    gap: 4px !important;
+    gap: 3px !important;
     width: 100% !important;
     min-width: 0;
   }
@@ -4907,38 +4907,7 @@ select.attendance-filter-control {
     max-width: calc(100% - 20px);
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
     flex-shrink: 1;
-  }
-
-  .att-mobile-status-wrap .att-status-stack {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    justify-content: center;
-    gap: 3px;
-    min-inline-size: 0;
-    max-inline-size: calc(100% - 20px);
-  }
-
-  .att-mobile-status-wrap .att-status-stack .status-badge {
-    max-width: 100%;
-  }
-
-  .att-mobile-status-wrap .att-method-subtag {
-    font-size: 9.5px;
-    line-height: 1.15;
-    font-weight: 700;
-    white-space: nowrap;
-    text-align: right;
-  }
-
-  .att-mobile-status-wrap .att-subtag-full {
-    display: none;
-  }
-
-  .att-mobile-status-wrap .att-subtag-compact {
-    display: inline;
   }
 
   .att-mobile-expand-icon {
@@ -5293,12 +5262,6 @@ select.attendance-filter-control {
     margin-bottom: 12px !important;
   }
 
-  .dashboard-layout #teacherAttendanceContent .section-heading {
-    flex-direction: column !important;
-    align-items: stretch !important;
-    gap: 10px !important;
-  }
-
   .dashboard-layout #studentsContent .section-heading > div:first-child,
   .dashboard-layout #teachersContent .section-heading > div:first-child,
   .dashboard-layout #classesContent .section-heading > div:first-child,
@@ -5310,11 +5273,6 @@ select.attendance-filter-control {
     display: block !important;
   }
 
-  .dashboard-layout #teacherAttendanceContent .section-heading > div:first-child {
-    width: 100% !important;
-    flex: 0 0 auto !important;
-  }
-
   .dashboard-layout #studentsContent .section-heading h2,
   .dashboard-layout #teachersContent .section-heading h2,
   .dashboard-layout #classesContent .section-heading h2,
@@ -5323,7 +5281,6 @@ select.attendance-filter-control {
     font-size: 17px !important;
     line-height: 1.25 !important;
     margin: 0 !important;
-    text-wrap: balance;
   }
 
   .dashboard-layout #studentsContent .section-heading .section-actions,
@@ -5336,15 +5293,6 @@ select.attendance-filter-control {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: flex-end !important;
-  }
-
-  .dashboard-layout #teacherAttendanceContent .section-heading .section-actions {
-    width: 100% !important;
-    display: flex !important;
-    flex-wrap: wrap !important;
-    flex-wrap: balance !important;
-    justify-content: flex-start !important;
-    gap: 8px !important;
   }
 
   .dashboard-layout .section-heading button#addStudentButton,
@@ -5545,25 +5493,6 @@ select.attendance-filter-control {
   transform: translateY(-1px);
   outline: none;
 }
-
-.att-status-stack {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-}
-
-.att-method-subtag {
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 1.2;
-  white-space: nowrap;
-}
-
-.att-method-subtag.is-auto { color: #b91c1c; }
-.att-method-subtag.is-koreksi { color: #1d4ed8; }
-.att-method-subtag.is-susulan { color: #0f766e; }
-.att-subtag-compact { display: none; }
 
 .dashboard-layout .section-heading .section-actions button#runAutoAlpaTeacherBtn:active {
   transform: scale(0.98);

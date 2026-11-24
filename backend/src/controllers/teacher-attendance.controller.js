@@ -104,45 +104,6 @@ class TeacherAttendanceController {
       next(error);
     }
   }
-
-  async getAutoAlpaConfig(req, res, next) {
-    try {
-      if (String(req.user?.role || '').toUpperCase() !== 'ADMIN') {
-        throw new ForbiddenError('Hanya Admin / Operator yang dapat mengakses pengaturan Auto-Alpa guru');
-      }
-      const cfg = await teacherAttendanceService.getAutoAlpaRuntimeConfig();
-      return res.status(200).json({
-        status: 'success',
-        data: {
-          enabled: cfg.enabled,
-          cutoff_time: cfg.cutoff_time,
-          cutoff_mode: cfg.cutoff_mode,
-          effective_from: cfg.effective_from
-        }
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  async updateAutoAlpaConfig(req, res, next) {
-    try {
-      if (String(req.user?.role || '').toUpperCase() !== 'ADMIN') {
-        throw new ForbiddenError('Hanya Admin / Operator yang dapat mengubah pengaturan Auto-Alpa guru');
-      }
-      const saved = await teacherAttendanceService.updateAutoAlpaConfig(
-        req.body || {},
-        req.user?.user_id || null
-      );
-      return res.status(200).json({
-        status: 'success',
-        message: 'Pengaturan Auto-Alpa Guru berhasil disimpan',
-        data: saved
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
 }
 
 module.exports = new TeacherAttendanceController();
