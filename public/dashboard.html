@@ -11693,8 +11693,9 @@ function openBatchClassAttendanceFromQrModal() {
     openBatchClassAttendance(targetClassId);
 }
 
-function openBatchClassAttendance(classId) {
+function openBatchClassAttendance(classId, options) {
     if (!classId) return;
+    const batchOpts = (options && typeof options === 'object') ? options : {};
 
     const token = sessionStorage.getItem("SIMATA_TOKEN");
     if (!token) {
@@ -11730,7 +11731,7 @@ function openBatchClassAttendance(classId) {
                 closeBatchClassAttendanceModal();
                 return;
             }
-            renderBatchClassAttendanceRoster(res);
+            renderBatchClassAttendanceRoster(res, batchOpts);
         })
         .withFailureHandler(function(err) {
             alert('Gagal memuat presensi kelas: ' + ((err && err.message) ? err.message : err));
@@ -11810,8 +11811,9 @@ function updateBatchPeriodDisplay() {
     }
 }
 
-function renderBatchClassAttendanceRoster(data) {
+function renderBatchClassAttendanceRoster(data, options) {
     currentBatchRosterData = data;
+    const batchOpts = (options && typeof options === 'object') ? options : {};
 
     const modalTitle = document.getElementById('batchAttModalTitle');
     if (modalTitle) modalTitle.textContent = 'Presensi ' + (data.class.className || data.class.classId);
@@ -11821,9 +11823,17 @@ function renderBatchClassAttendanceRoster(data) {
         : (typeof getWibTodayISODate === 'function' ? getWibTodayISODate() : '');
     const batchClassId = (data.class && data.class.classId) || '';
 
-    // Initial periods: priority to active responder session, else data.periods, else smart KBM period fallback (skip PB/Non-KBM)
+    const preselectPeriods = Array.isArray(batchOpts.preselectPeriods)
+        ? batchOpts.preselectPeriods
+            .map(function(p) { return String(p).trim(); })
+            .filter(function(v) { return /^(?:[1-9]|10)$/.test(v); })
+        : [];
+
+    // Initial periods: priority to notification missing_periods preselect, else responder session, else data.periods, else smart KBM fallback
     let initialPeriods = [];
-    if (typeof responderLockedPeriods !== 'undefined' && responderLockedPeriods && responderLockedPeriods.length > 0) {
+    if (preselectPeriods.length > 0) {
+        initialPeriods = preselectPeriods;
+    } else if (typeof responderLockedPeriods !== 'undefined' && responderLockedPeriods && responderLockedPeriods.length > 0) {
         initialPeriods = responderLockedPeriods;
     } else if (typeof currentResponderSession !== 'undefined' && currentResponderSession) {
         if (Array.isArray(currentResponderSession.periods) && currentResponderSession.periods.length > 0) {
@@ -11847,7 +11857,7 @@ function renderBatchClassAttendanceRoster(data) {
         window.simataNonKbmHelper.ensureDate(batchDate).then(function() {
             if (!window.simataNonKbmHelper) return;
             window.simataNonKbmHelper.decoratePeriodContainer('#batchPeriodContainer .period-checkbox-container', batchDate, batchClassId, 'batchNonKbmNotice');
-            if (typeof responderLockedPeriods === 'undefined' || !responderLockedPeriods || responderLockedPeriods.length === 0) {
+            if (preselectPeriods.length === 0 && (typeof responderLockedPeriods === 'undefined' || !responderLockedPeriods || responderLockedPeriods.length === 0)) {
                 const curChecked = getSelectedBatchPeriods();
                 if (curChecked.length === 1 && curChecked[0] === '1' && window.simataNonKbmHelper.getNonKbmInfo(batchDate, 1, batchClassId)) {
                     const fallbackPeriod = String(window.simataNonKbmHelper.getDefaultKbmPeriod(batchDate, batchClassId) || '2');
@@ -12060,6 +12070,7 @@ function submitBatchClassAttendance() {
             closeBatchClassAttendanceModal();
             if (typeof loadRecentAttendances === 'function') loadRecentAttendances();
             if (typeof loadStudentAttendanceView === 'function') loadStudentAttendanceView();
+            if (typeof window.refreshSimataNotifications === 'function') window.refreshSimataNotifications({ silent: true });
         })
         .withFailureHandler(function(err) {
             if (btn) {
@@ -34712,6 +34723,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function navigateByNotifAction(actionMenu, payload) {
         closeNotifCenter();
+        if (payload && payload.mode === 'batch_class_attendance' && payload.class_id) {
+            if (typeof openBatchClassAttendance === 'function') {
+                openBatchClassAttendance(payload.class_id, {
+                    preselectPeriods: Array.isArray(payload.missing_periods) ? payload.missing_periods : [],
+                    date: payload.date || null
+                });
+                return;
+            }
+        }
         if (actionMenu === 'notif-settings') {
             if (isCurrentUserAdmin) openNotifSettingsModal();
             return;
@@ -34812,9 +34832,18 @@ document.addEventListener('DOMContentLoaded', function() {
             const stateCls = item.resolved ? 'is-resolved' : (itemRead ? 'is-read' : 'is-unread');
             const catCls = 'cat-' + (item.category || 'info');
             const safeId = escapeAttr(item.id);
-            const actionBtnHtml = item.action_menu
-                ? '<button type="button" class="notif-act-btn is-primary js-notif-action-btn" data-nid="' + safeId + '">' + escapeHtml(item.action_label || 'Buka Menu \u2192') + '</button>'
-                : '';
+            const incClasses = (!item.resolved && item.meta && Array.isArray(item.meta.incomplete_classes))
+                ? item.meta.incomplete_classes
+                : [];
+            let actionBtnHtml = '';
+            if (incClasses.length > 0 && item.action_payload && item.action_payload.mode === 'batch_class_attendance') {
+                actionBtnHtml = incClasses.map(function(c, cIdx) {
+                    const label = 'Lengkapi ' + (c.class_name || c.class_id) + ' \u2192';
+                    return '<button type="button" class="notif-act-btn is-primary js-notif-batch-class-btn" data-nid="' + safeId + '" data-cidx="' + cIdx + '">' + escapeHtml(label) + '</button>';
+                }).join('');
+            } else if (item.action_menu) {
+                actionBtnHtml = '<button type="button" class="notif-act-btn is-primary js-notif-action-btn" data-nid="' + safeId + '">' + escapeHtml(item.action_label || 'Buka Menu \u2192') + '</button>';
+            }
             const snoozeBtnHtml = (item.snoozable && !item.resolved)
                 ? '<button type="button" class="notif-act-btn js-notif-snooze-btn" data-nid="' + safeId + '">Tunda 30m</button>'
                 : '';
@@ -35087,6 +35116,25 @@ document.addEventListener('DOMContentLoaded', function() {
         const listContainer = document.getElementById('notifListContainer');
         if (listContainer) {
             listContainer.addEventListener('click', function(ev) {
+                const batchBtn = ev.target.closest('.js-notif-batch-class-btn');
+                if (batchBtn) {
+                    const nid = batchBtn.dataset.nid;
+                    const cIdx = parseInt(batchBtn.dataset.cidx, 10);
+                    const item = state.feed.find(function(n) { return n.id === nid; });
+                    const incClasses = item && item.meta && Array.isArray(item.meta.incomplete_classes) ? item.meta.incomplete_classes : [];
+                    const targetCls = incClasses[cIdx];
+                    if (item && targetCls && targetCls.class_id) {
+                        const targetPayload = {
+                            mode: 'batch_class_attendance',
+                            class_id: targetCls.class_id,
+                            class_name: targetCls.class_name || targetCls.class_id,
+                            date: (item.action_payload && item.action_payload.date) || (item.meta && item.meta.date) || null,
+                            missing_periods: Array.isArray(targetCls.missing_periods) ? targetCls.missing_periods : []
+                        };
+                        navigateByNotifAction(item.action_menu || 'menu-attendance', targetPayload);
+                    }
+                    return;
+                }
                 const actBtn = ev.target.closest('.js-notif-action-btn');
                 if (actBtn) {
                     const nid = actBtn.dataset.nid;

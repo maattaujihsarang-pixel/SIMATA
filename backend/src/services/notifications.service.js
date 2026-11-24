@@ -519,11 +519,15 @@ class NotificationsService {
           action_label: `Lengkapi ${incompleteClasses[0].class_name} \u2192`,
           action_menu: 'menu-attendance',
           action_payload: {
+            mode: 'batch_class_attendance',
             class_id: incompleteClasses[0].class_id,
-            period: incompleteClasses[0].missing_periods[0]
+            class_name: incompleteClasses[0].class_name,
+            date: targetDate,
+            period: incompleteClasses[0].missing_periods[0],
+            missing_periods: incompleteClasses[0].missing_periods
           },
           snoozable: true,
-          meta: { incomplete_classes: incompleteClasses }
+          meta: { incomplete_classes: incompleteClasses, date: targetDate }
         });
       } else {
         feed.push({
