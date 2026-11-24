@@ -5593,24 +5593,28 @@ select.attendance-filter-control {
 }
 
 .period-checkbox-label.is-filled-period {
-  background: #f1f5f9 !important;
+  background: #f8fafc !important;
   border-color: #cbd5e1 !important;
   color: #64748b !important;
-  opacity: 0.85;
   cursor: not-allowed !important;
 }
 
 .period-filled-badge {
   display: inline-flex;
   align-items: center;
-  margin-left: 4px;
-  padding: 1px 5px;
+  margin-left: auto;
+  padding: 2px 6px;
   border-radius: 999px;
   background: #dcfce7;
   color: #166534;
-  font-size: 9.5px;
+  font-size: 10px;
   font-weight: 700;
   line-height: 1.2;
+  flex-shrink: 0;
+}
+
+.period-checkbox-label .period-nonkbm-badge {
+  margin-left: auto;
 }
 
 .att-status-stack {

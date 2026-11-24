@@ -1908,26 +1908,115 @@ body.dashboard-page {
   background: #ffffff;
   border-radius: 16px;
   width: 100%;
-  max-width: 880px;
+  max-width: 920px;
   max-height: 92vh;
+  max-height: 92dvh;
   display: flex;
   flex-direction: column;
   box-shadow: 0 20px 44px rgba(15, 23, 42, 0.16);
   box-sizing: border-box;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   margin: auto;
   padding: 0;
 }
 
 #batchClassAttendanceModal .batch-att-modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 8;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 16px 20px;
+  padding: 14px 20px;
   border-bottom: 1px solid #e2e8f0;
   background: #ffffff;
   flex-shrink: 0;
+}
+
+#batchClassAttendanceModal .batch-susulan-bar {
+  padding: 12px 20px;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+#batchClassAttendanceModal .batch-susulan-grid {
+  display: grid;
+  grid-template-columns: minmax(190px, 1.1fr) minmax(175px, 0.9fr) minmax(200px, 1.15fr);
+  gap: 12px;
+  align-items: end;
+}
+
+@media (max-width: 768px) {
+  #batchClassAttendanceModal .batch-susulan-bar {
+    padding: 10px 14px;
+  }
+  #batchClassAttendanceModal .batch-susulan-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
+
+#batchClassAttendanceModal .batch-susulan-field {
+  min-width: 0;
+}
+
+#batchClassAttendanceModal .batch-susulan-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #475569;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+#batchClassAttendanceModal .batch-susulan-control {
+  width: 100%;
+  height: 38px;
+  min-height: 38px;
+  padding: 6px 12px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #0f172a;
+  background: #f8fafc;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 9px;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+#batchClassAttendanceModal .batch-susulan-control:focus {
+  border-color: #059669;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.14);
+}
+
+#batchClassAttendanceModal .batch-susulan-hint {
+  display: flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 6px 12px;
+  border-radius: 9px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+  box-sizing: border-box;
+}
+
+#batchClassAttendanceModal .batch-susulan-hint.is-complete {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #166534;
 }
 
 #batchClassAttendanceModal .student-modal-close-btn {
@@ -2060,24 +2149,28 @@ body.dashboard-page {
 
 #batchClassAttendanceModal .period-checkbox-container {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
-  gap: 6px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
 }
 
 #batchClassAttendanceModal .period-checkbox-label {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 6px;
-  padding: 5px 8px;
+  min-height: 36px;
+  padding: 6px 10px;
   background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 7px;
-  font-size: 11.5px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 12px;
   font-weight: 600;
   color: #334155;
   cursor: pointer;
   user-select: none;
   white-space: nowrap;
+  overflow: hidden;
+  box-sizing: border-box;
   transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
@@ -2196,10 +2289,18 @@ body.dashboard-page {
 
 #batchClassAttendanceModal .batch-att-modal-body {
   padding: 0;
-  overflow: auto;
-  flex: 1 1 auto;
-  min-height: 160px;
+  overflow: visible;
+  flex: 1 0 auto;
+  min-height: 220px;
   background: #ffffff;
+}
+
+#batchClassAttendanceModal .batch-att-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 8;
+  background: #ffffff;
+  box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.06);
 }
 
 #batchClassAttendanceModal .batch-att-loading {
@@ -2597,8 +2698,15 @@ body.dashboard-page {
   }
 
   #batchClassAttendanceModal .period-checkbox-container {
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 6px !important;
+  }
+
+  #batchClassAttendanceModal .batch-susulan-control {
+    height: 44px;
+    min-height: 44px;
+    font-size: 16px;
+    padding: 8px 12px;
   }
 
   #batchClassAttendanceModal .period-checkbox-label {
