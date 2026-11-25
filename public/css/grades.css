@@ -443,6 +443,15 @@
   grid-area: 1 / 1;
   min-width: 0;
 }
+.grd-panels-stack > [role="tabpanel"][hidden] {
+  pointer-events: none;
+  visibility: hidden;
+  z-index: 0;
+}
+.grd-panels-stack > [role="tabpanel"]:not([hidden]) {
+  position: relative;
+  z-index: 1;
+}
 
 .grd-panel-inner {
   display: flex;
