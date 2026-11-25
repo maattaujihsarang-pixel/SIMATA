@@ -5960,7 +5960,7 @@ html, body {
                     <div class="accounts-toolbar">
                       <div class="accounts-search-wrap">
                         <svg viewBox="0 0 24 24" aria-hidden="true" style="width:16px;height:16px;stroke:#64748b;fill:none;stroke-width:2;flex-shrink:0;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                        <input id="accountsSearchInput" type="search" class="accounts-search-input" placeholder="Cari username / nama..." aria-label="Cari username atau nama lengkap" oninput="filterAccountsTable()" />
+                        <input id="accountsSearchInput" type="search" class="accounts-search-input" placeholder="Cari username, nama, atau ID guru..." aria-label="Cari username, nama lengkap, atau ID guru" oninput="filterAccountsTable()" />
                         <button id="accountsSearchClearBtn" type="button" class="accounts-search-clear" style="display:none;" onclick="clearAccountsSearch()" aria-label="Hapus pencarian">&times;</button>
                       </div>
                       <button id="refreshAccountsBtn" type="button" class="login-button btn-secondary accounts-refresh-btn" onclick="loadAccountsTable()" style="font-size:12.5px;padding:0 14px;display:inline-flex;align-items:center;gap:6px;">
@@ -5971,14 +5971,14 @@ html, body {
 
                     <div id="accountsTableHost" class="accounts-table-host">
                     <div id="accountsTableWrapper" class="table-responsive accounts-table-wrapper" role="region" aria-labelledby="accountsTableHeading" tabindex="0">
-                      <table id="accountsTable" class="simata-table accounts-table" style="width:100%;border-collapse:collapse;">
+                      <table id="accountsTable" class="simata-table accounts-table">
                         <thead>
-                          <tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">
-                            <th style="padding:10px 12px;text-align:center;width:50px;font-size:12.5px;font-weight:700;color:#475569;">No</th>
-                            <th style="padding:10px 14px;text-align:left;font-size:12.5px;font-weight:700;color:#475569;">Username</th>
-                            <th style="padding:10px 14px;text-align:left;font-size:12.5px;font-weight:700;color:#475569;">Nama Lengkap</th>
-                            <th style="padding:10px 14px;text-align:center;width:100px;font-size:12.5px;font-weight:700;color:#475569;">Role</th>
-                            <th style="padding:10px 14px;text-align:center;width:190px;font-size:12.5px;font-weight:700;color:#475569;">Aksi</th>
+                          <tr>
+                            <th scope="col" class="acc-th-no">No</th>
+                            <th scope="col" class="acc-th-username">Username</th>
+                            <th scope="col" class="acc-th-name">Nama &amp; Tautan Guru</th>
+                            <th scope="col" class="acc-th-role">Role</th>
+                            <th scope="col" class="acc-th-actions">Aksi</th>
                           </tr>
                         </thead>
                         <tbody id="accountsTbody">
@@ -6462,18 +6462,136 @@ html, body {
               width: 100%;
               max-inline-size: 100%;
               min-width: 0;
-              overflow-x: auto;
+              overflow: auto;
               -webkit-overflow-scrolling: touch;
               margin-top: 0 !important;
+              border: 1px solid #e2e8f0;
+              border-radius: 12px;
+              background: #ffffff;
               box-sizing: border-box;
             }
             .dashboard-layout #settingsContent .accounts-table {
               width: 100%;
-              border-collapse: collapse;
+              border-collapse: separate;
+              border-spacing: 0;
+            }
+            .dashboard-layout #settingsContent .accounts-table thead {
+              position: sticky;
+              inset-block-start: 0;
+              z-index: 1;
+              background: #f8fafc;
+            }
+            .dashboard-layout #settingsContent .accounts-table thead th {
+              padding: 11px 12px;
+              font-size: 11.5px;
+              font-weight: 700;
+              letter-spacing: 0.04em;
+              text-transform: uppercase;
+              color: #64748b;
+              border-bottom: 1px solid #e2e8f0;
+              background: #f8fafc;
+              white-space: nowrap;
+              text-align: left;
+            }
+            .dashboard-layout #settingsContent .accounts-table thead th.acc-th-no,
+            .dashboard-layout #settingsContent .accounts-table thead th.acc-th-role,
+            .dashboard-layout #settingsContent .accounts-table thead th.acc-th-actions {
+              text-align: center;
+              width: 1%;
+            }
+            .dashboard-layout #settingsContent .accounts-table thead th.acc-th-no {
+              width: 44px;
+            }
+            .dashboard-layout #settingsContent .accounts-table thead th.acc-th-username {
+              width: 1%;
+            }
+            .dashboard-layout #settingsContent .accounts-table tbody td {
+              padding: 11px 12px;
+              vertical-align: middle;
+              border-bottom: 1px solid #f1f5f9;
+            }
+            .dashboard-layout #settingsContent .accounts-table tbody tr:last-child td {
+              border-bottom: none;
+            }
+            .dashboard-layout #settingsContent .accounts-table .acc-col-no {
+              text-align: center;
+              color: #64748b;
+              font-size: 12.5px;
+              font-variant-numeric: tabular-nums;
+              white-space: nowrap;
             }
             .dashboard-layout #settingsContent .accounts-table .acc-col-username {
+              white-space: nowrap;
               overflow-wrap: anywhere;
-              word-break: break-word;
+            }
+            .dashboard-layout #settingsContent .accounts-table .acc-username-pill {
+              display: inline-block;
+              font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+              font-size: 12px;
+              font-weight: 600;
+              color: #334155;
+              background: #f8fafc;
+              border: 1px solid #e2e8f0;
+              padding: 3px 8px;
+              border-radius: 6px;
+              line-height: 1.3;
+            }
+            .dashboard-layout #settingsContent .accounts-table .acc-col-name {
+              min-width: 220px;
+            }
+            .dashboard-layout #settingsContent .accounts-table .acc-display-name {
+              font-size: 13.5px;
+              font-weight: 600;
+              color: #0f172a;
+              line-height: 1.35;
+            }
+            .dashboard-layout #settingsContent .accounts-table .acc-teacher-meta {
+              display: flex;
+              align-items: center;
+              flex-wrap: wrap;
+              gap: 6px;
+              margin-top: 4px;
+            }
+            .dashboard-layout #settingsContent .accounts-table .acc-tid-chip {
+              display: inline-flex;
+              align-items: center;
+              gap: 4px;
+              padding: 2px 7px;
+              border-radius: 6px;
+              background: #ecfdf5;
+              border: 1px solid #bbf7d0;
+              color: #166534;
+              font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+              font-size: 11px;
+              font-weight: 700;
+              line-height: 1.3;
+              white-space: nowrap;
+              flex-shrink: 0;
+            }
+            .dashboard-layout #settingsContent .accounts-table .acc-teacher-ref {
+              font-size: 12px;
+              color: #475569;
+              font-weight: 500;
+              line-height: 1.3;
+            }
+            .dashboard-layout #settingsContent .accounts-table .acc-tid-warn {
+              display: inline-flex;
+              align-items: center;
+              gap: 5px;
+              padding: 2px 8px;
+              border-radius: 6px;
+              background: #fffbeb;
+              border: 1px solid #fde68a;
+              color: #b45309;
+              font-size: 11px;
+              font-weight: 600;
+              line-height: 1.3;
+              white-space: nowrap;
+            }
+            .dashboard-layout #settingsContent .accounts-table .acc-col-role,
+            .dashboard-layout #settingsContent .accounts-table .acc-col-actions {
+              text-align: center;
+              white-space: nowrap;
             }
             .dashboard-layout #settingsContent .accounts-table .acc-actions-wrap {
               display: inline-flex;
@@ -6490,7 +6608,7 @@ html, body {
               gap: 5px;
               font-size: 12px;
               font-weight: 600;
-              padding: 6px 11px;
+              padding: 5px 10px;
               border-radius: 8px;
               cursor: pointer;
               transition: background 0.15s ease, transform 0.1s ease;
@@ -6600,6 +6718,7 @@ html, body {
               }
               .dashboard-layout #settingsContent .accounts-table tr.accounts-card-row td.acc-col-name {
                 grid-area: name;
+                min-width: 0;
                 padding: 0 !important;
                 font-size: 14.5px;
                 font-weight: 700;
@@ -6608,6 +6727,14 @@ html, body {
                 text-align: left;
                 overflow-wrap: anywhere;
                 word-break: break-word;
+              }
+              .dashboard-layout #settingsContent .accounts-table tr.accounts-card-row td.acc-col-username .acc-username-pill {
+                background: transparent;
+                border: none;
+                padding: 0;
+                font-size: 13px;
+                color: #1e293b;
+                white-space: normal;
               }
               .dashboard-layout #settingsContent .accounts-table tr.accounts-card-row td.acc-col-role {
                 grid-area: role;
@@ -30217,18 +30344,20 @@ function renderAccountsRows() {
         let teacherLinkBadgeHtml = '';
         if (acc.teacherId) {
             const tLabel = teacherNameById[String(acc.teacherId)];
-            const tDisplay = tLabel ? (acc.teacherId + ' \u2022 ' + tLabel) : acc.teacherId;
-            teacherLinkBadgeHtml = '<div style="margin-top:4px;"><span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;font-size:10.5px;font-weight:700;">ID Guru: ' + escapeHtml(tDisplay) + '</span></div>';
+            const linkIcon = '<svg viewBox="0 0 24 24" aria-hidden="true" style="width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2.3;flex-shrink:0;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
+            const refHtml = tLabel ? ('<span class="acc-teacher-ref">' + escapeHtml(tLabel) + '</span>') : '';
+            teacherLinkBadgeHtml = '<div class="acc-teacher-meta"><span class="acc-tid-chip" title="ID Guru tertaut">' + linkIcon + escapeHtml(acc.teacherId) + '</span>' + refHtml + '</div>';
         } else if (rClean === 'GURU') {
-            teacherLinkBadgeHtml = '<div style="margin-top:4px;"><span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;background:#fef3c7;border:1px solid #fde68a;color:#92400e;font-size:10.5px;font-weight:700;">Belum Tertaut ID Guru</span></div>';
+            const warnIcon = '<svg viewBox="0 0 24 24" aria-hidden="true" style="width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2.3;flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+            teacherLinkBadgeHtml = '<div class="acc-teacher-meta"><span class="acc-tid-warn">' + warnIcon + 'Belum Tertaut ID Guru</span></div>';
         }
 
         return '<tr class="simata-table-row accounts-card-row' + (isSelf ? ' accounts-self-row' : '') + '">' +
-            '<td class="acc-col-no" style="padding:10px 12px;text-align:center;color:#64748b;font-size:12.5px;">' + (idx + 1) + '</td>' +
-            '<td class="acc-col-username" style="padding:10px 14px;font-family:monospace;font-size:12.5px;color:#334155;font-weight:600;">' + escapeHtml(acc.username) + '</td>' +
-            '<td class="acc-col-name" style="padding:10px 14px;font-size:13px;color:#0f172a;"><div>' + escapeHtml(acc.name) + '</div>' + teacherLinkBadgeHtml + '</td>' +
-            '<td class="acc-col-role" style="padding:10px 14px;text-align:center;"><span class="simata-badge ' + badgeCls + '">' + escapeHtml(acc.role) + '</span></td>' +
-            '<td class="acc-col-actions" style="padding:10px 14px;text-align:center;white-space:nowrap;"><div class="acc-actions-wrap">' + editBtnHtml + deleteBtnHtml + '</div></td>' +
+            '<td class="acc-col-no">' + (idx + 1) + '</td>' +
+            '<td class="acc-col-username"><span class="acc-username-pill">' + escapeHtml(acc.username) + '</span></td>' +
+            '<td class="acc-col-name"><div class="acc-display-name">' + escapeHtml(acc.name) + '</div>' + teacherLinkBadgeHtml + '</td>' +
+            '<td class="acc-col-role"><span class="simata-badge ' + badgeCls + '">' + escapeHtml(acc.role) + '</span></td>' +
+            '<td class="acc-col-actions"><div class="acc-actions-wrap">' + editBtnHtml + deleteBtnHtml + '</div></td>' +
         '</tr>';
     }).join('');
 }
