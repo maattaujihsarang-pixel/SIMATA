@@ -1299,18 +1299,78 @@
       };
     },
 
-    // 43. Legacy Grades compatibility stubs
-    getGrades: async function (filters) {
-      return { success: true, grades: [] };
+    // 43. Grades & Assessments (BUG 74 — ASTS / ASAS SIMATA & Portal RDM)
+    getGradesOverview: async function (params = {}) {
+      const qs = new URLSearchParams();
+      if (params && params.academic_year_id) qs.set('academic_year_id', params.academic_year_id);
+      if (params && params.assessment_type) qs.set('assessment_type', params.assessment_type);
+      if (params && params.class_id) qs.set('class_id', params.class_id);
+      const qStr = qs.toString();
+      const res = await apiFetch('/grades/overview' + (qStr ? '?' + qStr : ''));
+      return { success: true, data: res.data };
     },
-    getGradeById: async function (gradeId) {
-      return { success: false, message: 'Data nilai belum diaktifkan pada migrasi ini.' };
+    getStudentKhs: async function (studentId, params = {}) {
+      const qs = new URLSearchParams();
+      if (params && params.academic_year_id) qs.set('academic_year_id', params.academic_year_id);
+      if (params && params.assessment_type) qs.set('assessment_type', params.assessment_type);
+      const qStr = qs.toString();
+      const res = await apiFetch(`/grades/student/${encodeURIComponent(studentId)}/khs` + (qStr ? '?' + qStr : ''));
+      return { success: true, data: res.data };
+    },
+    saveBatchGrades: async function (payload = {}) {
+      const res = await apiFetch('/grades/batch', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+      return { success: true, message: res.message, data: res.data };
+    },
+    updateSubjectKkm: async function (payload = {}) {
+      const res = await apiFetch('/grades/kkm', {
+        method: 'PUT',
+        body: JSON.stringify(payload)
+      });
+      return { success: true, message: res.message, data: res.data };
+    },
+    updateGradesPublication: async function (payload = {}) {
+      const res = await apiFetch('/grades/publish', {
+        method: 'PUT',
+        body: JSON.stringify(payload)
+      });
+      return { success: true, message: res.message, data: res.data };
+    },
+    updateStudentGradeNote: async function (payload = {}) {
+      const res = await apiFetch('/grades/student-note', {
+        method: 'PUT',
+        body: JSON.stringify(payload)
+      });
+      return { success: true, message: res.message, data: res.data };
+    },
+    updateGradesPortalSettings: async function (payload = {}) {
+      const res = await apiFetch('/grades/portal-settings', {
+        method: 'PUT',
+        body: JSON.stringify(payload)
+      });
+      return { success: true, message: res.message, data: res.data };
+    },
+    seedAstsGanjilGrades: async function () {
+      const res = await apiFetch('/grades/seed-asts-ganjil', {
+        method: 'POST',
+        body: JSON.stringify({})
+      });
+      return { success: true, message: res.message, data: res.data };
+    },
+    getGrades: async function (filters) {
+      const res = await this.getGradesOverview(filters || {});
+      return { success: true, grades: (res.data && res.data.matrix) || [], data: res.data };
+    },
+    getGradeById: async function () {
+      return { success: false, message: 'Gunakan getGradesOverview atau getStudentKhs.' };
     },
     createGrade: async function (payload) {
-      return { success: false, message: 'Fitur input nilai belum diaktifkan pada migrasi ini.' };
+      return this.saveBatchGrades(payload);
     },
     updateGrade: async function (payload) {
-      return { success: false, message: 'Fitur update nilai belum diaktifkan pada migrasi ini.' };
+      return this.saveBatchGrades(payload);
     },
 
     // 42. Profile Photos: FEATURE 01

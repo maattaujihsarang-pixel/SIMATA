@@ -1,0 +1,1442 @@
+/**
+ * SIMATA — Menu Nilai Dua Jalur Controller (BUG 74)
+ * - 2-Card Gateway: Nilai Akademik SIMATA (ASTS/ASAS) vs Portal RDM Kemenag
+ * - 4 Official Periods: ASTS Ganjil, ASAS Ganjil, ASTS Genap, ASAS Genap
+ * - Soft-Filter Teacher Assignments (connected to users.teacher_id & schedules)
+ * - Flexible KKM per Mapel (default 75), Toggleable Class Ranking
+ * - Live SVG Mastery Donut, Segmented Predicate Bar, Subject Horizontal Bars, & 4-Period Trend Chart
+ * - Official Madrasah Excel Landscape Matrix Print & Portrait KHS Print
+ */
+(function initSimataGradesController(window) {
+  'use strict';
+
+  const state = {
+    initialized: false,
+    screen: 'gateway', // 'gateway' | 'workspace'
+    activeTab: 'input', // 'input' | 'leger' | 'khs'
+    academicYearId: '',
+    periodCode: 'ASTS_GANJIL',
+    classId: '',
+    subjectCode: '',
+    kkmDraft: 75,
+    studentSearch: '',
+    showRanking: true,
+    rankingPrefLoaded: false,
+    parentPreviewMode: false,
+    selectedStudentId: '',
+    draftScores: {}, // student_id -> { scoreStr, remarks }
+    dirty: false,
+    overview: null,
+    khsData: null,
+    reqSeq: 0
+  };
+
+  function esc(val) {
+    if (val === null || val === undefined) return '';
+    return String(val)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function fmtScore(val, digits) {
+    if (val === null || val === undefined || val === '' || Number.isNaN(Number(val))) return '-';
+    const num = Number(val);
+    if (digits !== undefined) {
+      return num.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: digits });
+    }
+    return Number.isInteger(num)
+      ? String(num)
+      : num.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  }
+
+  function parseInputScore(raw) {
+    if (raw === null || raw === undefined) return null;
+    const s = String(raw).trim().replace(',', '.');
+    if (!s) return null;
+    const n = Number(s);
+    if (!Number.isFinite(n) || n < 0 || n > 100) return NaN;
+    return Math.round(n * 100) / 100;
+  }
+
+  function calcPredicate(score, kkm) {
+    if (score === null || score === undefined || Number.isNaN(score)) {
+      return { p: '-', label: 'Belum Diisi', tuntas: null };
+    }
+    const k = Number(kkm || 75);
+    const step = Math.max(1, (100 - k) / 3);
+    if (score >= k + step * 2) return { p: 'A', label: 'Sangat Baik', tuntas: true };
+    if (score >= k + step) return { p: 'B', label: 'Baik', tuntas: true };
+    if (score >= k) return { p: 'C', label: 'Cukup', tuntas: true };
+    return { p: 'D', label: 'Perlu Remedial', tuntas: false };
+  }
+
+  function romanClassLevel(cls) {
+    if (!cls) return '-';
+    const lvl = Number(cls.level);
+    if (lvl === 10) return 'X';
+    if (lvl === 11) return 'XI';
+    if (lvl === 12) return 'XII';
+    return cls.class_name || '-';
+  }
+
+  function setScreen(mode) {
+    const isParent = Boolean(state.overview && state.overview.viewer && state.overview.viewer.is_parent);
+    state.screen = isParent ? 'workspace' : (mode === 'workspace' ? 'workspace' : 'gateway');
+    const gw = document.getElementById('gradesGatewayView');
+    const ws = document.getElementById('gradesWorkspaceView');
+    if (gw) gw.style.display = state.screen === 'gateway' ? '' : 'none';
+    if (ws) ws.style.display = state.screen === 'workspace' ? '' : 'none';
+
+    if (state.screen === 'workspace') {
+      if (isParent) setActiveTab('khs');
+      renderWorkspace();
+    } else {
+      renderGateway();
+    }
+  }
+
+  function setActiveTab(tabKey, opts) {
+    const isParent = Boolean(state.overview && state.overview.viewer && state.overview.viewer.is_parent);
+    const valid = isParent ? ['khs'] : ['input', 'leger', 'khs'];
+    const next = valid.includes(tabKey) ? tabKey : valid[0];
+    state.activeTab = next;
+
+    const map = {
+      input: 'grdPanelInput',
+      leger: 'grdPanelLeger',
+      khs: 'grdPanelKhs'
+    };
+
+    document.querySelectorAll('#grdSubTablist [role="tab"], #grdSubTablist button[data-grd-tab]').forEach(function (btn) {
+      const key = btn.getAttribute('data-grd-tab');
+      const selected = key === next;
+      btn.setAttribute('aria-selected', selected ? 'true' : 'false');
+      btn.toggleAttribute('focusgroupstart', selected);
+      if (isParent && key !== 'khs') {
+        btn.style.display = 'none';
+        btn.setAttribute('focusgroup', 'none');
+      } else {
+        btn.style.display = '';
+        btn.removeAttribute('focusgroup');
+      }
+      if (selected) {
+        if (opts && opts.focus) btn.focus();
+        try {
+          btn.scrollIntoView({ block: 'nearest', inline: 'nearest', container: 'nearest' });
+        } catch (_) {
+          try { btn.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch (__) {}
+        }
+      }
+    });
+
+    Object.keys(map).forEach(function (k) {
+      const panel = document.getElementById(map[k]);
+      if (!panel) return;
+      if (k === next) {
+        panel.hidden = false;
+      } else {
+        panel.hidden = 'until-found';
+      }
+    });
+
+    if (next === 'khs') {
+      loadKhsForSelectedStudent();
+    } else if (next === 'leger') {
+      renderLegerPanel();
+    } else {
+      renderInputPanel();
+    }
+  }
+
+  function syncDraftFromOverview() {
+    state.draftScores = {};
+    state.dirty = false;
+    const ov = state.overview;
+    if (!ov || !Array.isArray(ov.subjects) || ov.subjects.length === 0) return;
+
+    // Soft-filter default subject: pick teacher's own scheduled subject first if current subject not valid
+    const hasCurrent = ov.subjects.some(function (s) { return s.subject_code === state.subjectCode; });
+    if (!hasCurrent) {
+      const mySubj = ov.subjects.find(function (s) { return s.is_my_subject; });
+      state.subjectCode = mySubj ? mySubj.subject_code : ov.subjects[0].subject_code;
+    }
+
+    const activeSubj = ov.subjects.find(function (s) { return s.subject_code === state.subjectCode; }) || ov.subjects[0];
+    state.kkmDraft = activeSubj ? Number(activeSubj.kkm || 75) : 75;
+
+    (ov.matrix || []).forEach(function (row) {
+      const cell = row.scores && row.scores[state.subjectCode];
+      state.draftScores[row.student_id] = {
+        scoreStr: cell && cell.score !== null && cell.score !== undefined ? fmtScore(cell.score, 2) : '',
+        remarks: (cell && cell.remarks) || ''
+      };
+    });
+
+    if (!state.selectedStudentId || !(ov.matrix || []).some(function (r) { return r.student_id === state.selectedStudentId; })) {
+      state.selectedStudentId = ov.matrix && ov.matrix[0] ? ov.matrix[0].student_id : '';
+    }
+  }
+
+  function loadGradesOverview(options) {
+    const opts = options || {};
+    const seq = ++state.reqSeq;
+    const statusEl = document.getElementById('grdGwSimataStatus');
+    if (statusEl && !state.overview) {
+      statusEl.innerHTML = 'Memuat ringkasan penilaian tahun ajaran aktif...';
+    }
+
+    simataClient
+      .withSuccessHandler(function (res) {
+        if (seq !== state.reqSeq) return;
+        if (!res || !res.success || !res.data) return;
+        state.overview = res.data;
+        const ov = res.data;
+
+        if (!state.rankingPrefLoaded && ov.portal_settings) {
+          state.showRanking = ov.portal_settings.show_ranking_default !== false;
+          state.rankingPrefLoaded = true;
+        }
+        state.academicYearId = ov.active_academic_year ? ov.active_academic_year.academic_year_id : '';
+        state.periodCode = ov.selected_period ? ov.selected_period.code : 'ASTS_GANJIL';
+        state.classId = ov.selected_class ? ov.selected_class.class_id : '';
+
+        syncDraftFromOverview();
+
+        if (ov.viewer && ov.viewer.is_parent) {
+          setScreen('workspace');
+          return;
+        }
+        if (opts.stayOnScreen) {
+          if (state.screen === 'workspace') renderWorkspace();
+          else renderGateway();
+        } else {
+          renderGateway();
+          if (state.screen === 'workspace') renderWorkspace();
+        }
+      })
+      .withFailureHandler(function (err) {
+        console.error('[SIMATA GRADES] Failed loading overview:', err);
+        if (statusEl) {
+          statusEl.textContent = 'Gagal memuat data nilai: ' + (err && err.message ? err.message : err);
+        }
+      })
+      .getGradesOverview({
+        academic_year_id: state.academicYearId || undefined,
+        assessment_type: state.periodCode || undefined,
+        class_id: state.classId || undefined
+      });
+  }
+
+  function renderGateway() {
+    const ov = state.overview;
+    if (!ov) return;
+
+    const rdmCard = document.getElementById('grdGatewayRdmCard');
+    const rdmSettingsBtn = document.getElementById('grdOpenRdmSettingsBtn');
+    const rdmStatusText = document.getElementById('grdGwRdmStatusText');
+    const simataStatusEl = document.getElementById('grdGwSimataStatus');
+
+    const isAdmin = Boolean(ov.viewer && ov.viewer.is_admin);
+    const isParent = Boolean(ov.viewer && ov.viewer.is_parent);
+
+    if (rdmCard) rdmCard.style.display = isParent ? 'none' : '';
+    if (rdmSettingsBtn) rdmSettingsBtn.style.display = isAdmin ? 'inline-flex' : 'none';
+
+    const ps = ov.portal_settings || {};
+    if (rdmStatusText) {
+      if (ps.rdm_url) {
+        let hostText = ps.rdm_url;
+        try { hostText = new URL(ps.rdm_url).host || ps.rdm_url; } catch (_) {}
+        rdmStatusText.innerHTML =
+          '<div class="grd-gw-status-title"><span class="grd-gw-dot"></span>Terhubung ke: ' + esc(hostText) + '</div>' +
+          '<div>Dilengkapi fitur <strong>Export Nilai SIMATA</strong> siap salin ke RDM agar guru tidak mengetik ulang.</div>';
+      } else {
+        rdmStatusText.innerHTML =
+          '<div class="grd-gw-status-title"><span class="grd-gw-dot" style="background:#f59e0b;"></span>Link RDM Belum Dikonfigurasi</div>' +
+          '<div>' + (isAdmin
+            ? 'Klik tombol <strong>Atur Link RDM</strong> di bawah untuk menautkan alamat server RDM madrasah.'
+            : 'Hubungi Admin SIMATA untuk menautkan alamat portal RDM madrasah.') + '</div>';
+      }
+    }
+
+    if (simataStatusEl) {
+      const yr = ov.active_academic_year ? ov.active_academic_year.academic_year_id : '2026/2027';
+      const p = ov.selected_period || { short_label: 'ASTS Ganjil' };
+      const sum = ov.class_summary || { completed_subjects: 0, total_subjects: 0 };
+      const clsName = ov.selected_class ? ov.selected_class.class_name : 'Semua Kelas';
+      simataStatusEl.innerHTML =
+        '<div class="grd-gw-status-title"><span class="grd-gw-dot"></span>Tahun Ajaran ' + esc(yr) + '</div>' +
+        '<div>' + esc(p.short_label) + ' Aktif &bull; ' + esc(clsName) + ' (' + sum.completed_subjects + '/' + sum.total_subjects + ' Mapel Terisi)</div>';
+    }
+  }
+
+  function renderWorkspace() {
+    const ov = state.overview;
+    if (!ov) return;
+
+    const isParent = Boolean(ov.viewer && ov.viewer.is_parent);
+    const backBtn = document.getElementById('grdBackToGatewayBtn');
+    if (backBtn) backBtn.style.display = isParent ? 'none' : 'inline-flex';
+
+    // Publish toggle button
+    const pubBtn = document.getElementById('grdTogglePublishBtn');
+    const expBtn = document.getElementById('grdExportRdmCsvBtn');
+    const prtLegerTopBtn = document.getElementById('grdTopPrintLegerBtn');
+    if (pubBtn) {
+      if (isParent) {
+        pubBtn.style.display = 'none';
+      } else {
+        pubBtn.style.display = 'inline-flex';
+        const isPub = Boolean(ov.selected_period && ov.selected_period.is_published);
+        pubBtn.className = 'grd-btn ' + (isPub ? 'grd-btn--soft' : 'grd-btn--amber');
+        pubBtn.innerHTML = isPub
+          ? '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span>Wali Murid: Diterbitkan</span>'
+          : '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span>Wali Murid: Draft Internal</span>';
+      }
+    }
+    if (expBtn) expBtn.style.display = isParent ? 'none' : 'inline-flex';
+    if (prtLegerTopBtn) prtLegerTopBtn.style.display = isParent ? 'none' : 'inline-flex';
+
+    // Render 4 pure Period Pills (ASTS Ganjil, ASAS Ganjil, ASTS Genap, ASAS Genap)
+    const periodStrip = document.getElementById('grdPeriodStrip');
+    if (periodStrip) {
+      periodStrip.innerHTML = (ov.periods || []).map(function (p) {
+        const active = p.code === state.periodCode;
+        const pubDot = p.is_published ? '<span class="grd-period-pub-dot" title="Sudah diterbitkan ke Wali Murid"></span>' : '';
+        const countBadge = !isParent
+          ? '<span class="grd-period-pill-count">' + p.completed_subjects + '/' + p.total_subjects + '</span>'
+          : '';
+        return '<button type="button" class="grd-period-pill' + (active ? ' is-active' : '') + '" data-period="' + esc(p.code) + '">' +
+          pubDot +
+          '<span>' + esc(p.short_label) + '</span>' +
+          countBadge +
+        '</button>';
+      }).join('');
+    }
+
+    if (state.activeTab === 'leger') renderLegerPanel();
+    else if (state.activeTab === 'khs') loadKhsForSelectedStudent();
+    else renderInputPanel();
+  }
+
+  function renderInputPanel() {
+    const ov = state.overview;
+    if (!ov) return;
+
+    const classSel = document.getElementById('grdInputClassSelect');
+    const subjSel = document.getElementById('grdInputSubjectSelect');
+    const kkmInput = document.getElementById('grdInputKkm');
+
+    if (classSel) {
+      const assignedClassIds = new Set(
+        ((ov.viewer && ov.viewer.teacher_assignments) || []).map(function (a) { return a.class_id; }).filter(Boolean)
+      );
+      classSel.innerHTML = (ov.classes || []).map(function (c) {
+        const star = assignedClassIds.has(c.class_id) ? ' \u2605' : '';
+        const sel = c.class_id === state.classId ? ' selected' : '';
+        return '<option value="' + esc(c.class_id) + '"' + sel + '>' + esc(c.class_name + star) + '</option>';
+      }).join('');
+    }
+
+    if (subjSel) {
+      const mySubjects = (ov.subjects || []).filter(function (s) { return s.is_my_subject; });
+      const otherSubjects = (ov.subjects || []).filter(function (s) { return !s.is_my_subject; });
+
+      const renderOpt = function (s) {
+        const sel = s.subject_code === state.subjectCode ? ' selected' : '';
+        const statusMark = s.is_complete ? ' \u2713' : ' (' + s.filled_count + '/' + s.student_count + ')';
+        const prefix = s.is_my_subject ? '\u2605 ' : '';
+        return '<option value="' + esc(s.subject_code) + '"' + sel + '>' +
+          esc(prefix + s.subject_code + ' \u2014 ' + s.subject_name + statusMark) +
+        '</option>';
+      };
+
+      if (mySubjects.length > 0 && otherSubjects.length > 0) {
+        subjSel.innerHTML =
+          '<optgroup label="Mapel Jadwal Saya (Otomatis)">' + mySubjects.map(renderOpt).join('') + '</optgroup>' +
+          '<optgroup label="Mata Pelajaran Lain di Kelas Ini">' + otherSubjects.map(renderOpt).join('') + '</optgroup>';
+      } else {
+        subjSel.innerHTML = (ov.subjects || []).map(renderOpt).join('');
+      }
+    }
+
+    if (kkmInput) {
+      kkmInput.value = state.kkmDraft;
+    }
+
+    renderInputMasteryStrip();
+    renderInputGridRows();
+  }
+
+  function renderInputMasteryStrip() {
+    const host = document.getElementById('grdInputMasteryStrip');
+    if (!host || !state.overview) return;
+
+    const rows = state.overview.matrix || [];
+    const kkm = Number(state.kkmDraft || 75);
+    let filled = 0;
+    let sum = 0;
+    let tuntas = 0;
+    let remedial = 0;
+    let maxVal = null;
+    const dist = { A: 0, B: 0, C: 0, D: 0 };
+
+    rows.forEach(function (r) {
+      const d = state.draftScores[r.student_id];
+      const num = d ? parseInputScore(d.scoreStr) : null;
+      if (num !== null && !Number.isNaN(num)) {
+        filled++;
+        sum += num;
+        if (maxVal === null || num > maxVal) maxVal = num;
+        const pr = calcPredicate(num, kkm);
+        if (pr.tuntas) tuntas++;
+        else remedial++;
+        if (dist[pr.p] !== undefined) dist[pr.p]++;
+      }
+    });
+
+    const totalStudents = rows.length;
+    const avg = filled > 0 ? (sum / filled) : 0;
+    const pctTuntas = filled > 0 ? Math.round((tuntas / filled) * 100) : 0;
+    const radius = 27;
+    const circ = 2 * Math.PI * radius;
+    const dash = (pctTuntas / 100) * circ;
+
+    const denom = Math.max(1, filled);
+    const pA = (dist.A / denom) * 100;
+    const pB = (dist.B / denom) * 100;
+    const pC = (dist.C / denom) * 100;
+    const pD = (dist.D / denom) * 100;
+
+    host.innerHTML =
+      '<div class="grd-mastery-box">' +
+        '<div class="grd-donut-wrap" aria-hidden="true">' +
+          '<svg viewBox="0 0 68 68">' +
+            '<circle cx="34" cy="34" r="' + radius + '" stroke="#e2e8f0" stroke-width="7" fill="none"></circle>' +
+            '<circle cx="34" cy="34" r="' + radius + '" stroke="#16a34a" stroke-width="7" fill="none" stroke-linecap="round" stroke-dasharray="' + dash.toFixed(1) + ' ' + circ.toFixed(1) + '"></circle>' +
+          '</svg>' +
+          '<span class="grd-donut-label">' + pctTuntas + '%</span>' +
+        '</div>' +
+        '<div class="grd-mastery-stats">' +
+          '<div class="grd-stat-chips">' +
+            '<span class="grd-chip grd-chip--emerald">Rata-rata: ' + (filled > 0 ? fmtScore(avg, 1) : '-') + '</span>' +
+            '<span class="grd-chip grd-chip--emerald">Tuntas (&ge;' + fmtScore(kkm, 1) + '): ' + tuntas + '</span>' +
+            '<span class="grd-chip grd-chip--amber">Remedial (&lt;' + fmtScore(kkm, 1) + '): ' + remedial + '</span>' +
+            '<span class="grd-chip grd-chip--slate">Terisi: ' + filled + '/' + totalStudents + (maxVal !== null ? ' &bull; Max: ' + fmtScore(maxVal, 1) : '') + '</span>' +
+          '</div>' +
+          '<div class="grd-seg-bar" role="img" aria-label="Distribusi predikat A B C D">' +
+            '<div class="grd-seg-a" style="width:' + pA + '%"></div>' +
+            '<div class="grd-seg-b" style="width:' + pB + '%"></div>' +
+            '<div class="grd-seg-c" style="width:' + pC + '%"></div>' +
+            '<div class="grd-seg-d" style="width:' + pD + '%"></div>' +
+          '</div>' +
+          '<div class="grd-seg-legend">' +
+            '<span><strong style="color:#16a34a;">A</strong>: ' + dist.A + '</span>' +
+            '<span><strong style="color:#0284c7;">B</strong>: ' + dist.B + '</span>' +
+            '<span><strong style="color:#d97706;">C</strong>: ' + dist.C + '</span>' +
+            '<span><strong style="color:#dc2626;">D</strong>: ' + dist.D + '</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+  }
+
+  function renderInputGridRows() {
+    const tbody = document.getElementById('grdInputTbody');
+    const saveCountEl = document.getElementById('grdSaveBtnLabel');
+    if (!tbody || !state.overview) return;
+
+    const kkm = Number(state.kkmDraft || 75);
+    const q = String(state.studentSearch || '').trim().toLowerCase();
+    const allRows = state.overview.matrix || [];
+    const filtered = q
+      ? allRows.filter(function (r) {
+          return (String(r.name) + ' ' + String(r.nis) + ' ' + String(r.nisn)).toLowerCase().indexOf(q) !== -1;
+        })
+      : allRows;
+
+    if (saveCountEl) {
+      const filledTotal = allRows.filter(function (r) {
+        const d = state.draftScores[r.student_id];
+        const v = d ? parseInputScore(d.scoreStr) : null;
+        return v !== null && !Number.isNaN(v);
+      }).length;
+      saveCountEl.textContent = 'Simpan Nilai Kelas (' + filledTotal + '/' + allRows.length + ')';
+    }
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:26px;color:#64748b;">Tidak ada siswa yang cocok dengan pencarian.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(function (r) {
+      const d = state.draftScores[r.student_id] || { scoreStr: '', remarks: '' };
+      const num = parseInputScore(d.scoreStr);
+      const pr = (num !== null && !Number.isNaN(num)) ? calcPredicate(num, kkm) : { p: '-', label: 'Belum Diisi', tuntas: null };
+      const inpCls = pr.tuntas === true ? ' is-tuntas' : (pr.tuntas === false ? ' is-remedial' : '');
+      const statusBadge = pr.tuntas === true
+        ? '<span class="grd-chip grd-chip--emerald">' + pr.p + ' &bull; Tuntas</span>'
+        : (pr.tuntas === false
+            ? '<span class="grd-chip grd-chip--amber">' + pr.p + ' &bull; Remedial</span>'
+            : '<span class="grd-chip grd-chip--slate">Kosong</span>');
+
+      return '<tr class="grd-input-row" data-student-id="' + esc(r.student_id) + '">' +
+        '<td class="grd-td-no" style="width:44px;text-align:center;color:#64748b;">' + r.row_no + '</td>' +
+        '<td class="grd-td-nis" style="font-family:monospace;font-size:12px;color:#475569;">' + esc(r.nis) + '</td>' +
+        '<td class="grd-td-student"><div style="font-weight:700;color:#0f172a;">#' + r.row_no + ' ' + esc(r.name) + '</div><div style="font-size:11.5px;color:#64748b;">NIS: ' + esc(r.nis) + '</div></td>' +
+        '<td class="grd-td-score"><input type="text" inputmode="decimal" class="grd-score-input' + inpCls + '" data-score-for="' + esc(r.student_id) + '" value="' + esc(d.scoreStr) + '" placeholder="0-100" aria-label="Nilai ' + esc(r.name) + '" /></td>' +
+        '<td class="grd-td-pred" data-pred-cell="' + esc(r.student_id) + '" style="font-weight:700;">' + (pr.p !== '-' ? (pr.p + ' <span style="font-weight:500;color:#64748b;font-size:12px;">(' + pr.label + ')</span>') : '<span style="color:#94a3b8;">-</span>') + '</td>' +
+        '<td class="grd-td-status" data-status-cell="' + esc(r.student_id) + '">' + statusBadge + '</td>' +
+        '<td class="grd-td-remark"><input type="text" class="grd-remark-input" data-remark-for="' + esc(r.student_id) + '" value="' + esc(d.remarks) + '" placeholder="Catatan / apresiasi singkat (opsional)" aria-label="Catatan untuk ' + esc(r.name) + '" /></td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  function updateSingleRowVisuals(studentId) {
+    const kkm = Number(state.kkmDraft || 75);
+    const d = state.draftScores[studentId] || { scoreStr: '' };
+    const num = parseInputScore(d.scoreStr);
+    const pr = (num !== null && !Number.isNaN(num)) ? calcPredicate(num, kkm) : { p: '-', label: 'Belum Diisi', tuntas: null };
+
+    const inp = document.querySelector('#grdInputTbody input[data-score-for="' + studentId + '"]');
+    if (inp) {
+      inp.classList.toggle('is-tuntas', pr.tuntas === true);
+      inp.classList.toggle('is-remedial', pr.tuntas === false);
+    }
+    const predCell = document.querySelector('#grdInputTbody [data-pred-cell="' + studentId + '"]');
+    if (predCell) {
+      predCell.innerHTML = pr.p !== '-'
+        ? (pr.p + ' <span style="font-weight:500;color:#64748b;font-size:12px;">(' + pr.label + ')</span>')
+        : '<span style="color:#94a3b8;">-</span>';
+    }
+    const stCell = document.querySelector('#grdInputTbody [data-status-cell="' + studentId + '"]');
+    if (stCell) {
+      stCell.innerHTML = pr.tuntas === true
+        ? '<span class="grd-chip grd-chip--emerald">' + pr.p + ' &bull; Tuntas</span>'
+        : (pr.tuntas === false
+            ? '<span class="grd-chip grd-chip--amber">' + pr.p + ' &bull; Remedial</span>'
+            : '<span class="grd-chip grd-chip--slate">Kosong</span>');
+    }
+    renderInputMasteryStrip();
+    const saveCountEl = document.getElementById('grdSaveBtnLabel');
+    if (saveCountEl && state.overview) {
+      const allRows = state.overview.matrix || [];
+      const filledTotal = allRows.filter(function (r) {
+        const item = state.draftScores[r.student_id];
+        const v = item ? parseInputScore(item.scoreStr) : null;
+        return v !== null && !Number.isNaN(v);
+      }).length;
+      saveCountEl.textContent = 'Simpan Nilai Kelas (' + filledTotal + '/' + allRows.length + ')';
+    }
+  }
+
+  function saveCurrentSubjectBatch() {
+    if (!state.overview || !state.classId || !state.subjectCode) return;
+    const rows = state.overview.matrix || [];
+    const kkmVal = parseInputScore(document.getElementById('grdInputKkm') ? document.getElementById('grdInputKkm').value : state.kkmDraft);
+    if (kkmVal === null || Number.isNaN(kkmVal)) {
+      alert('Angka KKM harus bernilai antara 0 sampai 100.');
+      return;
+    }
+
+    const entries = [];
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      const d = state.draftScores[r.student_id] || { scoreStr: '', remarks: '' };
+      const trimmed = String(d.scoreStr || '').trim();
+      if (trimmed !== '') {
+        const parsed = parseInputScore(trimmed);
+        if (Number.isNaN(parsed)) {
+          alert('Nilai untuk ' + r.name + ' ("' + trimmed + '") tidak valid. Masukkan angka 0 s.d. 100.');
+          const badInput = document.querySelector('#grdInputTbody input[data-score-for="' + r.student_id + '"]');
+          if (badInput) badInput.focus();
+          return;
+        }
+        entries.push({ student_id: r.student_id, score: parsed, remarks: d.remarks || '' });
+      } else {
+        entries.push({ student_id: r.student_id, score: null, remarks: '' });
+      }
+    }
+
+    const btn = document.getElementById('grdSaveBatchBtn');
+    if (btn) btn.disabled = true;
+
+    const subjObj = (state.overview.subjects || []).find(function (s) { return s.subject_code === state.subjectCode; });
+
+    simataClient
+      .withSuccessHandler(function (res) {
+        if (btn) btn.disabled = false;
+        state.dirty = false;
+        alert((res && res.message) || 'Nilai kelas berhasil disimpan.');
+        loadGradesOverview({ stayOnScreen: true });
+      })
+      .withFailureHandler(function (err) {
+        if (btn) btn.disabled = false;
+        alert('Gagal menyimpan nilai: ' + (err && err.message ? err.message : err));
+      })
+      .saveBatchGrades({
+        academic_year_id: state.academicYearId,
+        class_id: state.classId,
+        assessment_type: state.periodCode,
+        subject_code: state.subjectCode,
+        subject_name: subjObj ? subjObj.subject_name : state.subjectCode,
+        kkm: kkmVal,
+        entries: entries
+      });
+  }
+
+  function renderLegerPanel() {
+    const ov = state.overview;
+    if (!ov) return;
+
+    const classSel = document.getElementById('grdLegerClassSelect');
+    if (classSel) {
+      classSel.innerHTML = (ov.classes || []).map(function (c) {
+        const sel = c.class_id === state.classId ? ' selected' : '';
+        return '<option value="' + esc(c.class_id) + '"' + sel + '>' + esc(c.class_name + ' \u2014 Wali: ' + (c.homeroom_teacher_name || '-')) + '</option>';
+      }).join('');
+    }
+
+    const rankBtn = document.getElementById('grdToggleRankingBtn');
+    if (rankBtn) {
+      rankBtn.className = 'grd-btn ' + (state.showRanking ? 'grd-btn--soft' : 'grd-btn--secondary');
+      rankBtn.innerHTML = state.showRanking
+        ? '<svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><span>Peringkat: Ditampilkan</span>'
+        : '<svg viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><line x1="1" y1="1" x2="23" y2="23"/></svg><span>Peringkat: Disembunyikan</span>';
+    }
+
+    // Analytics Row (Summary + Subject Horizontal Bars)
+    const analyticsHost = document.getElementById('grdLegerAnalyticsHost');
+    const sum = ov.class_summary || {};
+    const subjects = ov.subjects || [];
+    const matrix = ov.matrix || [];
+
+    if (analyticsHost) {
+      const pctSubj = sum.total_subjects > 0 ? Math.round((sum.completed_subjects / sum.total_subjects) * 100) : 0;
+      const topStudents = [...matrix]
+        .filter(function (r) { return r.total_score > 0; })
+        .sort(function (a, b) { return b.total_score - a.total_score; })
+        .slice(0, 3);
+
+      const topHtml = state.showRanking && topStudents.length > 0
+        ? '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #e2e8f0;font-size:12.5px;color:#334155;">' +
+            '<strong style="display:block;margin-bottom:4px;color:#0f172a;">3 Nilai Tertinggi Kelas Ini:</strong>' +
+            topStudents.map(function (t, i) {
+              return '<div style="display:flex;justify-content:space-between;gap:8px;padding:2px 0;"><span>#' + (i + 1) + ' ' + esc(t.name) + '</span><strong>' + fmtScore(t.total_score, 1) + ' (' + fmtScore(t.average_score, 2) + ')</strong></div>';
+            }).join('') +
+          '</div>'
+        : '';
+
+      const barsHtml = subjects.map(function (s) {
+        const avg = s.avg_score !== null && s.avg_score !== undefined ? Number(s.avg_score) : 0;
+        const below = avg < Number(s.kkm || 75);
+        return '<div class="grd-hbar-item">' +
+          '<div class="grd-hbar-head"><span>' + esc(s.subject_code) + '</span><span>' + (s.avg_score !== null ? fmtScore(avg, 1) : '-') + '</span></div>' +
+          '<div class="grd-hbar-track"><div class="grd-hbar-fill' + (below ? ' grd-hbar-fill--below' : '') + '" style="width:' + Math.min(100, Math.max(0, avg)) + '%"></div></div>' +
+        '</div>';
+      }).join('');
+
+      analyticsHost.innerHTML =
+        '<div class="grd-card">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
+            '<strong style="font-size:14px;color:#0f172a;">Progres & Ringkasan Leger ' + esc(ov.selected_class ? ov.selected_class.class_name : '') + '</strong>' +
+            '<span class="grd-chip grd-chip--emerald">' + sum.completed_subjects + '/' + sum.total_subjects + ' Mapel (' + pctSubj + '%)</span>' +
+          '</div>' +
+          '<div class="grd-seg-bar" style="margin-bottom:10px;"><div class="grd-seg-a" style="width:' + pctSubj + '%"></div></div>' +
+          '<div class="grd-stat-chips">' +
+            '<span class="grd-chip grd-chip--sky">Siswa: ' + (sum.student_count || 0) + '</span>' +
+            '<span class="grd-chip grd-chip--emerald">Rata Kelas: ' + fmtScore(sum.class_average, 2) + '</span>' +
+            '<span class="grd-chip grd-chip--slate">Rata Tertinggi: ' + fmtScore(sum.highest_average, 2) + '</span>' +
+          '</div>' +
+          topHtml +
+        '</div>' +
+        '<div class="grd-card">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
+            '<strong style="font-size:14px;color:#0f172a;">Diagram Rata-rata Kelas per Mata Pelajaran</strong>' +
+            '<span style="font-size:11.5px;color:#64748b;">Hijau &ge; KKM &bull; Kuning &lt; KKM</span>' +
+          '</div>' +
+          '<div class="grd-hbar-list">' + barsHtml + '</div>' +
+        '</div>';
+    }
+
+    // Render Full Matrix Table
+    const tableEl = document.getElementById('grdLegerTable');
+    if (!tableEl) return;
+
+    const rankHeadHtml = state.showRanking ? '<th scope="col">Rangking</th>' : '';
+    const theadHtml =
+      '<thead><tr>' +
+        '<th scope="col" class="grd-sticky-no">No</th>' +
+        '<th scope="col" class="grd-sticky-name">Nama Siswa</th>' +
+        subjects.map(function (s) {
+          return '<th scope="col" title="' + esc(s.subject_name + ' (KKM ' + s.kkm + ')') + '">' + esc(s.subject_code) + '</th>';
+        }).join('') +
+        '<th scope="col">Jumlah</th>' +
+        '<th scope="col">Rata-Rata</th>' +
+        rankHeadHtml +
+        '<th scope="col">KHS</th>' +
+      '</tr></thead>';
+
+    const tbodyHtml =
+      '<tbody>' +
+      matrix.map(function (r) {
+        const subjCells = subjects.map(function (s) {
+          const c = r.scores && r.scores[s.subject_code];
+          if (!c || c.score === null || c.score === undefined) return '<td class="grd-cell-zero">-</td>';
+          const cls = c.score === 0 ? 'grd-cell-zero' : (c.is_tuntas === false ? 'grd-cell-remedial' : '');
+          return '<td class="' + cls + '">' + fmtScore(c.score, 2) + '</td>';
+        }).join('');
+
+        let rankCellHtml = '';
+        if (state.showRanking) {
+          const rk = r.rank || '-';
+          const rkCls = rk === 1 ? ' grd-rank-badge--top1' : (rk === 2 ? ' grd-rank-badge--top2' : (rk === 3 ? ' grd-rank-badge--top3' : ''));
+          rankCellHtml = '<td><span class="grd-rank-badge' + rkCls + '">' + rk + '</span></td>';
+        }
+
+        return '<tr>' +
+          '<td class="grd-sticky-no">' + r.row_no + '</td>' +
+          '<th scope="row" class="grd-sticky-name">' + esc(r.name) + '</th>' +
+          subjCells +
+          '<td style="font-weight:800;color:#0f172a;">' + fmtScore(r.total_score, 2) + '</td>' +
+          '<td style="font-weight:700;color:#166534;">' + fmtScore(r.average_score, 2) + '</td>' +
+          rankCellHtml +
+          '<td><button type="button" class="grd-btn grd-btn--secondary" style="min-height:28px;padding:0 9px;font-size:11.5px;" data-open-khs="' + esc(r.student_id) + '">KHS</button></td>' +
+        '</tr>';
+      }).join('') +
+      '</tbody>';
+
+    const tfootHtml =
+      '<tfoot><tr>' +
+        '<th scope="row" colspan="2" class="grd-sticky-avg-label">NILAI RATA-RATA SATU KELAS / MAPEL</th>' +
+        subjects.map(function (s) {
+          const v = ov.subject_averages ? ov.subject_averages[s.subject_code] : null;
+          return '<td>' + (v !== null && v !== undefined ? fmtScore(v, 2) : '-') + '</td>';
+        }).join('') +
+        '<td>' + fmtScore(sum.class_total_average, 2) + '</td>' +
+        '<td>' + fmtScore(sum.class_average, 2) + '</td>' +
+        (state.showRanking ? '<td></td>' : '') +
+        '<td></td>' +
+      '</tr></tfoot>';
+
+    tableEl.innerHTML = theadHtml + tbodyHtml + tfootHtml;
+  }
+
+  function loadKhsForSelectedStudent() {
+    const ov = state.overview;
+    if (!ov) return;
+
+    const classSel = document.getElementById('grdKhsClassSelect');
+    const stSel = document.getElementById('grdKhsStudentSelect');
+    const isParent = Boolean(ov.viewer && ov.viewer.is_parent);
+
+    if (classSel) {
+      classSel.parentElement.style.display = isParent ? 'none' : '';
+      classSel.innerHTML = (ov.classes || []).map(function (c) {
+        const sel = c.class_id === state.classId ? ' selected' : '';
+        return '<option value="' + esc(c.class_id) + '"' + sel + '>' + esc(c.class_name) + '</option>';
+      }).join('');
+    }
+
+    const matrix = ov.matrix || [];
+    if (!state.selectedStudentId || !matrix.some(function (r) { return r.student_id === state.selectedStudentId; })) {
+      state.selectedStudentId = matrix[0] ? matrix[0].student_id : '';
+    }
+
+    if (stSel) {
+      stSel.innerHTML = matrix.map(function (r) {
+        const sel = r.student_id === state.selectedStudentId ? ' selected' : '';
+        return '<option value="' + esc(r.student_id) + '"' + sel + '>' + esc(r.row_no + '. ' + r.name + ' (NIS: ' + r.nis + ')') + '</option>';
+      }).join('');
+    }
+
+    const previewBtn = document.getElementById('grdToggleParentPreviewBtn');
+    if (previewBtn) {
+      previewBtn.style.display = isParent ? 'none' : 'inline-flex';
+      previewBtn.className = 'grd-btn ' + (state.parentPreviewMode ? 'grd-btn--soft' : 'grd-btn--secondary');
+      previewBtn.innerHTML = '<span>' + (state.parentPreviewMode ? '\u2713 Mode Pratinjau Wali Murid Aktif' : 'Pratinjau Mode Wali Murid') + '</span>';
+    }
+
+    const rankKhsBtn = document.getElementById('grdKhsToggleRankingBtn');
+    if (rankKhsBtn) {
+      rankKhsBtn.style.display = isParent ? 'none' : 'inline-flex';
+      rankKhsBtn.textContent = state.showRanking ? 'Peringkat: Tampil' : 'Peringkat: Sembunyi';
+    }
+
+    const bodyHost = document.getElementById('grdKhsBodyHost');
+    if (!state.selectedStudentId) {
+      if (bodyHost) {
+        bodyHost.innerHTML = '<div class="grd-card" style="text-align:center;color:#64748b;padding:30px;">' +
+          (ov.parent_unpublished_notice
+            ? 'Nilai periode <strong>' + esc(ov.selected_period ? ov.selected_period.short_label : '') + '</strong> belum diterbitkan oleh pihak madrasah.'
+            : 'Belum ada data siswa pada kelas ini.') +
+        '</div>';
+      }
+      return;
+    }
+
+    simataClient
+      .withSuccessHandler(function (res) {
+        if (!res || !res.success || !res.data) return;
+        state.khsData = res.data;
+        renderKhsContent();
+      })
+      .withFailureHandler(function (err) {
+        if (bodyHost) {
+          bodyHost.innerHTML = '<div class="grd-card" style="color:#dc2626;">Gagal memuat KHS siswa: ' + esc(err && err.message ? err.message : err) + '</div>';
+        }
+      })
+      .getStudentKhs(state.selectedStudentId, {
+        academic_year_id: state.academicYearId,
+        assessment_type: state.periodCode
+      });
+  }
+
+  function renderKhsContent() {
+    const host = document.getElementById('grdKhsBodyHost');
+    const khs = state.khsData;
+    if (!host || !khs) return;
+
+    const isParent = Boolean(state.overview && state.overview.viewer && state.overview.viewer.is_parent);
+    const readOnlyParentView = isParent || state.parentPreviewMode;
+
+    if ((isParent || state.parentPreviewMode) && !khs.selected_period.is_published) {
+      host.innerHTML =
+        '<div class="grd-card" style="text-align:center;padding:36px 20px;">' +
+          '<span class="grd-chip grd-chip--amber" style="margin-bottom:10px;">Belum Diterbitkan</span>' +
+          '<h3 style="margin:6px 0;color:#0f172a;">Hasil ' + esc(khs.selected_period.short_label) + ' Masih Dalam Proses Rekap Guru</h3>' +
+          '<p style="color:#64748b;font-size:13.5px;max-width:520px;margin:0 auto;">Pada tampilan Wali Murid, nilai hanya muncul setelah periode asesmen ini diaktifkan saklar <strong>Diterbitkan ke Wali Murid</strong>.</p>' +
+        '</div>';
+      return;
+    }
+
+    const st = khs.student;
+    const row = khs.student_row || { scores: {}, total_score: 0, average_score: 0, rank: '-', attendance: {} };
+    const initials = String(st.name || 'S').trim().split(/\s+/).slice(0, 2).map(function (w) { return w[0] || ''; }).join('').toUpperCase();
+    const overallPred = calcPredicate(row.average_score, 75);
+    const att = row.attendance || {};
+    const attText = att.total_days > 0
+      ? ('Hadir ' + fmtScore(att.hadir_pct, 0) + '% &bull; S:' + att.sakit + ' &bull; I:' + att.izin + ' &bull; A:' + att.alpa)
+      : 'Sakit: 0 &bull; Izin: 0 &bull; Alpa: 0';
+
+    const rankText = (state.showRanking && row.rank)
+      ? (' &bull; <strong>Peringkat #' + row.rank + ' dari ' + khs.class_student_count + '</strong>')
+      : '';
+
+    const subjRowsHtml = (khs.subjects || []).map(function (s, idx) {
+      const c = (row.scores && row.scores[s.subject_code]) || { score: null, kkm: s.kkm, predicate: '-', is_tuntas: null, remarks: '' };
+      const clsAvg = khs.subject_averages ? khs.subject_averages[s.subject_code] : null;
+      const badge = c.is_tuntas === true
+        ? '<span class="grd-chip grd-chip--emerald">Tuntas</span>'
+        : (c.is_tuntas === false ? '<span class="grd-chip grd-chip--amber">Remedial</span>' : '<span class="grd-chip grd-chip--slate">-</span>');
+      return '<tr>' +
+        '<td style="text-align:center;color:#64748b;">' + (idx + 1) + '</td>' +
+        '<td style="font-weight:600;">' + esc(s.subject_name) + ' <span style="color:#94a3b8;font-size:11.5px;">(' + esc(s.subject_code) + ')</span></td>' +
+        '<td style="text-align:center;">' + fmtScore(c.kkm || s.kkm, 1) + '</td>' +
+        '<td style="text-align:center;font-weight:800;font-size:13.5px;">' + (c.score !== null ? fmtScore(c.score, 2) : '-') + '</td>' +
+        '<td style="text-align:center;color:#64748b;">' + (clsAvg !== null && clsAvg !== undefined ? fmtScore(clsAvg, 1) : '-') + '</td>' +
+        '<td style="text-align:center;font-weight:700;">' + esc(c.predicate || '-') + '</td>' +
+        '<td style="text-align:center;">' + badge + '</td>' +
+        '<td style="color:#475569;font-size:12px;">' + esc(c.remarks || '-') + '</td>' +
+      '</tr>';
+    }).join('');
+
+    // Build SVG 4-Period Trend Chart
+    const trend = khs.trend || [];
+    const svgW = 360;
+    const svgH = 175;
+    const baseY = 135;
+    const topY = 22;
+    const chartH = baseY - topY;
+    const kkmY = baseY - (75 / 100) * chartH;
+    const colXs = [52, 136, 222, 308];
+    const pts = [];
+
+    const barsSvg = trend.map(function (t, i) {
+      const cx = colXs[i] || (50 + i * 80);
+      const val = t.average_score;
+      const hasVal = val !== null && val !== undefined && t.filled_subjects > 0;
+      const h = hasVal ? Math.max(4, (Math.min(100, val) / 100) * chartH) : 4;
+      const y = baseY - h;
+      if (hasVal) pts.push(cx + ',' + y.toFixed(1));
+      const fill = hasVal ? '#16a34a' : '#e2e8f0';
+      return '<g>' +
+        '<rect x="' + (cx - 18) + '" y="' + y.toFixed(1) + '" width="36" height="' + h.toFixed(1) + '" rx="6" fill="' + fill + '" opacity="' + (hasVal ? '0.9' : '0.45') + '"></rect>' +
+        '<text x="' + cx + '" y="' + (hasVal ? (y - 6).toFixed(1) : (baseY - 8)) + '" text-anchor="middle" font-size="11" font-weight="700" fill="#0f172a">' + (hasVal ? fmtScore(val, 1) : '-') + '</text>' +
+        '<text x="' + cx + '" y="154" text-anchor="middle" font-size="10.5" font-weight="700" fill="#475569">' + esc(t.short_label) + '</text>' +
+      '</g>';
+    }).join('');
+
+    const lineSvg = pts.length > 1
+      ? '<polyline points="' + pts.join(' ') + '" fill="none" stroke="#14532d" stroke-width="2.2"></polyline>'
+      : '';
+
+    const noteCardHtml = readOnlyParentView
+      ? '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;font-size:13px;color:#14532d;line-height:1.55;">' +
+          esc(row.homeroom_note || 'Terus tingkatkan semangat belajar, ibadah, dan kedisiplinan di madrasah.') +
+        '</div>'
+      : '<textarea id="grdHomeroomNoteInput" class="grd-input" rows="3" style="resize:vertical;margin-bottom:8px;" placeholder="Tulis catatan atau motivasi Wali Kelas untuk siswa & orang tua...">' + esc(row.homeroom_note || '') + '</textarea>' +
+        '<button type="button" class="grd-btn grd-btn--soft" id="grdSaveHomeroomNoteBtn" style="width:100%;">Simpan Catatan Wali Kelas</button>';
+
+    host.innerHTML =
+      '<div class="grd-khs-banner">' +
+        '<div class="grd-khs-identity">' +
+          '<div class="grd-khs-avatar">' + esc(initials) + '</div>' +
+          '<div>' +
+            '<h3 style="margin:0 0 3px;font-size:17px;color:#0f172a;">' + esc(st.name) + '</h3>' +
+            '<div style="font-size:12.5px;color:#475569;">NIS: ' + esc(st.nis || '-') + ' &bull; ' + esc(st.class_name) + ' &bull; Wali Kelas: ' + esc(st.homeroom_teacher_name) + rankText + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div style="display:flex;flex-wrap:wrap;gap:8px;">' +
+          '<span class="grd-chip grd-chip--emerald" style="padding:6px 12px;font-size:12.5px;">Jumlah: ' + fmtScore(row.total_score, 2) + ' &bull; Rata-rata: ' + fmtScore(row.average_score, 2) + ' (' + overallPred.p + ')</span>' +
+          '<span class="grd-chip grd-chip--sky" style="padding:6px 12px;font-size:12.5px;">' + attText + '</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="grd-khs-grid" style="margin-top:16px;">' +
+        '<div class="grd-card" style="padding:0;overflow:hidden;">' +
+          '<div style="padding:14px 16px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">' +
+            '<strong style="font-size:14.5px;color:#0f172a;">Daftar Nilai ' + esc(khs.selected_period.short_label) + ' (' + esc(khs.academic_year.academic_year_id) + ')</strong>' +
+            '<span class="grd-chip ' + (khs.selected_period.is_published ? 'grd-chip--emerald' : 'grd-chip--amber') + '">' +
+              (khs.selected_period.is_published ? '\u2713 Tampil di Portal Wali Murid' : 'Draft Internal') +
+            '</span>' +
+          '</div>' +
+          '<div class="grd-table-wrap" style="border:none;border-radius:0;">' +
+            '<table class="grd-table">' +
+              '<thead><tr><th scope="col" style="text-align:center;">No</th><th scope="col">Mata Pelajaran</th><th scope="col" style="text-align:center;">KKM</th><th scope="col" style="text-align:center;">Nilai</th><th scope="col" style="text-align:center;">Rata Kelas</th><th scope="col" style="text-align:center;">Predikat</th><th scope="col" style="text-align:center;">Ketuntasan</th><th scope="col">Catatan Guru</th></tr></thead>' +
+              '<tbody>' + subjRowsHtml + '</tbody>' +
+            '</table>' +
+          '</div>' +
+        '</div>' +
+        '<div style="display:flex;flex-direction:column;gap:16px;">' +
+          '<div class="grd-card">' +
+            '<strong style="display:block;font-size:14px;color:#0f172a;margin-bottom:8px;">Tren Nilai ASTS & ASAS (' + esc(khs.academic_year.academic_year_id) + ')</strong>' +
+            '<svg class="grd-trend-chart" viewBox="0 0 ' + svgW + ' ' + svgH + '" role="img" aria-label="Grafik perkembangan rata-rata nilai antar periode asesmen">' +
+              '<line x1="20" y1="' + baseY + '" x2="342" y2="' + baseY + '" stroke="#cbd5e1" stroke-width="1"></line>' +
+              '<line x1="20" y1="' + kkmY.toFixed(1) + '" x2="342" y2="' + kkmY.toFixed(1) + '" stroke="#f59e0b" stroke-dasharray="4 3" stroke-width="1.2"></line>' +
+              '<text x="340" y="' + (kkmY - 4).toFixed(1) + '" text-anchor="end" font-size="9.5" font-weight="700" fill="#b45309">KKM 75</text>' +
+              barsSvg +
+              lineSvg +
+            '</svg>' +
+          '</div>' +
+          '<div class="grd-card">' +
+            '<strong style="display:block;font-size:14px;color:#0f172a;margin-bottom:8px;">Catatan Wali Kelas</strong>' +
+            noteCardHtml +
+          '</div>' +
+        '</div>' +
+      '</div>';
+  }
+
+  function triggerPrintSheet(htmlContent, pageOrientation) {
+    let sheet = document.getElementById('gradesPrintSheet');
+    if (!sheet) {
+      sheet = document.createElement('div');
+      sheet.id = 'gradesPrintSheet';
+      document.body.appendChild(sheet);
+    }
+    let pageStyle = document.getElementById('gradesDynamicPrintPageStyle');
+    if (!pageStyle) {
+      pageStyle = document.createElement('style');
+      pageStyle.id = 'gradesDynamicPrintPageStyle';
+      document.head.appendChild(pageStyle);
+    }
+    pageStyle.textContent = pageOrientation === 'landscape'
+      ? '@media print { @page { size: landscape; margin: 8mm; } }'
+      : '@media print { @page { size: portrait; margin: 10mm; } }';
+
+    sheet.innerHTML = htmlContent;
+    document.body.classList.add('printing-grades-sheet');
+
+    const cleanup = function () {
+      document.body.classList.remove('printing-grades-sheet');
+      window.removeEventListener('afterprint', cleanup);
+    };
+    window.addEventListener('afterprint', cleanup);
+    setTimeout(function () {
+      window.print();
+      setTimeout(cleanup, 800);
+    }, 80);
+  }
+
+  // Official Madrasah Excel Matrix Print (matches attached Excel layout 100%)
+  function printMadrasahLegerMatrix() {
+    const ov = state.overview;
+    if (!ov || !ov.selected_class) return;
+
+    const cls = ov.selected_class;
+    const p = ov.selected_period || { print_heading: 'HASIL NILAI ASTS GANJIL' };
+    const yr = (ov.active_academic_year ? ov.active_academic_year.academic_year_id : '2026/2027').replace('/', ' - ');
+    const subjects = ov.subjects || [];
+    const matrix = ov.matrix || [];
+    const sum = ov.class_summary || {};
+    const principal = (ov.portal_settings && ov.portal_settings.principal_name) || 'Moch. Iqnaul Badril Falah, S.Ag';
+    const wali = cls.homeroom_teacher_name || '-';
+
+    const html =
+      '<div class="grd-print-leger">' +
+        '<div class="grd-print-leger-head">' +
+          '<h1>' + esc(p.print_heading || ('HASIL NILAI ' + (p.short_label || '').toUpperCase())) + '</h1>' +
+          '<h2>MADRASAH ALIYAH AT-TAUJIH</h2>' +
+          '<p>Ds. Bajingjowo Kec. Sarang Kab. Rembang</p>' +
+          '<p>Tahun Ajaran ' + esc(yr) + '</p>' +
+        '</div>' +
+        '<div class="grd-print-leger-meta">' +
+          '<div>Kelas : ' + esc(romanClassLevel(cls)) + '</div>' +
+          '<div>Wali Kelas : ' + esc(wali) + '</div>' +
+        '</div>' +
+        '<table class="grd-print-leger-table">' +
+          '<thead><tr>' +
+            '<th>No</th>' +
+            '<th>Nama</th>' +
+            subjects.map(function (s) { return '<th>' + esc(s.subject_code) + '</th>'; }).join('') +
+            '<th>Jumlah</th>' +
+            '<th>Rata-Rata</th>' +
+            (state.showRanking ? '<th>Rangking</th>' : '') +
+          '</tr></thead>' +
+          '<tbody>' +
+            matrix.map(function (r) {
+              return '<tr>' +
+                '<td>' + r.row_no + '</td>' +
+                '<td class="p-name">' + esc(r.name) + '</td>' +
+                subjects.map(function (s) {
+                  const c = r.scores && r.scores[s.subject_code];
+                  return '<td>' + (c && c.score !== null && c.score !== undefined ? fmtScore(c.score, 2) : '') + '</td>';
+                }).join('') +
+                '<td><strong>' + fmtScore(r.total_score, 2) + '</strong></td>' +
+                '<td>' + fmtScore(r.average_score, 2) + '</td>' +
+                (state.showRanking ? '<td><strong>' + (r.rank || '') + '</strong></td>' : '') +
+              '</tr>';
+            }).join('') +
+            '<tr class="p-avg-row">' +
+              '<td colspan="2" style="text-align:left;padding-left:5px;">NILAI RATA-RATA SATU KELAS / MAPEL</td>' +
+              subjects.map(function (s) {
+                const v = ov.subject_averages ? ov.subject_averages[s.subject_code] : null;
+                return '<td>' + (v !== null && v !== undefined ? fmtScore(v, 2) : '') + '</td>';
+              }).join('') +
+              '<td>' + fmtScore(sum.class_total_average, 2) + '</td>' +
+              '<td>' + fmtScore(sum.class_average, 2) + '</td>' +
+              (state.showRanking ? '<td></td>' : '') +
+            '</tr>' +
+          '</tbody>' +
+        '</table>' +
+        '<div class="grd-print-signatures">' +
+          '<div class="grd-print-sig-col">' +
+            '<div>Mengetahui,</div>' +
+            '<div>Wali Kelas</div>' +
+            '<div class="grd-print-sig-space"></div>' +
+            '<div><strong>' + esc(wali) + '</strong></div>' +
+          '</div>' +
+          '<div class="grd-print-sig-col">' +
+            '<div>Kepala Madrasah</div>' +
+            '<div>MA. At-Taujih</div>' +
+            '<div class="grd-print-sig-space"></div>' +
+            '<div><strong>' + esc(principal) + '</strong></div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+
+    triggerPrintSheet(html, 'landscape');
+  }
+
+  function printStudentKhsSheet() {
+    const khs = state.khsData;
+    if (!khs || !khs.student_row) return;
+    const st = khs.student;
+    const row = khs.student_row;
+    const principal = (khs.portal_settings && khs.portal_settings.principal_name) || 'Moch. Iqnaul Badril Falah, S.Ag';
+    const att = row.attendance || { sakit: 0, izin: 0, alpa: 0 };
+
+    const html =
+      '<div class="grd-print-khs">' +
+        '<div style="text-align:center;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:12px;">' +
+          '<div style="font-size:13pt;font-weight:700;">MADRASAH ALIYAH AT-TAUJIH SARANG</div>' +
+          '<div style="font-size:9.5pt;">Ds. Bajingjowo Kec. Sarang Kab. Rembang &bull; NPSN: 70033117</div>' +
+          '<div style="font-size:11pt;font-weight:700;margin-top:6px;text-transform:uppercase;">LAPORAN HASIL BELAJAR — ' + esc(khs.selected_period.short_label) + '</div>' +
+        '</div>' +
+        '<table style="width:100%;font-size:9.5pt;margin-bottom:8px;">' +
+          '<tr>' +
+            '<td style="width:16%;">Nama Siswa</td><td style="width:42%;">: <strong>' + esc(st.name) + '</strong></td>' +
+            '<td style="width:18%;">Tahun Ajaran</td><td>: ' + esc(khs.academic_year.academic_year_id) + '</td>' +
+          '</tr>' +
+          '<tr>' +
+            '<td>NIS / NISN</td><td>: ' + esc(st.nis || '-') + ' / ' + esc(st.nisn || '-') + '</td>' +
+            '<td>Kelas</td><td>: ' + esc(romanClassLevel(st)) + ' (' + esc(st.class_name) + ')</td>' +
+          '</tr>' +
+        '</table>' +
+        '<table class="grd-print-khs-table">' +
+          '<thead><tr><th style="width:32px;">No</th><th>Mata Pelajaran</th><th style="width:50px;">KKM</th><th style="width:62px;">Nilai</th><th style="width:62px;">Predikat</th><th style="width:85px;">Ketuntasan</th><th>Keterangan</th></tr></thead>' +
+          '<tbody>' +
+            (khs.subjects || []).map(function (s, idx) {
+              const c = (row.scores && row.scores[s.subject_code]) || {};
+              return '<tr>' +
+                '<td style="text-align:center;">' + (idx + 1) + '</td>' +
+                '<td>' + esc(s.subject_name) + '</td>' +
+                '<td style="text-align:center;">' + fmtScore(c.kkm || s.kkm, 1) + '</td>' +
+                '<td style="text-align:center;font-weight:700;">' + (c.score !== null && c.score !== undefined ? fmtScore(c.score, 2) : '-') + '</td>' +
+                '<td style="text-align:center;">' + esc(c.predicate || '-') + '</td>' +
+                '<td style="text-align:center;">' + (c.is_tuntas === true ? 'Tuntas' : (c.is_tuntas === false ? 'Remedial' : '-')) + '</td>' +
+                '<td>' + esc(c.remarks || '') + '</td>' +
+              '</tr>';
+            }).join('') +
+            '<tr style="font-weight:700;background:#f8fafc;">' +
+              '<td colspan="3" style="text-align:right;">Jumlah Nilai / Rata-Rata' + (state.showRanking && row.rank ? ' / Peringkat Kelas' : '') + '</td>' +
+              '<td colspan="4">' + fmtScore(row.total_score, 2) + ' &bull; Rata-rata: ' + fmtScore(row.average_score, 2) + (state.showRanking && row.rank ? (' &bull; Peringkat #' + row.rank + ' dari ' + khs.class_student_count) : '') + '</td>' +
+            '</tr>' +
+          '</tbody>' +
+        '</table>' +
+        '<div style="display:flex;gap:16px;margin-top:10px;font-size:9.5pt;">' +
+          '<div style="flex:1;border:1px solid #000;padding:6px 8px;"><strong>Ketidakhadiran (SIMATA):</strong> Sakit: ' + (att.sakit || 0) + ' hari &bull; Izin: ' + (att.izin || 0) + ' hari &bull; Tanpa Keterangan: ' + (att.alpa || 0) + ' hari</div>' +
+          '<div style="flex:1.4;border:1px solid #000;padding:6px 8px;"><strong>Catatan Wali Kelas:</strong> ' + esc(row.homeroom_note || '-') + '</div>' +
+        '</div>' +
+        '<div class="grd-print-signatures" style="padding:0 12px;margin-top:20px;">' +
+          '<div class="grd-print-sig-col"><div>Orang Tua / Wali</div><div class="grd-print-sig-space"></div><div>( ............................ )</div></div>' +
+          '<div class="grd-print-sig-col"><div>Wali Kelas</div><div class="grd-print-sig-space"></div><div><strong>' + esc(st.homeroom_teacher_name) + '</strong></div></div>' +
+          '<div class="grd-print-sig-col"><div>Kepala Madrasah</div><div class="grd-print-sig-space"></div><div><strong>' + esc(principal) + '</strong></div></div>' +
+        '</div>' +
+      '</div>';
+
+    triggerPrintSheet(html, 'portrait');
+  }
+
+  function exportLegerCsv() {
+    const ov = state.overview;
+    if (!ov || !ov.selected_class) return;
+    const subjects = ov.subjects || [];
+    const matrix = ov.matrix || [];
+    const headers = ['No', 'NIS', 'Nama Siswa'].concat(subjects.map(function (s) { return s.subject_code; }), ['Jumlah', 'Rata-Rata']);
+    if (state.showRanking) headers.push('Rangking');
+
+    const csvEscape = function (v) {
+      const s = String(v === null || v === undefined ? '' : v);
+      if (/[",\n;]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+      return s;
+    };
+
+    const lines = [headers.map(csvEscape).join(',')];
+    matrix.forEach(function (r) {
+      const rowArr = [r.row_no, r.nis, r.name];
+      subjects.forEach(function (s) {
+        const c = r.scores && r.scores[s.subject_code];
+        rowArr.push(c && c.score !== null && c.score !== undefined ? c.score : '');
+      });
+      rowArr.push(r.total_score, r.average_score);
+      if (state.showRanking) rowArr.push(r.rank || '');
+      lines.push(rowArr.map(csvEscape).join(','));
+    });
+
+    const blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Leger_' + (ov.selected_class.class_name || 'Kelas').replace(/\s+/g, '_') + '_' + state.periodCode + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function bindEventsOnce() {
+    if (state.initialized) return;
+    state.initialized = true;
+
+    const root = document.getElementById('gradesContent');
+    if (!root) return;
+
+    root.addEventListener('click', function (e) {
+      const openWsBtn = e.target.closest('#grdOpenSimataWorkspaceBtn');
+      if (openWsBtn) {
+        setScreen('workspace');
+        return;
+      }
+
+      const backGwBtn = e.target.closest('#grdBackToGatewayBtn');
+      if (backGwBtn) {
+        setScreen('gateway');
+        return;
+      }
+
+      const openRdmBtn = e.target.closest('#grdOpenRdmPortalBtn');
+      if (openRdmBtn) {
+        const url = state.overview && state.overview.portal_settings && state.overview.portal_settings.rdm_url;
+        if (url) {
+          window.open(url, '_blank', 'noopener,noreferrer');
+        } else {
+          const isAdmin = Boolean(state.overview && state.overview.viewer && state.overview.viewer.is_admin);
+          if (isAdmin) openRdmSettingsModal();
+          else alert('Link Portal RDM belum dikonfigurasi oleh Admin SIMATA.');
+        }
+        return;
+      }
+
+      const rdmCfgBtn = e.target.closest('#grdOpenRdmSettingsBtn');
+      if (rdmCfgBtn) {
+        openRdmSettingsModal();
+        return;
+      }
+
+      const periodBtn = e.target.closest('.grd-period-pill[data-period]');
+      if (periodBtn) {
+        const nextPeriod = periodBtn.getAttribute('data-period');
+        if (nextPeriod && nextPeriod !== state.periodCode) {
+          state.periodCode = nextPeriod;
+          loadGradesOverview({ stayOnScreen: true });
+        }
+        return;
+      }
+
+      const tabBtn = e.target.closest('#grdSubTablist button[data-grd-tab]');
+      if (tabBtn) {
+        setActiveTab(tabBtn.getAttribute('data-grd-tab'));
+        return;
+      }
+
+      const saveBtn = e.target.closest('#grdSaveBatchBtn');
+      if (saveBtn) {
+        saveCurrentSubjectBatch();
+        return;
+      }
+
+      const pasteBtn = e.target.closest('#grdOpenPasteModalBtn');
+      if (pasteBtn) {
+        const modal = document.getElementById('gradesPasteModal');
+        const ta = document.getElementById('grdPasteTextarea');
+        if (ta) ta.value = '';
+        if (modal) modal.style.display = 'flex';
+        if (ta) ta.focus();
+        return;
+      }
+
+      const pubBtn = e.target.closest('#grdTogglePublishBtn');
+      if (pubBtn && state.overview && state.overview.selected_period) {
+        const currentlyPub = Boolean(state.overview.selected_period.is_published);
+        const nextPub = !currentlyPub;
+        const msg = nextPub
+          ? 'Terbitkan nilai ' + state.overview.selected_period.short_label + ' agar dapat dilihat pada tampilan Orang Tua / Wali Murid?'
+          : 'Kembalikan periode ' + state.overview.selected_period.short_label + ' ke mode Draft Internal?';
+        if (!confirm(msg)) return;
+        simataClient
+          .withSuccessHandler(function (res) {
+            alert((res && res.message) || 'Status publikasi diperbarui.');
+            loadGradesOverview({ stayOnScreen: true });
+          })
+          .withFailureHandler(function (err) {
+            alert('Gagal memperbarui status publikasi: ' + (err && err.message ? err.message : err));
+          })
+          .updateGradesPublication({
+            academic_year_id: state.academicYearId,
+            assessment_type: state.periodCode,
+            is_published: nextPub
+          });
+        return;
+      }
+
+      const rankToggleBtn = e.target.closest('#grdToggleRankingBtn, #grdKhsToggleRankingBtn');
+      if (rankToggleBtn) {
+        state.showRanking = !state.showRanking;
+        if (state.activeTab === 'khs') renderKhsContent();
+        else renderLegerPanel();
+        return;
+      }
+
+      const prtLegerBtn = e.target.closest('#grdPrintLegerMatrixBtn, #grdTopPrintLegerBtn');
+      if (prtLegerBtn) {
+        printMadrasahLegerMatrix();
+        return;
+      }
+
+      const expCsvBtn = e.target.closest('#grdExportRdmCsvBtn, #grdExportLegerCsvBtn');
+      if (expCsvBtn) {
+        exportLegerCsv();
+        return;
+      }
+
+      const openKhsRowBtn = e.target.closest('[data-open-khs]');
+      if (openKhsRowBtn) {
+        state.selectedStudentId = openKhsRowBtn.getAttribute('data-open-khs');
+        setActiveTab('khs');
+        return;
+      }
+
+      const parentPrevBtn = e.target.closest('#grdToggleParentPreviewBtn');
+      if (parentPrevBtn) {
+        state.parentPreviewMode = !state.parentPreviewMode;
+        loadKhsForSelectedStudent();
+        return;
+      }
+
+      const printKhsBtn = e.target.closest('#grdPrintKhsBtn');
+      if (printKhsBtn) {
+        printStudentKhsSheet();
+        return;
+      }
+
+      const saveNoteBtn = e.target.closest('#grdSaveHomeroomNoteBtn');
+      if (saveNoteBtn && state.selectedStudentId) {
+        const noteEl = document.getElementById('grdHomeroomNoteInput');
+        const val = noteEl ? noteEl.value : '';
+        simataClient
+          .withSuccessHandler(function (res) {
+            alert((res && res.message) || 'Catatan Wali Kelas disimpan.');
+            loadKhsForSelectedStudent();
+          })
+          .withFailureHandler(function (err) {
+            alert('Gagal menyimpan catatan: ' + (err && err.message ? err.message : err));
+          })
+          .updateStudentGradeNote({
+            academic_year_id: state.academicYearId,
+            assessment_type: state.periodCode,
+            student_id: state.selectedStudentId,
+            homeroom_note: val
+          });
+      }
+    });
+
+    // Sync selection follow focus / beforematch for hidden=until-found panels
+    ['grdPanelInput', 'grdPanelLeger', 'grdPanelKhs'].forEach(function (panelId) {
+      const panel = document.getElementById(panelId);
+      if (panel) {
+        panel.addEventListener('beforematch', function () {
+          const key = panelId === 'grdPanelLeger' ? 'leger' : (panelId === 'grdPanelKhs' ? 'khs' : 'input');
+          setActiveTab(key);
+        });
+      }
+    });
+
+    root.addEventListener('change', function (e) {
+      if (e.target.id === 'grdInputClassSelect' || e.target.id === 'grdLegerClassSelect' || e.target.id === 'grdKhsClassSelect') {
+        state.classId = e.target.value;
+        state.selectedStudentId = '';
+        loadGradesOverview({ stayOnScreen: true });
+      } else if (e.target.id === 'grdInputSubjectSelect') {
+        state.subjectCode = e.target.value;
+        syncDraftFromOverview();
+        renderInputPanel();
+      } else if (e.target.id === 'grdInputKkm') {
+        const v = parseInputScore(e.target.value);
+        if (v !== null && !Number.isNaN(v)) {
+          state.kkmDraft = v;
+          renderInputMasteryStrip();
+          renderInputGridRows();
+        }
+      } else if (e.target.id === 'grdKhsStudentSelect') {
+        state.selectedStudentId = e.target.value;
+        loadKhsForSelectedStudent();
+      }
+    });
+
+    root.addEventListener('input', function (e) {
+      if (e.target.matches('input[data-score-for]')) {
+        const sid = e.target.getAttribute('data-score-for');
+        if (!state.draftScores[sid]) state.draftScores[sid] = { scoreStr: '', remarks: '' };
+        state.draftScores[sid].scoreStr = e.target.value;
+        state.dirty = true;
+        updateSingleRowVisuals(sid);
+      } else if (e.target.matches('input[data-remark-for]')) {
+        const sid2 = e.target.getAttribute('data-remark-for');
+        if (!state.draftScores[sid2]) state.draftScores[sid2] = { scoreStr: '', remarks: '' };
+        state.draftScores[sid2].remarks = e.target.value;
+        state.dirty = true;
+      } else if (e.target.id === 'grdStudentSearchInput') {
+        state.studentSearch = e.target.value;
+        renderInputGridRows();
+      }
+    });
+
+    // Spreadsheet Enter / ArrowDown / ArrowUp navigation across score inputs
+    root.addEventListener('keydown', function (e) {
+      if (!e.target.matches('input[data-score-for]')) return;
+      if (e.key !== 'Enter' && e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+      e.preventDefault();
+      const inputs = Array.from(document.querySelectorAll('#grdInputTbody input[data-score-for]'));
+      const idx = inputs.indexOf(e.target);
+      if (idx === -1) return;
+      const nextIdx = e.key === 'ArrowUp' ? idx - 1 : idx + 1;
+      if (inputs[nextIdx]) {
+        inputs[nextIdx].focus();
+        inputs[nextIdx].select();
+      }
+    });
+  }
+
+  function openRdmSettingsModal() {
+    const ov = state.overview;
+    if (!ov || !ov.viewer || !ov.viewer.is_admin) return;
+    const modal = document.getElementById('gradesRdmSettingsModal');
+    const ps = ov.portal_settings || {};
+    const urlEl = document.getElementById('grdCfgRdmUrl');
+    const prinEl = document.getElementById('grdCfgPrincipalName');
+    const kkmEl = document.getElementById('grdCfgDefaultKkm');
+    if (urlEl) urlEl.value = ps.rdm_url || '';
+    if (prinEl) prinEl.value = ps.principal_name || 'Moch. Iqnaul Badril Falah, S.Ag';
+    if (kkmEl) kkmEl.value = ps.default_kkm !== undefined ? ps.default_kkm : 75;
+    if (modal) modal.style.display = 'flex';
+  }
+
+  window.closeGradesRdmSettingsModal = function () {
+    const modal = document.getElementById('gradesRdmSettingsModal');
+    if (modal) modal.style.display = 'none';
+  };
+
+  window.saveGradesRdmSettings = function () {
+    const urlEl = document.getElementById('grdCfgRdmUrl');
+    const prinEl = document.getElementById('grdCfgPrincipalName');
+    const kkmEl = document.getElementById('grdCfgDefaultKkm');
+
+    simataClient
+      .withSuccessHandler(function (res) {
+        window.closeGradesRdmSettingsModal();
+        alert((res && res.message) || 'Pengaturan Portal RDM berhasil disimpan.');
+        loadGradesOverview({ stayOnScreen: true });
+      })
+      .withFailureHandler(function (err) {
+        alert('Gagal menyimpan pengaturan RDM: ' + (err && err.message ? err.message : err));
+      })
+      .updateGradesPortalSettings({
+        rdm_url: urlEl ? urlEl.value.trim() : '',
+        principal_name: prinEl ? prinEl.value.trim() : 'Moch. Iqnaul Badril Falah, S.Ag',
+        default_kkm: kkmEl ? kkmEl.value : 75
+      });
+  };
+
+  window.closeGradesPasteModal = function () {
+    const modal = document.getElementById('gradesPasteModal');
+    if (modal) modal.style.display = 'none';
+  };
+
+  window.applyGradesExcelPaste = function () {
+    const ta = document.getElementById('grdPasteTextarea');
+    if (!ta || !state.overview) return;
+    const lines = String(ta.value || '').replace(/\r\n/g, '\n').split('\n').map(function (l) { return l.trim(); });
+    while (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
+    if (lines.length === 0) {
+      window.closeGradesPasteModal();
+      return;
+    }
+
+    const matrix = state.overview.matrix || [];
+    let applied = 0;
+    for (let i = 0; i < Math.min(lines.length, matrix.length); i++) {
+      const cellVal = lines[i].split('\t')[0].trim();
+      const sid = matrix[i].student_id;
+      if (!state.draftScores[sid]) state.draftScores[sid] = { scoreStr: '', remarks: '' };
+      if (cellVal !== '') {
+        const parsed = parseInputScore(cellVal);
+        if (!Number.isNaN(parsed) && parsed !== null) {
+          state.draftScores[sid].scoreStr = fmtScore(parsed, 2);
+          applied++;
+        }
+      }
+    }
+    state.dirty = true;
+    window.closeGradesPasteModal();
+    renderInputMasteryStrip();
+    renderInputGridRows();
+    alert('Berhasil menempelkan ' + applied + ' baris nilai dari Excel. Klik "Simpan Nilai Kelas" untuk menyimpan ke database.');
+  };
+
+  window.__simataOpenGradesModule = function () {
+    bindEventsOnce();
+    loadGradesOverview();
+  };
+})(window);

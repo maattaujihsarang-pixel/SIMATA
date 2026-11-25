@@ -15,6 +15,7 @@ const financeRoutes = require('./finance.routes');
 const reportsRoutes = require('./reports.routes');
 const schedulesRoutes = require('./schedules.routes');
 const notificationsRoutes = require('./notifications.routes');
+const gradesRoutes = require('./grades.routes');
 const masterService = require('../services/master.service');
 const authMiddleware = require('../middleware/auth.middleware');
 
@@ -64,6 +65,7 @@ router.use('/finance', financeRoutes);
 router.use('/reports', reportsRoutes);
 router.use('/schedules', schedulesRoutes);
 router.use('/notifications', notificationsRoutes);
+router.use('/grades', gradesRoutes);
 
 module.exports = router;
 
