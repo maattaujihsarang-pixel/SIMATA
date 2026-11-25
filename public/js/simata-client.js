@@ -1267,8 +1267,11 @@
         data: d,
         user: {
           name: currentUser ? (currentUser.full_name || currentUser.username) : 'User SIMATA',
+          full_name: currentUser ? (currentUser.full_name || currentUser.username) : 'User SIMATA',
           username: currentUser ? currentUser.username : '',
-          role: currentUser ? currentUser.role : 'Guru'
+          role: currentUser ? currentUser.role : 'Guru',
+          teacher_id: currentUser ? (currentUser.teacher_id || null) : null,
+          teacherId: currentUser ? (currentUser.teacher_id || null) : null
         },
         statistics: {
           students: counts.students || 0,

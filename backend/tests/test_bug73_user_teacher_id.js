@@ -46,6 +46,7 @@ async function runBug73Tests() {
   assert.ok(html.includes('id="acc_teacherId"') && html.includes('id="edit_acc_teacherId"'), 'Missing teacherId dropdowns in Pengaturan Akun');
   assert.ok(html.includes('onAccountRoleChange') && html.includes('Belum Tertaut ID Guru'), 'Missing role toggle & unlinked badge');
   assert.ok(clientJs.includes('teacherId: u.teacher_id || null') && clientJs.includes('teacher_id: data.teacher_id || data.teacherId || null'), 'simata-client.js must forward teacher_id');
+  assert.ok(clientJs.includes('teacher_id: currentUser ? (currentUser.teacher_id || null) : null'), 'getDashboardData must forward teacher_id to currentResponderUser');
   console.log('1. PASS: Frontend Pengaturan Akun teacher_id UI & simata-client contract verified.');
 
   await testDbEngine.reset();
