@@ -21,6 +21,16 @@ class UserRepository {
     return res.rows[0] || null;
   }
 
+  async findByTeacherId(teacherId) {
+    const res = await db.query(
+      `SELECT user_id, username, full_name, role, status, teacher_id
+       FROM users
+       WHERE teacher_id = $1`,
+      [teacherId]
+    );
+    return res.rows[0] || null;
+  }
+
   async findAll() {
     const res = await db.query(
       `SELECT user_id, username, full_name, role, status, teacher_id, must_change_password, created_at, updated_at

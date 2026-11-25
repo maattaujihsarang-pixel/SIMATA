@@ -5756,10 +5756,15 @@ html, body {
               </div>
               <div>
                 <label for="edit_acc_role" style="display:block;font-size:12.5px;font-weight:600;color:#475569;margin-bottom:4px;">Role Pengguna <span style="color:#ef4444;">*</span></label>
-                <select id="edit_acc_role" class="input-box">
+                <select id="edit_acc_role" class="input-box" onchange="onAccountRoleChange('edit')">
                   <option value="Admin">Admin</option>
                   <option value="Guru">Guru</option>
                 </select>
+              </div>
+              <div id="edit_acc_teacherWrap" style="display:none;">
+                <label id="edit_acc_teacherLabel" for="edit_acc_teacherId" style="display:block;font-size:12.5px;font-weight:600;color:#475569;margin-bottom:4px;">Tautkan Data Guru (ID Guru) <span style="color:#ef4444;">*</span></label>
+                <select id="edit_acc_teacherId" class="input-box"></select>
+                <small style="display:block;font-size:11.5px;color:#64748b;margin-top:4px;line-height:1.4;">Menautkan ID Guru mengaktifkan notifikasi jadwal pribadi, auto-pilih Responder, dan lapor izin/sakit walau nama akun disingkat.</small>
               </div>
             </div>
             <div class="modal-footer" style="display:flex;gap:8px;justify-content:flex-end;">
@@ -5922,11 +5927,16 @@ html, body {
                       </div>
                       <div>
                         <label for="acc_role" style="display:block;font-size:12.5px;font-weight:600;color:#475569;margin-bottom:4px;">Role Pengguna <span style="color:#ef4444;">*</span></label>
-                        <select id="acc_role" class="input-box">
+                        <select id="acc_role" class="input-box" onchange="onAccountRoleChange('create')">
                           <option value="">(Pilih Role)</option>
                           <option value="Admin">Admin</option>
                           <option value="Guru">Guru</option>
                         </select>
+                      </div>
+                      <div id="acc_teacherWrap" style="display:none;grid-column:1 / -1;">
+                        <label id="acc_teacherLabel" for="acc_teacherId" style="display:block;font-size:12.5px;font-weight:600;color:#475569;margin-bottom:4px;">Tautkan Data Guru (ID Guru) <span style="color:#ef4444;">*</span></label>
+                        <select id="acc_teacherId" class="input-box" onchange="onAccountTeacherSelectChange('create')"></select>
+                        <small style="display:block;font-size:11.5px;color:#64748b;margin-top:4px;line-height:1.4;">Penautan ID Guru mengaktifkan seluruh otomatisasi (Notifikasi, Responder, Presensi Guru) meskipun Nama Lengkap akun dipersingkat.</small>
                       </div>
                     </div>
 
@@ -29965,21 +29975,131 @@ function saveTeacherAutoAlpaSettings() {
     }).updateTeacherAutoAlpaConfig(payload);
 }
 
+let simataAccountTeachersCache = [];
+
+function ensureAccountTeachersLoaded(callback) {
+    if (Array.isArray(simataAccountTeachersCache) && simataAccountTeachersCache.length > 0) {
+        if (typeof callback === 'function') callback(simataAccountTeachersCache);
+        return;
+    }
+    simataClient
+        .withSuccessHandler(function(tRes) {
+            simataAccountTeachersCache = (tRes && tRes.success && Array.isArray(tRes.teachers)) ? tRes.teachers : [];
+            if (typeof callback === 'function') callback(simataAccountTeachersCache);
+        })
+        .withFailureHandler(function() {
+            if (typeof callback === 'function') callback(simataAccountTeachersCache || []);
+        })
+        .getTeachers();
+}
+
+function populateAccountTeacherDropdown(mode, selectedTeacherId, excludeUserId) {
+    const sel = document.getElementById(mode === 'edit' ? 'edit_acc_teacherId' : 'acc_teacherId');
+    const roleEl = document.getElementById(mode === 'edit' ? 'edit_acc_role' : 'acc_role');
+    if (!sel) return;
+
+    const roleUpper = String(roleEl ? roleEl.value : '').trim().toUpperCase();
+    const accounts = Array.isArray(simataAccountsCache.accounts) ? simataAccountsCache.accounts : [];
+    const usedByMap = {};
+    accounts.forEach(function(a) {
+        if (a && a.teacherId && String(a.userId || '') !== String(excludeUserId || '')) {
+            usedByMap[String(a.teacherId)] = a.username || 'akun lain';
+        }
+    });
+
+    const placeholder = (roleUpper === 'ADMIN')
+        ? '(Tidak ditautkan / Khusus Admin non-mengajar)'
+        : '(Pilih Data Guru / ID Guru)';
+
+    const optsHtml = ['<option value="">' + placeholder + '</option>'];
+    (simataAccountTeachersCache || []).forEach(function(t) {
+        const tid = String(t.teacherId || t.teacher_id || '');
+        if (!tid) return;
+        const tName = t.name || tid;
+        const tSubj = t.subject ? (' — ' + t.subject) : '';
+        const usedBy = usedByMap[tid];
+        const isCurrentSelected = selectedTeacherId && String(selectedTeacherId) === tid;
+        const disabledAttr = (usedBy && !isCurrentSelected) ? ' disabled' : '';
+        const usedSuffix = (usedBy && !isCurrentSelected) ? (' [Sudah dipakai: @' + usedBy + ']') : '';
+        optsHtml.push('<option value="' + escapeAttr(tid) + '"' + disabledAttr + '>' + escapeHtml(tName + tSubj + ' (' + tid + ')' + usedSuffix) + '</option>');
+    });
+
+    sel.innerHTML = optsHtml.join('');
+    if (selectedTeacherId) {
+        sel.value = String(selectedTeacherId);
+    }
+}
+
+function onAccountRoleChange(mode, presetTeacherId, excludeUserId) {
+    const isEdit = (mode === 'edit');
+    const roleEl = document.getElementById(isEdit ? 'edit_acc_role' : 'acc_role');
+    const wrapEl = document.getElementById(isEdit ? 'edit_acc_teacherWrap' : 'acc_teacherWrap');
+    const lblEl = document.getElementById(isEdit ? 'edit_acc_teacherLabel' : 'acc_teacherLabel');
+    const selEl = document.getElementById(isEdit ? 'edit_acc_teacherId' : 'acc_teacherId');
+    if (!wrapEl) return;
+
+    const roleUpper = String(roleEl ? roleEl.value : '').trim().toUpperCase();
+    const showTeacher = (roleUpper === 'GURU' || roleUpper === 'ADMIN');
+    wrapEl.style.display = showTeacher ? '' : 'none';
+
+    if (lblEl) {
+        lblEl.innerHTML = (roleUpper === 'GURU')
+            ? 'Tautkan Data Guru (ID Guru) <span style="color:#ef4444;">*</span>'
+            : 'Tautkan Data Guru <span style="color:#64748b;font-weight:500;">(Opsional — jika Admin merangkap mengajar)</span>';
+    }
+
+    if (!showTeacher) {
+        if (selEl) selEl.value = '';
+        return;
+    }
+
+    const currentVal = presetTeacherId !== undefined ? presetTeacherId : (selEl ? selEl.value : '');
+    const exUid = excludeUserId !== undefined
+        ? excludeUserId
+        : (isEdit && document.getElementById('edit_acc_user_id') ? document.getElementById('edit_acc_user_id').value.trim() : '');
+    ensureAccountTeachersLoaded(function() {
+        populateAccountTeacherDropdown(mode, currentVal, exUid);
+    });
+}
+
+function onAccountTeacherSelectChange(mode) {
+    if (mode !== 'create') return;
+    const selEl = document.getElementById('acc_teacherId');
+    const nameEl = document.getElementById('acc_name');
+    if (!selEl || !nameEl || nameEl.value.trim()) return;
+    const tid = selEl.value;
+    if (!tid) return;
+    const found = (simataAccountTeachersCache || []).find(function(t) {
+        return String(t.teacherId || t.teacher_id || '') === String(tid);
+    });
+    if (found && found.name) {
+        nameEl.value = found.name;
+    }
+}
+
 function saveAccountFromForm() {
     const uEl = document.getElementById('acc_username');
     const pEl = document.getElementById('acc_password');
     const nEl = document.getElementById('acc_name');
     const rEl = document.getElementById('acc_role');
+    const tEl = document.getElementById('acc_teacherId');
 
     const username = uEl ? uEl.value.trim() : '';
     const password = pEl ? pEl.value.trim() : '';
     const name = nEl ? nEl.value.trim() : '';
     const role = rEl ? rEl.value.trim() : '';
+    const roleUpper = role.toUpperCase();
+    const teacherId = (tEl && (roleUpper === 'GURU' || roleUpper === 'ADMIN')) ? tEl.value.trim() : '';
 
     if (!username) { alert('Username wajib diisi.'); if (uEl) uEl.focus(); return; }
     if (!password) { alert('Password wajib diisi.'); if (pEl) pEl.focus(); return; }
     if (!name) { alert('Nama Lengkap wajib diisi.'); if (nEl) nEl.focus(); return; }
     if (!role) { alert('Pilih role akun (Admin atau Guru).'); if (rEl) rEl.focus(); return; }
+    if (roleUpper === 'GURU' && !teacherId) {
+        alert('Akun dengan role Guru wajib ditautkan ke Data Guru (ID Guru).');
+        if (tEl) tEl.focus();
+        return;
+    }
 
     const token = sessionStorage.getItem('SIMATA_TOKEN');
     if (!token) { alert('Sesi login tidak valid. Silakan login kembali.'); return; }
@@ -29998,6 +30118,8 @@ function saveAccountFromForm() {
                 if (pEl) pEl.value = '';
                 if (nEl) nEl.value = '';
                 if (rEl) rEl.value = '';
+                if (tEl) tEl.value = '';
+                onAccountRoleChange('create');
                 loadAccountsTable();
             } else {
                 alert((res && res.message) || 'Gagal menambahkan akun.');
@@ -30008,7 +30130,7 @@ function saveAccountFromForm() {
             setButtonLoading(btn, false, '', 'Simpan Akun');
             alert('Terjadi kesalahan saat menambahkan akun: ' + (err && err.message ? err.message : err));
         })
-        .createAccount(token, { username: username, password: password, name: name, role: role });
+        .createAccount(token, { username: username, password: password, name: name, role: role, teacherId: teacherId || null });
 }
 
 function togglePasswordVisibility(inputId, btnEl) {
@@ -30046,9 +30168,16 @@ function renderAccountsRows() {
         clearBtn.style.display = query ? 'inline-flex' : 'none';
     }
 
+    const teacherNameById = {};
+    (simataAccountTeachersCache || []).forEach(function(t) {
+        const tid = String(t.teacherId || t.teacher_id || '');
+        if (tid) teacherNameById[tid] = t.name || tid;
+    });
+
     const filtered = query
         ? allAccounts.filter(function(acc) {
-            const hay = (String(acc.username || '') + ' ' + String(acc.name || '') + ' ' + String(acc.role || '')).toLowerCase();
+            const linkedName = acc.teacherId ? (teacherNameById[String(acc.teacherId)] || '') : '';
+            const hay = (String(acc.username || '') + ' ' + String(acc.name || '') + ' ' + String(acc.role || '') + ' ' + String(acc.teacherId || '') + ' ' + linkedName).toLowerCase();
             return hay.indexOf(query) !== -1;
         })
         : allAccounts;
@@ -30083,12 +30212,21 @@ function renderAccountsRows() {
             ? '<button type="button" disabled class="acc-action-btn acc-btn-self" title="Akun yang sedang aktif tidak dapat dihapus">' + activeIcon + 'Akun Aktif</button>'
             : '<button type="button" class="acc-action-btn acc-btn-delete" onclick="confirmDeleteAccount(\'' + escapeAttr(acc.username) + '\', this)">' + deleteIcon + 'Hapus</button>';
 
-        const editBtnHtml = '<button type="button" class="acc-action-btn acc-btn-edit" onclick="openEditAccountModal(\'' + escapeAttr(acc.username) + '\', \'' + escapeAttr(acc.name) + '\', \'' + escapeAttr(acc.role) + '\', \'' + escapeAttr(acc.userId || '') + '\')">' + editIcon + 'Edit</button>';
+        const editBtnHtml = '<button type="button" class="acc-action-btn acc-btn-edit" onclick="openEditAccountModal(\'' + escapeAttr(acc.username) + '\', \'' + escapeAttr(acc.name) + '\', \'' + escapeAttr(acc.role) + '\', \'' + escapeAttr(acc.userId || '') + '\', \'' + escapeAttr(acc.teacherId || '') + '\')">' + editIcon + 'Edit</button>';
+
+        let teacherLinkBadgeHtml = '';
+        if (acc.teacherId) {
+            const tLabel = teacherNameById[String(acc.teacherId)];
+            const tDisplay = tLabel ? (acc.teacherId + ' \u2022 ' + tLabel) : acc.teacherId;
+            teacherLinkBadgeHtml = '<div style="margin-top:4px;"><span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;font-size:10.5px;font-weight:700;">ID Guru: ' + escapeHtml(tDisplay) + '</span></div>';
+        } else if (rClean === 'GURU') {
+            teacherLinkBadgeHtml = '<div style="margin-top:4px;"><span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;background:#fef3c7;border:1px solid #fde68a;color:#92400e;font-size:10.5px;font-weight:700;">Belum Tertaut ID Guru</span></div>';
+        }
 
         return '<tr class="simata-table-row accounts-card-row' + (isSelf ? ' accounts-self-row' : '') + '">' +
             '<td class="acc-col-no" style="padding:10px 12px;text-align:center;color:#64748b;font-size:12.5px;">' + (idx + 1) + '</td>' +
             '<td class="acc-col-username" style="padding:10px 14px;font-family:monospace;font-size:12.5px;color:#334155;font-weight:600;">' + escapeHtml(acc.username) + '</td>' +
-            '<td class="acc-col-name" style="padding:10px 14px;font-size:13px;color:#0f172a;">' + escapeHtml(acc.name) + '</td>' +
+            '<td class="acc-col-name" style="padding:10px 14px;font-size:13px;color:#0f172a;"><div>' + escapeHtml(acc.name) + '</div>' + teacherLinkBadgeHtml + '</td>' +
             '<td class="acc-col-role" style="padding:10px 14px;text-align:center;"><span class="simata-badge ' + badgeCls + '">' + escapeHtml(acc.role) + '</span></td>' +
             '<td class="acc-col-actions" style="padding:10px 14px;text-align:center;white-space:nowrap;"><div class="acc-actions-wrap">' + editBtnHtml + deleteBtnHtml + '</div></td>' +
         '</tr>';
@@ -30128,7 +30266,10 @@ function loadAccountsTable() {
                 accounts: res.accounts,
                 currentCaller: (res.currentUsername || '').trim().toLowerCase()
             };
-            renderAccountsRows();
+            ensureAccountTeachersLoaded(function() {
+                renderAccountsRows();
+                onAccountRoleChange('create');
+            });
         })
         .withFailureHandler(function() {
             if (countBadge) countBadge.style.display = 'none';
@@ -30137,7 +30278,7 @@ function loadAccountsTable() {
         .getAccounts(token);
 }
 
-function openEditAccountModal(username, name, role, userId) {
+function openEditAccountModal(username, name, role, userId, teacherId) {
     const modal = document.getElementById('editAccountModal');
     if (!modal) return;
 
@@ -30183,6 +30324,7 @@ function openEditAccountModal(username, name, role, userId) {
         }
     }
 
+    onAccountRoleChange('edit', teacherId || '', userId || '');
     modal.style.display = 'flex';
 }
 
@@ -30198,17 +30340,25 @@ function saveEditAccount() {
     const pEl = document.getElementById('edit_acc_password');
     const nEl = document.getElementById('edit_acc_name');
     const rEl = document.getElementById('edit_acc_role');
+    const tEl = document.getElementById('edit_acc_teacherId');
 
     const originalUsername = origEl ? origEl.value.trim() : '';
     const newUsername = uEl ? uEl.value.trim() : '';
     const newPassword = pEl ? pEl.value.trim() : '';
     const name = nEl ? nEl.value.trim() : '';
     const role = rEl ? rEl.value.trim() : '';
+    const roleUpper = role.toUpperCase();
+    const teacherId = (tEl && (roleUpper === 'GURU' || roleUpper === 'ADMIN')) ? tEl.value.trim() : '';
 
     if (!originalUsername) { alert('Data akun tidak valid.'); return; }
     if (!newUsername) { alert('Username wajib diisi.'); if (uEl) uEl.focus(); return; }
     if (!name) { alert('Nama Lengkap wajib diisi.'); if (nEl) nEl.focus(); return; }
     if (!role) { alert('Pilih role akun (Admin atau Guru).'); if (rEl) rEl.focus(); return; }
+    if (roleUpper === 'GURU' && !teacherId) {
+        alert('Akun dengan role Guru wajib ditautkan ke Data Guru (ID Guru).');
+        if (tEl) tEl.focus();
+        return;
+    }
 
     const token = sessionStorage.getItem('SIMATA_TOKEN');
     if (!token) { alert('Sesi login tidak valid. Silakan login kembali.'); return; }
@@ -30249,7 +30399,8 @@ function saveEditAccount() {
             username: newUsername,
             password: newPassword,
             name: name,
-            role: role
+            role: role,
+            teacherId: teacherId || null
         });
 }
 

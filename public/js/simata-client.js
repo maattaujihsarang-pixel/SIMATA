@@ -251,6 +251,8 @@
         role: u.role,
         name: u.full_name || u.username,
         fullName: u.full_name || u.username,
+        teacherId: u.teacher_id || null,
+        teacher_id: u.teacher_id || null,
         createdAt: u.created_at
       }));
       return {
@@ -267,7 +269,8 @@
         username: data.username,
         password: data.password,
         full_name: data.name || data.fullName || data.full_name,
-        role: data.role
+        role: data.role,
+        teacher_id: data.teacher_id || data.teacherId || null
       };
       const res = await apiFetch('/users', {
         method: 'POST',
@@ -287,6 +290,9 @@
       };
       if (data.password) {
         body.password = data.password;
+      }
+      if ('teacher_id' in data || 'teacherId' in data) {
+        body.teacher_id = data.teacher_id || data.teacherId || null;
       }
       const res = await apiFetch(`/users/${encodeURIComponent(id)}`, {
         method: 'PUT',

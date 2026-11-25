@@ -608,8 +608,20 @@ class MasterService {
       throw new ConflictError(`Username '${data.username}' sudah digunakan`);
     }
 
-    if (data.teacher_id) {
-      await this.getTeacherById(data.teacher_id);
+    const rawTeacherId = data.teacher_id !== undefined ? data.teacher_id : data.teacherId;
+    let cleanTeacherId = rawTeacherId ? String(rawTeacherId).trim() : null;
+    if (normalizedRole !== 'GURU' && normalizedRole !== 'ADMIN') {
+      cleanTeacherId = null;
+    }
+    if (normalizedRole === 'GURU' && !cleanTeacherId) {
+      throw new BadRequestError('Akun dengan peran GURU wajib ditautkan ke Data Guru (ID Guru)');
+    }
+    if (cleanTeacherId) {
+      await this.getTeacherById(cleanTeacherId);
+      const linkedUser = await userRepository.findByTeacherId(cleanTeacherId);
+      if (linkedUser) {
+        throw new ConflictError(`ID Guru '${cleanTeacherId}' sudah ditautkan ke akun '@${linkedUser.username}'`);
+      }
     }
 
     const passwordHash = await hashPassword(data.password);
@@ -620,7 +632,7 @@ class MasterService {
       full_name: data.full_name,
       role: normalizedRole,
       status: data.status || 'Active',
-      teacher_id: data.teacher_id || null,
+      teacher_id: cleanTeacherId,
       must_change_password: data.must_change_password || false
     });
   }
@@ -670,12 +682,22 @@ class MasterService {
       updateFields.status = rawStatus === 'active' ? 'Active' : 'Inactive';
     }
 
-    if (data.teacher_id !== undefined) {
-      if (data.teacher_id) {
-        await this.getTeacherById(data.teacher_id);
-        updateFields.teacher_id = data.teacher_id;
-      } else {
-        updateFields.teacher_id = null;
+    const effectiveRole = updateFields.role || String(user.role || '').toUpperCase();
+    if (data.teacher_id !== undefined || data.teacherId !== undefined) {
+      const rawTid = data.teacher_id !== undefined ? data.teacher_id : data.teacherId;
+      updateFields.teacher_id = rawTid ? String(rawTid).trim() : null;
+    }
+    if (effectiveRole !== 'GURU' && effectiveRole !== 'ADMIN') {
+      updateFields.teacher_id = null;
+    }
+    if (effectiveRole === 'GURU' && !updateFields.teacher_id) {
+      throw new BadRequestError('Akun dengan peran GURU wajib ditautkan ke Data Guru (ID Guru)');
+    }
+    if (updateFields.teacher_id) {
+      await this.getTeacherById(updateFields.teacher_id);
+      const linkedUser = await userRepository.findByTeacherId(updateFields.teacher_id);
+      if (linkedUser && Number(linkedUser.user_id) !== Number(user.user_id)) {
+        throw new ConflictError(`ID Guru '${updateFields.teacher_id}' sudah ditautkan ke akun '@${linkedUser.username}'`);
       }
     }
 

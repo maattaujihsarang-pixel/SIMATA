@@ -97,6 +97,10 @@ class TestDbEngine {
       const u = this.users.find(u => u.user_id === parseInt(params[0], 10));
       return { rows: u ? [{ ...u }] : [], rowCount: u ? 1 : 0 };
     }
+    if (q.includes('FROM users') && q.includes('teacher_id = $1')) {
+      const u = this.users.find(u => u.teacher_id && String(u.teacher_id) === String(params[0]));
+      return { rows: u ? [{ ...u }] : [], rowCount: u ? 1 : 0 };
+    }
     if (q.includes('FROM users') && q.includes('ORDER BY user_id ASC')) {
       return { rows: [...this.users], rowCount: this.users.length };
     }
