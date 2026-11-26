@@ -249,10 +249,10 @@
     const yr = ov.active_academic_year ? ov.active_academic_year.academic_year_id : '2026/2027';
     const p = ov.selected_period || { short_label: 'ASTS Ganjil' };
     if (yearPillEl) {
-      const archTag = ov.is_year_archived ? ' (Arsip)' : ' Aktif';
+      const archTag = ov.is_year_archived ? ' (Arsip)' : '';
       yearPillEl.innerHTML =
         '<span class="grd-gw-dot" style="' + (ov.is_year_archived ? 'background:#f59e0b;' : '') + '"></span>' +
-        '<span>Tahun Ajaran ' + esc(yr) + ' &bull; ' + esc(p.short_label) + archTag + '</span>';
+        '<span>' + esc(yr) + ' &bull; ' + esc(p.short_label) + archTag + '</span>';
     }
 
     const ps = ov.portal_settings || {};
@@ -266,18 +266,15 @@
       } else {
         rdmStatusText.innerHTML =
           '<span class="grd-gw-dot" style="background:#f59e0b;"></span>' +
-          '<span>' + (isAdmin
-            ? 'Link RDM belum diatur &mdash; klik <strong>Atur Link</strong> di bawah'
-            : 'Link Portal RDM belum dikonfigurasi oleh Admin') + '</span>';
+          '<span>' + (isAdmin ? 'Link RDM belum diatur' : 'Link RDM belum diatur Admin') + '</span>';
       }
     }
 
     if (simataStatusEl) {
       const ySum = ov.year_grade_summary || { total_grades: 0, total_classes: 0 };
-      const sum = ov.class_summary || { completed_subjects: 0, total_subjects: 0 };
       const detailText = ySum.total_grades > 0
-        ? (esc(p.short_label) + ' ' + esc(yr) + ' &bull; ' + (ySum.total_classes || 3) + ' Kelas terisi (' + Number(ySum.total_grades).toLocaleString('id-ID') + ' nilai)')
-        : (esc(p.short_label) + ' ' + esc(yr) + ' &bull; ' + sum.completed_subjects + '/' + sum.total_subjects + ' Mapel terisi');
+        ? (esc(p.short_label) + ' ' + esc(yr) + ' &bull; ' + (ySum.total_classes || 3) + ' kelas terisi')
+        : (esc(p.short_label) + ' ' + esc(yr) + ' &bull; Siap diisi');
       simataStatusEl.innerHTML =
         '<span class="grd-gw-dot"></span>' +
         '<span>' + detailText + '</span>';
