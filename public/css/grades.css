@@ -1462,6 +1462,37 @@
   padding: 10px 14px;
 }
 
+.grd-th-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 2px 4px;
+  margin: -2px -4px;
+  border-radius: 6px;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+.grd-th-sort:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+.grd-th-sort.is-sorted {
+  color: var(--grd-emerald);
+  font-weight: 700;
+}
+.grd-sort-ind {
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0.78;
+}
+.grd-th-sort.is-sorted .grd-sort-ind {
+  opacity: 1;
+}
+
 .grd-table--input tbody td {
   padding: 9px 14px;
 }

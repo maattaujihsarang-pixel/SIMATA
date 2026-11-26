@@ -20,6 +20,7 @@
     subjectCode: '',
     kkmDraft: 75,
     studentSearch: '',
+    inputSortName: 'none', // 'none' | 'asc' | 'desc'
     inputPage: 1,
     inputPageSize: 10,
     showRanking: true,
@@ -570,11 +571,30 @@
     const kkm = Number(state.kkmDraft || 75);
     const q = String(state.studentSearch || '').trim().toLowerCase();
     const allRows = state.overview.matrix || [];
-    const filtered = q
+    let filtered = q
       ? allRows.filter(function (r) {
           return (String(r.name) + ' ' + String(r.nis) + ' ' + String(r.nisn)).toLowerCase().indexOf(q) !== -1;
         })
-      : allRows;
+      : allRows.slice();
+
+    if (state.inputSortName === 'asc') {
+      filtered.sort(function (a, b) {
+        return String(a.name || '').localeCompare(String(b.name || ''), 'id', { sensitivity: 'base' });
+      });
+    } else if (state.inputSortName === 'desc') {
+      filtered.sort(function (a, b) {
+        return String(b.name || '').localeCompare(String(a.name || ''), 'id', { sensitivity: 'base' });
+      });
+    }
+
+    const sortBtn = document.getElementById('grdSortNameBtn');
+    const sortIcon = document.getElementById('grdSortNameIcon');
+    if (sortBtn && sortIcon) {
+      sortBtn.classList.toggle('is-sorted', state.inputSortName !== 'none');
+      sortIcon.textContent = state.inputSortName === 'asc'
+        ? '\u2191 A-Z'
+        : (state.inputSortName === 'desc' ? '\u2193 Z-A' : '\u21C5');
+    }
 
     const total = filtered.length;
     const pageSize = state.inputPageSize || 10;
@@ -1325,6 +1345,16 @@
       const tabBtn = e.target.closest('#grdSubTablist button[data-grd-tab]');
       if (tabBtn) {
         setActiveTab(tabBtn.getAttribute('data-grd-tab'));
+        return;
+      }
+
+      const sortNameBtn = e.target.closest('#grdSortNameBtn');
+      if (sortNameBtn) {
+        state.inputSortName = state.inputSortName === 'none'
+          ? 'asc'
+          : (state.inputSortName === 'asc' ? 'desc' : 'none');
+        state.inputPage = 1;
+        renderInputGridRows();
         return;
       }
 
