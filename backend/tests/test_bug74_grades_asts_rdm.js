@@ -48,6 +48,9 @@ async function runBug74Tests() {
 
   assert.ok(html.includes('id="gradesGatewayView"') && html.includes('id="grdGatewayRdmCard"'), 'Missing 2-card gateway in dashboard.html');
   assert.ok(html.includes('id="grdOpenRdmSettingsBtn"') && html.includes('id="gradesPrintSheet"'), 'Missing Admin RDM config button or print sheet');
+  assert.ok(html.includes('id="grdAcademicYearSelect"') && html.includes('id="gradesYearArchiveModal"'), 'Missing Academic Year selector & Archive modal');
+  assert.ok(!html.includes('id="grdCfgDefaultKkm"'), 'KKM Standar Madrasah must be removed from RDM settings modal');
+  assert.ok(html.includes('testGradesRdmUrl()') && html.includes('grd-gw-checklist'), 'Missing redesigned symmetrical gateway & Uji Buka button');
   assert.ok(html.includes('focusgroup="tablist nomemory"'), 'Sub-tabs must use accessible focusgroup tablist');
   assert.ok(gradesJs.includes('NILAI RATA-RATA SATU KELAS / MAPEL') && gradesJs.includes('MADRASAH ALIYAH AT-TAUJIH'), 'Missing official Madrasah Excel Leger print layout');
   assert.ok(gradesCss.includes('@container grd-input-grid (width < 640px)'), 'Missing mobile container query cards for grade input');
@@ -215,6 +218,51 @@ async function runBug74Tests() {
     assert.strictEqual(parentOwnKhs.status, 200);
     assert.strictEqual(parentOwnKhs.body.data.trend.length, 4);
     console.log('5. PASS: Parent publication switch & child-ownership isolation verified.');
+
+    // 7. Verify Multi-Year Academic Year Creation, Archive Lock, & Historical Student Preservation
+    const guruCreateYear = await reqJson(server, 'POST', '/api/v1/grades/academic-years', {
+      academic_year_id: '2027/2028'
+    }, guruAuth);
+    assert.strictEqual(guruCreateYear.status, 403, 'Guru must be forbidden from creating academic years');
+
+    const createYearRes = await reqJson(server, 'POST', '/api/v1/grades/academic-years', {
+      academic_year_id: '2027/2028',
+      name: 'Tahun Ajaran 2027/2028',
+      set_active: true,
+      archive_previous: true,
+      copy_subjects_from_year: '2026/2027'
+    }, adminAuth);
+    assert.strictEqual(createYearRes.status, 201, `Create academic year failed: ${createYearRes.text}`);
+    assert.ok(createYearRes.body.data.copied_subject_configs >= 65, 'Must copy subject configs (23+21+21)');
+    assert.ok(createYearRes.body.data.archived_previous_years.includes('2026/2027'), 'Previous year 2026/2027 must be archived');
+
+    // Attempt to overwrite grades in archived 2026/2027 -> must be 403 Forbidden
+    const editArchivedAttempt = await reqJson(server, 'POST', '/api/v1/grades/batch', {
+      academic_year_id: '2026/2027',
+      class_id: 'CLS-2627-10',
+      assessment_type: 'ASTS_GANJIL',
+      subject_code: 'FQ',
+      entries: [{ student_id: 'STD-K10015', score: 99 }]
+    }, adminAuth);
+    assert.strictEqual(editArchivedAttempt.status, 403, 'Archived academic year must block grade edits');
+
+    // Simulate graduating a Kelas 12 student (status = Inactive) -> historical archive 2026/2027 must still preserve all 7 students!
+    const gradStudent = testDbEngine.students.find((s) => s.student_id === 'STD-K12004');
+    gradStudent.status = 'Inactive';
+    const archivedK12 = await reqJson(server, 'GET', '/api/v1/grades/overview?academic_year_id=2026/2027&assessment_type=ASTS_GANJIL&class_id=CLS-2627-12', null, adminAuth);
+    assert.strictEqual(archivedK12.status, 200);
+    assert.strictEqual(archivedK12.body.data.is_year_archived, true);
+    assert.strictEqual(archivedK12.body.data.matrix.length, 7, 'Archived 2026/2027 Kelas 12 must retain graduated students');
+    assert.ok(archivedK12.body.data.matrix.some((r) => r.student_id === 'STD-K12004' && r.total_score === 1623));
+
+    // Unlock 2026/2027 archive temporarily & verify edit works again
+    const unlockRes = await reqJson(server, 'PUT', '/api/v1/grades/academic-years/archive', {
+      academic_year_id: '2026/2027',
+      is_archived: false
+    }, adminAuth);
+    assert.strictEqual(unlockRes.status, 200);
+    assert.strictEqual(unlockRes.body.data.is_archived, false);
+    console.log('6. PASS: Multi-year creation, archive lock (403), graduated-student historical retention, & unlock verified.');
   } finally {
     await new Promise((r) => server.close(r));
   }

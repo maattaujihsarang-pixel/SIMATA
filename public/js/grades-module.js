@@ -238,6 +238,7 @@
     const rdmSettingsBtn = document.getElementById('grdOpenRdmSettingsBtn');
     const rdmStatusText = document.getElementById('grdGwRdmStatusText');
     const simataStatusEl = document.getElementById('grdGwSimataStatus');
+    const yearPillEl = document.getElementById('grdGwYearPill');
 
     const isAdmin = Boolean(ov.viewer && ov.viewer.is_admin);
     const isParent = Boolean(ov.viewer && ov.viewer.is_parent);
@@ -245,31 +246,41 @@
     if (rdmCard) rdmCard.style.display = isParent ? 'none' : '';
     if (rdmSettingsBtn) rdmSettingsBtn.style.display = isAdmin ? 'inline-flex' : 'none';
 
+    const yr = ov.active_academic_year ? ov.active_academic_year.academic_year_id : '2026/2027';
+    const p = ov.selected_period || { short_label: 'ASTS Ganjil' };
+    if (yearPillEl) {
+      const archTag = ov.is_year_archived ? ' (Arsip)' : ' Aktif';
+      yearPillEl.innerHTML =
+        '<span class="grd-gw-dot" style="' + (ov.is_year_archived ? 'background:#f59e0b;' : '') + '"></span>' +
+        '<span>Tahun Ajaran ' + esc(yr) + ' &bull; ' + esc(p.short_label) + archTag + '</span>';
+    }
+
     const ps = ov.portal_settings || {};
     if (rdmStatusText) {
       if (ps.rdm_url) {
         let hostText = ps.rdm_url;
         try { hostText = new URL(ps.rdm_url).host || ps.rdm_url; } catch (_) {}
         rdmStatusText.innerHTML =
-          '<div class="grd-gw-status-title"><span class="grd-gw-dot"></span>Terhubung ke: ' + esc(hostText) + '</div>' +
-          '<div>Dilengkapi fitur <strong>Export Nilai SIMATA</strong> siap salin ke RDM agar guru tidak mengetik ulang.</div>';
+          '<span class="grd-gw-dot" style="background:#0f766e;"></span>' +
+          '<span>Terhubung: <strong>' + esc(hostText) + '</strong></span>';
       } else {
         rdmStatusText.innerHTML =
-          '<div class="grd-gw-status-title"><span class="grd-gw-dot" style="background:#f59e0b;"></span>Link RDM Belum Dikonfigurasi</div>' +
-          '<div>' + (isAdmin
-            ? 'Klik tombol <strong>Atur Link RDM</strong> di bawah untuk menautkan alamat server RDM madrasah.'
-            : 'Hubungi Admin SIMATA untuk menautkan alamat portal RDM madrasah.') + '</div>';
+          '<span class="grd-gw-dot" style="background:#f59e0b;"></span>' +
+          '<span>' + (isAdmin
+            ? 'Link RDM belum diatur &mdash; klik <strong>Atur Link</strong> di bawah'
+            : 'Link Portal RDM belum dikonfigurasi oleh Admin') + '</span>';
       }
     }
 
     if (simataStatusEl) {
-      const yr = ov.active_academic_year ? ov.active_academic_year.academic_year_id : '2026/2027';
-      const p = ov.selected_period || { short_label: 'ASTS Ganjil' };
+      const ySum = ov.year_grade_summary || { total_grades: 0, total_classes: 0 };
       const sum = ov.class_summary || { completed_subjects: 0, total_subjects: 0 };
-      const clsName = ov.selected_class ? ov.selected_class.class_name : 'Semua Kelas';
+      const detailText = ySum.total_grades > 0
+        ? (esc(p.short_label) + ' ' + esc(yr) + ' &bull; ' + (ySum.total_classes || 3) + ' Kelas terisi (' + Number(ySum.total_grades).toLocaleString('id-ID') + ' nilai)')
+        : (esc(p.short_label) + ' ' + esc(yr) + ' &bull; ' + sum.completed_subjects + '/' + sum.total_subjects + ' Mapel terisi');
       simataStatusEl.innerHTML =
-        '<div class="grd-gw-status-title"><span class="grd-gw-dot"></span>Tahun Ajaran ' + esc(yr) + '</div>' +
-        '<div>' + esc(p.short_label) + ' Aktif &bull; ' + esc(clsName) + ' (' + sum.completed_subjects + '/' + sum.total_subjects + ' Mapel Terisi)</div>';
+        '<span class="grd-gw-dot"></span>' +
+        '<span>' + detailText + '</span>';
     }
   }
 
@@ -277,9 +288,37 @@
     const ov = state.overview;
     if (!ov) return;
 
+    const isAdmin = Boolean(ov.viewer && ov.viewer.is_admin);
     const isParent = Boolean(ov.viewer && ov.viewer.is_parent);
+    const isArchived = Boolean(ov.is_year_archived);
     const backBtn = document.getElementById('grdBackToGatewayBtn');
     if (backBtn) backBtn.style.display = isParent ? 'none' : 'inline-flex';
+
+    // Populate Academic Year Selector (Multi-Year & Archive Switcher)
+    const yearSel = document.getElementById('grdAcademicYearSelect');
+    const yearMgrBtn = document.getElementById('grdOpenYearManagerBtn');
+    const printCfgBtn = document.getElementById('grdOpenPrintSettingsBtn');
+    if (yearSel) {
+      yearSel.innerHTML = (ov.academic_years || []).map(function (y) {
+        const sel = y.academic_year_id === state.academicYearId ? ' selected' : '';
+        const statusTxt = y.is_archived ? ' (Arsip Terkunci)' : (y.is_active ? ' (Aktif)' : '');
+        return '<option value="' + esc(y.academic_year_id) + '"' + sel + '>' + esc(y.academic_year_id + statusTxt) + '</option>';
+      }).join('');
+    }
+    if (yearMgrBtn) yearMgrBtn.style.display = isAdmin ? 'inline-flex' : 'none';
+    if (printCfgBtn) printCfgBtn.style.display = isAdmin ? 'inline-flex' : 'none';
+
+    // Archive Lock Banner
+    const archBanner = document.getElementById('grdArchiveLockBanner');
+    const archText = document.getElementById('grdArchiveLockBannerText');
+    const quickUnlockBtn = document.getElementById('grdQuickUnlockYearBtn');
+    if (archBanner) {
+      archBanner.style.display = isArchived ? 'flex' : 'none';
+      if (isArchived && archText) {
+        archText.innerHTML = '<strong>Mode Arsip &mdash; Tahun Ajaran ' + esc(state.academicYearId) + ' (Terkunci / Hanya Baca):</strong> Seluruh data nilai historis aman tersimpan; Anda tetap dapat melihat Leger, KHS, Grafik, Export CSV, dan Cetak.';
+      }
+      if (quickUnlockBtn) quickUnlockBtn.style.display = (isArchived && isAdmin) ? 'inline-flex' : 'none';
+    }
 
     // Publish toggle button
     const pubBtn = document.getElementById('grdTogglePublishBtn');
@@ -290,6 +329,7 @@
         pubBtn.style.display = 'none';
       } else {
         pubBtn.style.display = 'inline-flex';
+        pubBtn.disabled = isArchived;
         const isPub = Boolean(ov.selected_period && ov.selected_period.is_published);
         pubBtn.className = 'grd-btn ' + (isPub ? 'grd-btn--soft' : 'grd-btn--amber');
         pubBtn.innerHTML = isPub
@@ -365,7 +405,12 @@
 
     if (kkmInput) {
       kkmInput.value = state.kkmDraft;
+      kkmInput.disabled = Boolean(ov.is_year_archived);
     }
+    const pasteBtn = document.getElementById('grdOpenPasteModalBtn');
+    const saveBtn = document.getElementById('grdSaveBatchBtn');
+    if (pasteBtn) pasteBtn.disabled = Boolean(ov.is_year_archived);
+    if (saveBtn) saveBtn.disabled = Boolean(ov.is_year_archived);
 
     renderInputMasteryStrip();
     renderInputGridRows();
@@ -471,6 +516,9 @@
       return;
     }
 
+    const isArchived = Boolean(state.overview && state.overview.is_year_archived);
+    const disAttr = isArchived ? ' disabled' : '';
+
     tbody.innerHTML = filtered.map(function (r) {
       const d = state.draftScores[r.student_id] || { scoreStr: '', remarks: '' };
       const num = parseInputScore(d.scoreStr);
@@ -486,10 +534,10 @@
         '<td class="grd-td-no" style="width:44px;text-align:center;color:#64748b;">' + r.row_no + '</td>' +
         '<td class="grd-td-nis" style="font-family:monospace;font-size:12px;color:#475569;">' + esc(r.nis) + '</td>' +
         '<td class="grd-td-student"><div style="font-weight:700;color:#0f172a;">#' + r.row_no + ' ' + esc(r.name) + '</div><div style="font-size:11.5px;color:#64748b;">NIS: ' + esc(r.nis) + '</div></td>' +
-        '<td class="grd-td-score"><input type="text" inputmode="decimal" class="grd-score-input' + inpCls + '" data-score-for="' + esc(r.student_id) + '" value="' + esc(d.scoreStr) + '" placeholder="0-100" aria-label="Nilai ' + esc(r.name) + '" /></td>' +
+        '<td class="grd-td-score"><input type="text" inputmode="decimal" class="grd-score-input' + inpCls + '" data-score-for="' + esc(r.student_id) + '" value="' + esc(d.scoreStr) + '" placeholder="0-100" aria-label="Nilai ' + esc(r.name) + '"' + disAttr + ' /></td>' +
         '<td class="grd-td-pred" data-pred-cell="' + esc(r.student_id) + '" style="font-weight:700;">' + (pr.p !== '-' ? (pr.p + ' <span style="font-weight:500;color:#64748b;font-size:12px;">(' + pr.label + ')</span>') : '<span style="color:#94a3b8;">-</span>') + '</td>' +
         '<td class="grd-td-status" data-status-cell="' + esc(r.student_id) + '">' + statusBadge + '</td>' +
-        '<td class="grd-td-remark"><input type="text" class="grd-remark-input" data-remark-for="' + esc(r.student_id) + '" value="' + esc(d.remarks) + '" placeholder="Catatan / apresiasi singkat (opsional)" aria-label="Catatan untuk ' + esc(r.name) + '" /></td>' +
+        '<td class="grd-td-remark"><input type="text" class="grd-remark-input" data-remark-for="' + esc(r.student_id) + '" value="' + esc(d.remarks) + '" placeholder="Catatan / apresiasi singkat (opsional)" aria-label="Catatan untuk ' + esc(r.name) + '"' + disAttr + ' /></td>' +
       '</tr>';
     }).join('');
   }
@@ -800,7 +848,8 @@
     if (!host || !khs) return;
 
     const isParent = Boolean(state.overview && state.overview.viewer && state.overview.viewer.is_parent);
-    const readOnlyParentView = isParent || state.parentPreviewMode;
+    const isArchived = Boolean(state.overview && state.overview.is_year_archived);
+    const readOnlyParentView = isParent || state.parentPreviewMode || isArchived;
 
     if ((isParent || state.parentPreviewMode) && !khs.selected_period.is_published) {
       host.innerHTML =
@@ -1271,6 +1320,24 @@
         return;
       }
 
+      const yearMgrBtn = e.target.closest('#grdOpenYearManagerBtn');
+      if (yearMgrBtn) {
+        openGradesYearManagerModal();
+        return;
+      }
+
+      const printCfgBtn = e.target.closest('#grdOpenPrintSettingsBtn');
+      if (printCfgBtn) {
+        openGradesPrintSettingsModal();
+        return;
+      }
+
+      const quickUnlockBtn = e.target.closest('#grdQuickUnlockYearBtn');
+      if (quickUnlockBtn && state.academicYearId) {
+        toggleGradesYearArchive(state.academicYearId, false);
+        return;
+      }
+
       const saveNoteBtn = e.target.closest('#grdSaveHomeroomNoteBtn');
       if (saveNoteBtn && state.selectedStudentId) {
         const noteEl = document.getElementById('grdHomeroomNoteInput');
@@ -1304,7 +1371,11 @@
     });
 
     root.addEventListener('change', function (e) {
-      if (e.target.id === 'grdInputClassSelect' || e.target.id === 'grdLegerClassSelect' || e.target.id === 'grdKhsClassSelect') {
+      if (e.target.id === 'grdAcademicYearSelect') {
+        state.academicYearId = e.target.value;
+        state.selectedStudentId = '';
+        loadGradesOverview({ stayOnScreen: true });
+      } else if (e.target.id === 'grdInputClassSelect' || e.target.id === 'grdLegerClassSelect' || e.target.id === 'grdKhsClassSelect') {
         state.classId = e.target.value;
         state.selectedStudentId = '';
         loadGradesOverview({ stayOnScreen: true });
@@ -1365,11 +1436,7 @@
     const modal = document.getElementById('gradesRdmSettingsModal');
     const ps = ov.portal_settings || {};
     const urlEl = document.getElementById('grdCfgRdmUrl');
-    const prinEl = document.getElementById('grdCfgPrincipalName');
-    const kkmEl = document.getElementById('grdCfgDefaultKkm');
     if (urlEl) urlEl.value = ps.rdm_url || '';
-    if (prinEl) prinEl.value = ps.principal_name || 'Moch. Iqnaul Badril Falah, S.Ag';
-    if (kkmEl) kkmEl.value = ps.default_kkm !== undefined ? ps.default_kkm : 75;
     if (modal) modal.style.display = 'flex';
   }
 
@@ -1378,25 +1445,213 @@
     if (modal) modal.style.display = 'none';
   };
 
+  window.testGradesRdmUrl = function () {
+    const urlEl = document.getElementById('grdCfgRdmUrl');
+    let raw = urlEl ? urlEl.value.trim() : '';
+    if (!raw) {
+      alert('Masukkan alamat URL / Domain Portal RDM terlebih dahulu untuk diuji.');
+      if (urlEl) urlEl.focus();
+      return;
+    }
+    if (!/^https?:\/\//i.test(raw)) raw = 'https://' + raw;
+    window.open(raw, '_blank', 'noopener,noreferrer');
+  };
+
   window.saveGradesRdmSettings = function () {
     const urlEl = document.getElementById('grdCfgRdmUrl');
-    const prinEl = document.getElementById('grdCfgPrincipalName');
-    const kkmEl = document.getElementById('grdCfgDefaultKkm');
 
     simataClient
       .withSuccessHandler(function (res) {
         window.closeGradesRdmSettingsModal();
-        alert((res && res.message) || 'Pengaturan Portal RDM berhasil disimpan.');
+        alert((res && res.message) || 'Tautan Portal RDM berhasil disimpan.');
         loadGradesOverview({ stayOnScreen: true });
       })
       .withFailureHandler(function (err) {
-        alert('Gagal menyimpan pengaturan RDM: ' + (err && err.message ? err.message : err));
+        alert('Gagal menyimpan tautan RDM: ' + (err && err.message ? err.message : err));
       })
       .updateGradesPortalSettings({
-        rdm_url: urlEl ? urlEl.value.trim() : '',
-        principal_name: prinEl ? prinEl.value.trim() : 'Moch. Iqnaul Badril Falah, S.Ag',
-        default_kkm: kkmEl ? kkmEl.value : 75
+        rdm_url: urlEl ? urlEl.value.trim() : ''
       });
+  };
+
+  function openGradesPrintSettingsModal() {
+    const ov = state.overview;
+    if (!ov || !ov.viewer || !ov.viewer.is_admin) return;
+    const modal = document.getElementById('gradesPrintSettingsModal');
+    const ps = ov.portal_settings || {};
+    const prinEl = document.getElementById('grdCfgPrincipalName');
+    if (prinEl) prinEl.value = ps.principal_name || 'Moch. Iqnaul Badril Falah, S.Ag';
+    if (modal) modal.style.display = 'flex';
+  }
+
+  window.closeGradesPrintSettingsModal = function () {
+    const modal = document.getElementById('gradesPrintSettingsModal');
+    if (modal) modal.style.display = 'none';
+  };
+
+  window.saveGradesPrintSettings = function () {
+    const prinEl = document.getElementById('grdCfgPrincipalName');
+    simataClient
+      .withSuccessHandler(function (res) {
+        window.closeGradesPrintSettingsModal();
+        alert((res && res.message) || 'Pengaturan kop cetak berhasil disimpan.');
+        loadGradesOverview({ stayOnScreen: true });
+      })
+      .withFailureHandler(function (err) {
+        alert('Gagal menyimpan pengaturan cetak: ' + (err && err.message ? err.message : err));
+      })
+      .updateGradesPortalSettings({
+        principal_name: prinEl ? prinEl.value.trim() : 'Moch. Iqnaul Badril Falah, S.Ag'
+      });
+  };
+
+  function renderYearArchiveList(years) {
+    const host = document.getElementById('grdYearArchiveListHost');
+    if (!host) return;
+    if (!Array.isArray(years) || years.length === 0) {
+      host.innerHTML = '<div style="color:#64748b;font-size:13px;">Belum ada data tahun ajaran.</div>';
+      return;
+    }
+    host.innerHTML = years.map(function (y) {
+      const itemCls = y.is_archived ? ' grd-year-item--archived' : (y.is_active ? ' grd-year-item--active' : '');
+      const statusChip = y.is_archived
+        ? '<span class="grd-chip grd-chip--amber">Arsip Terkunci</span>'
+        : (y.is_active
+            ? '<span class="grd-chip grd-chip--emerald">Tahun Aktif</span>'
+            : '<span class="grd-chip grd-chip--slate">Non-Aktif</span>');
+      const openBtn = '<button type="button" class="grd-btn grd-btn--secondary" style="min-height:32px;padding:0 10px;font-size:12px;" onclick="selectGradesAcademicYear(\'' + esc(y.academic_year_id) + '\')">Buka</button>';
+      const archBtn = y.is_archived
+        ? '<button type="button" class="grd-btn grd-btn--secondary" style="min-height:32px;padding:0 10px;font-size:12px;" onclick="toggleGradesYearArchive(\'' + esc(y.academic_year_id) + '\', false)">Buka Kunci</button>'
+        : '<button type="button" class="grd-btn grd-btn--amber" style="min-height:32px;padding:0 10px;font-size:12px;" onclick="toggleGradesYearArchive(\'' + esc(y.academic_year_id) + '\', true)">Arsipkan &amp; Kunci</button>';
+      const actBtn = !y.is_active
+        ? '<button type="button" class="grd-btn grd-btn--soft" style="min-height:32px;padding:0 10px;font-size:12px;" onclick="activateGradesAcademicYear(\'' + esc(y.academic_year_id) + '\')">Jadikan Aktif</button>'
+        : '';
+      return '<div class="grd-year-item' + itemCls + '">' +
+        '<div>' +
+          '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">' +
+            '<strong style="font-size:14px;color:#0f172a;">' + esc(y.academic_year_id) + '</strong>' +
+            statusChip +
+          '</div>' +
+          '<div style="font-size:12px;color:#475569;margin-top:3px;">' +
+            esc(y.name || ('Tahun Ajaran ' + y.academic_year_id)) + ' &bull; ' +
+            Number(y.total_students || 0) + ' siswa &bull; ' +
+            Number(y.total_grades || 0).toLocaleString('id-ID') + ' nilai tersimpan' +
+          '</div>' +
+        '</div>' +
+        '<div style="display:flex;flex-wrap:wrap;gap:6px;">' + openBtn + actBtn + archBtn + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function openGradesYearManagerModal() {
+    const ov = state.overview;
+    if (!ov || !ov.viewer || !ov.viewer.is_admin) return;
+    const modal = document.getElementById('gradesYearArchiveModal');
+    const idEl = document.getElementById('grdNewYearId');
+    const nameEl = document.getElementById('grdNewYearName');
+
+    // Suggest next sequential academic year (e.g., 2026/2027 -> 2027/2028)
+    const years = ov.academic_years || [];
+    if (idEl && years.length > 0) {
+      const maxStart = Math.max.apply(null, years.map(function (y) { return parseInt(String(y.academic_year_id).split('/')[0], 10) || 2026; }));
+      const nextId = (maxStart + 1) + '/' + (maxStart + 2);
+      idEl.value = nextId;
+      if (nameEl) nameEl.value = 'Tahun Ajaran ' + nextId;
+    }
+
+    renderYearArchiveList(years);
+    if (modal) modal.style.display = 'flex';
+  }
+
+  window.closeGradesYearManagerModal = function () {
+    const modal = document.getElementById('gradesYearArchiveModal');
+    if (modal) modal.style.display = 'none';
+  };
+
+  window.selectGradesAcademicYear = function (yearId) {
+    window.closeGradesYearManagerModal();
+    state.academicYearId = yearId;
+    state.selectedStudentId = '';
+    loadGradesOverview({ stayOnScreen: true });
+  };
+
+  window.createNewGradesAcademicYear = function () {
+    const idEl = document.getElementById('grdNewYearId');
+    const nameEl = document.getElementById('grdNewYearName');
+    const setActiveEl = document.getElementById('grdNewYearSetActive');
+    const archPrevEl = document.getElementById('grdNewYearArchivePrev');
+    const copySubjEl = document.getElementById('grdNewYearCopySubjects');
+    const btn = document.getElementById('grdCreateYearBtn');
+
+    const newYearId = idEl ? idEl.value.trim() : '';
+    if (!/^\d{4}\/\d{4}$/.test(newYearId)) {
+      alert('Format Tahun Ajaran harus YYYY/YYYY, contoh: 2027/2028.');
+      if (idEl) idEl.focus();
+      return;
+    }
+
+    if (btn) btn.disabled = true;
+    const activeYr = state.overview && state.overview.active_academic_year ? state.overview.active_academic_year.academic_year_id : '';
+    simataClient
+      .withSuccessHandler(function (res) {
+        if (btn) btn.disabled = false;
+        alert((res && res.message) || ('Tahun Ajaran ' + newYearId + ' berhasil ditambahkan.'));
+        if (res && res.data && Array.isArray(res.data.academic_years)) {
+          renderYearArchiveList(res.data.academic_years);
+        }
+        state.academicYearId = newYearId;
+        loadGradesOverview({ stayOnScreen: true });
+      })
+      .withFailureHandler(function (err) {
+        if (btn) btn.disabled = false;
+        alert('Gagal menambah tahun ajaran: ' + (err && err.message ? err.message : err));
+      })
+      .createGradesAcademicYear({
+        academic_year_id: newYearId,
+        name: nameEl ? nameEl.value.trim() : ('Tahun Ajaran ' + newYearId),
+        set_active: setActiveEl ? setActiveEl.checked : true,
+        archive_previous: archPrevEl ? archPrevEl.checked : false,
+        copy_subjects_from_year: (copySubjEl && copySubjEl.checked) ? activeYr : ''
+      });
+  };
+
+  window.toggleGradesYearArchive = function (yearId, shouldArchive) {
+    const msg = shouldArchive
+      ? 'Arsipkan dan kunci Tahun Ajaran ' + yearId + '? Nilai lama tetap bisa dilihat, diekspor, dan dicetak tetapi tidak dapat diubah sembarangan.'
+      : 'Buka kunci arsip Tahun Ajaran ' + yearId + ' sementara agar nilai dapat direvisi?';
+    if (!confirm(msg)) return;
+    simataClient
+      .withSuccessHandler(function (res) {
+        alert((res && res.message) || 'Status arsip diperbarui.');
+        if (res && res.data && Array.isArray(res.data.academic_years)) {
+          renderYearArchiveList(res.data.academic_years);
+        }
+        loadGradesOverview({ stayOnScreen: true });
+      })
+      .withFailureHandler(function (err) {
+        alert('Gagal memperbarui status arsip: ' + (err && err.message ? err.message : err));
+      })
+      .setGradesYearArchive({
+        academic_year_id: yearId,
+        is_archived: Boolean(shouldArchive)
+      });
+  };
+
+  window.activateGradesAcademicYear = function (yearId) {
+    if (!confirm('Jadikan Tahun Ajaran ' + yearId + ' sebagai Tahun Ajaran Aktif di SIMATA?')) return;
+    simataClient
+      .withSuccessHandler(function (res) {
+        alert((res && res.message) || ('Tahun Ajaran ' + yearId + ' diaktifkan.'));
+        if (res && res.data && Array.isArray(res.data.academic_years)) {
+          renderYearArchiveList(res.data.academic_years);
+        }
+        state.academicYearId = yearId;
+        loadGradesOverview({ stayOnScreen: true });
+      })
+      .withFailureHandler(function (err) {
+        alert('Gagal mengaktifkan tahun ajaran: ' + (err && err.message ? err.message : err));
+      })
+      .activateGradesAcademicYear({ academic_year_id: yearId });
   };
 
   window.closeGradesPasteModal = function () {

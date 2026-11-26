@@ -74,6 +74,7 @@ class TestDbEngine {
     this.grade_subject_configs = [];
     this.grade_period_publications = [];
     this.grade_student_notes = [];
+    this.grade_year_archives = [];
   }
 
   get tables() {
@@ -885,14 +886,25 @@ class TestDbEngine {
 
     // 10. Academic Years
     if (q.includes('FROM academic_years') && q.includes('is_active = TRUE')) {
-      return { rows: [this.academic_years[0]], rowCount: 1 };
+      const act = this.academic_years.filter(a => a.is_active);
+      return { rows: act.length ? act.map(a => ({ ...a })) : [this.academic_years[0]], rowCount: act.length || 1 };
     }
     if (q.includes('FROM academic_years') && q.includes('academic_year_id = $1')) {
       const ay = this.academic_years.find(a => a.academic_year_id === params[0]);
       return { rows: ay ? [{ ...ay }] : [], rowCount: ay ? 1 : 0 };
     }
     if (q.includes('FROM academic_years')) {
-      return { rows: [...this.academic_years], rowCount: this.academic_years.length };
+      const sorted = [...this.academic_years].sort((a, b) => String(b.academic_year_id).localeCompare(String(a.academic_year_id)));
+      return { rows: sorted, rowCount: sorted.length };
+    }
+    if (q.startsWith('UPDATE academic_years') && q.includes('SET is_active = FALSE')) {
+      this.academic_years.forEach(a => { a.is_active = false; });
+      return { rows: [], rowCount: this.academic_years.length };
+    }
+    if (q.startsWith('UPDATE academic_years') && q.includes('SET is_active = TRUE')) {
+      const ay = this.academic_years.find(a => a.academic_year_id === params[0]);
+      if (ay) ay.is_active = true;
+      return { rows: ay ? [{ ...ay }] : [], rowCount: ay ? 1 : 0 };
     }
     if (q.startsWith('INSERT INTO academic_years')) {
       const ay = {
@@ -1216,10 +1228,47 @@ class TestDbEngine {
     }
 
     // Grades & Assessments queries (BUG 74)
+    if (q.includes('FROM grade_year_archives')) {
+      return { rows: (this.grade_year_archives || []).map(r => ({ ...r })), rowCount: (this.grade_year_archives || []).length };
+    }
+    if (q.startsWith('INSERT INTO grade_year_archives')) {
+      const yearId = params[0];
+      const isTrueLiteral = q.includes('VALUES ($1, TRUE,');
+      const isFalseLiteral = q.includes('VALUES ($1, FALSE,');
+      const isArchived = isTrueLiteral ? true : (isFalseLiteral ? false : Boolean(params[1]));
+      const archivedAt = isTrueLiteral ? new Date().toISOString() : (isFalseLiteral ? null : params[2]);
+      const uid = (isTrueLiteral || isFalseLiteral) ? params[1] : params[3];
+      const note = isTrueLiteral ? params[2] : (isFalseLiteral ? null : params[4]);
+      const existing = this.grade_year_archives.find(a => a.academic_year_id === yearId);
+      if (existing) {
+        existing.is_archived = isArchived;
+        existing.archived_at = archivedAt;
+        existing.archived_by_user_id = uid;
+        existing.archive_note = note;
+        existing.updated_at = new Date().toISOString();
+        return { rows: [{ ...existing }], rowCount: 1 };
+      }
+      const created = {
+        academic_year_id: yearId,
+        is_archived: isArchived,
+        archived_at: archivedAt,
+        archived_by_user_id: uid,
+        archive_note: note,
+        updated_at: new Date().toISOString()
+      };
+      this.grade_year_archives.push(created);
+      return { rows: [{ ...created }], rowCount: 1 };
+    }
     if (q.includes('FROM grade_subject_configs') && q.includes('academic_year_id = $1') && q.includes('class_id = $2')) {
       const rows = (this.grade_subject_configs || [])
         .filter(c => c.academic_year_id === params[0] && c.class_id === params[1])
         .sort((a, b) => (a.sort_order - b.sort_order) || String(a.subject_code).localeCompare(String(b.subject_code)));
+      return { rows: rows.map(r => ({ ...r })), rowCount: rows.length };
+    }
+    if (q.includes('FROM grade_subject_configs') && q.includes('academic_year_id = $1') && q.includes('is_active = TRUE')) {
+      const rows = (this.grade_subject_configs || [])
+        .filter(c => c.academic_year_id === params[0] && c.is_active !== false)
+        .sort((a, b) => String(a.class_id).localeCompare(String(b.class_id)) || (a.sort_order - b.sort_order));
       return { rows: rows.map(r => ({ ...r })), rowCount: rows.length };
     }
     if (q.startsWith('INSERT INTO grade_subject_configs')) {
@@ -1290,6 +1339,28 @@ class TestDbEngine {
       const created = { academic_year_id: yearId, assessment_type: aType, student_id: stId, homeroom_note: note, updated_by_user_id: uid, updated_at: new Date().toISOString() };
       this.grade_student_notes.push(created);
       return { rows: [{ ...created }], rowCount: 1 };
+    }
+    if (q.includes('FROM grades') && q.includes('GROUP BY academic_year_id')) {
+      const map = new Map();
+      for (const g of this.grades || []) {
+        if (!map.has(g.academic_year_id)) map.set(g.academic_year_id, { grades: 0, students: new Set(), classes: new Set() });
+        const item = map.get(g.academic_year_id);
+        item.grades++;
+        item.students.add(g.student_id);
+        item.classes.add(g.class_id);
+      }
+      const rows = Array.from(map.entries()).map(([yid, v]) => ({
+        academic_year_id: yid,
+        total_grades: v.grades,
+        total_students: v.students.size,
+        total_classes: v.classes.size
+      }));
+      return { rows, rowCount: rows.length };
+    }
+    if (q.includes('SELECT DISTINCT student_id') && q.includes('FROM grades')) {
+      const [yearId, classId] = params;
+      const ids = [...new Set((this.grades || []).filter(g => g.academic_year_id === yearId && g.class_id === classId).map(g => g.student_id))];
+      return { rows: ids.map(id => ({ student_id: id })), rowCount: ids.length };
     }
     if (q.includes('FROM grades') && q.includes('GROUP BY assessment_type')) {
       const [yearId, classId] = params;

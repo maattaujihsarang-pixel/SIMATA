@@ -98,6 +98,56 @@ class GradesController {
       next(err);
     }
   }
+
+  async listAcademicYears(req, res, next) {
+    try {
+      const data = await gradesService.listAcademicYearsWithArchiveStats();
+      res.status(200).json({ status: 'success', data });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async createAcademicYear(req, res, next) {
+    try {
+      const data = await gradesService.createAcademicYear(req.body || {}, req.user);
+      res.status(201).json({
+        status: 'success',
+        message: `Tahun Ajaran ${data.created_year_id} berhasil ditambahkan.`,
+        data
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async setYearArchive(req, res, next) {
+    try {
+      const data = await gradesService.setAcademicYearArchiveState(req.body || {}, req.user);
+      res.status(200).json({
+        status: 'success',
+        message: data.is_archived
+          ? `Tahun Ajaran ${data.academic_year_id} berhasil diarsipkan dan dikunci.`
+          : `Kunci arsip Tahun Ajaran ${data.academic_year_id} telah dibuka.`,
+        data
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async activateAcademicYear(req, res, next) {
+    try {
+      const data = await gradesService.setActiveAcademicYear(req.body || {}, req.user);
+      res.status(200).json({
+        status: 'success',
+        message: `Tahun Ajaran ${data.academic_year_id} ditetapkan sebagai Tahun Ajaran Aktif.`,
+        data
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
 }
 
 module.exports = new GradesController();

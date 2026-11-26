@@ -1,6 +1,6 @@
 const db = require('../config/database');
 const attendanceEvidenceRepository = require('../repositories/attendance-evidence.repository');
-const { BadRequestError, NotFoundError, ForbiddenError } = require('../errors');
+const { BadRequestError, NotFoundError, ForbiddenError, ConflictError } = require('../errors');
 const {
   ASSESSMENT_PERIODS,
   GRADE_SUBJECT_CATALOG,
@@ -149,12 +149,211 @@ class GradesService {
 
   async resolveAcademicYear(requestedYearId) {
     const yearsRes = await db.query('SELECT academic_year_id, name, is_active FROM academic_years ORDER BY academic_year_id DESC');
-    const allYears = yearsRes.rows || [];
-    const active = allYears.find((y) => y.is_active) || allYears[0] || { academic_year_id: '2026/2027', name: 'Tahun Ajaran 2026/2027', is_active: true };
+    const rawYears = yearsRes.rows || [];
+
+    const archMap = {};
+    try {
+      const archRes = await db.query(
+        'SELECT academic_year_id, is_archived, archived_at, archive_note FROM grade_year_archives'
+      );
+      for (const a of archRes.rows || []) {
+        archMap[a.academic_year_id] = a;
+      }
+    } catch (_) {}
+
+    const statsMap = {};
+    try {
+      const statsRes = await db.query(
+        `SELECT academic_year_id,
+                COUNT(*)::int AS total_grades,
+                COUNT(DISTINCT student_id)::int AS total_students,
+                COUNT(DISTINCT class_id)::int AS total_classes
+         FROM grades
+         GROUP BY academic_year_id`
+      );
+      for (const st of statsRes.rows || []) {
+        statsMap[st.academic_year_id] = st;
+      }
+    } catch (_) {}
+
+    const allYears = rawYears.map((y) => {
+      const arch = archMap[y.academic_year_id];
+      const st = statsMap[y.academic_year_id];
+      return {
+        ...y,
+        is_archived: Boolean(arch?.is_archived),
+        archived_at: arch?.archived_at || null,
+        archive_note: arch?.archive_note || null,
+        total_grades: Number(st?.total_grades || 0),
+        total_students: Number(st?.total_students || 0),
+        total_classes: Number(st?.total_classes || 0)
+      };
+    });
+
+    const active = allYears.find((y) => y.is_active) || allYears[0] || {
+      academic_year_id: '2026/2027',
+      name: 'Tahun Ajaran 2026/2027',
+      is_active: true,
+      is_archived: false,
+      archived_at: null,
+      archive_note: null,
+      total_grades: 0,
+      total_students: 0,
+      total_classes: 0
+    };
     const selected = requestedYearId
       ? (allYears.find((y) => y.academic_year_id === requestedYearId) || active)
       : active;
     return { allYears, activeYear: selected };
+  }
+
+  assertYearEditable(yearObj) {
+    if (yearObj && yearObj.is_archived) {
+      throw new ForbiddenError(
+        `Tahun Ajaran ${yearObj.academic_year_id} berstatus Arsip (Terkunci). Admin dapat membuka kunci sementara jika diperlukan revisi.`
+      );
+    }
+  }
+
+  async listAcademicYearsWithArchiveStats() {
+    const { allYears, activeYear } = await this.resolveAcademicYear();
+    return { academic_years: allYears, active_academic_year: activeYear };
+  }
+
+  async createAcademicYear(payload = {}, user = null) {
+    const rawId = String(payload.academic_year_id || '').trim();
+    if (!/^\d{4}\/\d{4}$/.test(rawId)) {
+      throw new BadRequestError('Format Tahun Ajaran harus YYYY/YYYY, contoh: 2027/2028.');
+    }
+    const [y1, y2] = rawId.split('/').map(Number);
+    if (y2 !== y1 + 1) {
+      throw new BadRequestError('Tahun Ajaran harus berurutan 1 tahun, contoh: 2027/2028.');
+    }
+
+    const existing = await db.query('SELECT academic_year_id FROM academic_years WHERE academic_year_id = $1', [rawId]);
+    if (existing.rows && existing.rows.length > 0) {
+      throw new ConflictError(`Tahun Ajaran ${rawId} sudah terdaftar.`);
+    }
+
+    const name = String(payload.name || `Tahun Ajaran ${rawId}`).trim().slice(0, 50);
+    const setActive = payload.set_active !== false;
+    const archivePrevious = Boolean(payload.archive_previous);
+    const copyFromYear = payload.copy_subjects_from_year ? String(payload.copy_subjects_from_year).trim() : '';
+
+    const prevRes = await db.query('SELECT academic_year_id FROM academic_years WHERE is_active = TRUE');
+    const prevActiveIds = (prevRes.rows || []).map((r) => r.academic_year_id);
+
+    let copiedConfigsCount = 0;
+
+    await db.withTransaction(async (client) => {
+      if (setActive) {
+        await client.query('UPDATE academic_years SET is_active = FALSE WHERE is_active = TRUE');
+      }
+
+      await client.query(
+        `INSERT INTO academic_years (academic_year_id, name, is_active, start_date, end_date)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [rawId, name, setActive, `${y1}-07-01`, `${y2}-06-30`]
+      );
+
+      if (archivePrevious && prevActiveIds.length > 0) {
+        for (const prevId of prevActiveIds) {
+          await client.query(
+            `INSERT INTO grade_year_archives (academic_year_id, is_archived, archived_at, archived_by_user_id, archive_note, updated_at)
+             VALUES ($1, TRUE, CURRENT_TIMESTAMP, $2, $3, CURRENT_TIMESTAMP)
+             ON CONFLICT (academic_year_id) DO UPDATE
+             SET is_archived = TRUE,
+                 archived_at = CURRENT_TIMESTAMP,
+                 archived_by_user_id = EXCLUDED.archived_by_user_id,
+                 archive_note = COALESCE(EXCLUDED.archive_note, grade_year_archives.archive_note),
+                 updated_at = CURRENT_TIMESTAMP`,
+            [prevId, user?.user_id || null, `Diarsipkan otomatis saat pembukaan Tahun Ajaran ${rawId}`]
+          );
+        }
+      }
+
+      if (copyFromYear) {
+        const srcRes = await client.query(
+          `SELECT class_id, subject_code, subject_name, kkm, sort_order
+           FROM grade_subject_configs
+           WHERE academic_year_id = $1 AND is_active = TRUE
+           ORDER BY class_id ASC, sort_order ASC`,
+          [copyFromYear]
+        );
+        for (const cfg of srcRes.rows || []) {
+          const newCfgId = `GSC-${rawId.replace('/', '')}-${cfg.class_id}-${cfg.subject_code}`.slice(0, 60);
+          await client.query(
+            `INSERT INTO grade_subject_configs (config_id, academic_year_id, class_id, subject_code, subject_name, kkm, sort_order, is_active)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE)
+             ON CONFLICT (academic_year_id, class_id, subject_code) DO NOTHING`,
+            [newCfgId, rawId, cfg.class_id, cfg.subject_code, cfg.subject_name, Number(cfg.kkm || 75), cfg.sort_order]
+          );
+          copiedConfigsCount++;
+        }
+      }
+    });
+
+    const refreshed = await this.listAcademicYearsWithArchiveStats();
+    return {
+      created_year_id: rawId,
+      copied_subject_configs: copiedConfigsCount,
+      archived_previous_years: archivePrevious ? prevActiveIds : [],
+      ...refreshed
+    };
+  }
+
+  async setAcademicYearArchiveState(payload = {}, user = null) {
+    const yearId = String(payload.academic_year_id || '').trim();
+    if (!yearId) throw new BadRequestError('ID Tahun Ajaran wajib diisi.');
+    const exists = await db.query('SELECT academic_year_id FROM academic_years WHERE academic_year_id = $1', [yearId]);
+    if (!exists.rows || exists.rows.length === 0) {
+      throw new NotFoundError(`Tahun Ajaran ${yearId} tidak ditemukan.`);
+    }
+
+    const isArchived = Boolean(payload.is_archived);
+    const note = payload.archive_note !== undefined && payload.archive_note !== null
+      ? String(payload.archive_note).trim().slice(0, 300)
+      : (isArchived ? 'Diarsipkan & dikunci oleh Admin SIMATA' : null);
+
+    await db.query(
+      `INSERT INTO grade_year_archives (academic_year_id, is_archived, archived_at, archived_by_user_id, archive_note, updated_at)
+       VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+       ON CONFLICT (academic_year_id) DO UPDATE
+       SET is_archived = EXCLUDED.is_archived,
+           archived_at = EXCLUDED.archived_at,
+           archived_by_user_id = EXCLUDED.archived_by_user_id,
+           archive_note = EXCLUDED.archive_note,
+           updated_at = CURRENT_TIMESTAMP`,
+      [yearId, isArchived, isArchived ? new Date().toISOString() : null, user?.user_id || null, note]
+    );
+
+    const refreshed = await this.listAcademicYearsWithArchiveStats();
+    return { academic_year_id: yearId, is_archived: isArchived, ...refreshed };
+  }
+
+  async setActiveAcademicYear(payload = {}, user = null) {
+    const yearId = String(payload.academic_year_id || '').trim();
+    if (!yearId) throw new BadRequestError('ID Tahun Ajaran wajib diisi.');
+    const exists = await db.query('SELECT academic_year_id FROM academic_years WHERE academic_year_id = $1', [yearId]);
+    if (!exists.rows || exists.rows.length === 0) {
+      throw new NotFoundError(`Tahun Ajaran ${yearId} tidak ditemukan.`);
+    }
+
+    await db.withTransaction(async (client) => {
+      await client.query('UPDATE academic_years SET is_active = FALSE WHERE is_active = TRUE');
+      await client.query('UPDATE academic_years SET is_active = TRUE WHERE academic_year_id = $1', [yearId]);
+      // Ensure activated year is unlocked for active entry
+      await client.query(
+        `INSERT INTO grade_year_archives (academic_year_id, is_archived, archived_at, archived_by_user_id, archive_note, updated_at)
+         VALUES ($1, FALSE, NULL, $2, NULL, CURRENT_TIMESTAMP)
+         ON CONFLICT (academic_year_id) DO UPDATE
+         SET is_archived = FALSE, archived_at = NULL, updated_at = CURRENT_TIMESTAMP`,
+        [yearId, user?.user_id || null]
+      );
+    });
+
+    const refreshed = await this.listAcademicYearsWithArchiveStats();
+    return { academic_year_id: yearId, is_active: true, ...refreshed };
   }
 
   async ensureClassSubjectConfigs(academicYearId, classRow, defaultKkm = 75) {
@@ -392,15 +591,47 @@ class GradesService {
       };
     }
 
-    // Load students in selected class
-    const studentsRes = await db.query(
-      `SELECT s.student_id, s.class_id, s.name, s.gender, s.nis, s.nisn, s.status
-       FROM students s
-       WHERE s.class_id = $1 AND s.status = $2
-       ORDER BY s.student_id ASC, s.name ASC`,
-      [selectedClass.class_id, 'Active']
+    // Load students in selected class — preserve historical archive students (promoted/graduated) when present
+    let students = [];
+    const histRes = await db.query(
+      `SELECT DISTINCT student_id
+       FROM grades
+       WHERE academic_year_id = $1 AND class_id = $2`,
+      [yearId, selectedClass.class_id]
     );
-    let students = studentsRes.rows || [];
+    const historicalIds = (histRes.rows || []).map((r) => r.student_id).filter(Boolean);
+
+    if (activeYear.is_archived && historicalIds.length > 0) {
+      const histStudentsRes = await db.query(
+        `SELECT s.student_id, s.class_id, s.name, s.gender, s.nis, s.nisn, s.status
+         FROM students s
+         WHERE s.student_id = ANY($1)
+         ORDER BY s.student_id ASC, s.name ASC`,
+        [historicalIds]
+      );
+      students = histStudentsRes.rows || [];
+    } else {
+      const studentsRes = await db.query(
+        `SELECT s.student_id, s.class_id, s.name, s.gender, s.nis, s.nisn, s.status
+         FROM students s
+         WHERE s.class_id = $1 AND s.status = $2
+         ORDER BY s.student_id ASC, s.name ASC`,
+        [selectedClass.class_id, 'Active']
+      );
+      students = studentsRes.rows || [];
+      const activeIdSet = new Set(students.map((s) => s.student_id));
+      const missingHistoricalIds = historicalIds.filter((id) => !activeIdSet.has(id));
+      if (missingHistoricalIds.length > 0) {
+        const extraRes = await db.query(
+          `SELECT s.student_id, s.class_id, s.name, s.gender, s.nis, s.nisn, s.status
+           FROM students s
+           WHERE s.student_id = ANY($1)
+           ORDER BY s.student_id ASC, s.name ASC`,
+          [missingHistoricalIds]
+        );
+        students = students.concat(extraRes.rows || []);
+      }
+    }
 
     // Preserve official Madrasah Excel ordering if seeded order matches this class
     const seedClass = ASTS_GANJIL_2026_SEED.classes.find((sc) => sc.class_id === selectedClass.class_id);
@@ -643,6 +874,12 @@ class GradesService {
       },
       academic_years: allYears,
       active_academic_year: activeYear,
+      is_year_archived: Boolean(activeYear.is_archived),
+      year_grade_summary: {
+        total_grades: Number(activeYear.total_grades || 0),
+        total_students: Number(activeYear.total_students || 0),
+        total_classes: Number(activeYear.total_classes || 0)
+      },
       selected_period: {
         ...periodMeta,
         is_published: isSelectedPeriodPublished,
@@ -763,6 +1000,7 @@ class GradesService {
       throw new BadRequestError('Payload penyimpanan nilai tidak valid.');
     }
     const { activeYear } = await this.resolveAcademicYear(payload.academic_year_id);
+    this.assertYearEditable(activeYear);
     const yearId = activeYear.academic_year_id;
 
     const periodMeta = getPeriodMeta(payload.assessment_type);
@@ -879,6 +1117,7 @@ class GradesService {
 
   async updateSubjectKkm(payload = {}) {
     const { activeYear } = await this.resolveAcademicYear(payload.academic_year_id);
+    this.assertYearEditable(activeYear);
     const yearId = activeYear.academic_year_id;
     const classId = String(payload.class_id || '').trim();
     const subjectCode = normalizeSubjectCode(payload.subject_code);
@@ -945,6 +1184,7 @@ class GradesService {
 
   async updateStudentNote(payload = {}, user = null) {
     const { activeYear } = await this.resolveAcademicYear(payload.academic_year_id);
+    this.assertYearEditable(activeYear);
     const yearId = activeYear.academic_year_id;
     const periodMeta = getPeriodMeta(payload.assessment_type);
     if (!periodMeta) throw new BadRequestError('Periode asesmen tidak valid.');

@@ -29,12 +29,24 @@ router.put('/student-note', requireGuruOrAdmin, (req, res, next) =>
   gradesController.updateStudentNote(req, res, next)
 );
 
-// Admin-only: RDM Portal Link & Principal configuration + Official ASTS Ganjil seed
+// Admin-only: RDM Portal Link & Principal configuration + Official ASTS Ganjil seed + Academic Year Archives
 router.put('/portal-settings', requireAdmin, (req, res, next) =>
   gradesController.updatePortalSettings(req, res, next)
 );
 router.post('/seed-asts-ganjil', requireAdmin, (req, res, next) =>
   gradesController.seedAstsGanjil(req, res, next)
+);
+router.get('/academic-years', requireGuruOrAdmin, (req, res, next) =>
+  gradesController.listAcademicYears(req, res, next)
+);
+router.post('/academic-years', requireAdmin, (req, res, next) =>
+  gradesController.createAcademicYear(req, res, next)
+);
+router.put('/academic-years/archive', requireAdmin, (req, res, next) =>
+  gradesController.setYearArchive(req, res, next)
+);
+router.put('/academic-years/activate', requireAdmin, (req, res, next) =>
+  gradesController.activateAcademicYear(req, res, next)
 );
 
 module.exports = router;

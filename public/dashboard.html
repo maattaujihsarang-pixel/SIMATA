@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="/css/style.css?v=bug67pb">
   <link rel="stylesheet" href="/css/notifications.css?v=bug66_notif3">
   <link rel="stylesheet" href="/css/finance.css">
-  <link rel="stylesheet" href="/css/grades.css?v=bug74b">
+  <link rel="stylesheet" href="/css/grades.css?v=bug74c">
   <style>
 /**
  * SIMATA — Mobile Responsive Stylesheet
@@ -827,9 +827,9 @@ html, body {
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
   <!-- QRCode.js: QR Code generator library for Student QR Preview & Print -->
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-  <script src="/js/simata-client.js?v=bug74"></script>
+  <script src="/js/simata-client.js?v=bug74c"></script>
   <script src="/js/notifications.js?v=bug65_2"></script>
-  <script src="/js/grades-module.js?v=bug74"></script>
+  <script src="/js/grades-module.js?v=bug74c"></script>
 </head>
 
 
@@ -3010,38 +3010,56 @@ html, body {
         </section>
         <!-- GRADES CONTENT (Menu Nilai Dua Jalur: ASTS/ASAS SIMATA & Portal RDM - BUG 74) -->
         <section id="gradesContent" class="content" style="display:none;">
-          <!-- 1. GATEWAY 2-CARD HUB (LEFT: SIMATA | RIGHT: PORTAL RDM) -->
+          <!-- 1. GATEWAY 2-CARD HUB (SYMMETRICAL SIMATA STANDARD - BUG 60) -->
           <div id="gradesGatewayView">
-            <div class="section-heading">
+            <div class="grd-gw-header">
               <div>
                 <span class="section-label">AKADEMIK &amp; PENILAIAN</span>
                 <h2 style="margin:4px 0 0;">Pusat Penilaian &amp; Rapor</h2>
-                <p class="grd-gateway-subtitle">Pilih jalur pengelolaan nilai akademik sesuai kebutuhan penilaian berkala SIMATA (ASTS &amp; ASAS) atau pelaporan akhir semester pada Portal RDM Kemenag.</p>
+                <p class="grd-gateway-subtitle">Pilih jalur pengelolaan nilai berkala SIMATA (ASTS &amp; ASAS) atau akses Portal RDM Kemenag.</p>
+              </div>
+              <div id="grdGwYearPill" class="grd-gw-year-pill">
+                <span class="grd-gw-dot"></span>
+                <span>Memuat Tahun Ajaran...</span>
               </div>
             </div>
 
             <div class="grd-gateway-grid">
               <!-- CARD KIRI: NILAI AKADEMIK SIMATA -->
               <article class="grd-gateway-card grd-gateway-card--simata" aria-labelledby="grdGwSimataTitle">
-                <div>
-                  <span class="grd-gw-badge grd-gw-badge--emerald">TERINTEGRASI SIMATA &bull; SIAP AKSES WALI MURID</span>
-                  <div class="grd-gw-icon grd-gw-icon--emerald" aria-hidden="true">
-                    <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6" rx="1"/><rect x="12" y="8" width="3" height="10" rx="1"/><rect x="17" y="5" width="3" height="13" rx="1"/></svg>
+                <div class="grd-gw-card-body">
+                  <div class="grd-gw-card-head">
+                    <div class="grd-gw-icon grd-gw-icon--emerald" aria-hidden="true">
+                      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="9" y1="20" x2="9" y2="10"/><line x1="15" y1="20" x2="15" y2="10"/></svg>
+                    </div>
+                    <div class="grd-gw-title-group">
+                      <h3 id="grdGwSimataTitle" class="grd-gw-title">Nilai Akademik SIMATA</h3>
+                      <span class="grd-gw-badge grd-gw-badge--emerald">TERINTEGRASI SIMATA &bull; WALI MURID</span>
+                    </div>
                   </div>
-                  <h3 id="grdGwSimataTitle" class="grd-gw-title">Nilai Akademik SIMATA</h3>
-                  <p class="grd-gw-desc">Kelola asesmen bertahap (<strong>ASTS Ganjil</strong>, <strong>ASAS Ganjil</strong>, <strong>ASTS Genap</strong>, <strong>ASAS Genap</strong>), input nilai cepat ala spreadsheet, leger matriks kelas, diagram statistik, cetak leger &amp; KHS, serta publikasi nilai untuk Orang Tua / Wali Murid.</p>
-                  <div class="grd-gw-chips">
-                    <span class="grd-gw-chip">4 Periode ASTS &amp; ASAS</span>
-                    <span class="grd-gw-chip">Input Cepat Grid &amp; Mobile</span>
-                    <span class="grd-gw-chip">Cetak Leger Matriks &amp; KHS</span>
-                  </div>
-                  <div id="grdGwSimataStatus" class="grd-gw-status-box grd-gw-status-box--emerald">
-                    Memuat ringkasan penilaian tahun ajaran aktif...
+                  <p class="grd-gw-desc">Pengelolaan asesmen berkala internal madrasah yang terhubung langsung dengan data siswa, jadwal guru, presensi, arsip tahunan, dan akses Orang Tua.</p>
+                  <ul class="grd-gw-checklist grd-gw-checklist--emerald">
+                    <li>
+                      <svg class="grd-gw-check-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+                      <span><strong>4 Periode Resmi:</strong> ASTS Ganjil, ASAS Ganjil, ASTS Genap, &amp; ASAS Genap</span>
+                    </li>
+                    <li>
+                      <svg class="grd-gw-check-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+                      <span>Input cepat ala spreadsheet, KKM fleksibel per mapel, &amp; diagram statistik</span>
+                    </li>
+                    <li>
+                      <svg class="grd-gw-check-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+                      <span>Cetak <strong>Leger Matriks Format Madrasah</strong>, KHS A4, &amp; arsip multi-tahun ajaran</span>
+                    </li>
+                  </ul>
+                  <div id="grdGwSimataStatus" class="grd-gw-status-strip grd-gw-status-strip--emerald">
+                    <span class="grd-gw-dot"></span>
+                    <span>Memuat ringkasan penilaian tahun ajaran aktif...</span>
                   </div>
                 </div>
                 <div class="grd-gw-actions">
                   <button type="button" id="grdOpenSimataWorkspaceBtn" class="grd-btn grd-btn--primary grd-btn--full">
-                    <span>Buka Menu Nilai SIMATA</span>
+                    <span>Buka Nilai Akademik SIMATA</span>
                     <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                   </button>
                 </div>
@@ -3049,15 +3067,34 @@ html, body {
 
               <!-- CARD KANAN: PORTAL RDM KEMENAG -->
               <article id="grdGatewayRdmCard" class="grd-gateway-card grd-gateway-card--rdm" aria-labelledby="grdGwRdmTitle">
-                <div>
-                  <span class="grd-gw-badge grd-gw-badge--slate">KHUSUS GURU &amp; OPERATOR &bull; PORTAL TERTUTUP</span>
-                  <div class="grd-gw-icon grd-gw-icon--slate" aria-hidden="true">
-                    <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+                <div class="grd-gw-card-body">
+                  <div class="grd-gw-card-head">
+                    <div class="grd-gw-icon grd-gw-icon--slate" aria-hidden="true">
+                      <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+                    </div>
+                    <div class="grd-gw-title-group">
+                      <h3 id="grdGwRdmTitle" class="grd-gw-title">Portal RDM Kemenag</h3>
+                      <span class="grd-gw-badge grd-gw-badge--slate">KHUSUS GURU &amp; OPERATOR</span>
+                    </div>
                   </div>
-                  <h3 id="grdGwRdmTitle" class="grd-gw-title">Portal RDM (Rapor Digital Madrasah)</h3>
-                  <p class="grd-gw-desc">Akses langsung ke portal RDM Kementerian Agama untuk pengisian nilai akumulasi akhir semester &amp; pencetakan rapor resmi madrasah (bersifat tertutup khusus akun Guru &amp; Operator).</p>
-                  <div id="grdGwRdmStatusText" class="grd-gw-status-box">
-                    Memeriksa konfigurasi tautan Portal RDM...
+                  <p class="grd-gw-desc">Akses langsung ke portal Rapor Digital Madrasah Kementerian Agama untuk pengelolaan nilai akumulasi akhir semester.</p>
+                  <ul class="grd-gw-checklist grd-gw-checklist--slate">
+                    <li>
+                      <svg class="grd-gw-check-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+                      <span>Portal eksternal tertutup khusus akun <strong>Guru &amp; Operator</strong> (tersembunyi dari Wali)</span>
+                    </li>
+                    <li>
+                      <svg class="grd-gw-check-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+                      <span>Pengolahan nilai akhir semester &amp; pencetakan <strong>Rapor Resmi Kemenag</strong></span>
+                    </li>
+                    <li>
+                      <svg class="grd-gw-check-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+                      <span>Didukung fitur <strong>Export Bantu RDM (CSV)</strong> dari Nilai SIMATA tanpa ketik ulang</span>
+                    </li>
+                  </ul>
+                  <div id="grdGwRdmStatusText" class="grd-gw-status-strip">
+                    <span class="grd-gw-dot" style="background:#94a3b8;"></span>
+                    <span>Memeriksa konfigurasi tautan Portal RDM...</span>
                   </div>
                 </div>
                 <div class="grd-gw-actions">
@@ -3067,10 +3104,15 @@ html, body {
                   </button>
                   <button type="button" id="grdOpenRdmSettingsBtn" class="grd-btn grd-btn--secondary" style="display:none;">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                    <span>Atur Link RDM</span>
+                    <span>Atur Link</span>
                   </button>
                 </div>
               </article>
+            </div>
+
+            <div class="grd-gw-footnote" role="note">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              <span>Gunakan <strong>Nilai Akademik SIMATA</strong> untuk asesmen berkala ASTS/ASAS, KHS Wali Murid, dan arsip tahunan madrasah, serta <strong>Portal RDM Kemenag</strong> untuk pelaporan rapor akhir resmi.</span>
             </div>
           </div>
 
@@ -3083,6 +3125,14 @@ html, body {
                   <span>Kembali ke Pilihan Nilai / RDM</span>
                 </button>
                 <h2 style="margin:0;font-size:22px;font-weight:800;color:#0f172a;">Nilai Akademik SIMATA</h2>
+                <div class="grd-year-bar">
+                  <label for="grdAcademicYearSelect" style="font-size:12px;font-weight:700;color:#64748b;">Tahun Ajaran:</label>
+                  <select id="grdAcademicYearSelect" class="grd-year-select" aria-label="Pilih Tahun Ajaran dan Arsip Nilai"></select>
+                  <button type="button" id="grdOpenYearManagerBtn" class="grd-btn grd-btn--secondary" style="display:none;min-height:36px;padding:0 12px;font-size:12px;">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    <span>Kelola Tahun &amp; Arsip</span>
+                  </button>
+                </div>
               </div>
               <div class="grd-ws-actions">
                 <button type="button" id="grdTogglePublishBtn" class="grd-btn grd-btn--amber">Wali Murid: Draft Internal</button>
@@ -3095,6 +3145,15 @@ html, body {
                   <span>Cetak Leger Matriks</span>
                 </button>
               </div>
+            </div>
+
+            <!-- Archive Read-Only Banner (shown automatically when viewing an archived academic year) -->
+            <div id="grdArchiveLockBanner" class="grd-archive-banner" style="display:none;" role="status">
+              <div style="display:flex;align-items:center;gap:9px;">
+                <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0;"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <span id="grdArchiveLockBannerText"><strong>Mode Arsip (Terkunci):</strong> Nilai tahun ajaran ini hanya dapat dilihat, diekspor, dan dicetak.</span>
+              </div>
+              <button type="button" id="grdQuickUnlockYearBtn" class="grd-btn grd-btn--secondary" style="display:none;min-height:34px;padding:0 12px;font-size:12px;">Buka Kunci Sementara</button>
             </div>
 
             <!-- 4 Official Assessment Period Pills (ASTS Ganjil, ASAS Ganjil, ASTS Genap, ASAS Genap) -->
@@ -3190,6 +3249,7 @@ html, body {
                     </div>
                     <div style="display:flex;flex-wrap:wrap;gap:8px;">
                       <button type="button" id="grdToggleRankingBtn" class="grd-btn grd-btn--soft">Peringkat: Ditampilkan</button>
+                      <button type="button" id="grdOpenPrintSettingsBtn" class="grd-btn grd-btn--secondary" style="display:none;">Atur Kop Cetak</button>
                       <button type="button" id="grdExportLegerCsvBtn" class="grd-btn grd-btn--secondary">Export CSV</button>
                       <button type="button" id="grdPrintLegerMatrixBtn" class="grd-btn grd-btn--primary">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
@@ -3238,31 +3298,130 @@ html, body {
             </div>
           </div>
 
-          <!-- MODAL ADMIN: ATUR LINK PORTAL RDM & PENGATURAN CETAK -->
+          <!-- MODAL ADMIN: ATUR TAUTAN PORTAL RDM (FOKUS LINK RDM SAJA, TANPA KKM - BUG 60) -->
           <div id="gradesRdmSettingsModal" class="modal-backdrop" style="display:none;align-items:center;justify-content:center;">
-            <div class="modal-card" style="max-width:480px;width:92%;padding:24px;border-radius:14px;">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #f1f5f9;">
-                <h3 style="margin:0;font-size:16.5px;font-weight:700;color:#0f172a;">Pengaturan Portal RDM &amp; Cetak Nilai</h3>
-                <button type="button" onclick="closeGradesRdmSettingsModal()" style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:20px;" aria-label="Tutup">&times;</button>
-              </div>
-              <div style="display:flex;flex-direction:column;gap:12px;">
-                <div class="grd-field">
-                  <label for="grdCfgRdmUrl">Alamat Link / Domain Portal RDM</label>
-                  <input id="grdCfgRdmUrl" type="url" class="grd-input" placeholder="Contoh: https://rdm.maattaujih.my.id" />
-                  <small style="display:block;margin-top:4px;font-size:11.5px;color:#64748b;">Hanya Admin yang dapat mengubah alamat link Portal RDM ini.</small>
+            <div class="grd-modal-card">
+              <div class="grd-modal-head">
+                <div class="grd-modal-head-left">
+                  <div class="grd-modal-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                  </div>
+                  <div>
+                    <h3 class="grd-modal-title">Atur Tautan Portal RDM</h3>
+                    <p class="grd-modal-sub">Konfigurasi alamat server Rapor Digital Madrasah (Khusus Admin)</p>
+                  </div>
                 </div>
-                <div class="grd-field">
-                  <label for="grdCfgPrincipalName">Nama Kepala Madrasah (Blok Tanda Tangan Cetak)</label>
+                <button type="button" class="grd-modal-close" onclick="closeGradesRdmSettingsModal()" aria-label="Tutup">&times;</button>
+              </div>
+              <div class="grd-modal-body">
+                <div>
+                  <label for="grdCfgRdmUrl" class="grd-modal-label">Alamat URL / Domain Portal RDM <span style="color:#ef4444;">*</span></label>
+                  <div class="grd-url-row">
+                    <div class="grd-url-input-wrap">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                      <input id="grdCfgRdmUrl" type="url" class="grd-input" placeholder="https://rdm.maattaujih.my.id" />
+                    </div>
+                    <button type="button" class="grd-btn grd-btn--secondary" style="min-height:40px;padding:0 12px;" onclick="testGradesRdmUrl()">
+                      <span>Uji Buka</span>
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    </button>
+                  </div>
+                  <small style="display:block;margin-top:6px;font-size:12px;color:#64748b;">Masukkan alamat domain atau IP server RDM madrasah yang aktif.</small>
+                </div>
+                <div class="grd-modal-callout">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                  <span>Tautan ini bersifat khusus <strong>Guru &amp; Operator</strong>. Saat tombol <strong>Buka Portal RDM</strong> diklik, portal RDM Kemenag akan dibuka pada tab browser baru.</span>
+                </div>
+              </div>
+              <div class="grd-modal-footer">
+                <button type="button" class="grd-btn grd-btn--secondary" onclick="closeGradesRdmSettingsModal()">Batal</button>
+                <button type="button" class="grd-btn grd-btn--primary" onclick="saveGradesRdmSettings()">Simpan Tautan RDM</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- MODAL ADMIN: KELOLA TAHUN AJARAN & ARSIP NILAI -->
+          <div id="gradesYearArchiveModal" class="modal-backdrop" style="display:none;align-items:center;justify-content:center;">
+            <div class="grd-modal-card grd-modal-card--wide">
+              <div class="grd-modal-head">
+                <div class="grd-modal-head-left">
+                  <div class="grd-modal-icon grd-modal-icon--emerald" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  </div>
+                  <div>
+                    <h3 class="grd-modal-title">Kelola Tahun Ajaran &amp; Arsip Nilai</h3>
+                    <p class="grd-modal-sub">Tambahkan tahun ajaran baru atau arsipkan tahun lama agar nilai historis terkunci aman</p>
+                  </div>
+                </div>
+                <button type="button" class="grd-modal-close" onclick="closeGradesYearManagerModal()" aria-label="Tutup">&times;</button>
+              </div>
+              <div class="grd-modal-body">
+                <div class="grd-year-form-box">
+                  <strong style="display:block;font-size:13.5px;color:#0f172a;margin-bottom:10px;">Tambah Tahun Ajaran Baru</strong>
+                  <div style="display:grid;grid-template-columns:160px minmax(0,1fr);gap:10px;margin-bottom:10px;">
+                    <div>
+                      <label for="grdNewYearId" class="grd-modal-label" style="font-size:12px;">Kode Tahun <span style="color:#ef4444;">*</span></label>
+                      <input id="grdNewYearId" type="text" class="grd-input" placeholder="2027/2028" maxlength="9" />
+                    </div>
+                    <div>
+                      <label for="grdNewYearName" class="grd-modal-label" style="font-size:12px;">Nama Label</label>
+                      <input id="grdNewYearName" type="text" class="grd-input" placeholder="Tahun Ajaran 2027/2028" />
+                    </div>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:7px;font-size:12.5px;color:#334155;margin-bottom:12px;">
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                      <input id="grdNewYearSetActive" type="checkbox" checked />
+                      <span>Jadikan sebagai <strong>Tahun Ajaran Aktif</strong> sekarang</span>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                      <input id="grdNewYearArchivePrev" type="checkbox" checked />
+                      <span>Otomatis <strong>Arsipkan &amp; Kunci</strong> tahun ajaran sebelumnya agar nilai lama tidak terubah</span>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                      <input id="grdNewYearCopySubjects" type="checkbox" checked />
+                      <span>Salin daftar <strong>Mata Pelajaran &amp; KKM</strong> dari tahun aktif sebelumnya</span>
+                    </label>
+                  </div>
+                  <div style="display:flex;justify-content:flex-end;">
+                    <button type="button" id="grdCreateYearBtn" class="grd-btn grd-btn--primary" style="min-height:38px;" onclick="createNewGradesAcademicYear()">+ Tambah Tahun Ajaran</button>
+                  </div>
+                </div>
+
+                <div>
+                  <strong style="display:block;font-size:13.5px;color:#0f172a;margin-bottom:8px;">Daftar Tahun Ajaran &amp; Status Arsip</strong>
+                  <div id="grdYearArchiveListHost" class="grd-year-list"></div>
+                </div>
+              </div>
+              <div class="grd-modal-footer">
+                <button type="button" class="grd-btn grd-btn--secondary" onclick="closeGradesYearManagerModal()">Tutup</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- MODAL ADMIN: PENGATURAN KOP CETAK LEGER / KHS (TERPISAH DARI RDM) -->
+          <div id="gradesPrintSettingsModal" class="modal-backdrop" style="display:none;align-items:center;justify-content:center;">
+            <div class="grd-modal-card">
+              <div class="grd-modal-head">
+                <div class="grd-modal-head-left">
+                  <div class="grd-modal-icon grd-modal-icon--emerald" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                  </div>
+                  <div>
+                    <h3 class="grd-modal-title">Pengaturan Cetak Leger &amp; KHS</h3>
+                    <p class="grd-modal-sub">Nama pejabat pada blok tanda tangan lembar cetak SIMATA</p>
+                  </div>
+                </div>
+                <button type="button" class="grd-modal-close" onclick="closeGradesPrintSettingsModal()" aria-label="Tutup">&times;</button>
+              </div>
+              <div class="grd-modal-body">
+                <div>
+                  <label for="grdCfgPrincipalName" class="grd-modal-label">Nama Kepala Madrasah (Blok Tanda Tangan)</label>
                   <input id="grdCfgPrincipalName" type="text" class="grd-input" value="Moch. Iqnaul Badril Falah, S.Ag" />
                 </div>
-                <div class="grd-field">
-                  <label for="grdCfgDefaultKkm">KKM Standar Madrasah (Default Mapel Baru)</label>
-                  <input id="grdCfgDefaultKkm" type="number" min="0" max="100" step="0.5" value="75" class="grd-input" />
-                </div>
               </div>
-              <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:18px;">
-                <button type="button" class="grd-btn grd-btn--secondary" onclick="closeGradesRdmSettingsModal()">Batal</button>
-                <button type="button" class="grd-btn grd-btn--primary" onclick="saveGradesRdmSettings()">Simpan Pengaturan</button>
+              <div class="grd-modal-footer">
+                <button type="button" class="grd-btn grd-btn--secondary" onclick="closeGradesPrintSettingsModal()">Batal</button>
+                <button type="button" class="grd-btn grd-btn--primary" onclick="saveGradesPrintSettings()">Simpan Pengaturan Cetak</button>
               </div>
             </div>
           </div>

@@ -17,20 +17,42 @@
   --grd-bg-subtle: #f8fafc;
 }
 
-/* 1. GATEWAY 2-CARD HUB (LEFT: SIMATA GRADES | RIGHT: PORTAL RDM) */
+/* 1. GATEWAY 2-CARD HUB (SYMMETRICAL SIMATA DESKTOP STANDARD - BUG 60) */
+.grd-gw-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
 .grd-gateway-subtitle {
   color: var(--grd-slate-600);
-  font-size: 14px;
+  font-size: 13.5px;
   margin: 4px 0 0;
-  max-width: 760px;
-  line-height: 1.55;
+  max-width: 680px;
+  line-height: 1.5;
+}
+
+.grd-gw-year-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: #ecfdf5;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .grd-gateway-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 22px;
-  margin-top: 20px;
+  gap: 20px;
   align-items: stretch;
 }
 
@@ -38,12 +60,11 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   background: var(--grd-surface);
   border: 1px solid var(--grd-border);
-  border-radius: 18px;
-  padding: 26px;
-  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
   transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
   overflow: hidden;
 }
@@ -52,11 +73,11 @@
   content: "";
   position: absolute;
   inset: 0 0 auto 0;
-  height: 5px;
+  height: 4px;
 }
 
 .grd-gateway-card--simata {
-  border-color: #86efac;
+  border-color: #bbf7d0;
 }
 .grd-gateway-card--simata::before {
   background: linear-gradient(90deg, #166534, #10b981);
@@ -68,48 +89,35 @@
 
 .grd-gateway-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
 }
 
-.grd-gw-badge {
-  display: inline-flex;
+.grd-gw-card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+}
+
+.grd-gw-card-head {
+  display: flex;
   align-items: center;
-  gap: 6px;
-  align-self: flex-start;
-  padding: 5px 11px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  margin-bottom: 16px;
-}
-
-.grd-gw-badge--emerald {
-  background: #dcfce7;
-  color: #166534;
-  border: 1px solid #bbf7d0;
-}
-
-.grd-gw-badge--slate {
-  background: #f1f5f9;
-  color: #334155;
-  border: 1px solid #cbd5e1;
+  gap: 14px;
+  margin-bottom: 14px;
 }
 
 .grd-gw-icon {
-  width: 54px;
-  height: 54px;
-  border-radius: 14px;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 16px;
+  flex-shrink: 0;
 }
 
 .grd-gw-icon svg {
-  width: 27px;
-  height: 27px;
+  width: 24px;
+  height: 24px;
   stroke: currentColor;
   fill: none;
   stroke-width: 2;
@@ -127,61 +135,108 @@
   border: 1px solid #cbd5e1;
 }
 
+.grd-gw-title-group {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+}
+
 .grd-gw-title {
-  font-size: 20px;
+  font-size: 18.5px;
   font-weight: 800;
   color: var(--grd-slate-900);
-  margin: 0 0 8px;
-  line-height: 1.3;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.grd-gw-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.grd-gw-badge--emerald {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.grd-gw-badge--slate {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
 }
 
 .grd-gw-desc {
   font-size: 13.5px;
   color: var(--grd-slate-600);
-  line-height: 1.6;
+  line-height: 1.55;
+  margin: 0 0 14px;
+}
+
+.grd-gw-checklist {
+  list-style: none;
+  padding: 0;
   margin: 0 0 16px;
-}
-
-.grd-gw-chips {
   display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-  margin-bottom: 16px;
+  flex-direction: column;
+  gap: 9px;
 }
 
-.grd-gw-chip {
-  font-size: 11.5px;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: #f0fdf4;
-  color: #166534;
-  border: 1px solid #bbf7d0;
-}
-
-.grd-gw-status-box {
-  background: #f8fafc;
-  border: 1px solid var(--grd-border);
-  border-radius: 12px;
-  padding: 12px 14px;
-  margin-bottom: 18px;
-  font-size: 12.5px;
+.grd-gw-checklist li {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 13px;
   color: var(--grd-slate-700);
-  line-height: 1.5;
+  line-height: 1.45;
 }
 
-.grd-gw-status-box--emerald {
-  background: #f0fdf4;
-  border-color: #bbf7d0;
+.grd-gw-check-icon {
+  width: 17px;
+  height: 17px;
+  margin-top: 1px;
+  flex-shrink: 0;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2.2;
 }
 
-.grd-gw-status-title {
+.grd-gw-checklist--emerald .grd-gw-check-icon {
+  color: #16a34a;
+}
+
+.grd-gw-checklist--slate .grd-gw-check-icon {
+  color: #0f766e;
+}
+
+.grd-gw-status-strip {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-weight: 700;
-  color: var(--grd-slate-900);
-  margin-bottom: 2px;
+  padding: 10px 13px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--grd-slate-700);
+  background: #f8fafc;
+  border: 1px solid var(--grd-border);
+  margin-top: auto;
+  margin-bottom: 18px;
+}
+
+.grd-gw-status-strip--emerald {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #14532d;
 }
 
 .grd-gw-dot {
@@ -196,7 +251,278 @@
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.grd-gw-footnote {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: #ffffff;
+  border: 1px solid var(--grd-border);
+  border-radius: 12px;
+  font-size: 12.5px;
+  color: var(--grd-slate-600);
+  line-height: 1.45;
+}
+
+.grd-gw-footnote svg {
+  width: 17px;
+  height: 17px;
+  stroke: #64748b;
+  fill: none;
+  stroke-width: 2;
+  flex-shrink: 0;
+}
+
+/* 1B. ACADEMIC YEAR SELECTOR BAR & ARCHIVE LOCK BANNER */
+.grd-year-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.grd-year-select {
+  min-height: 36px;
+  padding: 5px 11px;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  background: #ffffff;
+  color: var(--grd-slate-900);
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+}
+
+.grd-archive-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 12px 16px;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 12px;
+  color: #92400e;
+  font-size: 13px;
+}
+
+/* 1C. SIMATA STANDARD MODALS (RDM LINK, YEAR ARCHIVE, PRINT SETTINGS) */
+.grd-modal-card {
+  background: #ffffff;
+  width: 92%;
+  max-width: 480px;
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.22);
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.grd-modal-card--wide {
+  max-width: 640px;
+}
+
+.grd-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 22px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.grd-modal-head-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.grd-modal-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #f1f5f9;
+  color: #0f766e;
+  border: 1px solid #cbd5e1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.grd-modal-icon--emerald {
+  background: #ecfdf5;
+  color: #166534;
+  border-color: #bbf7d0;
+}
+
+.grd-modal-icon svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+}
+
+.grd-modal-title {
+  margin: 0;
+  font-size: 16.5px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.25;
+}
+
+.grd-modal-sub {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.grd-modal-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 19px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.grd-modal-close:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.grd-modal-body {
+  padding: 20px 22px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.grd-modal-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 6px;
+}
+
+.grd-url-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.grd-url-input-wrap {
+  position: relative;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.grd-url-input-wrap svg {
+  position: absolute;
+  left: 12px;
+  width: 16px;
+  height: 16px;
+  stroke: #64748b;
+  fill: none;
+  stroke-width: 2;
+  pointer-events: none;
+}
+
+.grd-url-input-wrap .grd-input {
+  padding-left: 36px;
+}
+
+.grd-modal-callout {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 11px;
+  font-size: 12.5px;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.grd-modal-callout svg {
+  width: 17px;
+  height: 17px;
+  stroke: #475569;
+  fill: none;
+  stroke-width: 2;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.grd-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 22px;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+}
+
+.grd-year-form-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.grd-year-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.grd-year-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.grd-year-item--active {
+  border-color: #86efac;
+  background: #f0fdf4;
+}
+
+.grd-year-item--archived {
+  border-color: #fde68a;
+  background: #fffbeb;
 }
 
 /* 2. SHARED BUTTONS */

@@ -1359,6 +1359,31 @@
       });
       return { success: true, message: res.message, data: res.data };
     },
+    getGradesAcademicYears: async function () {
+      const res = await apiFetch('/grades/academic-years');
+      return { success: true, data: res.data };
+    },
+    createGradesAcademicYear: async function (payload = {}) {
+      const res = await apiFetch('/grades/academic-years', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+      return { success: true, message: res.message, data: res.data };
+    },
+    setGradesYearArchive: async function (payload = {}) {
+      const res = await apiFetch('/grades/academic-years/archive', {
+        method: 'PUT',
+        body: JSON.stringify(payload)
+      });
+      return { success: true, message: res.message, data: res.data };
+    },
+    activateGradesAcademicYear: async function (payload = {}) {
+      const res = await apiFetch('/grades/academic-years/activate', {
+        method: 'PUT',
+        body: JSON.stringify(payload)
+      });
+      return { success: true, message: res.message, data: res.data };
+    },
     getGrades: async function (filters) {
       const res = await this.getGradesOverview(filters || {});
       return { success: true, grades: (res.data && res.data.matrix) || [], data: res.data };
