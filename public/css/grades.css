@@ -1124,26 +1124,31 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 10px 14px;
-  padding: 14px 18px;
+  flex-wrap: nowrap;
+  gap: 12px;
+  padding: 13px 16px;
   border-bottom: 1px solid #f1f5f9;
 }
 
 .grd-sheet-toolbar-left {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 10px;
+  flex: 1 1 0;
   min-width: 0;
 }
 
 .grd-active-subject-title {
   margin: 0;
-  font-size: 18px;
+  font-size: 16.5px;
   font-weight: 800;
   color: #0f172a;
   letter-spacing: -0.01em;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .grd-kkm-inline {
@@ -1157,6 +1162,7 @@
   font-size: 12px;
   font-weight: 700;
   color: #475569;
+  flex-shrink: 0;
 }
 
 .grd-kkm-input {
@@ -1182,13 +1188,14 @@
 .grd-sheet-toolbar-right {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
   gap: 8px;
 }
 
 .grd-search-wrap {
   position: relative;
-  width: 190px;
+  width: 155px;
 }
 
 .grd-search-input {
@@ -1981,9 +1988,14 @@
   }
   .grd-sheet-toolbar {
     padding: 12px 14px;
+    flex-wrap: wrap;
+  }
+  .grd-sheet-toolbar-left {
+    flex: 1 1 100%;
   }
   .grd-sheet-toolbar-right {
     width: 100%;
+    flex-wrap: wrap;
   }
   .grd-search-wrap {
     width: 100%;

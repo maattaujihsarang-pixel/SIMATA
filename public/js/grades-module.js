@@ -442,7 +442,9 @@
 
     const activeSubjObj = allSubjects.find(function (s) { return s.subject_code === state.subjectCode; }) || allSubjects[0];
     if (activeTitleEl) {
-      activeTitleEl.textContent = activeSubjObj ? activeSubjObj.subject_name : 'Pilih Mata Pelajaran';
+      const titleName = activeSubjObj ? activeSubjObj.subject_name : 'Pilih Mata Pelajaran';
+      activeTitleEl.textContent = titleName;
+      activeTitleEl.title = titleName;
     }
 
     const isArchived = Boolean(ov.is_year_archived);
