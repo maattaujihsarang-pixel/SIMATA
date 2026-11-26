@@ -317,7 +317,7 @@
       if (quickUnlockBtn) quickUnlockBtn.style.display = (isArchived && isAdmin) ? 'inline-flex' : 'none';
     }
 
-    // Publish toggle button
+    // Publish toggle switch ("Bagikan ke Wali")
     const pubBtn = document.getElementById('grdTogglePublishBtn');
     const expBtn = document.getElementById('grdExportRdmCsvBtn');
     const prtLegerTopBtn = document.getElementById('grdTopPrintLegerBtn');
@@ -328,28 +328,32 @@
         pubBtn.style.display = 'inline-flex';
         pubBtn.disabled = isArchived;
         const isPub = Boolean(ov.selected_period && ov.selected_period.is_published);
-        pubBtn.className = 'grd-btn ' + (isPub ? 'grd-btn--soft' : 'grd-btn--amber');
-        pubBtn.innerHTML = isPub
-          ? '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span>Wali Murid: Diterbitkan</span>'
-          : '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span>Wali Murid: Draft Internal</span>';
+        pubBtn.className = 'grd-pub-toggle';
+        pubBtn.setAttribute('aria-pressed', isPub ? 'true' : 'false');
+        pubBtn.title = isPub
+          ? 'Nilai periode ini sedang dibagikan ke Wali Murid. Klik untuk menyembunyikan.'
+          : 'Aktifkan untuk membagikan nilai periode ini ke akun Orang Tua / Wali Murid.';
+        pubBtn.innerHTML =
+          '<span class="grd-pub-toggle-label">Bagikan ke Wali</span>' +
+          '<span class="grd-switch-track" aria-hidden="true"><span class="grd-switch-thumb"></span></span>';
       }
     }
     if (expBtn) expBtn.style.display = isParent ? 'none' : 'inline-flex';
     if (prtLegerTopBtn) prtLegerTopBtn.style.display = isParent ? 'none' : 'inline-flex';
 
-    // Render 4 pure Period Pills (ASTS Ganjil, ASAS Ganjil, ASTS Genap, ASAS Genap)
+    // Render 4 pure Period Pills inside unified navigation bar
     const periodStrip = document.getElementById('grdPeriodStrip');
     if (periodStrip) {
       periodStrip.innerHTML = (ov.periods || []).map(function (p) {
         const active = p.code === state.periodCode;
-        const pubDot = p.is_published ? '<span class="grd-period-pub-dot" title="Sudah diterbitkan ke Wali Murid"></span>' : '';
-        const countBadge = !isParent
-          ? '<span class="grd-period-pill-count">' + p.completed_subjects + '/' + p.total_subjects + '</span>'
-          : '';
-        return '<button type="button" class="grd-period-pill' + (active ? ' is-active' : '') + '" data-period="' + esc(p.code) + '">' +
-          pubDot +
+        const dotHtml = active
+          ? '<span class="grd-period-active-dot" aria-hidden="true"></span>'
+          : (p.is_published ? '<span class="grd-period-pub-dot" title="Sudah dibagikan ke Wali Murid"></span>' : '');
+        const titleTxt = p.short_label + (p.is_published ? ' (Dibagikan ke Wali)' : '') +
+          (!isParent ? (' \u2022 ' + p.completed_subjects + '/' + p.total_subjects + ' mapel terisi') : '');
+        return '<button type="button" class="grd-period-pill' + (active ? ' is-active' : '') + '" data-period="' + esc(p.code) + '" title="' + esc(titleTxt) + '">' +
+          dotHtml +
           '<span>' + esc(p.short_label) + '</span>' +
-          countBadge +
         '</button>';
       }).join('');
     }
@@ -365,7 +369,10 @@
 
     const classSel = document.getElementById('grdInputClassSelect');
     const subjSel = document.getElementById('grdInputSubjectSelect');
+    const subjListEl = document.getElementById('grdSubjectList');
+    const activeTitleEl = document.getElementById('grdActiveSubjectTitle');
     const kkmInput = document.getElementById('grdInputKkm');
+    const activeStudentCount = (ov.matrix || []).length;
 
     if (classSel) {
       const assignedClassIds = new Set(
@@ -374,40 +381,69 @@
       classSel.innerHTML = (ov.classes || []).map(function (c) {
         const star = assignedClassIds.has(c.class_id) ? ' \u2605' : '';
         const sel = c.class_id === state.classId ? ' selected' : '';
-        return '<option value="' + esc(c.class_id) + '"' + sel + '>' + esc(c.class_name + star) + '</option>';
+        const countSuffix = c.class_id === state.classId
+          ? (' (' + activeStudentCount + ' Siswa)')
+          : (c.student_count ? (' (' + c.student_count + ' Siswa)') : '');
+        return '<option value="' + esc(c.class_id) + '"' + sel + '>' + esc(c.class_name + countSuffix + star) + '</option>';
       }).join('');
     }
 
-    if (subjSel) {
-      const mySubjects = (ov.subjects || []).filter(function (s) { return s.is_my_subject; });
-      const otherSubjects = (ov.subjects || []).filter(function (s) { return !s.is_my_subject; });
+    const allSubjects = ov.subjects || [];
+    const mySubjects = allSubjects.filter(function (s) { return s.is_my_subject; });
+    const otherSubjects = allSubjects.filter(function (s) { return !s.is_my_subject; });
+    const orderedSubjects = mySubjects.concat(otherSubjects);
 
+    if (subjSel) {
       const renderOpt = function (s) {
         const sel = s.subject_code === state.subjectCode ? ' selected' : '';
         const statusMark = s.is_complete ? ' \u2713' : ' (' + s.filled_count + '/' + s.student_count + ')';
         const prefix = s.is_my_subject ? '\u2605 ' : '';
         return '<option value="' + esc(s.subject_code) + '"' + sel + '>' +
-          esc(prefix + s.subject_code + ' \u2014 ' + s.subject_name + statusMark) +
+          esc(prefix + s.subject_name + statusMark) +
         '</option>';
       };
 
       if (mySubjects.length > 0 && otherSubjects.length > 0) {
         subjSel.innerHTML =
-          '<optgroup label="Mapel Jadwal Saya (Otomatis)">' + mySubjects.map(renderOpt).join('') + '</optgroup>' +
-          '<optgroup label="Mata Pelajaran Lain di Kelas Ini">' + otherSubjects.map(renderOpt).join('') + '</optgroup>';
+          '<optgroup label="Mapel Jadwal Saya">' + mySubjects.map(renderOpt).join('') + '</optgroup>' +
+          '<optgroup label="Mata Pelajaran Lain">' + otherSubjects.map(renderOpt).join('') + '</optgroup>';
       } else {
-        subjSel.innerHTML = (ov.subjects || []).map(renderOpt).join('');
+        subjSel.innerHTML = orderedSubjects.map(renderOpt).join('');
       }
     }
 
+    if (subjListEl) {
+      subjListEl.innerHTML = orderedSubjects.map(function (s) {
+        const isActive = s.subject_code === state.subjectCode;
+        const filled = Number(s.filled_count || 0);
+        const total = Number(s.student_count || activeStudentCount || 0);
+        const isComplete = Boolean(s.is_complete && total > 0);
+        const pillCls = isComplete ? 'is-complete' : (filled > 0 ? 'is-partial' : 'is-empty');
+        const pillTxt = filled + '/' + total + (isComplete ? ' \u2713' : '');
+        const starHtml = s.is_my_subject ? '<span class="grd-subject-star" title="Jadwal mengajar Anda">\u2605</span>' : '';
+        return '<button type="button" role="option" aria-selected="' + (isActive ? 'true' : 'false') + '" class="grd-subject-item' + (isActive ? ' is-active' : '') + '" data-select-subject="' + esc(s.subject_code) + '" title="' + esc(s.subject_name) + '">' +
+          '<span class="grd-subject-name">' + starHtml + esc(s.subject_name) + '</span>' +
+          '<span class="grd-subject-pill ' + pillCls + '">' + esc(pillTxt) + '</span>' +
+        '</button>';
+      }).join('');
+    }
+
+    const activeSubjObj = allSubjects.find(function (s) { return s.subject_code === state.subjectCode; }) || allSubjects[0];
+    if (activeTitleEl) {
+      activeTitleEl.textContent = activeSubjObj ? activeSubjObj.subject_name : 'Pilih Mata Pelajaran';
+    }
+
+    const isArchived = Boolean(ov.is_year_archived);
     if (kkmInput) {
       kkmInput.value = state.kkmDraft;
-      kkmInput.disabled = Boolean(ov.is_year_archived);
+      kkmInput.disabled = isArchived;
     }
     const pasteBtn = document.getElementById('grdOpenPasteModalBtn');
     const saveBtn = document.getElementById('grdSaveBatchBtn');
-    if (pasteBtn) pasteBtn.disabled = Boolean(ov.is_year_archived);
-    if (saveBtn) saveBtn.disabled = Boolean(ov.is_year_archived);
+    const mobSaveBtn = document.querySelector('[data-trigger-save-grades]');
+    if (pasteBtn) pasteBtn.disabled = isArchived;
+    if (saveBtn) saveBtn.disabled = isArchived;
+    if (mobSaveBtn) mobSaveBtn.disabled = isArchived;
 
     renderInputMasteryStrip();
     renderInputGridRows();
@@ -417,14 +453,13 @@
     const host = document.getElementById('grdInputMasteryStrip');
     if (!host || !state.overview) return;
 
-    const rows = state.overview.matrix || [];
+    const ov = state.overview;
+    const rows = ov.matrix || [];
     const kkm = Number(state.kkmDraft || 75);
     let filled = 0;
     let sum = 0;
     let tuntas = 0;
     let remedial = 0;
-    let maxVal = null;
-    const dist = { A: 0, B: 0, C: 0, D: 0 };
 
     rows.forEach(function (r) {
       const d = state.draftScores[r.student_id];
@@ -432,62 +467,82 @@
       if (num !== null && !Number.isNaN(num)) {
         filled++;
         sum += num;
-        if (maxVal === null || num > maxVal) maxVal = num;
         const pr = calcPredicate(num, kkm);
         if (pr.tuntas) tuntas++;
         else remedial++;
-        if (dist[pr.p] !== undefined) dist[pr.p]++;
       }
     });
 
     const totalStudents = rows.length;
     const avg = filled > 0 ? (sum / filled) : 0;
-    const pctTuntas = filled > 0 ? Math.round((tuntas / filled) * 100) : 0;
-    const radius = 27;
-    const circ = 2 * Math.PI * radius;
-    const dash = (pctTuntas / 100) * circ;
-
-    const denom = Math.max(1, filled);
-    const pA = (dist.A / denom) * 100;
-    const pB = (dist.B / denom) * 100;
-    const pC = (dist.C / denom) * 100;
-    const pD = (dist.D / denom) * 100;
+    const activeSubj = (ov.subjects || []).find(function (s) { return s.subject_code === state.subjectCode; });
+    const subjName = activeSubj ? activeSubj.subject_name : '-';
+    const clsName = ov.selected_class ? ov.selected_class.class_name : '';
+    const periodObj = ov.selected_period || {};
+    const completedSubjects = (ov.subjects || []).filter(function (s) { return s.is_complete; }).length;
+    const totalSubjects = (ov.subjects || []).length;
+    const classDoneSub = totalSubjects > 0 && completedSubjects >= totalSubjects
+      ? esc(periodObj.short_label || 'Periode') + ' lengkap \u2713'
+      : (completedSubjects > 0 ? (completedSubjects + ' mapel selesai diisi') : 'Belum ada mapel selesai');
+    const belumSub = filled === 0
+      ? 'Belum ada nilai terisi'
+      : (remedial === 0 ? 'Semua siswa tuntas \u2713' : 'Perlu pendampingan');
 
     host.innerHTML =
-      '<div class="grd-mastery-box">' +
-        '<div class="grd-donut-wrap" aria-hidden="true">' +
-          '<svg viewBox="0 0 68 68">' +
-            '<circle cx="34" cy="34" r="' + radius + '" stroke="#e2e8f0" stroke-width="7" fill="none"></circle>' +
-            '<circle cx="34" cy="34" r="' + radius + '" stroke="#16a34a" stroke-width="7" fill="none" stroke-linecap="round" stroke-dasharray="' + dash.toFixed(1) + ' ' + circ.toFixed(1) + '"></circle>' +
-          '</svg>' +
-          '<span class="grd-donut-label">' + pctTuntas + '%</span>' +
+      '<div class="grd-kpi-grid">' +
+        '<div class="grd-kpi-card">' +
+          '<div class="grd-kpi-icon grd-kpi-icon--emerald" aria-hidden="true">' +
+            '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><line x1="8" y1="16" x2="8" y2="11"/><line x1="12" y1="16" x2="12" y2="8"/><line x1="16" y1="16" x2="16" y2="13"/></svg>' +
+          '</div>' +
+          '<div class="grd-kpi-body">' +
+            '<div class="grd-kpi-label">Rata-rata Mapel</div>' +
+            '<div class="grd-kpi-value">' + (filled > 0 ? fmtScore(avg, 1) : '-') + '</div>' +
+            '<div class="grd-kpi-sub" title="' + esc(subjName + ' • ' + clsName) + '">' + esc(subjName) + (clsName ? ' &bull; ' + esc(clsName) : '') + '</div>' +
+          '</div>' +
         '</div>' +
-        '<div class="grd-mastery-stats">' +
-          '<div class="grd-stat-chips">' +
-            '<span class="grd-chip grd-chip--emerald">Rata-rata: ' + (filled > 0 ? fmtScore(avg, 1) : '-') + '</span>' +
-            '<span class="grd-chip grd-chip--emerald">Tuntas (&ge;' + fmtScore(kkm, 1) + '): ' + tuntas + '</span>' +
-            '<span class="grd-chip grd-chip--amber">Remedial (&lt;' + fmtScore(kkm, 1) + '): ' + remedial + '</span>' +
-            '<span class="grd-chip grd-chip--slate">Terisi: ' + filled + '/' + totalStudents + (maxVal !== null ? ' &bull; Max: ' + fmtScore(maxVal, 1) : '') + '</span>' +
+        '<div class="grd-kpi-card">' +
+          '<div class="grd-kpi-icon grd-kpi-icon--teal" aria-hidden="true">' +
+            '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="9 12 11 14 15 10"/></svg>' +
           '</div>' +
-          '<div class="grd-seg-bar" role="img" aria-label="Distribusi predikat A B C D">' +
-            '<div class="grd-seg-a" style="width:' + pA + '%"></div>' +
-            '<div class="grd-seg-b" style="width:' + pB + '%"></div>' +
-            '<div class="grd-seg-c" style="width:' + pC + '%"></div>' +
-            '<div class="grd-seg-d" style="width:' + pD + '%"></div>' +
+          '<div class="grd-kpi-body">' +
+            '<div class="grd-kpi-label">Tuntas (&ge; ' + fmtScore(kkm, 1) + ')</div>' +
+            '<div class="grd-kpi-value">' + tuntas + ' Siswa</div>' +
+            '<div class="grd-kpi-sub">Dari ' + totalStudents + ' siswa</div>' +
           '</div>' +
-          '<div class="grd-seg-legend">' +
-            '<span><strong style="color:#16a34a;">A</strong>: ' + dist.A + '</span>' +
-            '<span><strong style="color:#0284c7;">B</strong>: ' + dist.B + '</span>' +
-            '<span><strong style="color:#d97706;">C</strong>: ' + dist.C + '</span>' +
-            '<span><strong style="color:#dc2626;">D</strong>: ' + dist.D + '</span>' +
+        '</div>' +
+        '<div class="grd-kpi-card">' +
+          '<div class="grd-kpi-icon grd-kpi-icon--amber" aria-hidden="true">' +
+            '<svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><polyline points="9 14 12 17 15 14"/></svg>' +
+          '</div>' +
+          '<div class="grd-kpi-body">' +
+            '<div class="grd-kpi-label">Belum Tuntas</div>' +
+            '<div class="grd-kpi-value">' + remedial + ' Siswa</div>' +
+            '<div class="grd-kpi-sub">' + belumSub + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="grd-kpi-card">' +
+          '<div class="grd-kpi-icon grd-kpi-icon--sky" aria-hidden="true">' +
+            '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>' +
+          '</div>' +
+          '<div class="grd-kpi-body">' +
+            '<div class="grd-kpi-label">Kelengkapan Kelas</div>' +
+            '<div class="grd-kpi-value">' + completedSubjects + ' / ' + totalSubjects + ' Mapel</div>' +
+            '<div class="grd-kpi-sub">' + classDoneSub + '</div>' +
           '</div>' +
         '</div>' +
       '</div>';
   }
 
+  function updateSaveButtonLabels() {
+    const labelText = state.dirty ? 'Simpan Nilai *' : 'Simpan Nilai';
+    const saveCountEl = document.getElementById('grdSaveBtnLabel');
+    if (saveCountEl) saveCountEl.textContent = labelText;
+    const mobLbl = document.querySelector('.grd-mobile-save-label');
+    if (mobLbl) mobLbl.textContent = labelText;
+  }
+
   function renderInputGridRows() {
     const tbody = document.getElementById('grdInputTbody');
-    const saveCountEl = document.getElementById('grdSaveBtnLabel');
     if (!tbody || !state.overview) return;
 
     const kkm = Number(state.kkmDraft || 75);
@@ -499,17 +554,10 @@
         })
       : allRows;
 
-    if (saveCountEl) {
-      const filledTotal = allRows.filter(function (r) {
-        const d = state.draftScores[r.student_id];
-        const v = d ? parseInputScore(d.scoreStr) : null;
-        return v !== null && !Number.isNaN(v);
-      }).length;
-      saveCountEl.textContent = 'Simpan Nilai Kelas (' + filledTotal + '/' + allRows.length + ')';
-    }
+    updateSaveButtonLabels();
 
     if (filtered.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:26px;color:#64748b;">Tidak ada siswa yang cocok dengan pencarian.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:28px;color:#64748b;">Tidak ada siswa yang cocok dengan pencarian.</td></tr>';
       return;
     }
 
@@ -524,17 +572,16 @@
       const statusBadge = pr.tuntas === true
         ? '<span class="grd-chip grd-chip--emerald">' + pr.p + ' &bull; Tuntas</span>'
         : (pr.tuntas === false
-            ? '<span class="grd-chip grd-chip--amber">' + pr.p + ' &bull; Remedial</span>'
+            ? '<span class="grd-chip grd-chip--amber">' + pr.p + ' &bull; Belum Tuntas</span>'
             : '<span class="grd-chip grd-chip--slate">Kosong</span>');
 
       return '<tr class="grd-input-row" data-student-id="' + esc(r.student_id) + '">' +
-        '<td class="grd-td-no" style="width:44px;text-align:center;color:#64748b;">' + r.row_no + '</td>' +
-        '<td class="grd-td-nis" style="font-family:monospace;font-size:12px;color:#475569;">' + esc(r.nis) + '</td>' +
-        '<td class="grd-td-student"><div style="font-weight:700;color:#0f172a;">#' + r.row_no + ' ' + esc(r.name) + '</div><div style="font-size:11.5px;color:#64748b;">NIS: ' + esc(r.nis) + '</div></td>' +
+        '<td class="grd-td-no" style="width:48px;text-align:center;color:#475569;font-variant-numeric:tabular-nums;">' + r.row_no + '</td>' +
+        '<td class="grd-td-nis" style="font-family:\'Roboto Mono\',monospace;font-size:12.5px;color:#334155;">' + esc(r.nis) + '</td>' +
+        '<td class="grd-td-student"><div class="grd-student-name-main">' + esc(r.name) + '</div><div class="grd-mobile-nis-sub">#' + r.row_no + ' &bull; NIS: ' + esc(r.nis) + '</div></td>' +
         '<td class="grd-td-score"><input type="text" inputmode="decimal" class="grd-score-input' + inpCls + '" data-score-for="' + esc(r.student_id) + '" value="' + esc(d.scoreStr) + '" placeholder="0-100" aria-label="Nilai ' + esc(r.name) + '"' + disAttr + ' /></td>' +
-        '<td class="grd-td-pred" data-pred-cell="' + esc(r.student_id) + '" style="font-weight:700;">' + (pr.p !== '-' ? (pr.p + ' <span style="font-weight:500;color:#64748b;font-size:12px;">(' + pr.label + ')</span>') : '<span style="color:#94a3b8;">-</span>') + '</td>' +
         '<td class="grd-td-status" data-status-cell="' + esc(r.student_id) + '">' + statusBadge + '</td>' +
-        '<td class="grd-td-remark"><input type="text" class="grd-remark-input" data-remark-for="' + esc(r.student_id) + '" value="' + esc(d.remarks) + '" placeholder="Catatan / apresiasi singkat (opsional)" aria-label="Catatan untuk ' + esc(r.name) + '"' + disAttr + ' /></td>' +
+        '<td class="grd-td-remark"><input type="text" class="grd-remark-input" data-remark-for="' + esc(r.student_id) + '" value="' + esc(d.remarks) + '" placeholder="Opsional..." aria-label="Catatan untuk ' + esc(r.name) + '"' + disAttr + ' /></td>' +
       '</tr>';
     }).join('');
   }
@@ -550,31 +597,16 @@
       inp.classList.toggle('is-tuntas', pr.tuntas === true);
       inp.classList.toggle('is-remedial', pr.tuntas === false);
     }
-    const predCell = document.querySelector('#grdInputTbody [data-pred-cell="' + studentId + '"]');
-    if (predCell) {
-      predCell.innerHTML = pr.p !== '-'
-        ? (pr.p + ' <span style="font-weight:500;color:#64748b;font-size:12px;">(' + pr.label + ')</span>')
-        : '<span style="color:#94a3b8;">-</span>';
-    }
     const stCell = document.querySelector('#grdInputTbody [data-status-cell="' + studentId + '"]');
     if (stCell) {
       stCell.innerHTML = pr.tuntas === true
         ? '<span class="grd-chip grd-chip--emerald">' + pr.p + ' &bull; Tuntas</span>'
         : (pr.tuntas === false
-            ? '<span class="grd-chip grd-chip--amber">' + pr.p + ' &bull; Remedial</span>'
+            ? '<span class="grd-chip grd-chip--amber">' + pr.p + ' &bull; Belum Tuntas</span>'
             : '<span class="grd-chip grd-chip--slate">Kosong</span>');
     }
     renderInputMasteryStrip();
-    const saveCountEl = document.getElementById('grdSaveBtnLabel');
-    if (saveCountEl && state.overview) {
-      const allRows = state.overview.matrix || [];
-      const filledTotal = allRows.filter(function (r) {
-        const item = state.draftScores[r.student_id];
-        const v = item ? parseInputScore(item.scoreStr) : null;
-        return v !== null && !Number.isNaN(v);
-      }).length;
-      saveCountEl.textContent = 'Simpan Nilai Kelas (' + filledTotal + '/' + allRows.length + ')';
-    }
+    updateSaveButtonLabels();
   }
 
   function saveCurrentSubjectBatch() {
@@ -800,8 +832,8 @@
     const previewBtn = document.getElementById('grdToggleParentPreviewBtn');
     if (previewBtn) {
       previewBtn.style.display = isParent ? 'none' : 'inline-flex';
-      previewBtn.className = 'grd-btn ' + (state.parentPreviewMode ? 'grd-btn--soft' : 'grd-btn--secondary');
-      previewBtn.innerHTML = '<span>' + (state.parentPreviewMode ? '\u2713 Mode Pratinjau Wali Murid Aktif' : 'Pratinjau Mode Wali Murid') + '</span>';
+      previewBtn.className = 'grd-btn grd-btn--compact ' + (state.parentPreviewMode ? 'grd-btn--soft' : 'grd-btn--secondary');
+      previewBtn.innerHTML = '<span>' + (state.parentPreviewMode ? '\u2713 Tampilan Wali Aktif' : 'Lihat Tampilan Wali') + '</span>';
     }
 
     const rankKhsBtn = document.getElementById('grdKhsToggleRankingBtn');
@@ -853,7 +885,7 @@
         '<div class="grd-card" style="text-align:center;padding:36px 20px;">' +
           '<span class="grd-chip grd-chip--amber" style="margin-bottom:10px;">Belum Diterbitkan</span>' +
           '<h3 style="margin:6px 0;color:#0f172a;">Hasil ' + esc(khs.selected_period.short_label) + ' Masih Dalam Proses Rekap Guru</h3>' +
-          '<p style="color:#64748b;font-size:13.5px;max-width:520px;margin:0 auto;">Pada tampilan Wali Murid, nilai hanya muncul setelah periode asesmen ini diaktifkan saklar <strong>Diterbitkan ke Wali Murid</strong>.</p>' +
+          '<p style="color:#64748b;font-size:13.5px;max-width:520px;margin:0 auto;">Pada tampilan Wali Murid, nilai hanya muncul setelah periode ini diaktifkan melalui tombol <strong>Bagikan ke Wali</strong>.</p>' +
         '</div>';
       return;
     }
@@ -876,7 +908,7 @@
       const clsAvg = khs.subject_averages ? khs.subject_averages[s.subject_code] : null;
       const badge = c.is_tuntas === true
         ? '<span class="grd-chip grd-chip--emerald">Tuntas</span>'
-        : (c.is_tuntas === false ? '<span class="grd-chip grd-chip--amber">Remedial</span>' : '<span class="grd-chip grd-chip--slate">-</span>');
+        : (c.is_tuntas === false ? '<span class="grd-chip grd-chip--amber">Belum Tuntas</span>' : '<span class="grd-chip grd-chip--slate">-</span>');
       return '<tr>' +
         '<td style="text-align:center;color:#64748b;">' + (idx + 1) + '</td>' +
         '<td style="font-weight:600;">' + esc(s.subject_name) + ' <span style="color:#94a3b8;font-size:11.5px;">(' + esc(s.subject_code) + ')</span></td>' +
@@ -1237,7 +1269,18 @@
         return;
       }
 
-      const saveBtn = e.target.closest('#grdSaveBatchBtn');
+      const subjItemBtn = e.target.closest('.grd-subject-item[data-select-subject]');
+      if (subjItemBtn) {
+        const nextSubj = subjItemBtn.getAttribute('data-select-subject');
+        if (nextSubj && nextSubj !== state.subjectCode) {
+          state.subjectCode = nextSubj;
+          syncDraftFromOverview();
+          renderInputPanel();
+        }
+        return;
+      }
+
+      const saveBtn = e.target.closest('#grdSaveBatchBtn, [data-trigger-save-grades]');
       if (saveBtn) {
         saveCurrentSubjectBatch();
         return;
@@ -1258,8 +1301,8 @@
         const currentlyPub = Boolean(state.overview.selected_period.is_published);
         const nextPub = !currentlyPub;
         const msg = nextPub
-          ? 'Terbitkan nilai ' + state.overview.selected_period.short_label + ' agar dapat dilihat pada tampilan Orang Tua / Wali Murid?'
-          : 'Kembalikan periode ' + state.overview.selected_period.short_label + ' ke mode Draft Internal?';
+          ? 'Bagikan nilai ' + state.overview.selected_period.short_label + ' agar dapat dilihat oleh Orang Tua / Wali Murid?'
+          : 'Sembunyikan kembali nilai ' + state.overview.selected_period.short_label + ' dari tampilan Orang Tua / Wali Murid?';
         if (!confirm(msg)) return;
         simataClient
           .withSuccessHandler(function (res) {
@@ -1384,6 +1427,7 @@
         const v = parseInputScore(e.target.value);
         if (v !== null && !Number.isNaN(v)) {
           state.kkmDraft = v;
+          state.dirty = true;
           renderInputMasteryStrip();
           renderInputGridRows();
         }
@@ -1405,6 +1449,7 @@
         if (!state.draftScores[sid2]) state.draftScores[sid2] = { scoreStr: '', remarks: '' };
         state.draftScores[sid2].remarks = e.target.value;
         state.dirty = true;
+        updateSaveButtonLabels();
       } else if (e.target.id === 'grdStudentSearchInput') {
         state.studentSearch = e.target.value;
         renderInputGridRows();

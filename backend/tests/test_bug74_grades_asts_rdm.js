@@ -51,6 +51,9 @@ async function runBug74Tests() {
   assert.ok(html.includes('id="grdAcademicYearSelect"') && html.includes('id="gradesYearArchiveModal"'), 'Missing Academic Year selector & Archive modal');
   assert.ok(!html.includes('id="grdCfgDefaultKkm"'), 'KKM Standar Madrasah must be removed from RDM settings modal');
   assert.ok(html.includes('testGradesRdmUrl()') && html.includes('grd-gw-checklist'), 'Missing redesigned symmetrical gateway & Uji Buka button');
+  assert.ok(html.includes('id="grdSubjectList"') && html.includes('grd-nav-unified-bar') && html.includes('grd-pub-toggle'), 'Missing Option 4 unified bar, publish toggle switch, or 1-click subject sidebar');
+  assert.ok(!html.includes('Soft-Filter Guru') && !html.includes('Draft Internal'), 'Technical jargon Soft-Filter Guru / Draft Internal must not appear in workspace HTML');
+  assert.ok(gradesJs.includes('grd-kpi-grid') && gradesJs.includes('data-select-subject'), 'Missing Option 4 4-card KPI grid or clickable sidebar subjects in grades-module.js');
   assert.ok(html.includes('focusgroup="tablist nomemory"'), 'Sub-tabs must use accessible focusgroup tablist');
   assert.ok(gradesJs.includes('NILAI RATA-RATA SATU KELAS / MAPEL') && gradesJs.includes('MADRASAH ALIYAH AT-TAUJIH'), 'Missing official Madrasah Excel Leger print layout');
   assert.ok(gradesCss.includes('@container grd-input-grid (width < 640px)'), 'Missing mobile container query cards for grade input');
