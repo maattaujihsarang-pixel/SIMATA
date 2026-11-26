@@ -319,12 +319,12 @@
       if (quickUnlockBtn) quickUnlockBtn.style.display = (isArchived && isAdmin) ? 'inline-flex' : 'none';
     }
 
-    // Publish toggle switch ("Bagikan ke Wali")
+    // Publish toggle switch ("Bagikan ke Wali") — Admin-only control
     const pubBtn = document.getElementById('grdTogglePublishBtn');
     const expBtn = document.getElementById('grdExportRdmCsvBtn');
     const prtLegerTopBtn = document.getElementById('grdTopPrintLegerBtn');
     if (pubBtn) {
-      if (isParent) {
+      if (!isAdmin) {
         pubBtn.style.display = 'none';
       } else {
         pubBtn.style.display = 'inline-flex';
@@ -395,11 +395,16 @@
     const otherSubjects = allSubjects.filter(function (s) { return !s.is_my_subject; });
     const orderedSubjects = mySubjects.concat(otherSubjects);
 
+    const isAdmin = Boolean(ov.viewer && ov.viewer.is_admin);
+    const isParent = Boolean(ov.viewer && ov.viewer.is_parent);
+    const lockSvg = '<span class="grd-subject-lock" title="Hanya baca (bukan jadwal mengajar Anda)"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>';
+
     if (subjSel) {
       const renderOpt = function (s) {
         const sel = s.subject_code === state.subjectCode ? ' selected' : '';
         const statusMark = s.is_complete ? ' \u2713' : ' (' + s.filled_count + '/' + s.student_count + ')';
-        const prefix = s.is_my_subject ? '\u2605 ' : '';
+        const canEditSubj = isAdmin || Boolean(s.can_edit);
+        const prefix = s.is_my_subject ? '\u2605 ' : (!canEditSubj ? '\uD83D\uDD12 ' : '');
         return '<option value="' + esc(s.subject_code) + '"' + sel + '>' +
           esc(prefix + s.subject_name + statusMark) +
         '</option>';
@@ -408,7 +413,7 @@
       if (mySubjects.length > 0 && otherSubjects.length > 0) {
         subjSel.innerHTML =
           '<optgroup label="Mapel Jadwal Saya">' + mySubjects.map(renderOpt).join('') + '</optgroup>' +
-          '<optgroup label="Mata Pelajaran Lain">' + otherSubjects.map(renderOpt).join('') + '</optgroup>';
+          '<optgroup label="Mapel Lain (Hanya Baca)">' + otherSubjects.map(renderOpt).join('') + '</optgroup>';
       } else {
         subjSel.innerHTML = orderedSubjects.map(renderOpt).join('');
       }
@@ -417,14 +422,19 @@
     if (subjListEl) {
       subjListEl.innerHTML = orderedSubjects.map(function (s) {
         const isActive = s.subject_code === state.subjectCode;
+        const canEditSubj = isAdmin || Boolean(s.can_edit);
         const filled = Number(s.filled_count || 0);
         const total = Number(s.student_count || activeStudentCount || 0);
         const isComplete = Boolean(s.is_complete && total > 0);
         const pillCls = isComplete ? 'is-complete' : (filled > 0 ? 'is-partial' : 'is-empty');
         const pillTxt = filled + '/' + total + (isComplete ? ' \u2713' : '');
-        const starHtml = s.is_my_subject ? '<span class="grd-subject-star" title="Jadwal mengajar Anda">\u2605</span>' : '';
-        return '<button type="button" role="option" aria-selected="' + (isActive ? 'true' : 'false') + '" class="grd-subject-item' + (isActive ? ' is-active' : '') + '" data-select-subject="' + esc(s.subject_code) + '" title="' + esc(s.subject_name) + '">' +
-          '<span class="grd-subject-name">' + starHtml + esc(s.subject_name) + '</span>' +
+        const prefixHtml = s.is_my_subject
+          ? '<span class="grd-subject-star" title="Jadwal mengajar Anda">\u2605</span>'
+          : (!canEditSubj ? lockSvg : '');
+        const roCls = !canEditSubj ? ' is-readonly' : '';
+        const tipTxt = s.subject_name + (!canEditSubj ? ' (Hanya Baca)' : '');
+        return '<button type="button" role="option" aria-selected="' + (isActive ? 'true' : 'false') + '" class="grd-subject-item' + (isActive ? ' is-active' : '') + roCls + '" data-select-subject="' + esc(s.subject_code) + '" title="' + esc(tipTxt) + '">' +
+          '<span class="grd-subject-name">' + prefixHtml + esc(s.subject_name) + '</span>' +
           '<span class="grd-subject-pill ' + pillCls + '">' + esc(pillTxt) + '</span>' +
         '</button>';
       }).join('');
@@ -436,16 +446,24 @@
     }
 
     const isArchived = Boolean(ov.is_year_archived);
+    const canEditActiveSubj = !isParent && (isAdmin || Boolean(activeSubjObj && activeSubjObj.can_edit));
+    const isLocked = isArchived || !canEditActiveSubj;
+
+    const roBanner = document.getElementById('grdReadonlySubjectBanner');
+    if (roBanner) {
+      roBanner.style.display = (!isArchived && !isParent && !canEditActiveSubj) ? 'flex' : 'none';
+    }
+
     if (kkmInput) {
       kkmInput.value = state.kkmDraft;
-      kkmInput.disabled = isArchived;
+      kkmInput.disabled = isLocked;
     }
     const pasteBtn = document.getElementById('grdOpenPasteModalBtn');
     const saveBtn = document.getElementById('grdSaveBatchBtn');
     const mobSaveBtn = document.querySelector('[data-trigger-save-grades]');
-    if (pasteBtn) pasteBtn.disabled = isArchived;
-    if (saveBtn) saveBtn.disabled = isArchived;
-    if (mobSaveBtn) mobSaveBtn.disabled = isArchived;
+    if (pasteBtn) pasteBtn.disabled = isLocked;
+    if (saveBtn) saveBtn.disabled = isLocked;
+    if (mobSaveBtn) mobSaveBtn.disabled = isLocked;
 
     renderInputMasteryStrip();
     renderInputGridRows();
@@ -586,7 +604,11 @@
 
     const pageRows = filtered.slice((curPage - 1) * pageSize, curPage * pageSize);
     const isArchived = Boolean(state.overview && state.overview.is_year_archived);
-    const disAttr = isArchived ? ' disabled' : '';
+    const isAdmin = Boolean(state.overview && state.overview.viewer && state.overview.viewer.is_admin);
+    const isParent = Boolean(state.overview && state.overview.viewer && state.overview.viewer.is_parent);
+    const activeSubjObj = (state.overview.subjects || []).find(function (s) { return s.subject_code === state.subjectCode; });
+    const isLocked = isArchived || isParent || (!isAdmin && !(activeSubjObj && activeSubjObj.can_edit));
+    const disAttr = isLocked ? ' disabled' : '';
 
     tbody.innerHTML = pageRows.map(function (r) {
       const d = state.draftScores[r.student_id] || { scoreStr: '', remarks: '' };
@@ -635,6 +657,16 @@
 
   function saveCurrentSubjectBatch() {
     if (!state.overview || !state.classId || !state.subjectCode) return;
+    const isAdmin = Boolean(state.overview.viewer && state.overview.viewer.is_admin);
+    const subjCheck = (state.overview.subjects || []).find(function (s) { return s.subject_code === state.subjectCode; });
+    if (state.overview.is_year_archived) {
+      alert('Tahun ajaran ini dalam mode Arsip Terkunci.');
+      return;
+    }
+    if (!isAdmin && !(subjCheck && subjCheck.can_edit)) {
+      alert('Mode Hanya Baca: Anda hanya dapat menyimpan nilai pada mata pelajaran sesuai jadwal mengajar Anda.');
+      return;
+    }
     const rows = state.overview.matrix || [];
     const kkmVal = parseInputScore(document.getElementById('grdInputKkm') ? document.getElementById('grdInputKkm').value : state.kkmDraft);
     if (kkmVal === null || Number.isNaN(kkmVal)) {

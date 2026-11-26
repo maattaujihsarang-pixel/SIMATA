@@ -178,10 +178,40 @@ async function runBug74Tests() {
     const guruOv = await reqJson(server, 'GET', '/api/v1/grades/overview?assessment_type=ASTS_GANJIL&class_id=CLS-2627-10', null, guruAuth);
     assert.strictEqual(guruOv.status, 200);
     const fqSubj = guruOv.body.data.subjects.find((s) => s.subject_code === 'FQ');
-    assert.ok(fqSubj && fqSubj.is_my_subject === true, 'Guru_001 (Fiqih) must have FQ marked is_my_subject in Soft-Filter');
-    assert.strictEqual(guruOv.body.data.subjects.length, 23, 'Soft-filter still allows Guru to access other subjects when substituting');
+    const qhSubj = guruOv.body.data.subjects.find((s) => s.subject_code === 'QH');
+    assert.ok(fqSubj && fqSubj.is_my_subject === true && fqSubj.can_edit === true, 'Guru_001 (Fiqih) must have FQ marked is_my_subject & can_edit');
+    assert.ok(qhSubj && qhSubj.can_edit === false, 'Guru_001 must have non-scheduled subject QH marked read-only (can_edit=false)');
+    assert.strictEqual(guruOv.body.data.viewer.can_publish, false, 'Guru must not have can_publish');
+    assert.strictEqual(guruOv.body.data.subjects.length, 23, 'Guru can still view all 23 subjects in read-only mode');
 
-    // Guru batch save with comma decimal & custom KKM per mapel
+    // Strict Schedule Lock: Guru_001 blocked (403) from editing non-scheduled subject QH or its KKM
+    const guruOtherSubjAttempt = await reqJson(server, 'POST', '/api/v1/grades/batch', {
+      academic_year_id: '2026/2027',
+      class_id: 'CLS-2627-10',
+      assessment_type: 'ASAS_GANJIL',
+      subject_code: 'QH',
+      kkm: 75,
+      entries: [{ student_id: 'STD-K10015', score: 90 }]
+    }, guruAuth);
+    assert.strictEqual(guruOtherSubjAttempt.status, 403, 'Guru must be blocked (403) from editing another teacher subject');
+
+    const guruOtherKkmAttempt = await reqJson(server, 'PUT', '/api/v1/grades/kkm', {
+      academic_year_id: '2026/2027',
+      class_id: 'CLS-2627-10',
+      subject_code: 'QH',
+      kkm: 80
+    }, guruAuth);
+    assert.strictEqual(guruOtherKkmAttempt.status, 403, 'Guru must be blocked (403) from editing KKM of another teacher subject');
+
+    // Admin-only Publish: Guru_001 blocked (403) from toggling Bagikan ke Wali
+    const guruPublishAttempt = await reqJson(server, 'PUT', '/api/v1/grades/publish', {
+      academic_year_id: '2026/2027',
+      assessment_type: 'ASTS_GANJIL',
+      is_published: true
+    }, guruAuth);
+    assert.strictEqual(guruPublishAttempt.status, 403, 'Guru must be blocked (403) from toggling Bagikan ke Wali');
+
+    // Guru batch save on own scheduled subject FQ succeeds with comma decimal & custom KKM
     const batchRes = await reqJson(server, 'POST', '/api/v1/grades/batch', {
       academic_year_id: '2026/2027',
       class_id: 'CLS-2627-10',
@@ -194,7 +224,7 @@ async function runBug74Tests() {
     }, guruAuth);
     assert.strictEqual(batchRes.status, 200);
     assert.strictEqual(batchRes.body.data.kkm, 78);
-    console.log('4. PASS: Admin-only RDM link RBAC, Guru Soft-Filter, flexible KKM, & comma-decimal batch input verified.');
+    console.log('4. PASS: Strict Schedule Lock (403), Admin-only Publish (403), flexible KKM, & comma-decimal batch input verified.');
 
     // 6. Verify Parent (ORANG_TUA) privacy & publication gating
     const parentBeforePub = await reqJson(server, 'GET', '/api/v1/grades/overview?assessment_type=ASTS_GANJIL', null, parentAuth);

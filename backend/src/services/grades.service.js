@@ -446,6 +446,21 @@ class GradesService {
     return assignments;
   }
 
+  async assertTeacherCanEditSubject(academicYearId, scheduleSemester, classId, subjectCode, user) {
+    const roleUpper = String(user?.role || '').toUpperCase();
+    if (roleUpper === 'ADMIN') return;
+    if (roleUpper !== 'GURU' || !user?.teacher_id) {
+      throw new ForbiddenError('Akses ditolak. Akun Anda tidak memiliki izin mengubah nilai mata pelajaran ini.');
+    }
+    const assignments = await this.getTeacherScheduleAssignments(academicYearId, scheduleSemester, user.teacher_id);
+    const allowed = assignments.some(
+      (a) => a.subject_code === subjectCode && (!a.class_id || a.class_id === classId)
+    );
+    if (!allowed) {
+      throw new ForbiddenError('Akses ditolak. Anda hanya dapat mengubah nilai pada mata pelajaran dan kelas sesuai jadwal mengajar Anda. Untuk mapel lain, silakan hubungi Admin.');
+    }
+  }
+
   async getParentStudentIds(parentUserId) {
     const res = await db.query(
       `SELECT student_id FROM parent_student_mappings WHERE parent_user_id = $1`,
@@ -832,6 +847,7 @@ class GradesService {
         kkm,
         sort_order: cfg.sort_order,
         is_my_subject: isAssignedToViewer,
+        can_edit: !isParent && (isAdmin || isAssignedToViewer),
         filled_count: filledCount,
         student_count: fullMatrix.length,
         is_complete: isComplete,
@@ -869,6 +885,7 @@ class GradesService {
         role: roleUpper,
         is_admin: isAdmin,
         is_parent: isParent,
+        can_publish: isAdmin,
         teacher_id: viewerTeacherId,
         teacher_assignments: teacherAssignments
       },
@@ -1018,6 +1035,8 @@ class GradesService {
     const subjectCode = normalizeSubjectCode(payload.subject_code);
     if (!subjectCode) throw new BadRequestError('Mata pelajaran wajib dipilih.');
 
+    await this.assertTeacherCanEditSubject(yearId, periodMeta.schedule_semester, classId, subjectCode, user);
+
     const portalSettings = await this.getPortalSettings();
     const configs = await this.ensureClassSubjectConfigs(yearId, cls, portalSettings.default_kkm);
     const existingCfg = configs.find((c) => c.subject_code === subjectCode);
@@ -1115,7 +1134,7 @@ class GradesService {
     };
   }
 
-  async updateSubjectKkm(payload = {}) {
+  async updateSubjectKkm(payload = {}, user = null) {
     const { activeYear } = await this.resolveAcademicYear(payload.academic_year_id);
     this.assertYearEditable(activeYear);
     const yearId = activeYear.academic_year_id;
@@ -1126,6 +1145,9 @@ class GradesService {
     if (!classId || !subjectCode || kkmVal === null) {
       throw new BadRequestError('Kelas, mata pelajaran, dan angka KKM (0-100) wajib diisi.');
     }
+
+    const periodMeta = getPeriodMeta(payload.assessment_type) || ASSESSMENT_PERIODS[0];
+    await this.assertTeacherCanEditSubject(yearId, periodMeta.schedule_semester, classId, subjectCode, user);
 
     const clsRes = await db.query('SELECT class_id, level FROM classes WHERE class_id = $1', [classId]);
     const cls = clsRes.rows[0];

@@ -34,7 +34,7 @@ class GradesController {
 
   async updateSubjectKkm(req, res, next) {
     try {
-      const data = await gradesService.updateSubjectKkm(req.body || {});
+      const data = await gradesService.updateSubjectKkm(req.body || {}, req.user);
       res.status(200).json({
         status: 'success',
         message: `KKM ${data.subject_name} diperbarui menjadi ${data.kkm}.`,

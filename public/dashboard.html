@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="/css/style.css?v=bug67pb">
   <link rel="stylesheet" href="/css/notifications.css?v=bug66_notif3">
   <link rel="stylesheet" href="/css/finance.css">
-  <link rel="stylesheet" href="/css/grades.css?v=bug74f">
+  <link rel="stylesheet" href="/css/grades.css?v=bug74g">
   <style>
 /**
  * SIMATA — Mobile Responsive Stylesheet
@@ -829,7 +829,7 @@ html, body {
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <script src="/js/simata-client.js?v=bug74c"></script>
   <script src="/js/notifications.js?v=bug65_2"></script>
-  <script src="/js/grades-module.js?v=bug74f"></script>
+  <script src="/js/grades-module.js?v=bug74g"></script></script>
 </head>
 
 
@@ -3212,6 +3212,11 @@ html, body {
                             <span id="grdSaveBtnLabel">Simpan Nilai</span>
                           </button>
                         </div>
+                      </div>
+
+                      <div id="grdReadonlySubjectBanner" class="grd-readonly-banner" style="display:none;" role="status">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        <span><strong>Mode Hanya Baca:</strong> Mata pelajaran ini bukan jadwal mengajar Anda. Nilai hanya dapat dilihat; untuk perubahan silakan hubungi Admin.</span>
                       </div>
 
                       <div class="grd-grid-host">

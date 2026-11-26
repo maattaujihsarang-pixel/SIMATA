@@ -22,7 +22,7 @@ router.post('/batch', requireGuruOrAdmin, (req, res, next) =>
 router.put('/kkm', requireGuruOrAdmin, (req, res, next) =>
   gradesController.updateSubjectKkm(req, res, next)
 );
-router.put('/publish', requireGuruOrAdmin, (req, res, next) =>
+router.put('/publish', requireAdmin, (req, res, next) =>
   gradesController.updatePeriodPublication(req, res, next)
 );
 router.put('/student-note', requireGuruOrAdmin, (req, res, next) =>
