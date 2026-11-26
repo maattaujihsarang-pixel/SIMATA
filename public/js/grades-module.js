@@ -20,6 +20,8 @@
     subjectCode: '',
     kkmDraft: 75,
     studentSearch: '',
+    inputPage: 1,
+    inputPageSize: 10,
     showRanking: true,
     rankingPrefLoaded: false,
     parentPreviewMode: false,
@@ -554,17 +556,39 @@
         })
       : allRows;
 
+    const total = filtered.length;
+    const pageSize = state.inputPageSize || 10;
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    if (state.inputPage > totalPages) state.inputPage = totalPages;
+    if (state.inputPage < 1) state.inputPage = 1;
+    const curPage = state.inputPage;
+
+    const counterEl = document.getElementById('grdInputCounter');
+    if (counterEl) {
+      if (total === 0) {
+        counterEl.textContent = 'Menampilkan 0\u20130 dari 0 data';
+      } else {
+        const start = (curPage - 1) * pageSize + 1;
+        const end = Math.min(curPage * pageSize, total);
+        counterEl.textContent = 'Menampilkan ' + start + '\u2013' + end + ' dari ' + total + ' data';
+      }
+    }
+    if (typeof window.renderPaginationControl === 'function') {
+      window.renderPaginationControl('grdInputPagination', curPage, totalPages, pageSize, 'goToGradesInputPage');
+    }
+
     updateSaveButtonLabels();
 
-    if (filtered.length === 0) {
+    if (total === 0) {
       tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:28px;color:#64748b;">Tidak ada siswa yang cocok dengan pencarian.</td></tr>';
       return;
     }
 
+    const pageRows = filtered.slice((curPage - 1) * pageSize, curPage * pageSize);
     const isArchived = Boolean(state.overview && state.overview.is_year_archived);
     const disAttr = isArchived ? ' disabled' : '';
 
-    tbody.innerHTML = filtered.map(function (r) {
+    tbody.innerHTML = pageRows.map(function (r) {
       const d = state.draftScores[r.student_id] || { scoreStr: '', remarks: '' };
       const num = parseInputScore(d.scoreStr);
       const pr = (num !== null && !Number.isNaN(num)) ? calcPredicate(num, kkm) : { p: '-', label: 'Belum Diisi', tuntas: null };
@@ -1258,6 +1282,7 @@
         const nextPeriod = periodBtn.getAttribute('data-period');
         if (nextPeriod && nextPeriod !== state.periodCode) {
           state.periodCode = nextPeriod;
+          state.inputPage = 1;
           loadGradesOverview({ stayOnScreen: true });
         }
         return;
@@ -1274,6 +1299,7 @@
         const nextSubj = subjItemBtn.getAttribute('data-select-subject');
         if (nextSubj && nextSubj !== state.subjectCode) {
           state.subjectCode = nextSubj;
+          state.inputPage = 1;
           syncDraftFromOverview();
           renderInputPanel();
         }
@@ -1414,13 +1440,16 @@
       if (e.target.id === 'grdAcademicYearSelect') {
         state.academicYearId = e.target.value;
         state.selectedStudentId = '';
+        state.inputPage = 1;
         loadGradesOverview({ stayOnScreen: true });
       } else if (e.target.id === 'grdInputClassSelect' || e.target.id === 'grdLegerClassSelect' || e.target.id === 'grdKhsClassSelect') {
         state.classId = e.target.value;
         state.selectedStudentId = '';
+        state.inputPage = 1;
         loadGradesOverview({ stayOnScreen: true });
       } else if (e.target.id === 'grdInputSubjectSelect') {
         state.subjectCode = e.target.value;
+        state.inputPage = 1;
         syncDraftFromOverview();
         renderInputPanel();
       } else if (e.target.id === 'grdInputKkm') {
@@ -1452,11 +1481,19 @@
         updateSaveButtonLabels();
       } else if (e.target.id === 'grdStudentSearchInput') {
         state.studentSearch = e.target.value;
+        state.inputPage = 1;
         renderInputGridRows();
       }
     });
 
-    // Spreadsheet Enter / ArrowDown / ArrowUp navigation across score inputs
+    window.goToGradesInputPage = function (page) {
+      const next = Number(page) || 1;
+      if (next < 1) return;
+      state.inputPage = next;
+      renderInputGridRows();
+    };
+
+    // Spreadsheet Enter / ArrowDown / ArrowUp navigation across score inputs (auto-advances page at boundary)
     root.addEventListener('keydown', function (e) {
       if (!e.target.matches('input[data-score-for]')) return;
       if (e.key !== 'Enter' && e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
@@ -1468,6 +1505,19 @@
       if (inputs[nextIdx]) {
         inputs[nextIdx].focus();
         inputs[nextIdx].select();
+      } else if (e.key !== 'ArrowUp' && nextIdx >= inputs.length) {
+        const allRows = (state.overview && state.overview.matrix) || [];
+        const q = String(state.studentSearch || '').trim().toLowerCase();
+        const total = q
+          ? allRows.filter(function (r) { return (String(r.name) + ' ' + String(r.nis) + ' ' + String(r.nisn)).toLowerCase().indexOf(q) !== -1; }).length
+          : allRows.length;
+        const totalPages = Math.max(1, Math.ceil(total / (state.inputPageSize || 10)));
+        if (state.inputPage < totalPages) {
+          state.inputPage += 1;
+          renderInputGridRows();
+          const firstNext = document.querySelector('#grdInputTbody input[data-score-for]');
+          if (firstNext) { firstNext.focus(); firstNext.select(); }
+        }
       }
     });
   }

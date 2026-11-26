@@ -1182,6 +1182,12 @@
   display: none;
 }
 
+.grd-input-pagination-bar {
+  padding: 12px 18px !important;
+  border-top: 1px solid #f1f5f9;
+  background: #ffffff;
+}
+
 .grd-sheet-footer {
   display: flex;
   align-items: center;
