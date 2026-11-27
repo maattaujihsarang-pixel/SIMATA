@@ -1276,11 +1276,15 @@
     }).join('');
 
     const noteCardHtml = readOnlyParentView
-      ? '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;font-size:13px;color:#14532d;line-height:1.55;flex:1;">' +
+      ? '<div class="grd-khs-note-readonly">' +
           esc(row.homeroom_note || 'Terus tingkatkan semangat belajar, ibadah, dan kedisiplinan di madrasah.') +
         '</div>'
-      : '<textarea id="grdHomeroomNoteInput" class="grd-input" rows="4" style="resize:vertical;flex:1;" placeholder="Tulis catatan pembinaan atau apresiasi untuk siswa...">' + esc(row.homeroom_note || '') + '</textarea>' +
-        '<div class="grd-khs-note-actions"><button type="button" class="grd-btn grd-btn--primary grd-btn--compact" id="grdSaveHomeroomNoteBtn">Simpan Catatan</button></div>';
+      : '<p class="grd-khs-note-subtext">Catatan pembinaan atau apresiasi untuk siswa dan orang tua.</p>' +
+        '<textarea id="grdHomeroomNoteInput" class="grd-khs-note-textarea" rows="4" placeholder="Tulis catatan wali kelas...">' + esc(row.homeroom_note || '') + '</textarea>' +
+        '<div class="grd-khs-note-actions">' +
+          '<span class="grd-khs-note-hint">Tampil di cetakan A4 &amp; Portal Wali</span>' +
+          '<button type="button" class="grd-btn grd-btn--primary grd-btn--compact" id="grdSaveHomeroomNoteBtn">Simpan Catatan</button>' +
+        '</div>';
 
     const f = state.khsFilter || 'all';
 
@@ -1371,7 +1375,7 @@
             '</div>' +
           '</div>' +
           '<div class="grd-card grd-khs-note-card">' +
-            '<h4 class="grd-card-heading" style="margin-bottom:10px;">Catatan Wali Kelas</h4>' +
+            '<h4 class="grd-card-heading" style="margin-bottom:2px;">Catatan Wali Kelas</h4>' +
             noteCardHtml +
           '</div>' +
         '</div>' +
