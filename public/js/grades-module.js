@@ -589,11 +589,14 @@
 
     const sortBtn = document.getElementById('grdSortNameBtn');
     const sortIcon = document.getElementById('grdSortNameIcon');
-    if (sortBtn && sortIcon) {
+    if (sortBtn) {
       sortBtn.classList.toggle('is-sorted', state.inputSortName !== 'none');
-      sortIcon.textContent = state.inputSortName === 'asc'
-        ? '\u2191 A-Z'
-        : (state.inputSortName === 'desc' ? '\u2193 Z-A' : '\u21C5');
+      sortBtn.title = state.inputSortName === 'asc'
+        ? 'Urutan: Nama A–Z (klik untuk Z–A)'
+        : (state.inputSortName === 'desc' ? 'Urutan: Nama Z–A (klik untuk urutan awal)' : 'Klik untuk mengurutkan Nama Siswa A–Z / Z–A');
+    }
+    if (sortIcon) {
+      sortIcon.textContent = '';
     }
 
     const total = filtered.length;
