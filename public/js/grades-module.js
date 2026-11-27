@@ -756,8 +756,9 @@
       QH: 'QH', AA: 'AA', FQ: 'Fiqih', SKI: 'SKI', PPKN: 'PPKn',
       'B.INDO': 'B.Indo', 'B.ARAB': 'B.Arab', MTK: 'MTK', 'B.JAWA': 'B.Jawa',
       'B.ING': 'B.Ing', SBK: 'SBK', PJOK: 'PJOK', PKWU: 'PKWU',
-      GEO: 'Geo', EKO: 'Eko', SOSI: 'Sosi', SEJ: 'Sej', IPA: 'IPA',
-      BIO: 'Bio', INF: 'Info', TFS: 'Tafsir', NHW: 'Nahwu', SHF: 'Shorof'
+      GEO: 'Geo', EKO: 'Eko', SOSI: 'Sosi', SEJ: 'Sej', SEJARAH: 'Sej', IPA: 'IPA',
+      BIO: 'Bio', INF: 'Info', TFS: 'Tafsir', TAFSIR: 'Tafsir',
+      NHW: 'Nahwu', NAHWU: 'Nahwu', SHF: 'Shorof', SHOROF: 'Shorof'
     };
     return map[code] || code || String(s.subject_name || '').slice(0, 7);
   }
