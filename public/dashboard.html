@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="/css/style.css?v=bug67pb">
   <link rel="stylesheet" href="/css/notifications.css?v=bug66_notif3">
   <link rel="stylesheet" href="/css/finance.css">
-  <link rel="stylesheet" href="/css/grades.css?v=bug74k">
+  <link rel="stylesheet" href="/css/grades.css?v=bug74l">
   <style>
 /**
  * SIMATA — Mobile Responsive Stylesheet
@@ -829,7 +829,7 @@ html, body {
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <script src="/js/simata-client.js?v=bug74c"></script>
   <script src="/js/notifications.js?v=bug65_2"></script>
-  <script src="/js/grades-module.js?v=bug74j"></script></script></script></script>
+  <script src="/js/grades-module.js?v=bug74l"></script></script></script></script></script>
 </head>
 
 
@@ -3253,30 +3253,55 @@ html, body {
                 </div>
               </div>
 
-              <!-- PANEL 2: REKAP KELAS & GRAFIK (FULL WIDTH) -->
+              <!-- PANEL 2: REKAP KELAS & GRAFIK (OPTION 4: ULTIMATE HYBRID + VERTICAL BAR CHART) -->
               <div id="grdPanelLeger" role="tabpanel" aria-labelledby="grdTabLeger" hidden="until-found">
                 <div class="grd-panel-inner">
-                  <div class="grd-card" style="display:flex;justify-content:space-between;align-items:end;flex-wrap:wrap;gap:12px;">
-                    <div class="grd-field" style="min-width:240px;flex:1 1 240px;max-width:380px;">
-                      <label for="grdLegerClassSelect">Pilih Kelas</label>
-                      <select id="grdLegerClassSelect" class="grd-select"></select>
+                  <!-- ROW 1: SLIM SINGLE-ROW CLASS CONTROL STRIP (NO DUPLICATE BUTTONS) -->
+                  <div class="grd-leger-control-bar">
+                    <div class="grd-leger-control-left">
+                      <label for="grdLegerClassSelect" class="grd-sr-only">Pilih Kelas</label>
+                      <select id="grdLegerClassSelect" class="grd-select grd-leger-class-select" aria-label="Pilih Kelas Rekap"></select>
                     </div>
-                    <div style="display:flex;flex-wrap:wrap;gap:8px;">
-                      <button type="button" id="grdToggleRankingBtn" class="grd-btn grd-btn--soft grd-btn--compact">Peringkat: Ditampilkan</button>
-                      <button type="button" id="grdOpenPrintSettingsBtn" class="grd-btn grd-btn--secondary grd-btn--compact" style="display:none;">Atur Kop Cetak</button>
-                      <button type="button" id="grdExportLegerCsvBtn" class="grd-btn grd-btn--secondary grd-btn--compact">Unduh Excel</button>
-                      <button type="button" id="grdPrintLegerMatrixBtn" class="grd-btn grd-btn--primary grd-btn--compact">
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                        <span>Cetak Daftar Nilai</span>
+                    <div class="grd-leger-control-right">
+                      <button type="button" id="grdToggleRankingBtn" class="grd-pub-toggle" aria-pressed="true" title="Tampilkan atau sembunyikan kolom peringkat siswa">
+                        <span class="grd-pub-toggle-label">Tampilkan Peringkat</span>
+                        <span class="grd-switch-track" aria-hidden="true"><span class="grd-switch-thumb"></span></span>
                       </button>
+                      <button type="button" id="grdOpenPrintSettingsBtn" class="grd-btn grd-btn--secondary grd-btn--compact" style="display:none;">Atur Kop Cetak</button>
                     </div>
                   </div>
 
-                  <div id="grdLegerAnalyticsHost" class="grd-analytics-row"></div>
+                  <!-- ROW 2: 4 SLEEK KPI SUMMARY CARDS -->
+                  <div id="grdLegerKpiHost"></div>
 
-                  <div class="grd-card" style="padding:0;overflow:hidden;">
+                  <!-- ROW 3: BALANCED 2-COLUMN ANALYTICS (3 NILAI TERTINGGI + DIAGRAM BATANG VERTIKAL) -->
+                  <div id="grdLegerAnalyticsHost" class="grd-rekap-analytics-grid"></div>
+
+                  <!-- ROW 4: SMART DUAL-MODE TABLE CARD (RINGKAS | SEMUA MAPEL + PAGINASI) -->
+                  <div class="grd-sheet-card">
+                    <div class="grd-sheet-toolbar">
+                      <div class="grd-sheet-toolbar-left">
+                        <h3 id="grdLegerTableTitle" class="grd-active-subject-title">Rekap Nilai Kelas</h3>
+                        <div class="grd-mode-switch" role="group" aria-label="Mode tampilan tabel rekap">
+                          <button type="button" class="grd-mode-btn is-active" data-leger-view="summary">Ringkas</button>
+                          <button type="button" class="grd-mode-btn" data-leger-view="full" id="grdLegerFullModeBtn">Semua Mapel</button>
+                        </div>
+                      </div>
+                      <div class="grd-sheet-toolbar-right">
+                        <div class="grd-search-wrap grd-search-wrap--leger">
+                          <input id="grdLegerSearchInput" type="search" class="grd-input grd-search-input" placeholder="Cari siswa..." aria-label="Cari siswa pada rekap kelas" />
+                          <svg class="grd-search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        </div>
+                      </div>
+                    </div>
+
                     <div class="grd-table-wrap grd-leger-wrap" role="region" aria-label="Tabel rekap nilai kelas" tabindex="0" style="border:none;border-radius:0;">
                       <table id="grdLegerTable" class="grd-table grd-table--leger"></table>
+                    </div>
+
+                    <div class="attendance-table-footer grd-input-pagination-bar">
+                      <div class="table-footer-counter" id="grdLegerCounter">Menampilkan 0–0 dari 0 data</div>
+                      <div class="table-footer-pagination" id="grdLegerPagination"></div>
                     </div>
                   </div>
                 </div>

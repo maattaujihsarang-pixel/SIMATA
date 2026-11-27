@@ -1660,7 +1660,387 @@
   }
 }
 
-/* 8. LEGER MATRIX TABLE (STICKY ROW HEADER & FOOTER SUMMARY) */
+/* 8. REKAP KELAS & GRAFIK (OPTION 4: HYBRID + VERTICAL BAR CHART) */
+.grd-leger-control-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+}
+
+.grd-leger-control-left {
+  min-width: 240px;
+  flex: 0 1 360px;
+}
+
+.grd-leger-class-select {
+  min-height: 38px;
+  font-weight: 600;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.grd-leger-control-right {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.grd-rekap-analytics-grid {
+  display: grid;
+  grid-template-columns: minmax(290px, 0.92fr) minmax(0, 1.88fr);
+  gap: 14px;
+  align-items: stretch;
+}
+
+.grd-podium-card,
+.grd-vchart-card {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 18px;
+}
+
+.grd-card-head-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-bottom: 12px;
+}
+
+.grd-card-heading {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+/* Top 3 Podium Rows */
+.grd-podium-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  justify-content: center;
+}
+
+.grd-podium-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 11px;
+  border: 1px solid #f1f5f9;
+  background: #f8fafc;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.14s ease, border-color 0.14s ease;
+}
+.grd-podium-item:hover {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.grd-podium-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.grd-podium-medal {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11.5px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.grd-podium-medal--1 { background: #fef3c7; color: #92400e; border: 1.5px solid #f59e0b; }
+.grd-podium-medal--2 { background: #e2e8f0; color: #334155; border: 1.5px solid #94a3b8; }
+.grd-podium-medal--3 { background: #ffedd5; color: #9a3412; border: 1.5px solid #fb923c; }
+
+.grd-podium-name {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.grd-podium-score {
+  text-align: right;
+  flex-shrink: 0;
+}
+.grd-podium-avg {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+.grd-podium-total {
+  font-size: 11px;
+  color: var(--grd-slate-500);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Vertical Bar Chart Card (with KKM Reference Line) */
+.grd-chart-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.grd-chart-pills {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: #f1f5f9;
+  padding: 3px;
+  border-radius: 999px;
+}
+
+.grd-chart-pill {
+  border: none;
+  background: transparent;
+  color: var(--grd-slate-600);
+  font-size: 11.5px;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+.grd-chart-pill:hover {
+  color: #0f172a;
+}
+.grd-chart-pill.is-active {
+  background: #dcfce7;
+  color: #166534;
+  font-weight: 700;
+}
+
+.grd-vchart-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--grd-slate-500);
+}
+.grd-vchart-legend-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 4px;
+}
+
+.grd-vchart-scroll {
+  overflow-x: auto;
+  padding-top: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+.grd-vchart-scroll::-webkit-scrollbar {
+  height: 5px;
+}
+.grd-vchart-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+.grd-vchart-plot {
+  position: relative;
+  height: 176px;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 26px 6px 26px 6px;
+  box-sizing: border-box;
+  min-width: 100%;
+}
+
+.grd-vchart-kkm-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1.5px dashed #94a3b8;
+  pointer-events: none;
+  z-index: 1;
+}
+.grd-vchart-kkm-tag {
+  position: absolute;
+  left: 2px;
+  top: -17px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #475569;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 0 4px;
+  border-radius: 4px;
+}
+
+.grd-vchart-col {
+  flex: 1 0 42px;
+  min-width: 42px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  position: relative;
+  z-index: 2;
+}
+
+.grd-vchart-val {
+  font-size: 11px;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 4px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.grd-vchart-bar {
+  width: 28px;
+  max-width: 78%;
+  min-height: 4px;
+  border-radius: 6px 6px 2px 2px;
+  background: linear-gradient(180deg, #16a34a 0%, #15803d 100%);
+  transition: height 0.22s ease, opacity 0.14s ease;
+}
+.grd-vchart-bar.is-below {
+  background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
+}
+.grd-vchart-col:hover .grd-vchart-bar {
+  opacity: 0.85;
+}
+
+.grd-vchart-label {
+  position: absolute;
+  bottom: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--grd-slate-600);
+  white-space: nowrap;
+  max-width: 54px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Segmented Mode Switcher ("Ringkas | Semua Mapel") */
+.grd-mode-switch {
+  display: inline-flex;
+  align-items: center;
+  background: #f1f5f9;
+  padding: 3px;
+  border-radius: 999px;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.grd-mode-btn {
+  border: none;
+  background: transparent;
+  color: var(--grd-slate-600);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 5px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+.grd-mode-btn:hover {
+  color: #0f172a;
+}
+.grd-mode-btn.is-active {
+  background: #dcfce7;
+  color: #166534;
+  font-weight: 700;
+}
+
+.grd-search-wrap--leger {
+  width: 210px;
+}
+
+/* Ringkas Summary Table Columns */
+.grd-tuntas-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 118px;
+}
+.grd-tuntas-txt {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #334155;
+  min-width: 38px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.grd-mini-bar-track {
+  flex: 1;
+  min-width: 58px;
+  height: 6px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+.grd-mini-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: #16a34a;
+}
+.grd-mini-bar-fill.is-warn {
+  background: #f59e0b;
+}
+
+.grd-col-avg-mint {
+  background: #ecfdf5 !important;
+  color: #14532d !important;
+  font-weight: 800 !important;
+}
+
+.grd-table--leger thead th.grd-col-avg-mint {
+  background: #dcfce7 !important;
+  color: #166534 !important;
+}
+
+.grd-rapor-link-btn {
+  min-height: 30px;
+  padding: 0 11px;
+  font-size: 12px;
+  border-radius: 8px;
+}
+
+/* Sticky Right Columns in Full Matrix Mode */
+.grd-table--leger thead th.grd-sticky-right-avg,
+.grd-table--leger tbody td.grd-sticky-right-avg,
+.grd-table--leger tfoot td.grd-sticky-right-avg {
+  position: sticky;
+  inset-inline-end: 0;
+  z-index: 2;
+  border-left: 1px solid #bbf7d0;
+}
+
 .grd-leger-wrap {
   max-block-size: min(640px, 76vh);
 }
@@ -2023,6 +2403,7 @@
 @media (max-width: 900px) {
   .grd-gateway-grid,
   .grd-analytics-row,
+  .grd-rekap-analytics-grid,
   .grd-khs-grid {
     grid-template-columns: 1fr;
   }

@@ -23,6 +23,11 @@
     inputSortName: 'none', // 'none' | 'asc' | 'desc'
     inputPage: 1,
     inputPageSize: 10,
+    legerViewMode: 'summary', // 'summary' | 'full'
+    legerChartFilter: 'top', // 'top' | 'low' | 'all'
+    legerSearch: '',
+    legerPage: 1,
+    legerPageSize: 10,
     showRanking: true,
     rankingPrefLoaded: false,
     parentPreviewMode: false,
@@ -745,6 +750,18 @@
       });
   }
 
+  function shortChartSubjectLabel(s) {
+    const code = String(s.subject_code || '').toUpperCase();
+    const map = {
+      QH: 'QH', AA: 'AA', FQ: 'Fiqih', SKI: 'SKI', PPKN: 'PPKn',
+      'B.INDO': 'B.Indo', 'B.ARAB': 'B.Arab', MTK: 'MTK', 'B.JAWA': 'B.Jawa',
+      'B.ING': 'B.Ing', SBK: 'SBK', PJOK: 'PJOK', PKWU: 'PKWU',
+      GEO: 'Geo', EKO: 'Eko', SOSI: 'Sosi', SEJ: 'Sej', IPA: 'IPA',
+      BIO: 'Bio', INF: 'Info', TFS: 'Tafsir', NHW: 'Nahwu', SHF: 'Shorof'
+    };
+    return map[code] || code || String(s.subject_name || '').slice(0, 7);
+  }
+
   function renderLegerPanel() {
     const ov = state.overview;
     if (!ov) return;
@@ -759,71 +776,278 @@
 
     const rankBtn = document.getElementById('grdToggleRankingBtn');
     if (rankBtn) {
-      rankBtn.className = 'grd-btn ' + (state.showRanking ? 'grd-btn--soft' : 'grd-btn--secondary');
-      rankBtn.innerHTML = state.showRanking
-        ? '<svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><span>Peringkat: Ditampilkan</span>'
-        : '<svg viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><line x1="1" y1="1" x2="23" y2="23"/></svg><span>Peringkat: Disembunyikan</span>';
+      rankBtn.className = 'grd-pub-toggle';
+      rankBtn.setAttribute('aria-pressed', state.showRanking ? 'true' : 'false');
+      rankBtn.innerHTML =
+        '<span class="grd-pub-toggle-label">Tampilkan Peringkat</span>' +
+        '<span class="grd-switch-track" aria-hidden="true"><span class="grd-switch-thumb"></span></span>';
     }
 
-    // Analytics Row (Summary + Subject Horizontal Bars)
-    const analyticsHost = document.getElementById('grdLegerAnalyticsHost');
     const sum = ov.class_summary || {};
     const subjects = ov.subjects || [];
     const matrix = ov.matrix || [];
+    const clsName = ov.selected_class ? ov.selected_class.class_name : 'Kelas';
+    const periodObj = ov.selected_period || {};
 
-    if (analyticsHost) {
-      const pctSubj = sum.total_subjects > 0 ? Math.round((sum.completed_subjects / sum.total_subjects) * 100) : 0;
-      const topStudents = [...matrix]
-        .filter(function (r) { return r.total_score > 0; })
-        .sort(function (a, b) { return b.total_score - a.total_score; })
-        .slice(0, 3);
+    const tblTitleEl = document.getElementById('grdLegerTableTitle');
+    if (tblTitleEl) tblTitleEl.textContent = 'Rekap Nilai ' + clsName;
+    const fullModeBtn = document.getElementById('grdLegerFullModeBtn');
+    if (fullModeBtn) fullModeBtn.textContent = 'Semua Mapel (' + subjects.length + ')';
+    document.querySelectorAll('[data-leger-view]').forEach(function (btn) {
+      btn.classList.toggle('is-active', btn.getAttribute('data-leger-view') === state.legerViewMode);
+    });
 
-      const topHtml = state.showRanking && topStudents.length > 0
-        ? '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #e2e8f0;font-size:12.5px;color:#334155;">' +
-            '<strong style="display:block;margin-bottom:4px;color:#0f172a;">3 Nilai Tertinggi Kelas Ini:</strong>' +
-            topStudents.map(function (t, i) {
-              return '<div style="display:flex;justify-content:space-between;gap:8px;padding:2px 0;"><span>#' + (i + 1) + ' ' + esc(t.name) + '</span><strong>' + fmtScore(t.total_score, 1) + ' (' + fmtScore(t.average_score, 2) + ')</strong></div>';
-            }).join('') +
-          '</div>'
-        : '';
+    const rankedAll = matrix.slice()
+      .filter(function (r) { return r.total_score > 0; })
+      .sort(function (a, b) { return b.total_score - a.total_score; });
+    const top1 = rankedAll[0] || null;
 
-      const barsHtml = subjects.map(function (s) {
-        const avg = s.avg_score !== null && s.avg_score !== undefined ? Number(s.avg_score) : 0;
-        const below = avg < Number(s.kkm || 75);
-        return '<div class="grd-hbar-item">' +
-          '<div class="grd-hbar-head"><span>' + esc(s.subject_code) + '</span><span>' + (s.avg_score !== null ? fmtScore(avg, 1) : '-') + '</span></div>' +
-          '<div class="grd-hbar-track"><div class="grd-hbar-fill' + (below ? ' grd-hbar-fill--below' : '') + '" style="width:' + Math.min(100, Math.max(0, avg)) + '%"></div></div>' +
-        '</div>';
-      }).join('');
-
-      analyticsHost.innerHTML =
-        '<div class="grd-card">' +
-          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
-            '<strong style="font-size:14px;color:#0f172a;">Progres & Ringkasan Leger ' + esc(ov.selected_class ? ov.selected_class.class_name : '') + '</strong>' +
-            '<span class="grd-chip grd-chip--emerald">' + sum.completed_subjects + '/' + sum.total_subjects + ' Mapel (' + pctSubj + '%)</span>' +
+    // ROW 2: 4 SLEEK KPI SUMMARY CARDS
+    const kpiHost = document.getElementById('grdLegerKpiHost');
+    if (kpiHost) {
+      const doneAll = sum.total_subjects > 0 && sum.completed_subjects >= sum.total_subjects;
+      const doneSub = doneAll
+        ? esc(periodObj.short_label || 'Periode') + ' lengkap \u2713'
+        : (sum.completed_subjects > 0 ? (sum.completed_subjects + ' mapel selesai') : 'Belum ada mapel selesai');
+      kpiHost.innerHTML =
+        '<div class="grd-kpi-grid">' +
+          '<div class="grd-kpi-card">' +
+            '<div class="grd-kpi-icon grd-kpi-icon--sky" aria-hidden="true">' +
+              '<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' +
+            '</div>' +
+            '<div class="grd-kpi-body">' +
+              '<div class="grd-kpi-label">Jumlah Siswa</div>' +
+              '<div class="grd-kpi-value">' + (sum.student_count || 0) + ' Siswa</div>' +
+              '<div class="grd-kpi-sub">' + esc(clsName) + ' aktif</div>' +
+            '</div>' +
           '</div>' +
-          '<div class="grd-seg-bar" style="margin-bottom:10px;"><div class="grd-seg-a" style="width:' + pctSubj + '%"></div></div>' +
-          '<div class="grd-stat-chips">' +
-            '<span class="grd-chip grd-chip--sky">Siswa: ' + (sum.student_count || 0) + '</span>' +
-            '<span class="grd-chip grd-chip--emerald">Rata Kelas: ' + fmtScore(sum.class_average, 2) + '</span>' +
-            '<span class="grd-chip grd-chip--slate">Rata Tertinggi: ' + fmtScore(sum.highest_average, 2) + '</span>' +
+          '<div class="grd-kpi-card">' +
+            '<div class="grd-kpi-icon grd-kpi-icon--emerald" aria-hidden="true">' +
+              '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><line x1="8" y1="16" x2="8" y2="11"/><line x1="12" y1="16" x2="12" y2="8"/><line x1="16" y1="16" x2="16" y2="13"/></svg>' +
+            '</div>' +
+            '<div class="grd-kpi-body">' +
+              '<div class="grd-kpi-label">Rata-rata Kelas</div>' +
+              '<div class="grd-kpi-value">' + (sum.any_scores ? fmtScore(sum.class_average, 1) : '-') + '</div>' +
+              '<div class="grd-kpi-sub">Seluruh ' + (sum.total_subjects || 0) + ' mapel</div>' +
+            '</div>' +
           '</div>' +
-          topHtml +
-        '</div>' +
-        '<div class="grd-card">' +
-          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
-            '<strong style="font-size:14px;color:#0f172a;">Diagram Rata-rata Kelas per Mata Pelajaran</strong>' +
-            '<span style="font-size:11.5px;color:#64748b;">Hijau &ge; KKM &bull; Kuning &lt; KKM</span>' +
+          '<div class="grd-kpi-card">' +
+            '<div class="grd-kpi-icon grd-kpi-icon--amber" aria-hidden="true">' +
+              '<svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>' +
+            '</div>' +
+            '<div class="grd-kpi-body">' +
+              '<div class="grd-kpi-label">Nilai Tertinggi</div>' +
+              '<div class="grd-kpi-value">' + (sum.any_scores ? fmtScore(sum.highest_average, 1) : '-') + '</div>' +
+              '<div class="grd-kpi-sub" title="' + esc(top1 ? top1.name : '-') + '">' + esc(top1 && state.showRanking ? top1.name : (sum.any_scores ? 'Rata-rata tertinggi' : 'Belum ada nilai')) + '</div>' +
+            '</div>' +
           '</div>' +
-          '<div class="grd-hbar-list">' + barsHtml + '</div>' +
+          '<div class="grd-kpi-card">' +
+            '<div class="grd-kpi-icon grd-kpi-icon--teal" aria-hidden="true">' +
+              '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="9 12 11 14 15 10"/></svg>' +
+            '</div>' +
+            '<div class="grd-kpi-body">' +
+              '<div class="grd-kpi-label">Kelengkapan Nilai</div>' +
+              '<div class="grd-kpi-value">' + (sum.completed_subjects || 0) + ' / ' + (sum.total_subjects || 0) + ' Mapel</div>' +
+              '<div class="grd-kpi-sub">' + doneSub + '</div>' +
+            '</div>' +
+          '</div>' +
         '</div>';
     }
 
-    // Render Full Matrix Table
-    const tableEl = document.getElementById('grdLegerTable');
-    if (!tableEl) return;
+    // ROW 3: 2-COLUMN ANALYTICS (3 NILAI TERTINGGI + VERTICAL BAR CHART WITH KKM LINE)
+    const analyticsHost = document.getElementById('grdLegerAnalyticsHost');
+    if (analyticsHost) {
+      const top3 = rankedAll.slice(0, 3);
+      let podiumBodyHtml = '';
+      if (!state.showRanking) {
+        podiumBodyHtml = '<div style="padding:26px 12px;text-align:center;color:#64748b;font-size:12.5px;">Peringkat sedang disembunyikan. Aktifkan saklar <strong>Tampilkan Peringkat</strong> di atas untuk melihat 3 nilai tertinggi.</div>';
+      } else if (top3.length === 0) {
+        podiumBodyHtml = '<div style="padding:26px 12px;text-align:center;color:#64748b;font-size:12.5px;">Belum ada nilai yang masuk pada periode ini.</div>';
+      } else {
+        podiumBodyHtml = '<div class="grd-podium-list">' + top3.map(function (t, i) {
+          const rankNo = i + 1;
+          return '<button type="button" class="grd-podium-item" data-open-khs="' + esc(t.student_id) + '" title="Klik untuk melihat Rapor ' + esc(t.name) + '">' +
+            '<div class="grd-podium-left">' +
+              '<span class="grd-podium-medal grd-podium-medal--' + rankNo + '">#' + rankNo + '</span>' +
+              '<span class="grd-podium-name">' + esc(t.name) + '</span>' +
+            '</div>' +
+            '<div class="grd-podium-score">' +
+              '<div class="grd-podium-avg">' + fmtScore(t.average_score, 1) + '</div>' +
+              '<div class="grd-podium-total">Total ' + fmtScore(t.total_score, 1) + '</div>' +
+            '</div>' +
+          '</button>';
+        }).join('') + '</div>';
+      }
 
-    const rankHeadHtml = state.showRanking ? '<th scope="col">Rangking</th>' : '';
+      const scoredSubjects = subjects.map(function (s) {
+        return {
+          code: s.subject_code,
+          name: s.subject_name,
+          shortLabel: shortChartSubjectLabel(s),
+          avg: (s.avg_score !== null && s.avg_score !== undefined) ? Number(s.avg_score) : 0,
+          hasScore: s.avg_score !== null && s.avg_score !== undefined,
+          kkm: Number(s.kkm || 75)
+        };
+      });
+
+      let chartSubjects = scoredSubjects.slice();
+      if (state.legerChartFilter === 'top') {
+        chartSubjects.sort(function (a, b) { return b.avg - a.avg; });
+        chartSubjects = chartSubjects.slice(0, 10);
+      } else if (state.legerChartFilter === 'low') {
+        chartSubjects.sort(function (a, b) { return a.avg - b.avg; });
+        chartSubjects = chartSubjects.slice(0, 10);
+      }
+
+      const defaultKkmRef = 75;
+      // .grd-vchart-plot has height 176px with 26px top & 26px bottom padding => 124px usable bar height
+      const kkmBottomPx = Math.round(26 + (defaultKkmRef / 100) * 124);
+      const barsHtml = chartSubjects.length > 0
+        ? chartSubjects.map(function (item) {
+            const pct = Math.min(100, Math.max(0, item.avg));
+            const below = item.avg < item.kkm;
+            const barPx = item.hasScore ? Math.max(4, Math.round((pct / 100) * 124)) : 3;
+            const tip = item.name + ' \u2022 Rata-rata: ' + (item.hasScore ? fmtScore(item.avg, 1) : '-') + ' (KKM ' + fmtScore(item.kkm, 0) + ')';
+            return '<div class="grd-vchart-col" title="' + esc(tip) + '">' +
+              '<span class="grd-vchart-val">' + (item.hasScore ? fmtScore(Math.round(item.avg), 0) : '-') + '</span>' +
+              '<div class="grd-vchart-bar' + (below ? ' is-below' : '') + '" style="height:' + barPx + 'px;"></div>' +
+              '<span class="grd-vchart-label">' + esc(item.shortLabel) + '</span>' +
+            '</div>';
+          }).join('')
+        : '<div style="width:100%;text-align:center;color:#64748b;font-size:12.5px;padding-bottom:46px;">Belum ada data mata pelajaran.</div>';
+
+      const f = state.legerChartFilter;
+      analyticsHost.innerHTML =
+        '<div class="grd-card grd-podium-card">' +
+          '<div class="grd-card-head-row">' +
+            '<h4 class="grd-card-heading">3 Nilai Tertinggi</h4>' +
+          '</div>' +
+          podiumBodyHtml +
+        '</div>' +
+        '<div class="grd-card grd-vchart-card">' +
+          '<div class="grd-card-head-row">' +
+            '<h4 class="grd-card-heading">Grafik Rata-rata per Mata Pelajaran</h4>' +
+            '<div class="grd-chart-controls">' +
+              '<div class="grd-chart-pills" role="group" aria-label="Filter grafik mata pelajaran">' +
+                '<button type="button" class="grd-chart-pill' + (f === 'top' ? ' is-active' : '') + '" data-leger-chart-filter="top">Tertinggi</button>' +
+                '<button type="button" class="grd-chart-pill' + (f === 'low' ? ' is-active' : '') + '" data-leger-chart-filter="low">Perlu Perhatian</button>' +
+                '<button type="button" class="grd-chart-pill' + (f === 'all' ? ' is-active' : '') + '" data-leger-chart-filter="all">Semua</button>' +
+              '</div>' +
+              '<div class="grd-vchart-legend">' +
+                '<span><i class="grd-vchart-legend-dot" style="background:#16a34a;"></i>&ge; 75</span>' +
+                '<span><i class="grd-vchart-legend-dot" style="background:#f59e0b;"></i>&lt; 75</span>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="grd-vchart-scroll">' +
+            '<div class="grd-vchart-plot">' +
+              '<div class="grd-vchart-kkm-line" style="bottom:' + kkmBottomPx + 'px;"><span class="grd-vchart-kkm-tag">KKM 75</span></div>' +
+              barsHtml +
+            '</div>' +
+          '</div>' +
+        '</div>';
+    }
+
+    renderLegerTable();
+  }
+
+  function renderLegerTable() {
+    const ov = state.overview;
+    const tableEl = document.getElementById('grdLegerTable');
+    if (!ov || !tableEl) return;
+
+    const sum = ov.class_summary || {};
+    const subjects = ov.subjects || [];
+    const matrix = ov.matrix || [];
+    const q = String(state.legerSearch || '').trim().toLowerCase();
+
+    let rows = q
+      ? matrix.filter(function (r) {
+          return (String(r.name) + ' ' + String(r.nis) + ' ' + String(r.nisn)).toLowerCase().indexOf(q) !== -1;
+        })
+      : matrix.slice();
+
+    if (state.legerViewMode === 'summary' && state.showRanking) {
+      rows.sort(function (a, b) {
+        const ra = a.rank || 9999;
+        const rb = b.rank || 9999;
+        if (ra !== rb) return ra - rb;
+        return (a.row_no || 0) - (b.row_no || 0);
+      });
+    }
+
+    const total = rows.length;
+    const pageSize = state.legerPageSize || 10;
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    if (state.legerPage > totalPages) state.legerPage = totalPages;
+    if (state.legerPage < 1) state.legerPage = 1;
+    const curPage = state.legerPage;
+
+    const counterEl = document.getElementById('grdLegerCounter');
+    if (counterEl) {
+      if (total === 0) {
+        counterEl.textContent = 'Menampilkan 0\u20130 dari 0 data';
+      } else {
+        const start = (curPage - 1) * pageSize + 1;
+        const end = Math.min(curPage * pageSize, total);
+        counterEl.textContent = 'Menampilkan ' + start + '\u2013' + end + ' dari ' + total + ' data';
+      }
+    }
+    if (typeof window.renderPaginationControl === 'function') {
+      window.renderPaginationControl('grdLegerPagination', curPage, totalPages, pageSize, 'goToGradesLegerPage');
+    }
+
+    const pageRows = rows.slice((curPage - 1) * pageSize, curPage * pageSize);
+
+    if (state.legerViewMode === 'summary') {
+      const rankTh = state.showRanking ? '<th scope="col" style="width:92px;">Peringkat</th>' : '<th scope="col" style="width:52px;">No</th>';
+      const theadHtml =
+        '<thead><tr>' +
+          rankTh +
+          '<th scope="col" style="text-align:left;">NIS</th>' +
+          '<th scope="col" style="text-align:left;">Nama Siswa</th>' +
+          '<th scope="col" style="width:160px;">Mapel Tuntas</th>' +
+          '<th scope="col" style="width:120px;">Jumlah Nilai</th>' +
+          '<th scope="col" class="grd-col-avg-mint" style="width:110px;">Rata-rata</th>' +
+          '<th scope="col" style="width:130px;">Aksi</th>' +
+        '</tr></thead>';
+
+      const tbodyHtml = total === 0
+        ? '<tbody><tr><td colspan="7" style="text-align:center;padding:28px;color:#64748b;">Tidak ada siswa yang cocok dengan pencarian.</td></tr></tbody>'
+        : '<tbody>' + pageRows.map(function (r) {
+            const totalSubj = subjects.length || 1;
+            let tuntasCount = 0;
+            subjects.forEach(function (s) {
+              const c = r.scores && r.scores[s.subject_code];
+              if (c && c.is_tuntas === true) tuntasCount++;
+            });
+            const pctTuntas = Math.round((tuntasCount / totalSubj) * 100);
+            const warnBar = pctTuntas < 50 ? ' is-warn' : '';
+
+            let firstColHtml = '<td style="color:#64748b;">' + r.row_no + '</td>';
+            if (state.showRanking) {
+              const rk = r.rank || '-';
+              const rkCls = rk === 1 ? ' grd-rank-badge--top1' : (rk === 2 ? ' grd-rank-badge--top2' : (rk === 3 ? ' grd-rank-badge--top3' : ''));
+              firstColHtml = '<td><span class="grd-rank-badge' + rkCls + '">' + (rk !== '-' ? '#' + rk : '-') + '</span></td>';
+            }
+
+            return '<tr>' +
+              firstColHtml +
+              '<td style="text-align:left;font-family:\'Roboto Mono\',monospace;font-size:12px;color:#475569;">' + esc(r.nis) + '</td>' +
+              '<td style="text-align:left;font-weight:600;color:#0f172a;">' + esc(r.name) + '</td>' +
+              '<td><div class="grd-tuntas-cell"><span class="grd-tuntas-txt">' + tuntasCount + '/' + subjects.length + '</span><div class="grd-mini-bar-track"><div class="grd-mini-bar-fill' + warnBar + '" style="width:' + pctTuntas + '%"></div></div></div></td>' +
+              '<td style="font-weight:700;color:#0f172a;">' + fmtScore(r.total_score, 1) + '</td>' +
+              '<td class="grd-col-avg-mint">' + fmtScore(r.average_score, 1) + '</td>' +
+              '<td><button type="button" class="grd-btn grd-btn--secondary grd-rapor-link-btn" data-open-khs="' + esc(r.student_id) + '">Lihat Rapor &rarr;</button></td>' +
+            '</tr>';
+          }).join('') + '</tbody>';
+
+      tableEl.innerHTML = theadHtml + tbodyHtml;
+      return;
+    }
+
+    // FULL MATRIX MODE (All 21-23 Subjects + Sticky Left Name & Sticky Right Average)
+    const rankHeadHtml = state.showRanking ? '<th scope="col">Peringkat</th>' : '';
     const theadHtml =
       '<thead><tr>' +
         '<th scope="col" class="grd-sticky-no">No</th>' +
@@ -832,49 +1056,49 @@
           return '<th scope="col" title="' + esc(s.subject_name + ' (KKM ' + s.kkm + ')') + '">' + esc(s.subject_code) + '</th>';
         }).join('') +
         '<th scope="col">Jumlah</th>' +
-        '<th scope="col">Rata-Rata</th>' +
+        '<th scope="col" class="grd-col-avg-mint grd-sticky-right-avg">Rata-rata</th>' +
         rankHeadHtml +
-        '<th scope="col">KHS</th>' +
+        '<th scope="col">Rapor</th>' +
       '</tr></thead>';
 
-    const tbodyHtml =
-      '<tbody>' +
-      matrix.map(function (r) {
-        const subjCells = subjects.map(function (s) {
-          const c = r.scores && r.scores[s.subject_code];
-          if (!c || c.score === null || c.score === undefined) return '<td class="grd-cell-zero">-</td>';
-          const cls = c.score === 0 ? 'grd-cell-zero' : (c.is_tuntas === false ? 'grd-cell-remedial' : '');
-          return '<td class="' + cls + '">' + fmtScore(c.score, 2) + '</td>';
-        }).join('');
+    const colCount = subjects.length + (state.showRanking ? 6 : 5);
+    const tbodyHtml = total === 0
+      ? '<tbody><tr><td colspan="' + colCount + '" style="text-align:center;padding:28px;color:#64748b;">Tidak ada siswa yang cocok dengan pencarian.</td></tr></tbody>'
+      : '<tbody>' + pageRows.map(function (r) {
+          const subjCells = subjects.map(function (s) {
+            const c = r.scores && r.scores[s.subject_code];
+            if (!c || c.score === null || c.score === undefined) return '<td class="grd-cell-zero">-</td>';
+            const cls = c.score === 0 ? 'grd-cell-zero' : (c.is_tuntas === false ? 'grd-cell-remedial' : '');
+            return '<td class="' + cls + '">' + fmtScore(c.score, 2) + '</td>';
+          }).join('');
 
-        let rankCellHtml = '';
-        if (state.showRanking) {
-          const rk = r.rank || '-';
-          const rkCls = rk === 1 ? ' grd-rank-badge--top1' : (rk === 2 ? ' grd-rank-badge--top2' : (rk === 3 ? ' grd-rank-badge--top3' : ''));
-          rankCellHtml = '<td><span class="grd-rank-badge' + rkCls + '">' + rk + '</span></td>';
-        }
+          let rankCellHtml = '';
+          if (state.showRanking) {
+            const rk = r.rank || '-';
+            const rkCls = rk === 1 ? ' grd-rank-badge--top1' : (rk === 2 ? ' grd-rank-badge--top2' : (rk === 3 ? ' grd-rank-badge--top3' : ''));
+            rankCellHtml = '<td><span class="grd-rank-badge' + rkCls + '">' + (rk !== '-' ? '#' + rk : '-') + '</span></td>';
+          }
 
-        return '<tr>' +
-          '<td class="grd-sticky-no">' + r.row_no + '</td>' +
-          '<th scope="row" class="grd-sticky-name">' + esc(r.name) + '</th>' +
-          subjCells +
-          '<td style="font-weight:800;color:#0f172a;">' + fmtScore(r.total_score, 2) + '</td>' +
-          '<td style="font-weight:700;color:#166534;">' + fmtScore(r.average_score, 2) + '</td>' +
-          rankCellHtml +
-          '<td><button type="button" class="grd-btn grd-btn--secondary" style="min-height:28px;padding:0 9px;font-size:11.5px;" data-open-khs="' + esc(r.student_id) + '">KHS</button></td>' +
-        '</tr>';
-      }).join('') +
-      '</tbody>';
+          return '<tr>' +
+            '<td class="grd-sticky-no">' + r.row_no + '</td>' +
+            '<th scope="row" class="grd-sticky-name">' + esc(r.name) + '</th>' +
+            subjCells +
+            '<td style="font-weight:700;color:#0f172a;">' + fmtScore(r.total_score, 1) + '</td>' +
+            '<td class="grd-col-avg-mint grd-sticky-right-avg">' + fmtScore(r.average_score, 1) + '</td>' +
+            rankCellHtml +
+            '<td><button type="button" class="grd-btn grd-btn--secondary grd-rapor-link-btn" data-open-khs="' + esc(r.student_id) + '">Rapor</button></td>' +
+          '</tr>';
+        }).join('') + '</tbody>';
 
     const tfootHtml =
       '<tfoot><tr>' +
-        '<th scope="row" colspan="2" class="grd-sticky-avg-label">NILAI RATA-RATA SATU KELAS / MAPEL</th>' +
+        '<th scope="row" colspan="2" class="grd-sticky-avg-label">Rata-rata Kelas</th>' +
         subjects.map(function (s) {
           const v = ov.subject_averages ? ov.subject_averages[s.subject_code] : null;
-          return '<td>' + (v !== null && v !== undefined ? fmtScore(v, 2) : '-') + '</td>';
+          return '<td>' + (v !== null && v !== undefined ? fmtScore(v, 1) : '-') + '</td>';
         }).join('') +
-        '<td>' + fmtScore(sum.class_total_average, 2) + '</td>' +
-        '<td>' + fmtScore(sum.class_average, 2) + '</td>' +
+        '<td>' + fmtScore(sum.class_total_average, 1) + '</td>' +
+        '<td class="grd-col-avg-mint grd-sticky-right-avg">' + fmtScore(sum.class_average, 1) + '</td>' +
         (state.showRanking ? '<td></td>' : '') +
         '<td></td>' +
       '</tr></tfoot>';
@@ -1340,7 +1564,32 @@
         if (nextPeriod && nextPeriod !== state.periodCode) {
           state.periodCode = nextPeriod;
           state.inputPage = 1;
+          state.legerPage = 1;
           loadGradesOverview({ stayOnScreen: true });
+        }
+        return;
+      }
+
+      const legerFilterBtn = e.target.closest('[data-leger-chart-filter]');
+      if (legerFilterBtn) {
+        const nextFilter = legerFilterBtn.getAttribute('data-leger-chart-filter');
+        if (nextFilter && nextFilter !== state.legerChartFilter) {
+          state.legerChartFilter = nextFilter;
+          renderLegerPanel();
+        }
+        return;
+      }
+
+      const legerViewBtn = e.target.closest('[data-leger-view]');
+      if (legerViewBtn) {
+        const nextView = legerViewBtn.getAttribute('data-leger-view');
+        if (nextView && nextView !== state.legerViewMode) {
+          state.legerViewMode = nextView;
+          state.legerPage = 1;
+          document.querySelectorAll('[data-leger-view]').forEach(function (b) {
+            b.classList.toggle('is-active', b.getAttribute('data-leger-view') === nextView);
+          });
+          renderLegerTable();
         }
         return;
       }
@@ -1508,11 +1757,13 @@
         state.academicYearId = e.target.value;
         state.selectedStudentId = '';
         state.inputPage = 1;
+        state.legerPage = 1;
         loadGradesOverview({ stayOnScreen: true });
       } else if (e.target.id === 'grdInputClassSelect' || e.target.id === 'grdLegerClassSelect' || e.target.id === 'grdKhsClassSelect') {
         state.classId = e.target.value;
         state.selectedStudentId = '';
         state.inputPage = 1;
+        state.legerPage = 1;
         loadGradesOverview({ stayOnScreen: true });
       } else if (e.target.id === 'grdInputSubjectSelect') {
         state.subjectCode = e.target.value;
@@ -1550,6 +1801,10 @@
         state.studentSearch = e.target.value;
         state.inputPage = 1;
         renderInputGridRows();
+      } else if (e.target.id === 'grdLegerSearchInput') {
+        state.legerSearch = e.target.value;
+        state.legerPage = 1;
+        renderLegerTable();
       }
     });
 
@@ -1558,6 +1813,13 @@
       if (next < 1) return;
       state.inputPage = next;
       renderInputGridRows();
+    };
+
+    window.goToGradesLegerPage = function (page) {
+      const next = Number(page) || 1;
+      if (next < 1) return;
+      state.legerPage = next;
+      renderLegerTable();
     };
 
     // Spreadsheet Enter / ArrowDown / ArrowUp navigation across score inputs (auto-advances page at boundary)
