@@ -1869,14 +1869,14 @@
   display: flex;
   align-items: flex-end;
   gap: 8px;
-  padding: 26px 6px 26px 52px;
+  padding: 26px 6px 26px 6px;
   box-sizing: border-box;
   min-width: 100%;
 }
 
 .grd-vchart-kkm-line {
   position: absolute;
-  left: 48px;
+  left: 0;
   right: 0;
   border-top: 1.5px dashed #94a3b8;
   pointer-events: none;
@@ -1884,16 +1884,14 @@
 }
 .grd-vchart-kkm-tag {
   position: absolute;
-  left: -48px;
-  top: -9px;
-  width: 44px;
-  text-align: right;
+  left: 2px;
+  top: -17px;
   font-size: 10.5px;
   font-weight: 700;
   color: #475569;
-  background: #ffffff;
-  padding-right: 4px;
-  white-space: nowrap;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 0 4px;
+  border-radius: 4px;
 }
 
 .grd-vchart-col {
@@ -1912,14 +1910,9 @@
   font-size: 11px;
   font-weight: 700;
   color: #334155;
-  background: rgba(255, 255, 255, 0.9);
-  padding: 1px 3px;
-  border-radius: 4px;
-  margin-bottom: 3px;
+  margin-bottom: 4px;
   font-variant-numeric: tabular-nums;
   line-height: 1;
-  position: relative;
-  z-index: 3;
 }
 
 .grd-vchart-bar {
@@ -2237,11 +2230,383 @@
   flex-shrink: 0;
 }
 
+/* 9. RAPOR SISWA & TAMPILAN WALI (OPTION 4 FINAL) */
+.grd-khs-control-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+}
+
+.grd-khs-control-left {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.grd-khs-class-select {
+  min-height: 38px;
+  min-width: 122px;
+  font-weight: 600;
+  border-radius: 10px;
+}
+
+.grd-khs-student-wrap {
+  min-width: 215px;
+  max-width: 300px;
+}
+
+.grd-khs-student-select {
+  min-height: 38px;
+  font-weight: 600;
+  border-radius: 10px;
+}
+
+.grd-khs-nav-btns {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.grd-icon-nav-btn {
+  width: 36px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.14s ease, border-color 0.14s ease;
+}
+.grd-icon-nav-btn:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+.grd-icon-nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.grd-khs-control-right {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .grd-khs-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.65fr) minmax(280px, 1fr);
+  grid-template-columns: minmax(0, 1.92fr) minmax(290px, 1fr);
+  gap: 14px;
+  align-items: stretch;
+}
+
+.grd-khs-report-card {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+.grd-khs-hero-band {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 65%, #ffffff 100%);
+  border-bottom: 1px solid #d1fae5;
+}
+
+.grd-khs-identity {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-width: 0;
+  flex: 1 1 260px;
+}
+
+.grd-khs-avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--grd-emerald);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16.5px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.grd-khs-name-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+
+.grd-khs-name {
+  margin: 0;
+  font-size: 16.5px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.grd-khs-meta {
+  font-size: 12px;
+  color: #475569;
+  line-height: 1.4;
+}
+
+.grd-khs-hero-metrics {
+  display: flex;
+  align-items: center;
   gap: 16px;
-  align-items: start;
+  flex-shrink: 0;
+}
+
+.grd-khs-metric {
+  text-align: center;
+  padding-left: 16px;
+  border-left: 1px solid #d1fae5;
+}
+.grd-khs-metric:first-child {
+  padding-left: 0;
+  border-left: none;
+}
+
+.grd-khs-metric-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 2px;
+}
+
+.grd-khs-metric-val {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+.grd-khs-metric-val--emerald {
+  color: #166534;
+}
+
+.grd-khs-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 18px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.grd-khs-table-wrap {
+  border: none;
+  border-radius: 0;
+  flex: 1;
+}
+
+.grd-table--khs thead th {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--grd-slate-600);
+  padding: 10px 14px;
+}
+
+.grd-table--khs tbody td {
+  padding: 10px 14px;
+}
+
+.grd-khs-note-sub {
+  font-size: 11.5px;
+  font-style: italic;
+  color: #64748b;
+  margin-top: 2px;
+  line-height: 1.35;
+}
+
+.grd-khs-summary-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 18px;
+  background: #f0fdf4;
+  border-top: 1px solid #bbf7d0;
+  font-size: 13px;
+  color: #14532d;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Right Side Evaluation Stack */
+.grd-khs-side-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.grd-att-card,
+.grd-khs-trend-card,
+.grd-khs-note-card {
+  padding: 16px 18px;
+}
+
+.grd-khs-note-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.grd-att-body {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.grd-att-ring-wrap {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+}
+.grd-att-ring-wrap svg {
+  width: 64px;
+  height: 64px;
+  transform: rotate(-90deg);
+}
+.grd-att-ring-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+}
+
+.grd-att-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  flex: 1;
+}
+
+.grd-att-tile {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 8px 6px;
+  text-align: center;
+}
+.grd-att-tile-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 2px;
+}
+.grd-att-tile-val {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 4-Period Trend Bar Chart (Option 4 with uniform tracks & left KKM gutter) */
+.grd-khs-trend-plot {
+  position: relative;
+  height: 162px;
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 20px 6px 26px 50px;
+  box-sizing: border-box;
+}
+
+.grd-khs-trend-col {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  position: relative;
+  z-index: 2;
+}
+
+.grd-khs-trend-track {
+  width: 30px;
+  height: 116px;
+  background: #e2e8f0;
+  border-radius: 7px 7px 3px 3px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  position: relative;
+  overflow: visible;
+}
+
+.grd-khs-trend-fill {
+  width: 100%;
+  border-radius: 6px 6px 3px 3px;
+  background: linear-gradient(180deg, #16a34a 0%, #15803d 100%);
+  transition: height 0.22s ease;
+}
+.grd-khs-trend-fill.is-below {
+  background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
+}
+
+.grd-khs-trend-val {
+  position: absolute;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #334155;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+  z-index: 3;
+}
+
+.grd-khs-trend-lbl {
+  position: absolute;
+  bottom: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--grd-slate-600);
+  white-space: nowrap;
+}
+
+.grd-khs-note-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
 }
 
 .grd-trend-chart {

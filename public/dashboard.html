@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="/css/style.css?v=bug67pb">
   <link rel="stylesheet" href="/css/notifications.css?v=bug66_notif3">
   <link rel="stylesheet" href="/css/finance.css">
-  <link rel="stylesheet" href="/css/grades.css?v=bug74m">
+  <link rel="stylesheet" href="/css/grades.css?v=bug74n">
   <style>
 /**
  * SIMATA — Mobile Responsive Stylesheet
@@ -829,7 +829,7 @@ html, body {
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <script src="/js/simata-client.js?v=bug74c"></script>
   <script src="/js/notifications.js?v=bug65_2"></script>
-  <script src="/js/grades-module.js?v=bug74m"></script></script></script></script></script></script>
+  <script src="/js/grades-module.js?v=bug74n"></script></script></script></script></script></script></script>
 </head>
 
 
@@ -3307,22 +3307,29 @@ html, body {
                 </div>
               </div>
 
-              <!-- PANEL 3: RAPOR SISWA & TAMPILAN WALI MURID (FULL WIDTH) -->
+              <!-- PANEL 3: RAPOR SISWA & TAMPILAN WALI MURID (OPTION 4 FINAL) -->
               <div id="grdPanelKhs" role="tabpanel" aria-labelledby="grdTabKhs" hidden="until-found">
                 <div class="grd-panel-inner">
-                  <div class="grd-card" style="display:flex;justify-content:space-between;align-items:end;flex-wrap:wrap;gap:12px;">
-                    <div style="display:flex;flex-wrap:wrap;gap:12px;flex:1 1 320px;">
-                      <div class="grd-field" style="min-width:160px;">
-                        <label for="grdKhsClassSelect">Kelas</label>
-                        <select id="grdKhsClassSelect" class="grd-select"></select>
+                  <div class="grd-khs-control-bar">
+                    <div class="grd-khs-control-left">
+                      <div id="grdKhsClassWrap">
+                        <label for="grdKhsClassSelect" class="grd-sr-only">Kelas</label>
+                        <select id="grdKhsClassSelect" class="grd-select grd-khs-class-select" aria-label="Pilih Kelas Rapor"></select>
                       </div>
-                      <div class="grd-field" style="min-width:240px;flex:1 1 240px;">
-                        <label for="grdKhsStudentSelect">Pilih Siswa</label>
-                        <select id="grdKhsStudentSelect" class="grd-select"></select>
+                      <div class="grd-khs-student-wrap">
+                        <label for="grdKhsStudentSelect" class="grd-sr-only">Pilih Siswa</label>
+                        <select id="grdKhsStudentSelect" class="grd-select grd-khs-student-select" aria-label="Pilih Siswa"></select>
+                      </div>
+                      <div id="grdKhsNavBtns" class="grd-khs-nav-btns">
+                        <button type="button" id="grdKhsPrevStudentBtn" class="grd-icon-nav-btn" title="Siswa Sebelumnya" aria-label="Siswa Sebelumnya">&#8249;</button>
+                        <button type="button" id="grdKhsNextStudentBtn" class="grd-icon-nav-btn" title="Siswa Berikutnya" aria-label="Siswa Berikutnya">&#8250;</button>
                       </div>
                     </div>
-                    <div style="display:flex;flex-wrap:wrap;gap:8px;">
-                      <button type="button" id="grdKhsToggleRankingBtn" class="grd-btn grd-btn--secondary grd-btn--compact">Peringkat: Tampil</button>
+                    <div class="grd-khs-control-right">
+                      <button type="button" id="grdKhsToggleRankingBtn" class="grd-pub-toggle" aria-pressed="true" title="Tampilkan atau sembunyikan peringkat kelas pada rapor">
+                        <span class="grd-pub-toggle-label">Tampilkan Peringkat</span>
+                        <span class="grd-switch-track" aria-hidden="true"><span class="grd-switch-thumb"></span></span>
+                      </button>
                       <button type="button" id="grdToggleParentPreviewBtn" class="grd-btn grd-btn--secondary grd-btn--compact">Lihat Tampilan Wali</button>
                       <button type="button" id="grdPrintKhsBtn" class="grd-btn grd-btn--primary grd-btn--compact">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>

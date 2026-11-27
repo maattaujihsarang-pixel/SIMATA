@@ -28,6 +28,10 @@
     legerSearch: '',
     legerPage: 1,
     legerPageSize: 10,
+    khsFilter: 'all', // 'all' | 'tuntas' | 'belum'
+    khsSearch: '',
+    khsPage: 1,
+    khsPageSize: 10,
     showRanking: true,
     rankingPrefLoaded: false,
     parentPreviewMode: false,
@@ -1111,12 +1115,16 @@
     const ov = state.overview;
     if (!ov) return;
 
+    const classWrap = document.getElementById('grdKhsClassWrap');
     const classSel = document.getElementById('grdKhsClassSelect');
     const stSel = document.getElementById('grdKhsStudentSelect');
+    const navBtns = document.getElementById('grdKhsNavBtns');
+    const prevBtn = document.getElementById('grdKhsPrevStudentBtn');
+    const nextBtn = document.getElementById('grdKhsNextStudentBtn');
     const isParent = Boolean(ov.viewer && ov.viewer.is_parent);
 
+    if (classWrap) classWrap.style.display = isParent ? 'none' : '';
     if (classSel) {
-      classSel.parentElement.style.display = isParent ? 'none' : '';
       classSel.innerHTML = (ov.classes || []).map(function (c) {
         const sel = c.class_id === state.classId ? ' selected' : '';
         return '<option value="' + esc(c.class_id) + '"' + sel + '>' + esc(c.class_name) + '</option>';
@@ -1128,12 +1136,18 @@
       state.selectedStudentId = matrix[0] ? matrix[0].student_id : '';
     }
 
+    const curIdx = matrix.findIndex(function (r) { return r.student_id === state.selectedStudentId; });
+
     if (stSel) {
       stSel.innerHTML = matrix.map(function (r) {
         const sel = r.student_id === state.selectedStudentId ? ' selected' : '';
-        return '<option value="' + esc(r.student_id) + '"' + sel + '>' + esc(r.row_no + '. ' + r.name + ' (NIS: ' + r.nis + ')') + '</option>';
+        return '<option value="' + esc(r.student_id) + '"' + sel + '>' + esc(r.name) + '</option>';
       }).join('');
     }
+
+    if (navBtns) navBtns.style.display = matrix.length > 1 ? 'inline-flex' : 'none';
+    if (prevBtn) prevBtn.disabled = curIdx <= 0;
+    if (nextBtn) nextBtn.disabled = curIdx === -1 || curIdx >= matrix.length - 1;
 
     const previewBtn = document.getElementById('grdToggleParentPreviewBtn');
     if (previewBtn) {
@@ -1145,15 +1159,21 @@
     const rankKhsBtn = document.getElementById('grdKhsToggleRankingBtn');
     if (rankKhsBtn) {
       rankKhsBtn.style.display = isParent ? 'none' : 'inline-flex';
-      rankKhsBtn.textContent = state.showRanking ? 'Peringkat: Tampil' : 'Peringkat: Sembunyi';
+      rankKhsBtn.className = 'grd-pub-toggle';
+      rankKhsBtn.setAttribute('aria-pressed', state.showRanking ? 'true' : 'false');
+      rankKhsBtn.innerHTML =
+        '<span class="grd-pub-toggle-label">Tampilkan Peringkat</span>' +
+        '<span class="grd-switch-track" aria-hidden="true"><span class="grd-switch-thumb"></span></span>';
     }
+
+    state.khsPage = 1;
 
     const bodyHost = document.getElementById('grdKhsBodyHost');
     if (!state.selectedStudentId) {
       if (bodyHost) {
         bodyHost.innerHTML = '<div class="grd-card" style="text-align:center;color:#64748b;padding:30px;">' +
           (ov.parent_unpublished_notice
-            ? 'Nilai periode <strong>' + esc(ov.selected_period ? ov.selected_period.short_label : '') + '</strong> belum diterbitkan oleh pihak madrasah.'
+            ? 'Nilai periode <strong>' + esc(ov.selected_period ? ov.selected_period.short_label : '') + '</strong> belum dibagikan oleh pihak madrasah.'
             : 'Belum ada data siswa pada kelas ini.') +
         '</div>';
       }
@@ -1168,7 +1188,7 @@
       })
       .withFailureHandler(function (err) {
         if (bodyHost) {
-          bodyHost.innerHTML = '<div class="grd-card" style="color:#dc2626;">Gagal memuat KHS siswa: ' + esc(err && err.message ? err.message : err) + '</div>';
+          bodyHost.innerHTML = '<div class="grd-card" style="color:#dc2626;">Gagal memuat rapor siswa: ' + esc(err && err.message ? err.message : err) + '</div>';
         }
       })
       .getStudentKhs(state.selectedStudentId, {
@@ -1186,11 +1206,16 @@
     const isArchived = Boolean(state.overview && state.overview.is_year_archived);
     const readOnlyParentView = isParent || state.parentPreviewMode || isArchived;
 
+    const rankKhsBtn = document.getElementById('grdKhsToggleRankingBtn');
+    if (rankKhsBtn && !isParent) {
+      rankKhsBtn.setAttribute('aria-pressed', state.showRanking ? 'true' : 'false');
+    }
+
     if ((isParent || state.parentPreviewMode) && !khs.selected_period.is_published) {
       host.innerHTML =
         '<div class="grd-card" style="text-align:center;padding:36px 20px;">' +
-          '<span class="grd-chip grd-chip--amber" style="margin-bottom:10px;">Belum Diterbitkan</span>' +
-          '<h3 style="margin:6px 0;color:#0f172a;">Hasil ' + esc(khs.selected_period.short_label) + ' Masih Dalam Proses Rekap Guru</h3>' +
+          '<span class="grd-chip grd-chip--amber" style="margin-bottom:10px;">Belum Dibagikan</span>' +
+          '<h3 style="margin:6px 0;color:#0f172a;">Rapor ' + esc(khs.selected_period.short_label) + ' Masih Dalam Proses Rekap Guru</h3>' +
           '<p style="color:#64748b;font-size:13.5px;max-width:520px;margin:0 auto;">Pada tampilan Wali Murid, nilai hanya muncul setelah periode ini diaktifkan melalui tombol <strong>Bagikan ke Wali</strong>.</p>' +
         '</div>';
       return;
@@ -1199,117 +1224,235 @@
     const st = khs.student;
     const row = khs.student_row || { scores: {}, total_score: 0, average_score: 0, rank: '-', attendance: {} };
     const initials = String(st.name || 'S').trim().split(/\s+/).slice(0, 2).map(function (w) { return w[0] || ''; }).join('').toUpperCase();
-    const overallPred = calcPredicate(row.average_score, 75);
-    const att = row.attendance || {};
-    const attText = att.total_days > 0
-      ? ('Hadir ' + fmtScore(att.hadir_pct, 0) + '% &bull; S:' + att.sakit + ' &bull; I:' + att.izin + ' &bull; A:' + att.alpa)
-      : 'Sakit: 0 &bull; Izin: 0 &bull; Alpa: 0';
+    const subjects = khs.subjects || [];
 
-    const rankText = (state.showRanking && row.rank)
-      ? (' &bull; <strong>Peringkat #' + row.rank + ' dari ' + khs.class_student_count + '</strong>')
+    let tuntasCount = 0;
+    let belumCount = 0;
+    subjects.forEach(function (s) {
+      const c = row.scores && row.scores[s.subject_code];
+      if (c && c.is_tuntas === true) tuntasCount++;
+      else if (c && c.is_tuntas === false) belumCount++;
+    });
+
+    const pubPillHtml = khs.selected_period.is_published
+      ? '<span class="grd-chip grd-chip--emerald">Dibagikan \u2713</span>'
+      : '<span class="grd-chip grd-chip--amber">Belum Dibagikan</span>';
+
+    const rankMetricHtml = (state.showRanking && row.rank)
+      ? '<div class="grd-khs-metric">' +
+          '<div class="grd-khs-metric-label">Peringkat</div>' +
+          '<div class="grd-khs-metric-val"><span class="grd-rank-badge' +
+            (row.rank === 1 ? ' grd-rank-badge--top1' : (row.rank === 2 ? ' grd-rank-badge--top2' : (row.rank === 3 ? ' grd-rank-badge--top3' : ''))) +
+            '">#' + row.rank + ' / ' + khs.class_student_count + '</span></div>' +
+        '</div>'
       : '';
 
-    const subjRowsHtml = (khs.subjects || []).map(function (s, idx) {
-      const c = (row.scores && row.scores[s.subject_code]) || { score: null, kkm: s.kkm, predicate: '-', is_tuntas: null, remarks: '' };
-      const clsAvg = khs.subject_averages ? khs.subject_averages[s.subject_code] : null;
-      const badge = c.is_tuntas === true
-        ? '<span class="grd-chip grd-chip--emerald">Tuntas</span>'
-        : (c.is_tuntas === false ? '<span class="grd-chip grd-chip--amber">Belum Tuntas</span>' : '<span class="grd-chip grd-chip--slate">-</span>');
-      return '<tr>' +
-        '<td style="text-align:center;color:#64748b;">' + (idx + 1) + '</td>' +
-        '<td style="font-weight:600;">' + esc(s.subject_name) + ' <span style="color:#94a3b8;font-size:11.5px;">(' + esc(s.subject_code) + ')</span></td>' +
-        '<td style="text-align:center;">' + fmtScore(c.kkm || s.kkm, 1) + '</td>' +
-        '<td style="text-align:center;font-weight:800;font-size:13.5px;">' + (c.score !== null ? fmtScore(c.score, 2) : '-') + '</td>' +
-        '<td style="text-align:center;color:#64748b;">' + (clsAvg !== null && clsAvg !== undefined ? fmtScore(clsAvg, 1) : '-') + '</td>' +
-        '<td style="text-align:center;font-weight:700;">' + esc(c.predicate || '-') + '</td>' +
-        '<td style="text-align:center;">' + badge + '</td>' +
-        '<td style="color:#475569;font-size:12px;">' + esc(c.remarks || '-') + '</td>' +
-      '</tr>';
-    }).join('');
+    // Attendance donut ring + 3 clean tiles
+    const att = row.attendance || {};
+    const hadirPct = att.total_days > 0 ? Math.round(Number(att.hadir_pct || 0)) : 100;
+    const rRing = 25;
+    const circRing = 2 * Math.PI * rRing;
+    const dashRing = (Math.min(100, Math.max(0, hadirPct)) / 100) * circRing;
 
-    // Build SVG 4-Period Trend Chart
+    // 4-Period Trend Bar Chart (dedicated left KKM 75 gutter + uniform tracks)
     const trend = khs.trend || [];
-    const svgW = 360;
-    const svgH = 175;
-    const baseY = 135;
-    const topY = 22;
-    const chartH = baseY - topY;
-    const kkmY = baseY - (75 / 100) * chartH;
-    const colXs = [52, 136, 222, 308];
-    const pts = [];
-
-    const barsSvg = trend.map(function (t, i) {
-      const cx = colXs[i] || (50 + i * 80);
+    const trackH = 116;
+    const kkmBottomPx = Math.round(26 + (75 / 100) * trackH);
+    const trendBarsHtml = trend.map(function (t) {
       const val = t.average_score;
       const hasVal = val !== null && val !== undefined && t.filled_subjects > 0;
-      const h = hasVal ? Math.max(4, (Math.min(100, val) / 100) * chartH) : 4;
-      const y = baseY - h;
-      if (hasVal) pts.push(cx + ',' + y.toFixed(1));
-      const fill = hasVal ? '#16a34a' : '#e2e8f0';
-      return '<g>' +
-        '<rect x="' + (cx - 18) + '" y="' + y.toFixed(1) + '" width="36" height="' + h.toFixed(1) + '" rx="6" fill="' + fill + '" opacity="' + (hasVal ? '0.9' : '0.45') + '"></rect>' +
-        '<text x="' + cx + '" y="' + (hasVal ? (y - 6).toFixed(1) : (baseY - 8)) + '" text-anchor="middle" font-size="11" font-weight="700" fill="#0f172a">' + (hasVal ? fmtScore(val, 1) : '-') + '</text>' +
-        '<text x="' + cx + '" y="154" text-anchor="middle" font-size="10.5" font-weight="700" fill="#475569">' + esc(t.short_label) + '</text>' +
-      '</g>';
+      const pct = hasVal ? Math.min(100, Math.max(0, Number(val))) : 0;
+      const fillPx = hasVal ? Math.max(5, Math.round((pct / 100) * trackH)) : 0;
+      const below = hasVal && Number(val) < 75;
+      const valBottomPx = hasVal ? (fillPx + 4) : 6;
+      const tip = t.short_label + (hasVal ? (' \u2022 Rata-rata: ' + fmtScore(val, 1)) : ' \u2022 Belum ada nilai');
+      return '<div class="grd-khs-trend-col" title="' + esc(tip) + '">' +
+        '<div class="grd-khs-trend-track">' +
+          (hasVal ? '<span class="grd-khs-trend-val" style="bottom:' + valBottomPx + 'px;">' + fmtScore(val, 1) + '</span>' : '') +
+          (hasVal ? '<div class="grd-khs-trend-fill' + (below ? ' is-below' : '') + '" style="height:' + fillPx + 'px;"></div>' : '') +
+        '</div>' +
+        '<span class="grd-khs-trend-lbl">' + esc(t.short_label) + '</span>' +
+      '</div>';
     }).join('');
 
-    const lineSvg = pts.length > 1
-      ? '<polyline points="' + pts.join(' ') + '" fill="none" stroke="#14532d" stroke-width="2.2"></polyline>'
-      : '';
-
     const noteCardHtml = readOnlyParentView
-      ? '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;font-size:13px;color:#14532d;line-height:1.55;">' +
+      ? '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;font-size:13px;color:#14532d;line-height:1.55;flex:1;">' +
           esc(row.homeroom_note || 'Terus tingkatkan semangat belajar, ibadah, dan kedisiplinan di madrasah.') +
         '</div>'
-      : '<textarea id="grdHomeroomNoteInput" class="grd-input" rows="3" style="resize:vertical;margin-bottom:8px;" placeholder="Tulis catatan atau motivasi Wali Kelas untuk siswa & orang tua...">' + esc(row.homeroom_note || '') + '</textarea>' +
-        '<button type="button" class="grd-btn grd-btn--soft" id="grdSaveHomeroomNoteBtn" style="width:100%;">Simpan Catatan Wali Kelas</button>';
+      : '<textarea id="grdHomeroomNoteInput" class="grd-input" rows="4" style="resize:vertical;flex:1;" placeholder="Tulis catatan pembinaan atau apresiasi untuk siswa...">' + esc(row.homeroom_note || '') + '</textarea>' +
+        '<div class="grd-khs-note-actions"><button type="button" class="grd-btn grd-btn--primary grd-btn--compact" id="grdSaveHomeroomNoteBtn">Simpan Catatan</button></div>';
+
+    const f = state.khsFilter || 'all';
 
     host.innerHTML =
-      '<div class="grd-khs-banner">' +
-        '<div class="grd-khs-identity">' +
-          '<div class="grd-khs-avatar">' + esc(initials) + '</div>' +
-          '<div>' +
-            '<h3 style="margin:0 0 3px;font-size:17px;color:#0f172a;">' + esc(st.name) + '</h3>' +
-            '<div style="font-size:12.5px;color:#475569;">NIS: ' + esc(st.nis || '-') + ' &bull; ' + esc(st.class_name) + ' &bull; Wali Kelas: ' + esc(st.homeroom_teacher_name) + rankText + '</div>' +
+      '<div class="grd-khs-grid">' +
+        // LEFT 66%: DIGITAL REPORT CARD
+        '<div class="grd-card grd-khs-report-card">' +
+          '<div class="grd-khs-hero-band">' +
+            '<div class="grd-khs-identity">' +
+              '<div class="grd-khs-avatar">' + esc(initials) + '</div>' +
+              '<div style="min-width:0;">' +
+                '<div class="grd-khs-name-row">' +
+                  '<h3 class="grd-khs-name">' + esc(st.name) + '</h3>' +
+                  pubPillHtml +
+                '</div>' +
+                '<div class="grd-khs-meta">NIS: ' + esc(st.nis || '-') + ' &bull; ' + esc(st.class_name) + ' &bull; Wali: ' + esc(st.homeroom_teacher_name) + '</div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="grd-khs-hero-metrics">' +
+              '<div class="grd-khs-metric">' +
+                '<div class="grd-khs-metric-label">Rata-rata</div>' +
+                '<div class="grd-khs-metric-val grd-khs-metric-val--emerald">' + fmtScore(row.average_score, 1) + '</div>' +
+              '</div>' +
+              '<div class="grd-khs-metric">' +
+                '<div class="grd-khs-metric-label">Tuntas</div>' +
+                '<div class="grd-khs-metric-val">' + tuntasCount + '/' + subjects.length + '</div>' +
+              '</div>' +
+              rankMetricHtml +
+            '</div>' +
           '</div>' +
-        '</div>' +
-        '<div style="display:flex;flex-wrap:wrap;gap:8px;">' +
-          '<span class="grd-chip grd-chip--emerald" style="padding:6px 12px;font-size:12.5px;">Jumlah: ' + fmtScore(row.total_score, 2) + ' &bull; Rata-rata: ' + fmtScore(row.average_score, 2) + ' (' + overallPred.p + ')</span>' +
-          '<span class="grd-chip grd-chip--sky" style="padding:6px 12px;font-size:12.5px;">' + attText + '</span>' +
-        '</div>' +
-      '</div>' +
-      '<div class="grd-khs-grid" style="margin-top:16px;">' +
-        '<div class="grd-card" style="padding:0;overflow:hidden;">' +
-          '<div style="padding:14px 16px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">' +
-            '<strong style="font-size:14.5px;color:#0f172a;">Daftar Nilai ' + esc(khs.selected_period.short_label) + ' (' + esc(khs.academic_year.academic_year_id) + ')</strong>' +
-            '<span class="grd-chip ' + (khs.selected_period.is_published ? 'grd-chip--emerald' : 'grd-chip--amber') + '">' +
-              (khs.selected_period.is_published ? '\u2713 Tampil di Portal Wali Murid' : 'Draft Internal') +
-            '</span>' +
+          '<div class="grd-khs-toolbar">' +
+            '<div class="grd-mode-switch" role="group" aria-label="Filter mata pelajaran rapor">' +
+              '<button type="button" class="grd-mode-btn' + (f === 'all' ? ' is-active' : '') + '" data-khs-filter="all">Semua (' + subjects.length + ')</button>' +
+              '<button type="button" class="grd-mode-btn' + (f === 'tuntas' ? ' is-active' : '') + '" data-khs-filter="tuntas">Tuntas (' + tuntasCount + ')</button>' +
+              '<button type="button" class="grd-mode-btn' + (f === 'belum' ? ' is-active' : '') + '" data-khs-filter="belum">Belum Tuntas (' + belumCount + ')</button>' +
+            '</div>' +
+            '<div class="grd-search-wrap">' +
+              '<input id="grdKhsSearchInput" type="search" class="grd-input grd-search-input" value="' + esc(state.khsSearch || '') + '" placeholder="Cari mapel..." aria-label="Cari mata pelajaran pada rapor" />' +
+              '<svg class="grd-search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>' +
+            '</div>' +
           '</div>' +
-          '<div class="grd-table-wrap" style="border:none;border-radius:0;">' +
-            '<table class="grd-table">' +
-              '<thead><tr><th scope="col" style="text-align:center;">No</th><th scope="col">Mata Pelajaran</th><th scope="col" style="text-align:center;">KKM</th><th scope="col" style="text-align:center;">Nilai</th><th scope="col" style="text-align:center;">Rata Kelas</th><th scope="col" style="text-align:center;">Predikat</th><th scope="col" style="text-align:center;">Ketuntasan</th><th scope="col">Catatan Guru</th></tr></thead>' +
-              '<tbody>' + subjRowsHtml + '</tbody>' +
+          '<div class="grd-table-wrap grd-khs-table-wrap">' +
+            '<table class="grd-table grd-table--khs">' +
+              '<thead><tr>' +
+                '<th scope="col" style="width:46px;text-align:center;">No</th>' +
+                '<th scope="col">Mata Pelajaran</th>' +
+                '<th scope="col" style="width:66px;text-align:center;">KKM</th>' +
+                '<th scope="col" style="width:74px;text-align:center;">Nilai</th>' +
+                '<th scope="col" style="width:94px;text-align:center;">Rata Kelas</th>' +
+                '<th scope="col" style="width:154px;text-align:center;">Status</th>' +
+              '</tr></thead>' +
+              '<tbody id="grdKhsTbody"></tbody>' +
             '</table>' +
           '</div>' +
-        '</div>' +
-        '<div style="display:flex;flex-direction:column;gap:16px;">' +
-          '<div class="grd-card">' +
-            '<strong style="display:block;font-size:14px;color:#0f172a;margin-bottom:8px;">Tren Nilai ASTS & ASAS (' + esc(khs.academic_year.academic_year_id) + ')</strong>' +
-            '<svg class="grd-trend-chart" viewBox="0 0 ' + svgW + ' ' + svgH + '" role="img" aria-label="Grafik perkembangan rata-rata nilai antar periode asesmen">' +
-              '<line x1="20" y1="' + baseY + '" x2="342" y2="' + baseY + '" stroke="#cbd5e1" stroke-width="1"></line>' +
-              '<line x1="20" y1="' + kkmY.toFixed(1) + '" x2="342" y2="' + kkmY.toFixed(1) + '" stroke="#f59e0b" stroke-dasharray="4 3" stroke-width="1.2"></line>' +
-              '<text x="340" y="' + (kkmY - 4).toFixed(1) + '" text-anchor="end" font-size="9.5" font-weight="700" fill="#b45309">KKM 75</text>' +
-              barsSvg +
-              lineSvg +
-            '</svg>' +
+          '<div class="grd-khs-summary-bar">' +
+            '<span>Jumlah Nilai: <strong>' + fmtScore(row.total_score, 1) + '</strong></span>' +
+            '<span>Rata-rata: <strong>' + fmtScore(row.average_score, 1) + '</strong></span>' +
           '</div>' +
-          '<div class="grd-card">' +
-            '<strong style="display:block;font-size:14px;color:#0f172a;margin-bottom:8px;">Catatan Wali Kelas</strong>' +
+          '<div class="attendance-table-footer grd-input-pagination-bar">' +
+            '<div class="table-footer-counter" id="grdKhsCounter">Menampilkan 0\u20130 dari 0 mapel</div>' +
+            '<div class="table-footer-pagination" id="grdKhsPagination"></div>' +
+          '</div>' +
+        '</div>' +
+        // RIGHT 34%: 3 STACKED EVALUATION CARDS
+        '<div class="grd-khs-side-stack">' +
+          '<div class="grd-card grd-att-card">' +
+            '<h4 class="grd-card-heading" style="margin-bottom:12px;">Kehadiran Siswa</h4>' +
+            '<div class="grd-att-body">' +
+              '<div class="grd-att-ring-wrap" aria-label="Persentase kehadiran ' + hadirPct + '%">' +
+                '<svg viewBox="0 0 64 64">' +
+                  '<circle cx="32" cy="32" r="' + rRing + '" stroke="#e2e8f0" stroke-width="6.5" fill="none"></circle>' +
+                  '<circle cx="32" cy="32" r="' + rRing + '" stroke="#166534" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-dasharray="' + dashRing.toFixed(1) + ' ' + circRing.toFixed(1) + '"></circle>' +
+                '</svg>' +
+                '<span class="grd-att-ring-label">' + hadirPct + '%</span>' +
+              '</div>' +
+              '<div class="grd-att-tiles">' +
+                '<div class="grd-att-tile"><div class="grd-att-tile-label">Sakit</div><div class="grd-att-tile-val">' + (att.sakit || 0) + '</div></div>' +
+                '<div class="grd-att-tile"><div class="grd-att-tile-label">Izin</div><div class="grd-att-tile-val">' + (att.izin || 0) + '</div></div>' +
+                '<div class="grd-att-tile"><div class="grd-att-tile-label">Alpa</div><div class="grd-att-tile-val">' + (att.alpa || 0) + '</div></div>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="grd-card grd-khs-trend-card">' +
+            '<h4 class="grd-card-heading" style="margin-bottom:8px;">Perkembangan Nilai</h4>' +
+            '<div class="grd-khs-trend-plot">' +
+              '<div class="grd-vchart-kkm-line" style="bottom:' + kkmBottomPx + 'px;"><span class="grd-vchart-kkm-tag">KKM 75</span></div>' +
+              trendBarsHtml +
+            '</div>' +
+          '</div>' +
+          '<div class="grd-card grd-khs-note-card">' +
+            '<h4 class="grd-card-heading" style="margin-bottom:10px;">Catatan Wali Kelas</h4>' +
             noteCardHtml +
           '</div>' +
         '</div>' +
       '</div>';
+
+    renderKhsTableRows();
+  }
+
+  function renderKhsTableRows() {
+    const khs = state.khsData;
+    const tbody = document.getElementById('grdKhsTbody');
+    if (!khs || !tbody) return;
+
+    const row = khs.student_row || { scores: {} };
+    const allSubjects = (khs.subjects || []).map(function (s, idx) {
+      const c = (row.scores && row.scores[s.subject_code]) || { score: null, kkm: s.kkm, predicate: '-', is_tuntas: null, remarks: '' };
+      return { idx: idx + 1, subject: s, cell: c };
+    });
+
+    const f = state.khsFilter || 'all';
+    const q = String(state.khsSearch || '').trim().toLowerCase();
+    const filtered = allSubjects.filter(function (item) {
+      if (f === 'tuntas' && item.cell.is_tuntas !== true) return false;
+      if (f === 'belum' && item.cell.is_tuntas !== false) return false;
+      if (q) {
+        const hay = (String(item.subject.subject_name) + ' ' + String(item.subject.subject_code)).toLowerCase();
+        if (hay.indexOf(q) === -1) return false;
+      }
+      return true;
+    });
+
+    const total = filtered.length;
+    const pageSize = state.khsPageSize || 10;
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    if (state.khsPage > totalPages) state.khsPage = totalPages;
+    if (state.khsPage < 1) state.khsPage = 1;
+    const curPage = state.khsPage;
+
+    const counterEl = document.getElementById('grdKhsCounter');
+    if (counterEl) {
+      if (total === 0) {
+        counterEl.textContent = 'Menampilkan 0\u20130 dari 0 mapel';
+      } else {
+        const start = (curPage - 1) * pageSize + 1;
+        const end = Math.min(curPage * pageSize, total);
+        counterEl.textContent = 'Menampilkan ' + start + '\u2013' + end + ' dari ' + total + ' mapel';
+      }
+    }
+    if (typeof window.renderPaginationControl === 'function') {
+      window.renderPaginationControl('grdKhsPagination', curPage, totalPages, pageSize, 'goToGradesKhsPage');
+    }
+
+    if (total === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:28px;color:#64748b;">Tidak ada mata pelajaran yang cocok dengan filter.</td></tr>';
+      return;
+    }
+
+    const pageItems = filtered.slice((curPage - 1) * pageSize, curPage * pageSize);
+    tbody.innerHTML = pageItems.map(function (item) {
+      const s = item.subject;
+      const c = item.cell;
+      const clsAvg = khs.subject_averages ? khs.subject_averages[s.subject_code] : null;
+      const predLetter = c.predicate && c.predicate !== '-' ? c.predicate : '';
+      const statusBadge = c.is_tuntas === true
+        ? '<span class="grd-chip grd-chip--emerald">' + (predLetter ? predLetter + ' &bull; ' : '') + 'Tuntas</span>'
+        : (c.is_tuntas === false
+            ? '<span class="grd-chip grd-chip--amber">' + (predLetter ? predLetter + ' &bull; ' : '') + 'Belum Tuntas</span>'
+            : '<span class="grd-chip grd-chip--slate">Kosong</span>');
+      const remarkSub = c.remarks
+        ? '<div class="grd-khs-note-sub">Catatan: ' + esc(c.remarks) + '</div>'
+        : '';
+
+      return '<tr>' +
+        '<td style="text-align:center;color:#64748b;font-variant-numeric:tabular-nums;">' + item.idx + '</td>' +
+        '<td><div style="font-weight:600;color:#0f172a;">' + esc(s.subject_name) + '</div>' + remarkSub + '</td>' +
+        '<td style="text-align:center;color:#475569;font-variant-numeric:tabular-nums;">' + fmtScore(c.kkm || s.kkm, 1) + '</td>' +
+        '<td style="text-align:center;font-weight:800;font-size:13.5px;color:#0f172a;font-variant-numeric:tabular-nums;">' + (c.score !== null ? fmtScore(c.score, 2) : '-') + '</td>' +
+        '<td style="text-align:center;color:#64748b;font-variant-numeric:tabular-nums;">' + (clsAvg !== null && clsAvg !== undefined ? fmtScore(clsAvg, 1) : '-') + '</td>' +
+        '<td style="text-align:center;">' + statusBadge + '</td>' +
+      '</tr>';
+    }).join('');
   }
 
   function triggerPrintSheet(htmlContent, pageOrientation) {
@@ -1595,6 +1738,33 @@
         return;
       }
 
+      const khsFilterBtn = e.target.closest('[data-khs-filter]');
+      if (khsFilterBtn) {
+        const nextF = khsFilterBtn.getAttribute('data-khs-filter');
+        if (nextF && nextF !== state.khsFilter) {
+          state.khsFilter = nextF;
+          state.khsPage = 1;
+          document.querySelectorAll('[data-khs-filter]').forEach(function (b) {
+            b.classList.toggle('is-active', b.getAttribute('data-khs-filter') === nextF);
+          });
+          renderKhsTableRows();
+        }
+        return;
+      }
+
+      const prevStBtn = e.target.closest('#grdKhsPrevStudentBtn');
+      const nextStBtn = e.target.closest('#grdKhsNextStudentBtn');
+      if ((prevStBtn || nextStBtn) && state.overview && Array.isArray(state.overview.matrix)) {
+        const list = state.overview.matrix;
+        const idx = list.findIndex(function (r) { return r.student_id === state.selectedStudentId; });
+        const targetIdx = prevStBtn ? idx - 1 : idx + 1;
+        if (targetIdx >= 0 && targetIdx < list.length) {
+          state.selectedStudentId = list[targetIdx].student_id;
+          loadKhsForSelectedStudent();
+        }
+        return;
+      }
+
       const tabBtn = e.target.closest('#grdSubTablist button[data-grd-tab]');
       if (tabBtn) {
         setActiveTab(tabBtn.getAttribute('data-grd-tab'));
@@ -1806,6 +1976,10 @@
         state.legerSearch = e.target.value;
         state.legerPage = 1;
         renderLegerTable();
+      } else if (e.target.id === 'grdKhsSearchInput') {
+        state.khsSearch = e.target.value;
+        state.khsPage = 1;
+        renderKhsTableRows();
       }
     });
 
@@ -1821,6 +1995,13 @@
       if (next < 1) return;
       state.legerPage = next;
       renderLegerTable();
+    };
+
+    window.goToGradesKhsPage = function (page) {
+      const next = Number(page) || 1;
+      if (next < 1) return;
+      state.khsPage = next;
+      renderKhsTableRows();
     };
 
     // Spreadsheet Enter / ArrowDown / ArrowUp navigation across score inputs (auto-advances page at boundary)
