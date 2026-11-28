@@ -44,6 +44,7 @@ async function runPrintSettingsTests() {
   const printHelperJs = fs.readFileSync(path.join(rootDir, 'public/js/print-helper.js'), 'utf8');
   const gradesJs = fs.readFileSync(path.join(rootDir, 'public/js/grades-module.js'), 'utf8');
   const gradesCss = fs.readFileSync(path.join(rootDir, 'public/css/grades.css'), 'utf8');
+  const styleCss = fs.readFileSync(path.join(rootDir, 'public/css/style.css'), 'utf8');
   const clientJs = fs.readFileSync(path.join(rootDir, 'public/js/simata-client.js'), 'utf8');
 
   // 1. Visual Assets & Static Contracts
@@ -53,19 +54,22 @@ async function runPrintSettingsTests() {
 
   assert.ok(!gradesJs.includes('Tampil di cetakan A4'), 'Hint text "Tampil di cetakan A4 & Portal Wali" must be removed from grades-module.js');
   assert.ok(!gradesCss.includes('.grd-khs-note-hint'), '.grd-khs-note-hint must be removed from grades.css');
+  assert.ok(gradesCss.includes('padding: 26px 8px 26px 58px;') && gradesCss.includes('.grd-vchart-plot > .grd-vchart-kkm-line'), 'KKM bar chart must reserve left gutter to avoid overlapping bars');
+  assert.ok(styleCss.includes('.toast-spinner') && styleCss.includes('.toast.is-loading'), 'style.css must define SIMATA loading toast spinner');
   assert.ok(gradesJs.includes('NILAI RATA-RATA SATU KELAS / MAPEL') && gradesJs.includes('MADRASAH ALIYAH AT-TAUJIH'), 'Official Leger print markers must stay intact');
   assert.ok(gradesJs.includes('window.SimataPrint') && gradesJs.includes('renderPrincipalSigHtml') && gradesJs.includes('renderKopHtml'), 'grades-module.js must integrate SimataPrint');
 
   assert.ok(!printHelperJs.includes('DEFAULT_PRINT_SETTINGS'), 'print-helper.js must reference DEFAULTS, not undefined DEFAULT_PRINT_SETTINGS');
   assert.ok(printHelperJs.includes('window.SimataPrint') && printHelperJs.includes('buildQrSignatureDataUrl') && printHelperJs.includes('/assets/logo.png'), 'Missing core helpers in print-helper.js');
-  assert.ok(printHelperJs.includes('buildTrimmedCanvas') && printHelperJs.includes('createQrMatrixSource') && printHelperJs.includes('grid-template-columns'), 'Missing trimmed large logo, multi-level QR fallback, or symmetrical grid Kop CSS');
+  assert.ok(printHelperJs.includes('buildTrimmedCanvas') && printHelperJs.includes('createQrMatrixSource') && printHelperJs.includes('DEFAULT_KOP_ELEMENTS'), 'Missing trimmed large logo, multi-level QR fallback, or per-element Kop defaults');
   assert.ok(printHelperJs.includes('logo_size_px') && printHelperJs.includes('header_line_top_gap_px') && printHelperJs.includes('renderKopDividerHtml'), 'Missing flexible Kop sizing/spacing controls in print-helper.js');
 
   assert.ok(clientJs.includes('getPrintSettings') && clientJs.includes('updatePrintSettings'), 'Missing print-settings REST methods in simata-client.js');
 
   assert.ok(html.includes('/js/print-helper.js'), 'dashboard.html must load /js/print-helper.js');
   assert.ok(html.includes('id="settingsTab_cetak"') && html.includes('id="settingsPanel_cetak"'), 'dashboard.html missing Pengaturan Cetak tab/panel');
-  assert.ok(html.includes('id="prtCfgLivePreview"') && html.includes('id="prtCfg_logoSizePx"') && html.includes('id="prtCfg_headerLineTopGapPx"') && html.includes('resetKopStyleDefaults') && html.includes('savePrintSettingsFromForm') && html.includes('testPrintSettingsPreview'), 'dashboard.html missing flexible print settings controls');
+  assert.ok(html.includes('id="prtCfgLivePreview"') && html.includes('focusgroup="tablist nomemory"') && html.includes('id="printLayoutStudioDialog"'), 'dashboard.html missing redesigned print tabs or dedicated KTS-style layout studio dialog');
+  assert.ok(html.includes('openPrintLayoutStudio') && html.includes('nudgePrintStudioElement') && html.includes("showToast('loading'") && html.includes('savePrintSettingsFromForm'), 'dashboard.html missing studio controls or SIMATA loading toast hook');
   assert.ok(html.includes("'cetak'") && html.includes('loadPrintSettingsForm()'), 'switchSettingsCategory must handle cetak tab');
 
   const simataPrintRefsInDashboard = (html.match(/window\.SimataPrint/g) || []).length;
@@ -110,7 +114,8 @@ async function runPrintSettingsTests() {
     assert.strictEqual(guruGet.body.data.margin_mm, 10);
     assert.strictEqual(guruGet.body.data.kop_align, 'center_page');
     assert.strictEqual(guruGet.body.data.logo_size_px, 64);
-    assert.strictEqual(guruGet.body.data.header_line_style, 'double');
+    assert.strictEqual(guruGet.body.data.kop_elements.school.font_weight, 800);
+    assert.strictEqual(guruGet.body.data.kop_elements.divider.thickness_px, 3);
 
     // 2c. RBAC: GURU PUT denied
     const guruPut = await reqJson(server, 'PUT', '/api/v1/print-settings', { signature_mode: 'blank' }, guruAuth);
@@ -135,16 +140,16 @@ async function runPrintSettingsTests() {
         show_logo: false,
         school_name: 'MADRASAH ALIYAH AT-TAUJIH SARANG (CUSTOM)',
         kop_align: 'center_remain',
-        header_font_family: 'serif',
         logo_size_px: 190,
         logo_text_gap_px: 26,
-        logo_offset_x_px: 12,
-        header_offset_x_px: -10,
-        header_font_scale_pct: 125,
-        header_line_gap_px: 6,
+        header_font_scale_pct: 120,
         header_line_style: 'thick_thin',
         header_line_top_gap_px: 14,
-        header_line_bottom_gap_px: 18,
+        kop_elements: {
+          foundation: { font_family: 'Times New Roman', font_size_pt: 10.5, font_weight: 400, italic: true, letter_spacing_px: 1.4, color: '#1e293b', offset_x: 6, offset_y: -2 },
+          school: { font_family: 'Times New Roman', font_size_pt: 15, font_weight: 900, letter_spacing_px: 0.8 },
+          divider: { color: '#166534', thickness_px: 4 }
+        },
         principal_name: 'K.H. M. Iqnaul Badril Falah, S.Ag., M.Pd.',
         signature_mode: 'qr_stamp',
         qr_style: 'qr_only_crest',
@@ -159,11 +164,14 @@ async function runPrintSettingsTests() {
     assert.strictEqual(putRes.status, 200, `Expected 200 on ADMIN PUT, got ${putRes.status}: ${putRes.text}`);
     assert.strictEqual(putRes.body.data.show_logo, false);
     assert.strictEqual(putRes.body.data.kop_align, 'center_remain');
-    assert.strictEqual(putRes.body.data.header_font_family, 'serif');
     assert.strictEqual(putRes.body.data.logo_size_px, 130); // clamped to 130
-    assert.strictEqual(putRes.body.data.header_font_scale_pct, 125);
     assert.strictEqual(putRes.body.data.header_line_style, 'thick_thin');
     assert.strictEqual(putRes.body.data.header_line_top_gap_px, 14);
+    assert.strictEqual(putRes.body.data.kop_elements.foundation.font_weight, 400);
+    assert.strictEqual(putRes.body.data.kop_elements.foundation.italic, true);
+    assert.strictEqual(putRes.body.data.kop_elements.foundation.letter_spacing_px, 1.4);
+    assert.strictEqual(putRes.body.data.kop_elements.school.font_weight, 900);
+    assert.strictEqual(putRes.body.data.kop_elements.divider.thickness_px, 4);
     assert.strictEqual(putRes.body.data.signature_mode, 'qr_stamp');
     assert.strictEqual(putRes.body.data.qr_style, 'qr_only_crest');
     assert.strictEqual(putRes.body.data.qr_verify_url, 'https://simata-attaujih.my.id/tte');
@@ -176,7 +184,7 @@ async function runPrintSettingsTests() {
     assert.strictEqual(getAfter.status, 200);
     assert.strictEqual(getAfter.body.data.school_name, 'MADRASAH ALIYAH AT-TAUJIH SARANG (CUSTOM)');
     assert.strictEqual(getAfter.body.data.logo_size_px, 130);
-    assert.strictEqual(getAfter.body.data.kop_align, 'center_remain');
+    assert.strictEqual(getAfter.body.data.kop_elements.foundation.font_family, 'Times New Roman');
     assert.strictEqual(getAfter.body.data.signature_mode, 'qr_stamp');
     assert.strictEqual(getAfter.body.data.default_paper_size, 'F4');
 

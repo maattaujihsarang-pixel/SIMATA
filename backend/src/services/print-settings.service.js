@@ -10,6 +10,71 @@ const VALID_PAPER_SIZES = new Set(['A4', 'F4']);
 const VALID_KOP_ALIGNS = new Set(['center_page', 'center_remain', 'left']);
 const VALID_HEADER_FONTS = new Set(['sans', 'serif']);
 const VALID_LINE_STYLES = new Set(['double', 'solid', 'thick_thin', 'none']);
+const VALID_FONT_FAMILIES = new Set([
+  'Plus Jakarta Sans',
+  'Times New Roman',
+  'Inter',
+  'Poppins',
+  'Montserrat',
+  'Playfair Display',
+  'Arial'
+]);
+const VALID_FONT_WEIGHTS = new Set([300, 400, 500, 600, 700, 800, 900]);
+
+const DEFAULT_KOP_ELEMENTS = {
+  logo: {
+    offset_x: 0,
+    offset_y: 0
+  },
+  foundation: {
+    font_family: 'Plus Jakarta Sans',
+    font_size_pt: 8.8,
+    font_weight: 700,
+    italic: false,
+    uppercase: true,
+    letter_spacing_px: 0.6,
+    color: '#334155',
+    offset_x: 0,
+    offset_y: 0
+  },
+  school: {
+    font_family: 'Plus Jakarta Sans',
+    font_size_pt: 13.8,
+    font_weight: 800,
+    italic: false,
+    uppercase: true,
+    letter_spacing_px: 0.4,
+    color: '#0f172a',
+    offset_x: 0,
+    offset_y: 0
+  },
+  address: {
+    font_family: 'Plus Jakarta Sans',
+    font_size_pt: 8.2,
+    font_weight: 400,
+    italic: false,
+    uppercase: false,
+    letter_spacing_px: 0,
+    color: '#334155',
+    offset_x: 0,
+    offset_y: 0
+  },
+  contact: {
+    font_family: 'Plus Jakarta Sans',
+    font_size_pt: 8.2,
+    font_weight: 600,
+    italic: false,
+    uppercase: false,
+    letter_spacing_px: 0,
+    color: '#334155',
+    offset_x: 0,
+    offset_y: 0
+  },
+  divider: {
+    color: '#0f172a',
+    thickness_px: 3
+  }
+};
 
 const DEFAULT_PRINT_SETTINGS = {
   show_logo: true,
@@ -23,12 +88,15 @@ const DEFAULT_PRINT_SETTINGS = {
   logo_size_px: 64,
   logo_text_gap_px: 14,
   logo_offset_x_px: 0,
+  logo_offset_y_px: 0,
   header_offset_x_px: 0,
+  header_offset_y_px: 0,
   header_font_scale_pct: 100,
   header_line_gap_px: 2,
   header_line_style: 'double',
   header_line_top_gap_px: 8,
   header_line_bottom_gap_px: 12,
+  kop_elements: DEFAULT_KOP_ELEMENTS,
   principal_title: 'Kepala Madrasah',
   principal_name: 'Moch. Iqnaul Badril Falah, S.Ag',
   principal_nip: '',
@@ -67,6 +135,60 @@ function clampInt(val, min, max, fallback) {
   return Math.min(max, Math.max(min, Math.round(n)));
 }
 
+function clampFloat(val, min, max, decimals, fallback) {
+  if (val === undefined || val === null || val === '') return fallback;
+  const n = Number(val);
+  if (!Number.isFinite(n)) return fallback;
+  const clamped = Math.min(max, Math.max(min, n));
+  const factor = Math.pow(10, decimals);
+  return Math.round(clamped * factor) / factor;
+}
+
+function sanitizeHexColor(val, fallback) {
+  const s = String(val || '').trim();
+  if (/^#[0-9a-fA-F]{6}$/.test(s)) return s.toLowerCase();
+  return fallback;
+}
+
+function sanitizeTextElement(rawEl, baseEl) {
+  const src = (rawEl && typeof rawEl === 'object') ? rawEl : {};
+  const fam = VALID_FONT_FAMILIES.has(src.font_family) ? src.font_family : baseEl.font_family;
+  const wNum = Number(src.font_weight);
+  const weight = VALID_FONT_WEIGHTS.has(wNum) ? wNum : baseEl.font_weight;
+  return {
+    font_family: fam,
+    font_size_pt: clampFloat(src.font_size_pt, 6, 26, 1, baseEl.font_size_pt),
+    font_weight: weight,
+    italic: src.italic === undefined ? baseEl.italic : Boolean(src.italic),
+    uppercase: src.uppercase === undefined ? baseEl.uppercase : Boolean(src.uppercase),
+    letter_spacing_px: clampFloat(src.letter_spacing_px, -1, 10, 1, baseEl.letter_spacing_px),
+    color: sanitizeHexColor(src.color, baseEl.color),
+    offset_x: clampInt(src.offset_x, -120, 120, baseEl.offset_x),
+    offset_y: clampInt(src.offset_y, -30, 30, baseEl.offset_y)
+  };
+}
+
+function sanitizeKopElements(rawEls, fallbackEls = DEFAULT_KOP_ELEMENTS) {
+  const src = (rawEls && typeof rawEls === 'object') ? rawEls : {};
+  const fb = fallbackEls || DEFAULT_KOP_ELEMENTS;
+  const rawLogo = (src.logo && typeof src.logo === 'object') ? src.logo : {};
+  const rawDiv = (src.divider && typeof src.divider === 'object') ? src.divider : {};
+  return {
+    logo: {
+      offset_x: clampInt(rawLogo.offset_x, -60, 100, fb.logo.offset_x),
+      offset_y: clampInt(rawLogo.offset_y, -35, 35, fb.logo.offset_y)
+    },
+    foundation: sanitizeTextElement(src.foundation, fb.foundation),
+    school: sanitizeTextElement(src.school, fb.school),
+    address: sanitizeTextElement(src.address, fb.address),
+    contact: sanitizeTextElement(src.contact, fb.contact),
+    divider: {
+      color: sanitizeHexColor(rawDiv.color, fb.divider.color),
+      thickness_px: clampInt(rawDiv.thickness_px, 1, 6, fb.divider.thickness_px)
+    }
+  };
+}
+
 function sanitizeImageRef(val, fallback) {
   if (val === undefined || val === null) return fallback;
   const s = String(val).trim();
@@ -92,6 +214,7 @@ class PrintSettingsService {
     const portalRaw = safeParseJson(map[KEY_PORTAL_SETTINGS]?.setting_value, {});
 
     const fallbackPrincipal = cleanStr(portalRaw.principal_name, 150, DEFAULT_PRINT_SETTINGS.principal_name) || DEFAULT_PRINT_SETTINGS.principal_name;
+    const kopElements = sanitizeKopElements(raw.kop_elements, DEFAULT_KOP_ELEMENTS);
 
     return {
       show_logo: raw.show_logo === undefined ? DEFAULT_PRINT_SETTINGS.show_logo : Boolean(raw.show_logo),
@@ -103,14 +226,17 @@ class PrintSettingsService {
       kop_align: VALID_KOP_ALIGNS.has(raw.kop_align) ? raw.kop_align : DEFAULT_PRINT_SETTINGS.kop_align,
       header_font_family: VALID_HEADER_FONTS.has(raw.header_font_family) ? raw.header_font_family : DEFAULT_PRINT_SETTINGS.header_font_family,
       logo_size_px: clampInt(raw.logo_size_px, 40, 130, DEFAULT_PRINT_SETTINGS.logo_size_px),
-      logo_text_gap_px: clampInt(raw.logo_text_gap_px, 4, 40, DEFAULT_PRINT_SETTINGS.logo_text_gap_px),
-      logo_offset_x_px: clampInt(raw.logo_offset_x_px, -40, 80, DEFAULT_PRINT_SETTINGS.logo_offset_x_px),
-      header_offset_x_px: clampInt(raw.header_offset_x_px, -80, 80, DEFAULT_PRINT_SETTINGS.header_offset_x_px),
+      logo_text_gap_px: clampInt(raw.logo_text_gap_px, 4, 44, DEFAULT_PRINT_SETTINGS.logo_text_gap_px),
+      logo_offset_x_px: clampInt(raw.logo_offset_x_px, -60, 100, kopElements.logo.offset_x),
+      logo_offset_y_px: clampInt(raw.logo_offset_y_px, -35, 35, kopElements.logo.offset_y),
+      header_offset_x_px: clampInt(raw.header_offset_x_px, -120, 120, DEFAULT_PRINT_SETTINGS.header_offset_x_px),
+      header_offset_y_px: clampInt(raw.header_offset_y_px, -30, 30, DEFAULT_PRINT_SETTINGS.header_offset_y_px),
       header_font_scale_pct: clampInt(raw.header_font_scale_pct, 75, 140, DEFAULT_PRINT_SETTINGS.header_font_scale_pct),
-      header_line_gap_px: clampInt(raw.header_line_gap_px, 0, 14, DEFAULT_PRINT_SETTINGS.header_line_gap_px),
+      header_line_gap_px: clampInt(raw.header_line_gap_px, 0, 16, DEFAULT_PRINT_SETTINGS.header_line_gap_px),
       header_line_style: VALID_LINE_STYLES.has(raw.header_line_style) ? raw.header_line_style : DEFAULT_PRINT_SETTINGS.header_line_style,
-      header_line_top_gap_px: clampInt(raw.header_line_top_gap_px, 2, 28, DEFAULT_PRINT_SETTINGS.header_line_top_gap_px),
-      header_line_bottom_gap_px: clampInt(raw.header_line_bottom_gap_px, 4, 30, DEFAULT_PRINT_SETTINGS.header_line_bottom_gap_px),
+      header_line_top_gap_px: clampInt(raw.header_line_top_gap_px, 2, 30, DEFAULT_PRINT_SETTINGS.header_line_top_gap_px),
+      header_line_bottom_gap_px: clampInt(raw.header_line_bottom_gap_px, 4, 34, DEFAULT_PRINT_SETTINGS.header_line_bottom_gap_px),
+      kop_elements: kopElements,
       principal_title: cleanStr(raw.principal_title, 100, DEFAULT_PRINT_SETTINGS.principal_title) || DEFAULT_PRINT_SETTINGS.principal_title,
       principal_name: cleanStr(raw.principal_name, 150, fallbackPrincipal) || fallbackPrincipal,
       principal_nip: cleanStr(raw.principal_nip, 80, DEFAULT_PRINT_SETTINGS.principal_nip),
@@ -170,6 +296,19 @@ class PrintSettingsService {
       verifyUrl = 'https://' + verifyUrl;
     }
 
+    const kopElements = payload.kop_elements !== undefined
+      ? sanitizeKopElements(payload.kop_elements, current.kop_elements)
+      : current.kop_elements;
+
+    const logoOffX = payload.logo_offset_x_px !== undefined
+      ? clampInt(payload.logo_offset_x_px, -60, 100, current.logo_offset_x_px)
+      : kopElements.logo.offset_x;
+    const logoOffY = payload.logo_offset_y_px !== undefined
+      ? clampInt(payload.logo_offset_y_px, -35, 35, current.logo_offset_y_px)
+      : kopElements.logo.offset_y;
+    kopElements.logo.offset_x = logoOffX;
+    kopElements.logo.offset_y = logoOffY;
+
     const next = {
       show_logo: payload.show_logo !== undefined ? Boolean(payload.show_logo) : current.show_logo,
       logo_url: sanitizeImageRef(payload.logo_url, current.logo_url),
@@ -180,14 +319,17 @@ class PrintSettingsService {
       kop_align: kopAlign,
       header_font_family: headerFont,
       logo_size_px: clampInt(payload.logo_size_px, 40, 130, current.logo_size_px),
-      logo_text_gap_px: clampInt(payload.logo_text_gap_px, 4, 40, current.logo_text_gap_px),
-      logo_offset_x_px: clampInt(payload.logo_offset_x_px, -40, 80, current.logo_offset_x_px),
-      header_offset_x_px: clampInt(payload.header_offset_x_px, -80, 80, current.header_offset_x_px),
+      logo_text_gap_px: clampInt(payload.logo_text_gap_px, 4, 44, current.logo_text_gap_px),
+      logo_offset_x_px: logoOffX,
+      logo_offset_y_px: logoOffY,
+      header_offset_x_px: clampInt(payload.header_offset_x_px, -120, 120, current.header_offset_x_px),
+      header_offset_y_px: clampInt(payload.header_offset_y_px, -30, 30, current.header_offset_y_px),
       header_font_scale_pct: clampInt(payload.header_font_scale_pct, 75, 140, current.header_font_scale_pct),
-      header_line_gap_px: clampInt(payload.header_line_gap_px, 0, 14, current.header_line_gap_px),
+      header_line_gap_px: clampInt(payload.header_line_gap_px, 0, 16, current.header_line_gap_px),
       header_line_style: lineStyle,
-      header_line_top_gap_px: clampInt(payload.header_line_top_gap_px, 2, 28, current.header_line_top_gap_px),
-      header_line_bottom_gap_px: clampInt(payload.header_line_bottom_gap_px, 4, 30, current.header_line_bottom_gap_px),
+      header_line_top_gap_px: clampInt(payload.header_line_top_gap_px, 2, 30, current.header_line_top_gap_px),
+      header_line_bottom_gap_px: clampInt(payload.header_line_bottom_gap_px, 4, 34, current.header_line_bottom_gap_px),
+      kop_elements: kopElements,
       principal_title: payload.principal_title !== undefined ? (cleanStr(payload.principal_title, 100, '') || DEFAULT_PRINT_SETTINGS.principal_title) : current.principal_title,
       principal_name: payload.principal_name !== undefined ? (cleanStr(payload.principal_name, 150, '') || DEFAULT_PRINT_SETTINGS.principal_name) : current.principal_name,
       principal_nip: payload.principal_nip !== undefined ? cleanStr(payload.principal_nip, 80, '') : current.principal_nip,
@@ -232,3 +374,4 @@ class PrintSettingsService {
 
 module.exports = new PrintSettingsService();
 module.exports.DEFAULT_PRINT_SETTINGS = DEFAULT_PRINT_SETTINGS;
+module.exports.DEFAULT_KOP_ELEMENTS = DEFAULT_KOP_ELEMENTS;

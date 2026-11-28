@@ -6,6 +6,70 @@
 (function initSimataPrintHelper(window) {
   'use strict';
 
+  const DEFAULT_KOP_ELEMENTS = {
+    logo: { offset_x: 0, offset_y: 0 },
+    foundation: {
+      font_family: 'Plus Jakarta Sans',
+      font_size_pt: 8.8,
+      font_weight: 700,
+      italic: false,
+      uppercase: true,
+      letter_spacing_px: 0.6,
+      color: '#334155',
+      offset_x: 0,
+      offset_y: 0
+    },
+    school: {
+      font_family: 'Plus Jakarta Sans',
+      font_size_pt: 13.8,
+      font_weight: 800,
+      italic: false,
+      uppercase: true,
+      letter_spacing_px: 0.4,
+      color: '#0f172a',
+      offset_x: 0,
+      offset_y: 0
+    },
+    address: {
+      font_family: 'Plus Jakarta Sans',
+      font_size_pt: 8.2,
+      font_weight: 400,
+      italic: false,
+      uppercase: false,
+      letter_spacing_px: 0,
+      color: '#334155',
+      offset_x: 0,
+      offset_y: 0
+    },
+    contact: {
+      font_family: 'Plus Jakarta Sans',
+      font_size_pt: 8.2,
+      font_weight: 600,
+      italic: false,
+      uppercase: false,
+      letter_spacing_px: 0,
+      color: '#334155',
+      offset_x: 0,
+      offset_y: 0
+    },
+    divider: {
+      color: '#0f172a',
+      thickness_px: 3
+    }
+  };
+
+  function cloneKopElements(src) {
+    const s = src || {};
+    return {
+      logo: Object.assign({}, DEFAULT_KOP_ELEMENTS.logo, s.logo || {}),
+      foundation: Object.assign({}, DEFAULT_KOP_ELEMENTS.foundation, s.foundation || {}),
+      school: Object.assign({}, DEFAULT_KOP_ELEMENTS.school, s.school || {}),
+      address: Object.assign({}, DEFAULT_KOP_ELEMENTS.address, s.address || {}),
+      contact: Object.assign({}, DEFAULT_KOP_ELEMENTS.contact, s.contact || {}),
+      divider: Object.assign({}, DEFAULT_KOP_ELEMENTS.divider, s.divider || {})
+    };
+  }
+
   const DEFAULTS = {
     show_logo: true,
     logo_url: '/assets/logo.png',
@@ -18,12 +82,15 @@
     logo_size_px: 64,
     logo_text_gap_px: 14,
     logo_offset_x_px: 0,
+    logo_offset_y_px: 0,
     header_offset_x_px: 0,
+    header_offset_y_px: 0,
     header_font_scale_pct: 100,
     header_line_gap_px: 2,
     header_line_style: 'double',
     header_line_top_gap_px: 8,
     header_line_bottom_gap_px: 12,
+    kop_elements: cloneKopElements(DEFAULT_KOP_ELEMENTS),
     principal_title: 'Kepala Madrasah',
     principal_name: 'Moch. Iqnaul Badril Falah, S.Ag',
     principal_nip: '',
@@ -40,7 +107,7 @@
     footer_note: 'Dokumen ini dicetak secara resmi melalui SIMATA \u2014 MA At-Taujih Sarang'
   };
 
-  let currentSettings = Object.assign({}, DEFAULTS);
+  let currentSettings = Object.assign({}, DEFAULTS, { kop_elements: cloneKopElements(DEFAULT_KOP_ELEMENTS) });
   const assetDataCache = {}; // url -> dataUrl
   const assetImgCache = {};  // url -> HTMLImageElement / canvas
   const qrRenderCache = {};  // cacheKey -> dataUrl
@@ -61,6 +128,25 @@
     const n = Number(val);
     if (!Number.isFinite(n)) return fallback;
     return Math.min(max, Math.max(min, Math.round(n)));
+  }
+
+  function clampFloat(val, min, max, fallback) {
+    if (val === undefined || val === null || val === '') return fallback;
+    const n = Number(val);
+    if (!Number.isFinite(n)) return fallback;
+    return Math.min(max, Math.max(min, n));
+  }
+
+  function fontStackFor(name) {
+    switch (String(name || 'Plus Jakarta Sans')) {
+      case 'Times New Roman': return '"Times New Roman", Times, Georgia, serif';
+      case 'Playfair Display': return '"Playfair Display", Georgia, serif';
+      case 'Montserrat': return '"Montserrat", "Plus Jakarta Sans", Arial, sans-serif';
+      case 'Poppins': return '"Poppins", "Plus Jakarta Sans", Arial, sans-serif';
+      case 'Inter': return '"Inter", "Segoe UI", Arial, sans-serif';
+      case 'Arial': return 'Arial, Helvetica, sans-serif';
+      default: return '"Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif';
+    }
   }
 
   function resolveUrl(src) {
@@ -113,9 +199,7 @@
         oCtx.drawImage(raw, minX, minY, cw, ch, dx, dy, cw, ch);
         return out;
       }
-    } catch (_) {
-      // Cross-origin fallback
-    }
+    } catch (_) {}
     return raw;
   }
 
@@ -164,19 +248,27 @@
   }
 
   function getMergedSettings(override) {
-    return Object.assign({}, DEFAULTS, currentSettings, override || {});
+    const merged = Object.assign({}, DEFAULTS, currentSettings, override || {});
+    merged.kop_elements = cloneKopElements(
+      (override && override.kop_elements) || (currentSettings && currentSettings.kop_elements) || DEFAULT_KOP_ELEMENTS
+    );
+    return merged;
   }
 
   function setSettings(next) {
-    currentSettings = Object.assign({}, DEFAULTS, currentSettings, next || {});
+    const merged = Object.assign({}, DEFAULTS, currentSettings, next || {});
+    merged.kop_elements = cloneKopElements(
+      (next && next.kop_elements) || currentSettings.kop_elements || DEFAULT_KOP_ELEMENTS
+    );
+    currentSettings = merged;
     preloadAssets(currentSettings);
     ensureInlinePrintStyles();
     try {
       if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof window.CustomEvent === 'function') {
-        window.dispatchEvent(new window.CustomEvent('simata:print-settings-updated', { detail: Object.assign({}, currentSettings) }));
+        window.dispatchEvent(new window.CustomEvent('simata:print-settings-updated', { detail: getMergedSettings() }));
       }
     } catch (_) {}
-    return Object.assign({}, currentSettings);
+    return getMergedSettings();
   }
 
   async function loadSettings() {
@@ -186,14 +278,14 @@
         const res = await window.simataClient.getPrintSettings();
         if (res && res.success && res.data) {
           setSettings(res.data);
-          return Object.assign({}, currentSettings);
+          return getMergedSettings();
         }
       }
     } catch (err) {
       console.warn('[SIMATA PRINT] Using default print settings:', err && err.message ? err.message : err);
     }
     ensureInlinePrintStyles();
-    return Object.assign({}, currentSettings);
+    return getMergedSettings();
   }
 
   function getCachedAssetSrc(rawSrc, preferTrim) {
@@ -291,9 +383,7 @@
               cCtx.drawImage(source, 0, 0, copy.width, copy.height);
               return copy;
             }
-          } catch (_) {
-            // Retry next level
-          }
+          } catch (_) {}
         }
       }
       return null;
@@ -376,47 +466,72 @@
     }
   }
 
-  function renderKopDividerHtml(lineStyle, topGapPx, bottomGapPx) {
+  function renderKopDividerHtml(lineStyle, topGapPx, bottomGapPx, divCfg, studioAttr, isSelected) {
+    const color = (divCfg && divCfg.color) || '#0f172a';
+    const thick = clampNum(divCfg && divCfg.thickness_px, 1, 6, 3);
+    const selCls = isSelected ? ' is-studio-selected' : '';
     const mt = topGapPx;
     const mb = bottomGapPx;
+
     if (lineStyle === 'none') {
-      return '<div style="height:0;margin-top:' + mt + 'px;margin-bottom:' + mb + 'px;"></div>';
+      return '<div class="simata-kop-divider' + selCls + '"' + (studioAttr || '') + ' style="height:2px;border-bottom:1px dashed transparent;margin-top:' + mt + 'px;margin-bottom:' + mb + 'px;"></div>';
     }
     if (lineStyle === 'thick_thin') {
-      return '<div class="simata-kop-divider" style="border-top:2.8px solid #0f172a;border-bottom:1px solid #0f172a;height:3px;margin-top:' + mt + 'px;margin-bottom:' + mb + 'px;"></div>';
+      const topW = Math.max(2, thick);
+      return '<div class="simata-kop-divider' + selCls + '"' + (studioAttr || '') + ' style="border-top:' + topW + 'px solid ' + esc(color) + ';border-bottom:1px solid ' + esc(color) + ';height:3px;margin-top:' + mt + 'px;margin-bottom:' + mb + 'px;"></div>';
     }
     if (lineStyle === 'solid') {
-      return '<div class="simata-kop-divider" style="border-bottom:2px solid #0f172a;height:0;margin-top:' + mt + 'px;margin-bottom:' + mb + 'px;"></div>';
+      return '<div class="simata-kop-divider' + selCls + '"' + (studioAttr || '') + ' style="border-bottom:' + thick + 'px solid ' + esc(color) + ';height:0;margin-top:' + mt + 'px;margin-bottom:' + mb + 'px;"></div>';
     }
-    return '<div class="simata-kop-divider" style="border-bottom:3px double #0f172a;height:0;margin-top:' + mt + 'px;margin-bottom:' + mb + 'px;"></div>';
+    const doubleW = Math.max(3, thick);
+    return '<div class="simata-kop-divider' + selCls + '"' + (studioAttr || '') + ' style="border-bottom:' + doubleW + 'px double ' + esc(color) + ';height:0;margin-top:' + mt + 'px;margin-bottom:' + mb + 'px;"></div>';
+  }
+
+  function buildTextLineStyle(elCfg, k, fontScale) {
+    const e = elCfg || {};
+    const sizePt = (clampFloat(e.font_size_pt, 6, 26, 9) * k * fontScale).toFixed(2);
+    const weight = clampNum(e.font_weight, 300, 900, 400);
+    const ls = clampFloat(e.letter_spacing_px, -1, 10, 0).toFixed(1);
+    const ox = clampNum(e.offset_x, -120, 120, 0);
+    const oy = clampNum(e.offset_y, -30, 30, 0);
+    const parts = [
+      'font-family:' + fontStackFor(e.font_family),
+      'font-size:' + sizePt + 'pt',
+      'font-weight:' + weight,
+      'font-style:' + (e.italic ? 'italic' : 'normal'),
+      'text-transform:' + (e.uppercase ? 'uppercase' : 'none'),
+      'letter-spacing:' + ls + 'px',
+      'color:' + esc(e.color || '#0f172a')
+    ];
+    if (ox !== 0 || oy !== 0) {
+      parts.push('transform:translate(' + ox + 'px,' + oy + 'px)');
+    }
+    return parts.join(';') + ';';
   }
 
   function renderKopHtml(opts) {
     const o = opts || {};
     const cfg = getMergedSettings(o.cfg);
+    const els = cloneKopElements(cfg.kop_elements);
     const compact = Boolean(o.compact);
+    const interactive = Boolean(o.interactive);
+    const selectedEl = interactive ? String(o.selectedEl || '') : '';
     const k = compact ? 0.88 : 1;
 
     const showLogo = cfg.show_logo !== false && Boolean(cfg.logo_url);
     const logoSrc = showLogo ? getCachedAssetSrc(cfg.logo_url, true) : '';
 
     const logoPx = Math.round(clampNum(cfg.logo_size_px, 40, 130, 64) * k);
-    const gapPx = Math.round(clampNum(cfg.logo_text_gap_px, 4, 40, 14) * k);
-    const logoOffsetX = clampNum(cfg.logo_offset_x_px, -40, 80, 0);
-    const textOffsetX = clampNum(cfg.header_offset_x_px, -80, 80, 0);
+    const gapPx = Math.round(clampNum(cfg.logo_text_gap_px, 4, 44, 14) * k);
+    const logoOffsetX = clampNum(els.logo.offset_x !== undefined ? els.logo.offset_x : cfg.logo_offset_x_px, -60, 100, 0);
+    const logoOffsetY = clampNum(els.logo.offset_y !== undefined ? els.logo.offset_y : cfg.logo_offset_y_px, -35, 35, 0);
+    const textOffsetX = clampNum(cfg.header_offset_x_px, -120, 120, 0);
+    const textOffsetY = clampNum(cfg.header_offset_y_px, -30, 30, 0);
     const fontScale = clampNum(cfg.header_font_scale_pct, 75, 140, 100) / 100;
-    const lineGap = clampNum(cfg.header_line_gap_px, 0, 14, 2);
-    const lineTopGap = clampNum(cfg.header_line_top_gap_px, 2, 28, 8);
-    const lineBottomGap = clampNum(cfg.header_line_bottom_gap_px, 4, 30, 12);
+    const lineGap = clampNum(cfg.header_line_gap_px, 0, 16, 2);
+    const lineTopGap = clampNum(cfg.header_line_top_gap_px, 2, 30, 8);
+    const lineBottomGap = clampNum(cfg.header_line_bottom_gap_px, 4, 34, 12);
     const kopAlign = cfg.kop_align || 'center_page';
-    const fontFam = cfg.header_font_family === 'serif'
-      ? '"Times New Roman", Times, Georgia, serif'
-      : '"Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif';
-
-    const foundSize = (8.8 * k * fontScale).toFixed(2) + 'pt';
-    const schoolSize = (13.8 * k * fontScale).toFixed(2) + 'pt';
-    const addrSize = (8.2 * k * fontScale).toFixed(2) + 'pt';
-    const contactSize = (8.2 * k * fontScale).toFixed(2) + 'pt';
 
     const textAlignCss = kopAlign === 'left' ? 'left' : 'center';
     let gridColsCss = 'minmax(0, 1fr)';
@@ -426,8 +541,16 @@
         : (logoPx + 'px minmax(0, 1fr)');
     }
 
+    const attrFor = function (key) {
+      return interactive ? (' data-kop-el="' + key + '"') : '';
+    };
+    const selClass = function (key) {
+      return (interactive && selectedEl === key) ? ' is-studio-selected' : '';
+    };
+
     const logoCellHtml = showLogo
-      ? '<div class="simata-kop-logo" style="width:' + logoPx + 'px;height:' + logoPx + 'px;transform:translateX(' + logoOffsetX + 'px);">' +
+      ? '<div class="simata-kop-logo' + selClass('logo') + '"' + attrFor('logo') +
+          ' style="width:' + logoPx + 'px;height:' + logoPx + 'px;transform:translate(' + logoOffsetX + 'px,' + logoOffsetY + 'px);">' +
           '<img src="' + esc(logoSrc) + '" alt="Logo Madrasah" />' +
         '</div>'
       : '';
@@ -436,17 +559,24 @@
       : '';
 
     const foundHtml = cfg.foundation_name
-      ? '<div class="simata-kop-found" style="font-size:' + foundSize + ';">' + esc(cfg.foundation_name) + '</div>'
+      ? '<div class="simata-kop-found' + selClass('foundation') + '"' + attrFor('foundation') + ' style="' + buildTextLineStyle(els.foundation, k, fontScale) + '">' + esc(cfg.foundation_name) + '</div>'
       : '';
-    const schoolHtml = '<div class="simata-kop-school" style="font-size:' + schoolSize + ';">' + esc(cfg.school_name) + '</div>';
+    const schoolHtml = '<div class="simata-kop-school' + selClass('school') + '"' + attrFor('school') + ' style="' + buildTextLineStyle(els.school, k, fontScale) + '">' + esc(cfg.school_name) + '</div>';
     const addrHtml = cfg.school_address
-      ? '<div class="simata-kop-addr" style="font-size:' + addrSize + ';">' + esc(cfg.school_address) + '</div>'
+      ? '<div class="simata-kop-addr' + selClass('address') + '"' + attrFor('address') + ' style="' + buildTextLineStyle(els.address, k, fontScale) + '">' + esc(cfg.school_address) + '</div>'
       : '';
     const contactHtml = cfg.school_contact
-      ? '<div class="simata-kop-contact" style="font-size:' + contactSize + ';">' + esc(cfg.school_contact) + '</div>'
+      ? '<div class="simata-kop-contact' + selClass('contact') + '"' + attrFor('contact') + ' style="' + buildTextLineStyle(els.contact, k, fontScale) + '">' + esc(cfg.school_contact) + '</div>'
       : '';
 
-    const dividerHtml = renderKopDividerHtml(cfg.header_line_style || 'double', lineTopGap, lineBottomGap);
+    const dividerHtml = renderKopDividerHtml(
+      cfg.header_line_style || 'double',
+      lineTopGap,
+      lineBottomGap,
+      els.divider,
+      attrFor('divider'),
+      interactive && selectedEl === 'divider'
+    );
 
     const docHeadHtml = o.title
       ? '<div class="simata-doc-title-wrap' + (compact ? ' is-compact' : '') + '">' +
@@ -455,10 +585,14 @@
         '</div>'
       : '';
 
-    return '<div class="simata-kop-wrap' + (compact ? ' is-compact' : '') + '">' +
-        '<div class="simata-kop" style="display:grid;grid-template-columns:' + gridColsCss + ';align-items:center;gap:' + gapPx + 'px;font-family:' + fontFam + ';">' +
+    const centerTransform = (textOffsetX !== 0 || textOffsetY !== 0)
+      ? 'transform:translate(' + textOffsetX + 'px,' + textOffsetY + 'px);'
+      : '';
+
+    return '<div class="simata-kop-wrap' + (compact ? ' is-compact' : '') + (interactive ? ' is-studio-interactive' : '') + '">' +
+        '<div class="simata-kop" style="display:grid;grid-template-columns:' + gridColsCss + ';align-items:center;gap:' + gapPx + 'px;">' +
           logoCellHtml +
-          '<div class="simata-kop-center" style="text-align:' + textAlignCss + ';display:flex;flex-direction:column;gap:' + lineGap + 'px;transform:translateX(' + textOffsetX + 'px);">' +
+          '<div class="simata-kop-center' + selClass('global') + '" style="text-align:' + textAlignCss + ';display:flex;flex-direction:column;gap:' + lineGap + 'px;' + centerTransform + '">' +
             foundHtml +
             schoolHtml +
             addrHtml +
@@ -561,11 +695,10 @@
       '.simata-kop-logo img { width: 100%; height: 100%; object-fit: contain; display: block; }',
       '.simata-kop-spacer { width: 100%; min-height: 1px; }',
       '.simata-kop-center { min-width: 0; line-height: 1.24; color: #0f172a; }',
-      '.simata-kop-found { font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #334155; }',
-      '.simata-kop-school { font-weight: 800; letter-spacing: 0.025em; text-transform: uppercase; color: #0f172a; }',
-      '.simata-kop-addr { color: #334155; }',
-      '.simata-kop-contact { font-weight: 600; color: #334155; }',
       '.simata-kop-divider { width: 100%; }',
+      '.simata-kop-wrap.is-studio-interactive [data-kop-el] { cursor: pointer; border-radius: 4px; transition: outline-color 0.12s ease, background-color 0.12s ease; }',
+      '.simata-kop-wrap.is-studio-interactive [data-kop-el]:hover { outline: 1.5px dashed rgba(22, 101, 52, 0.55); outline-offset: 2px; background: rgba(240, 253, 244, 0.55); }',
+      '.simata-kop-wrap.is-studio-interactive .is-studio-selected { outline: 2px solid #166534 !important; outline-offset: 3px; background: rgba(220, 252, 231, 0.45); }',
       '.simata-doc-title-wrap { width: 100%; text-align: center; }',
       '.simata-doc-title { font-size: 11.5pt; font-weight: 800; text-transform: uppercase; letter-spacing: 0.02em; color: #0f172a; }',
       '.simata-doc-title-wrap.is-compact .simata-doc-title { font-size: 10.5pt; }',
@@ -603,10 +736,12 @@
       alert('Izinkan pop-up browser untuk membuka Pratinjau Cetak.');
       return;
     }
+    const fontLink = '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Montserrat:wght@400;600;700;800&family=Playfair+Display:ital,wght@0,400..800;1,400..700&family=Plus+Jakarta+Sans:ital,wght@0,400..800;1,400..700&family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">';
     const html = '<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Uji Cetak SIMATA</title>' +
+      fontLink +
       '<style>' +
       getPageCss('portrait', cfg) +
-      'body{font-family:Arial,Helvetica,sans-serif;margin:20px;color:#0f172a;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;}' +
+      'body{font-family:"Plus Jakarta Sans",Arial,Helvetica,sans-serif;margin:20px;color:#0f172a;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;}' +
       getSharedPrintCss() +
       'table{width:100%;border-collapse:collapse;margin:14px 0;font-size:10pt;}' +
       'th,td{border:1px solid #334155;padding:7px 9px;text-align:left;}th{background:#f1f5f9;font-weight:700;}' +
@@ -629,7 +764,7 @@
         renderPrincipalSigHtml({ docTitle: 'Uji Cetak Dokumen Resmi SIMATA', showCityDate: true, cfg: cfg }) +
       '</div>' +
       renderPrintFooterHtml(cfg) +
-      '<script>window.onload=function(){setTimeout(function(){window.print();},250);};<' + '/script></body></html>';
+      '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<' + '/script></body></html>';
     win.document.open();
     win.document.write(html);
     win.document.close();
@@ -637,6 +772,8 @@
 
   window.SimataPrint = {
     DEFAULTS: DEFAULTS,
+    DEFAULT_KOP_ELEMENTS: DEFAULT_KOP_ELEMENTS,
+    cloneKopElements: cloneKopElements,
     getSettings: function () { return getMergedSettings(); },
     setSettings: setSettings,
     loadSettings: loadSettings,

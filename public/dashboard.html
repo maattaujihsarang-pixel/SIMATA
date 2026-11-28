@@ -19,10 +19,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100..900;1,100..900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=bug67pb">
+  <link rel="stylesheet" href="/css/style.css?v=bug74s">
   <link rel="stylesheet" href="/css/notifications.css?v=bug66_notif3">
   <link rel="stylesheet" href="/css/finance.css">
-  <link rel="stylesheet" href="/css/grades.css?v=bug74r">
+  <link rel="stylesheet" href="/css/grades.css?v=bug74s">
   <style>
 /**
  * SIMATA — Mobile Responsive Stylesheet
@@ -827,10 +827,10 @@ html, body {
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
   <!-- QRCode.js: QR Code generator library for Student QR Preview & Print -->
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-  <script src="/js/simata-client.js?v=bug74r"></script>
-  <script src="/js/print-helper.js?v=bug74r"></script>
+  <script src="/js/simata-client.js?v=bug74s"></script>
+  <script src="/js/print-helper.js?v=bug74s"></script>
   <script src="/js/notifications.js?v=bug65_2"></script>
-  <script src="/js/grades-module.js?v=bug74r"></script>
+  <script src="/js/grades-module.js?v=bug74s"></script>
 </head>
 
 
@@ -6703,41 +6703,73 @@ html, body {
               <!-- PANEL F: PENGATURAN CETAK & KOP SURAT (Admin Only) -->
               <div id="settingsPanel_cetak" class="settings-panel" style="display:none;">
                 <div class="settings-panel-card">
-                  <div class="settings-panel-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:18px;">
+                  <div class="settings-panel-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:14px;">
                     <div style="min-width:0;flex:1 1 260px;">
                       <h3 style="font-size:16px;font-weight:700;color:#0f172a;margin:0 0 4px 0;">Pengaturan Cetak &amp; Kop Surat Resmi</h3>
-                      <p style="font-size:13px;color:#64748b;margin:0;">Atur logo madrasah, kop surat, model tanda tangan Kepala Madrasah (QR TTE / basah), ukuran kertas, dan margin untuk seluruh cetakan di SIMATA.</p>
+                      <p style="font-size:13px;color:#64748b;margin:0;">Atur identitas kop, logo, tanda tangan QR Kepala Madrasah, ukuran kertas, serta buka Studio Visual untuk menata huruf &amp; jarak header.</p>
                     </div>
-                    <span id="prtCfg_statusBadge" class="simata-badge simata-badge-success" style="font-size:12px;flex-shrink:0;">TTD QR Aktif</span>
+                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                      <button type="button" onclick="openPrintLayoutStudio()" class="login-button" style="margin:0;width:auto;padding:8px 14px;font-size:12.5px;border-radius:10px;display:inline-flex;align-items:center;gap:6px;">
+                        <span>&#9998;</span> Edit Layout Kop Visual
+                      </button>
+                      <span id="prtCfg_statusBadge" class="simata-badge simata-badge-success" style="font-size:11.5px;flex-shrink:0;">TTD QR Aktif</span>
+                    </div>
                   </div>
 
                   <style>
                     .prt-cfg-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
                     .prt-cfg-field { display:flex; flex-direction:column; gap:5px; }
                     .prt-cfg-field label { font-size:12px; font-weight:700; color:#334155; }
-                    .prt-cfg-field input:not([type="range"]), .prt-cfg-field select { padding:9px 11px; border:1px solid #cbd5e1; border-radius:9px; font-size:13px; color:#0f172a; background:#fff; width:100%; box-sizing:border-box; }
+                    .prt-cfg-field input:not([type="range"]):not([type="color"]), .prt-cfg-field select { padding:9px 11px; border:1px solid #cbd5e1; border-radius:9px; font-size:13px; color:#0f172a; background:#fff; width:100%; box-sizing:border-box; }
                     .prt-cfg-field input:focus, .prt-cfg-field select:focus { outline:none; border-color:#166534; box-shadow:0 0 0 3px rgba(22,101,52,0.1); }
-                    .prt-range-head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
-                    .prt-range-val { font-size:11.5px; font-weight:700; color:#166534; background:#dcfce7; border:1px solid #bbf7d0; padding:1px 8px; border-radius:999px; font-variant-numeric:tabular-nums; }
-                    .prt-cfg-field input[type="range"] { width:100%; accent-color:#166534; cursor:pointer; margin:2px 0; }
+                    .prt-preview-card { padding:14px 16px; border-radius:12px; border:1px solid #bbf7d0; background:#f0fdf4; display:flex; flex-direction:column; gap:10px; margin-bottom:14px; }
+                    .prt-preview-head { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+                    .prt-preview-sheet { background:#fff; border:1px solid #cbd5e1; border-radius:10px; padding:16px 18px; box-shadow:0 2px 6px rgba(15,23,42,0.05); color:#0f172a; overflow:hidden; }
+                    .prt-subtabs { display:flex; align-items:center; gap:6px; overflow-x:auto; border-bottom:1px solid #e2e8f0; margin-bottom:14px; padding-bottom:0; scrollbar-width:thin; }
+                    .prt-subtab-btn { position:relative; flex:none; border:none; background:transparent; padding:10px 14px; font-size:13px; font-weight:700; color:#64748b; cursor:pointer; white-space:nowrap; transition:color 0.15s ease; }
+                    .prt-subtab-btn:hover { color:#0f172a; }
+                    .prt-subtab-btn[aria-selected="true"] { color:#166534; }
+                    .prt-subtab-btn[aria-selected="true"]::after { content:""; position:absolute; inset:auto 0 0; border-block-end:3px solid #166534; }
+                    .prt-subpanel-body { padding:14px 16px; border-radius:12px; border:1px solid #e2e8f0; background:#f8fafc; display:flex; flex-direction:column; gap:12px; }
                     .prt-sig-mode-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
                     .prt-sig-mode-btn { display:flex; flex-direction:column; align-items:flex-start; gap:2px; padding:10px 12px; border:1.5px solid #e2e8f0; border-radius:10px; background:#fff; cursor:pointer; text-align:left; transition:all 0.15s ease; }
                     .prt-sig-mode-btn:hover { border-color:#86efac; background:#f0fdf4; }
                     .prt-sig-mode-btn.is-active { border-color:#166534; background:#f0fdf4; box-shadow:0 0 0 2px rgba(22,101,52,0.12); }
                     .prt-sig-mode-btn strong { font-size:12.5px; color:#0f172a; }
                     .prt-sig-mode-btn small { font-size:11px; color:#64748b; line-height:1.3; }
-                    .prt-preview-sheet { background:#fff; border:1px solid #cbd5e1; border-radius:10px; padding:16px 18px; box-shadow:0 2px 6px rgba(15,23,42,0.05); color:#0f172a; overflow:hidden; }
+                    .prt-studio-callout { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; padding:12px 14px; border-radius:10px; background:#ecfdf5; border:1px solid #bbf7d0; }
                     @media (max-width: 720px) {
                       .prt-cfg-grid, .prt-sig-mode-grid { grid-template-columns:1fr; }
                     }
                   </style>
 
-                  <div style="display:flex;flex-direction:column;gap:16px;">
-                    <!-- 1. Logo & Kop Surat -->
-                    <div style="padding:14px 16px;border-radius:12px;border:1px solid #e2e8f0;background:#f8fafc;display:flex;flex-direction:column;gap:12px;">
+                  <!-- PRATINJAU LANGSUNG SELALU TERLIHAT DI ATAS -->
+                  <div class="prt-preview-card">
+                    <div class="prt-preview-head">
+                      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                        <strong style="font-size:13px;color:#166534;">Pratinjau Kop Surat &amp; TTD Kepala Madrasah</strong>
+                        <span id="prtCfg_paperSummaryBadge" class="simata-badge simata-badge-info" style="font-size:11px;">A4 &bull; Margin 10 mm</span>
+                      </div>
+                      <button type="button" onclick="openPrintLayoutStudio()" style="padding:5px 11px;border-radius:8px;border:1px solid #166534;background:#fff;color:#166534;font-weight:700;font-size:12px;cursor:pointer;">
+                        Atur Tata Letak Visual &rarr;
+                      </button>
+                    </div>
+                    <div id="prtCfgLivePreview" class="prt-preview-sheet"></div>
+                  </div>
+
+                  <!-- NAVIGASI SUB-TAB BERSIH (ACCESSIBLE FOCUSGROUP TABLIST) -->
+                  <div class="prt-subtabs" focusgroup="tablist nomemory" aria-label="Kategori Pengaturan Cetak">
+                    <button type="button" id="prtTabBtn_kop" class="prt-subtab-btn" aria-selected="true" focusgroupstart onclick="switchPrintSettingsTab('kop')">Identitas Kop &amp; Logo</button>
+                    <button type="button" id="prtTabBtn_ttd" class="prt-subtab-btn" aria-selected="false" onclick="switchPrintSettingsTab('ttd')">Tanda Tangan (QR TTE)</button>
+                    <button type="button" id="prtTabBtn_kertas" class="prt-subtab-btn" aria-selected="false" onclick="switchPrintSettingsTab('kertas')">Kertas &amp; Footer</button>
+                  </div>
+
+                  <!-- TAB PANEL 1: IDENTITAS KOP & LOGO -->
+                  <div id="prtSubPanel_kop" role="tabpanel" aria-labelledby="prtTabBtn_kop" tabindex="0">
+                    <div class="prt-subpanel-body">
                       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
                         <div>
-                          <strong style="font-size:13.5px;color:#0f172a;display:block;">1. Header / Kop Surat &amp; Logo Madrasah</strong>
+                          <strong style="font-size:13.5px;color:#0f172a;display:block;">Identitas Header / Kop Surat</strong>
                           <small style="font-size:11.5px;color:#64748b;">Tampil seragam di seluruh cetakan PDF/Print SIMATA.</small>
                         </div>
                         <label style="display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;color:#166534;cursor:pointer;">
@@ -6751,7 +6783,7 @@ html, body {
                         <input type="hidden" id="prtCfg_logoUrl" value="/assets/logo.png" />
                         <div style="flex:1 1 220px;min-width:0;">
                           <div style="font-size:12.5px;font-weight:700;color:#0f172a;">Logo Kop Madrasah</div>
-                          <div style="font-size:11.5px;color:#64748b;">Default: <code>/assets/logo.png</code> (MA At-Taujih). Bisa ganti gambar PNG/JPG bila perlu.</div>
+                          <div style="font-size:11.5px;color:#64748b;">Default: <code>/assets/logo.png</code> (MA At-Taujih). Bisa ganti PNG/JPG sesuai kebutuhan.</div>
                         </div>
                         <div style="display:flex;gap:8px;flex-wrap:wrap;">
                           <label for="prtCfg_logoFile" class="button-outline" style="margin:0;padding:7px 12px;font-size:12px;font-weight:600;border-radius:8px;cursor:pointer;border:1px solid #cbd5e1;background:#fff;color:#0f172a;">Ganti Logo</label>
@@ -6779,110 +6811,23 @@ html, body {
                         </div>
                       </div>
 
-                      <!-- Sub-panel Fleksibel: Ukuran Logo, Teks, Geser & Jarak Garis Header -->
-                      <div style="margin-top:4px;padding:12px 14px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;display:flex;flex-direction:column;gap:12px;">
-                        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding-bottom:8px;border-bottom:1px solid #f1f5f9;">
-                          <div>
-                            <strong style="font-size:12.5px;color:#0f172a;display:block;">Tata Letak, Ukuran &amp; Jarak Header (Real-time)</strong>
-                            <small style="font-size:11px;color:#64748b;">Geser slider di bawah untuk memperbesar logo/teks, menggeser posisi, atau mengatur jarak garis kop.</small>
-                          </div>
-                          <button type="button" onclick="resetKopStyleDefaults()" style="padding:5px 11px;font-size:11.5px;font-weight:600;border-radius:8px;border:1px solid #cbd5e1;background:#f8fafc;color:#334155;cursor:pointer;">Reset Tata Letak</button>
+                      <div class="prt-studio-callout">
+                        <div style="min-width:0;flex:1 1 240px;">
+                          <strong style="font-size:12.5px;color:#065f46;display:block;">Butuh Atur Ukuran Logo, Font (Regular/Bold), Jarak Huruf, Geser Posisi, atau Garis Kop?</strong>
+                          <small style="font-size:11.5px;color:#166534;">Gunakan Editor Visual khusus (model Studio KTS) agar pratinjau kertas tetap terlihat jelas saat mengedit.</small>
                         </div>
-
-                        <div class="prt-cfg-grid">
-                          <div class="prt-cfg-field">
-                            <label for="prtCfg_kopAlign">Posisi Perataan Teks Header</label>
-                            <select id="prtCfg_kopAlign" onchange="renderPrintSettingsLivePreview()">
-                              <option value="center_page">Lurus Tengah Halaman (Simetris)</option>
-                              <option value="center_remain">Tengah Area Samping Logo (Lebar Penuh)</option>
-                              <option value="left">Rata Kiri di Samping Logo</option>
-                            </select>
-                          </div>
-                          <div class="prt-cfg-field">
-                            <label for="prtCfg_headerFontFamily">Gaya Huruf Header</label>
-                            <select id="prtCfg_headerFontFamily" onchange="renderPrintSettingsLivePreview()">
-                              <option value="sans">Modern SIMATA (Sans-Serif)</option>
-                              <option value="serif">Klasik Surat Resmi (Times New Roman)</option>
-                            </select>
-                          </div>
-
-                          <div class="prt-cfg-field">
-                            <div class="prt-range-head">
-                              <label for="prtCfg_logoSizePx">Ukuran Logo Madrasah</label>
-                              <span id="prtCfg_logoSizeVal" class="prt-range-val">64 px</span>
-                            </div>
-                            <input type="range" id="prtCfg_logoSizePx" min="40" max="130" step="2" value="64" oninput="renderPrintSettingsLivePreview()" />
-                          </div>
-                          <div class="prt-cfg-field">
-                            <div class="prt-range-head">
-                              <label for="prtCfg_headerFontScale">Skala Ukuran Teks Header</label>
-                              <span id="prtCfg_headerFontScaleVal" class="prt-range-val">100%</span>
-                            </div>
-                            <input type="range" id="prtCfg_headerFontScale" min="75" max="140" step="5" value="100" oninput="renderPrintSettingsLivePreview()" />
-                          </div>
-
-                          <div class="prt-cfg-field">
-                            <div class="prt-range-head">
-                              <label for="prtCfg_logoTextGapPx">Jarak Logo ke Teks Header</label>
-                              <span id="prtCfg_logoTextGapVal" class="prt-range-val">14 px</span>
-                            </div>
-                            <input type="range" id="prtCfg_logoTextGapPx" min="4" max="40" step="2" value="14" oninput="renderPrintSettingsLivePreview()" />
-                          </div>
-                          <div class="prt-cfg-field">
-                            <div class="prt-range-head">
-                              <label for="prtCfg_headerLineGapPx">Jarak Antar Baris Teks Header</label>
-                              <span id="prtCfg_headerLineGapVal" class="prt-range-val">2 px</span>
-                            </div>
-                            <input type="range" id="prtCfg_headerLineGapPx" min="0" max="14" step="1" value="2" oninput="renderPrintSettingsLivePreview()" />
-                          </div>
-
-                          <div class="prt-cfg-field">
-                            <div class="prt-range-head">
-                              <label for="prtCfg_logoOffsetX">Geser Posisi Logo (Kiri / Kanan)</label>
-                              <span id="prtCfg_logoOffsetXVal" class="prt-range-val">0 px</span>
-                            </div>
-                            <input type="range" id="prtCfg_logoOffsetX" min="-40" max="80" step="2" value="0" oninput="renderPrintSettingsLivePreview()" />
-                          </div>
-                          <div class="prt-cfg-field">
-                            <div class="prt-range-head">
-                              <label for="prtCfg_headerOffsetX">Geser Posisi Teks Header (Kiri / Kanan)</label>
-                              <span id="prtCfg_headerOffsetXVal" class="prt-range-val">0 px</span>
-                            </div>
-                            <input type="range" id="prtCfg_headerOffsetX" min="-80" max="80" step="2" value="0" oninput="renderPrintSettingsLivePreview()" />
-                          </div>
-
-                          <div class="prt-cfg-field">
-                            <label for="prtCfg_headerLineStyle">Model Garis Bawah Header</label>
-                            <select id="prtCfg_headerLineStyle" onchange="renderPrintSettingsLivePreview()">
-                              <option value="double">Garis Ganda Resmi (Standar SIMATA)</option>
-                              <option value="thick_thin">Tebal-Tipis Surat Resmi</option>
-                              <option value="solid">Garis Tunggal Tegas</option>
-                              <option value="none">Tanpa Garis</option>
-                            </select>
-                          </div>
-                          <div class="prt-cfg-field">
-                            <div class="prt-range-head">
-                              <label for="prtCfg_headerLineTopGapPx">Jarak Teks ke Garis Header</label>
-                              <span id="prtCfg_headerLineTopGapVal" class="prt-range-val">8 px</span>
-                            </div>
-                            <input type="range" id="prtCfg_headerLineTopGapPx" min="2" max="28" step="1" value="8" oninput="renderPrintSettingsLivePreview()" />
-                          </div>
-
-                          <div class="prt-cfg-field" style="grid-column:1 / -1;">
-                            <div class="prt-range-head">
-                              <label for="prtCfg_headerLineBottomGapPx">Jarak Garis Header ke Judul Dokumen</label>
-                              <span id="prtCfg_headerLineBottomGapVal" class="prt-range-val">12 px</span>
-                            </div>
-                            <input type="range" id="prtCfg_headerLineBottomGapPx" min="4" max="30" step="1" value="12" oninput="renderPrintSettingsLivePreview()" />
-                          </div>
-                        </div>
+                        <button type="button" onclick="openPrintLayoutStudio()" style="padding:8px 14px;border-radius:9px;border:none;background:#166534;color:#fff;font-weight:700;font-size:12.5px;cursor:pointer;white-space:nowrap;">
+                          Buka Editor Layout Kop Visual
+                        </button>
                       </div>
                     </div>
+                  </div>
 
-                    <!-- 2. Tanda Tangan Kepala Madrasah & QR TTE -->
-                    <div style="padding:14px 16px;border-radius:12px;border:1px solid #e2e8f0;background:#f8fafc;display:flex;flex-direction:column;gap:12px;">
+                  <!-- TAB PANEL 2: TANDA TANGAN KEPALA MADRASAH & QR TTE -->
+                  <div id="prtSubPanel_ttd" role="tabpanel" aria-labelledby="prtTabBtn_ttd" hidden>
+                    <div class="prt-subpanel-body">
                       <div>
-                        <strong style="font-size:13.5px;color:#0f172a;display:block;">2. Tanda Tangan Kepala Madrasah (QR TTE / Manual)</strong>
+                        <strong style="font-size:13.5px;color:#0f172a;display:block;">Tanda Tangan Kepala Madrasah (QR TTE / Manual)</strong>
                         <small style="font-size:11.5px;color:#64748b;">Pilih cara menampilkan tanda tangan pejabat di kolom pengesahan pada semua cetakan.</small>
                       </div>
 
@@ -6946,19 +6891,21 @@ html, body {
                         </div>
                       </div>
                     </div>
+                  </div>
 
-                    <!-- 3. Kertas, Margin & Footer -->
-                    <div style="padding:14px 16px;border-radius:12px;border:1px solid #e2e8f0;background:#f8fafc;display:flex;flex-direction:column;gap:12px;">
+                  <!-- TAB PANEL 3: UKURAN KERTAS, MARGIN & FOOTER -->
+                  <div id="prtSubPanel_kertas" role="tabpanel" aria-labelledby="prtTabBtn_kertas" hidden>
+                    <div class="prt-subpanel-body">
                       <div>
-                        <strong style="font-size:13.5px;color:#0f172a;display:block;">3. Ukuran Kertas, Margin &amp; Catatan Kaki</strong>
+                        <strong style="font-size:13.5px;color:#0f172a;display:block;">Ukuran Kertas, Margin &amp; Catatan Kaki</strong>
                         <small style="font-size:11.5px;color:#64748b;">Diterapkan otomatis saat mencetak dari browser (Ctrl+P / Tombol Cetak).</small>
                       </div>
                       <div class="prt-cfg-grid">
                         <div class="prt-cfg-field">
                           <label for="prtCfg_paperSize">Ukuran Kertas Default</label>
                           <select id="prtCfg_paperSize" onchange="renderPrintSettingsLivePreview()">
-                            <option value="A4">A4 Standar (210 × 297 mm)</option>
-                            <option value="F4">F4 / Folio Madrasah (215 × 330 mm)</option>
+                            <option value="A4">A4 Standar (210 &times; 297 mm)</option>
+                            <option value="F4">F4 / Folio Madrasah (215 &times; 330 mm)</option>
                           </select>
                         </div>
                         <div class="prt-cfg-field">
@@ -6975,26 +6922,17 @@ html, body {
                         Sertakan tanggal &amp; waktu cetak di baris bawah dokumen
                       </label>
                     </div>
+                  </div>
 
-                    <!-- 4. Pratinjau Langsung -->
-                    <div style="padding:14px 16px;border-radius:12px;border:1px solid #bbf7d0;background:#f0fdf4;display:flex;flex-direction:column;gap:10px;">
-                      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-                        <strong style="font-size:13px;color:#166534;">Pratinjau Kop Surat &amp; TTD Kepala Madrasah (Real-time)</strong>
-                        <span id="prtCfg_paperSummaryBadge" class="simata-badge simata-badge-info" style="font-size:11px;">A4 • Margin 10 mm</span>
-                      </div>
-                      <div id="prtCfgLivePreview" class="prt-preview-sheet"></div>
-                    </div>
-
-                    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding-top:6px;border-top:1px solid #f1f5f9;">
-                      <span id="prtCfg_feedback" style="font-size:12.5px;font-weight:600;color:#166534;"></span>
-                      <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                        <button type="button" onclick="testPrintSettingsPreview()" style="padding:10px 16px;border-radius:10px;border:1px solid #cbd5e1;background:#fff;color:#0f172a;font-weight:700;font-size:13px;cursor:pointer;">
-                          Uji Cetak Contoh
-                        </button>
-                        <button type="button" id="prtCfg_saveBtn" class="login-button" onclick="savePrintSettingsFromForm()" style="margin:0;width:auto;padding:10px 22px;">
-                          Simpan Pengaturan Cetak
-                        </button>
-                      </div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding-top:14px;margin-top:14px;border-top:1px solid #f1f5f9;">
+                    <span id="prtCfg_feedback" style="font-size:12.5px;font-weight:600;color:#166534;"></span>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                      <button type="button" onclick="testPrintSettingsPreview()" style="padding:10px 16px;border-radius:10px;border:1px solid #cbd5e1;background:#fff;color:#0f172a;font-weight:700;font-size:13px;cursor:pointer;">
+                        Uji Cetak Contoh
+                      </button>
+                      <button type="button" id="prtCfg_saveBtn" class="login-button" onclick="savePrintSettingsFromForm('settings')" style="margin:0;width:auto;padding:10px 22px;">
+                        Simpan Pengaturan Cetak
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -8059,6 +7997,685 @@ html, body {
   </div>
 </div>
 
+<!-- PRINT KOP VISUAL LAYOUT STUDIO (KTS-STYLE DEDICATED NATIVE DIALOG) -->
+<style>
+  .prt-studio-dialog {
+    margin: auto;
+    padding: 0;
+    border: none;
+    border-radius: 16px;
+    width: min(1160px, calc(100vw - 24px));
+    max-width: 1160px;
+    max-height: calc(100vh - 24px);
+    background: #ffffff;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
+    overflow: hidden;
+    flex-direction: column;
+    box-sizing: border-box;
+  }
+  .prt-studio-dialog[open] {
+    display: flex;
+  }
+  .prt-studio-dialog:modal {
+    overscroll-behavior: contain;
+  }
+  .prt-studio-dialog::backdrop {
+    overflow: hidden;
+    overscroll-behavior: contain;
+    background: rgba(15, 23, 42, 0.62);
+  }
+  .prt-studio-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 13px 18px;
+    border-bottom: 1px solid #e2e8f0;
+    background: #ffffff;
+  }
+  .prt-studio-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .prt-studio-title-wrap h1 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.2;
+  }
+  .prt-studio-badge {
+    font-size: 11px;
+    font-weight: 700;
+    color: #166534;
+    background: #dcfce7;
+    border: 1px solid #bbf7d0;
+    padding: 2px 9px;
+    border-radius: 999px;
+  }
+  .prt-studio-center-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .prt-studio-seg {
+    display: inline-flex;
+    background: #f1f5f9;
+    padding: 3px;
+    border-radius: 9px;
+    gap: 2px;
+  }
+  .prt-studio-seg button {
+    border: none;
+    background: transparent;
+    padding: 5px 11px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #475569;
+    cursor: pointer;
+  }
+  .prt-studio-seg button.is-active {
+    background: #166534;
+    color: #ffffff;
+  }
+  .prt-studio-workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1.32fr) minmax(320px, 410px);
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .prt-studio-stage-col {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    background: #e2e8f0;
+    border-right: 1px solid #cbd5e1;
+  }
+  .prt-studio-stage-scroll {
+    flex: 1 1 auto;
+    overflow: auto;
+    padding: 18px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+  }
+  .prt-studio-paper {
+    position: relative;
+    width: 100%;
+    max-width: 720px;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 8px 28px rgba(15, 23, 42, 0.14);
+    padding: 24px 28px;
+    color: #0f172a;
+    overflow: hidden;
+    box-sizing: border-box;
+    transition: max-width 0.18s ease, padding 0.18s ease;
+  }
+  .prt-studio-paper.is-compact-sheet {
+    max-width: 560px;
+    padding: 18px 20px;
+  }
+  .prt-studio-paper.has-center-guide::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 1px;
+    background: repeating-linear-gradient(to bottom, rgba(22, 101, 52, 0.38) 0 5px, transparent 5px 10px);
+    pointer-events: none;
+    z-index: 4;
+  }
+  .prt-studio-paper-placeholder {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    opacity: 0.48;
+    pointer-events: none;
+  }
+  .prt-studio-ph-row {
+    height: 10px;
+    border-radius: 4px;
+    background: #e2e8f0;
+  }
+  .prt-studio-dock {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 9px 14px;
+    background: #f8fafc;
+    border-top: 1px solid #cbd5e1;
+  }
+  .prt-studio-dock-note {
+    font-size: 11.5px;
+    color: #475569;
+    font-weight: 600;
+  }
+  .prt-studio-nudge-bar {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+  .prt-studio-nudge-btn {
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #0f172a;
+    border-radius: 7px;
+    height: 28px;
+    min-width: 28px;
+    padding: 0 8px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .prt-studio-nudge-btn:hover {
+    background: #f0fdf4;
+    border-color: #166534;
+    color: #166534;
+  }
+  .prt-studio-inspector {
+    overflow-y: auto;
+    padding: 14px 16px;
+    background: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .prt-insp-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px 13px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .prt-insp-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .prt-insp-head strong {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #334155;
+  }
+  .prt-el-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .prt-el-chip {
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #334155;
+    border-radius: 999px;
+    padding: 5px 11px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.14s ease;
+  }
+  .prt-el-chip:hover {
+    border-color: #166534;
+    color: #166534;
+  }
+  .prt-el-chip.is-active {
+    background: #166534;
+    border-color: #166534;
+    color: #ffffff;
+  }
+  .prt-ctrl-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .prt-ctrl-row label {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #334155;
+  }
+  .prt-ctrl-input, .prt-ctrl-select {
+    width: 100%;
+    padding: 7px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 12.5px;
+    color: #0f172a;
+    background: #ffffff;
+    box-sizing: border-box;
+  }
+  .prt-ctrl-pair {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 64px;
+    align-items: center;
+    gap: 8px;
+  }
+  .prt-ctrl-num {
+    width: 100%;
+    padding: 5px 6px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+    color: #0f172a;
+    box-sizing: border-box;
+  }
+  .prt-two-col {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .prt-weight-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .prt-weight-btn, .prt-style-btn {
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #334155;
+    border-radius: 7px;
+    padding: 5px 9px;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .prt-weight-btn.is-active, .prt-style-btn.is-active {
+    background: #166534;
+    border-color: #166534;
+    color: #ffffff;
+  }
+  .prt-swatch-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .prt-swatch-btn {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 1.5px solid #cbd5e1;
+    cursor: pointer;
+    padding: 0;
+  }
+  .prt-studio-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 18px;
+    border-top: 1px solid #e2e8f0;
+    background: #ffffff;
+  }
+
+  /* Native Brand-Consistent Range Slider (Separate WebKit & Firefox Rules) */
+  input[type="range"].prt-studio-range {
+    --slider-track-size: 6px;
+    --slider-thumb-size: 16px;
+    --slider-track-color: #cbd5e1;
+    --slider-fill-color: #166534;
+    --slider-thumb-color: #166534;
+    --attr-min: 0;
+    --attr-max: 100;
+    --control-value: 50;
+    --slider-progress: calc(progress(var(--control-value), var(--attr-min), var(--attr-max)) * 100%);
+    -webkit-appearance: none;
+    appearance: none;
+    inline-size: 100%;
+    block-size: 28px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+  @supports not (opacity: progress(1, 0, 100)) {
+    input[type="range"].prt-studio-range {
+      --slider-progress: calc((var(--control-value) - var(--attr-min)) / max(1, (var(--attr-max) - var(--attr-min))) * 100%);
+    }
+  }
+  input[type="range"].prt-studio-range:focus-visible {
+    outline: 2px solid #166534;
+    outline-offset: 4px;
+    border-radius: 6px;
+  }
+  input[type="range"].prt-studio-range::-webkit-slider-runnable-track {
+    block-size: var(--slider-track-size);
+    border: 0;
+    border-radius: 999px;
+    background: linear-gradient(to right, var(--slider-fill-color) var(--slider-progress), var(--slider-track-color) var(--slider-progress));
+  }
+  input[type="range"].prt-studio-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    inline-size: var(--slider-thumb-size);
+    block-size: var(--slider-thumb-size);
+    margin-block-start: calc((var(--slider-track-size) - var(--slider-thumb-size)) / 2);
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    background: var(--slider-thumb-color);
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.25);
+  }
+  input[type="range"].prt-studio-range::-moz-range-track {
+    block-size: var(--slider-track-size);
+    border: 0;
+    border-radius: 999px;
+    background: var(--slider-track-color);
+  }
+  input[type="range"].prt-studio-range::-moz-range-progress {
+    block-size: var(--slider-track-size);
+    border-radius: 999px;
+    background: var(--slider-fill-color);
+  }
+  input[type="range"].prt-studio-range::-moz-range-thumb {
+    inline-size: var(--slider-thumb-size);
+    block-size: var(--slider-thumb-size);
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    background: var(--slider-thumb-color);
+  }
+
+  @media (max-width: 960px) {
+    .prt-studio-workspace {
+      grid-template-columns: 1fr;
+      overflow-y: auto;
+    }
+    .prt-studio-stage-col {
+      border-right: none;
+      border-bottom: 1px solid #cbd5e1;
+      max-height: 46vh;
+    }
+  }
+</style>
+
+<dialog id="printLayoutStudioDialog" class="prt-studio-dialog" aria-labelledby="prtStudioTitle">
+  <div class="prt-studio-header">
+    <div class="prt-studio-title-wrap">
+      <h1 id="prtStudioTitle">Editor Layout Kop Surat</h1>
+      <span id="prtStudioActiveElLabel" class="prt-studio-badge">Elemen: Nama Madrasah</span>
+    </div>
+    <div class="prt-studio-center-bar">
+      <div class="prt-studio-seg" role="group" aria-label="Ukuran tampilan kertas">
+        <button type="button" id="prtStModeNormalBtn" class="is-active" onclick="setPrintStudioPaperMode('normal')">Kertas A4</button>
+        <button type="button" id="prtStModeCompactBtn" onclick="setPrintStudioPaperMode('compact')">Mode Ringkas</button>
+      </div>
+      <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#334155;cursor:pointer;">
+        <input type="checkbox" id="prtStudioGuideToggle" checked onchange="renderPrintStudioStage()" style="accent-color:#166534;" />
+        <span>Garis Tengah</span>
+      </label>
+    </div>
+    <button type="button" onclick="closePrintLayoutStudio(true)" class="student-modal-close-btn" aria-label="Tutup">&times;</button>
+  </div>
+
+  <div class="prt-studio-workspace">
+    <!-- KANVAS PRATINJAU KIRI (SELALU TERLIHAT) -->
+    <div class="prt-studio-stage-col">
+      <div class="prt-studio-stage-scroll">
+        <div id="prtStudioPaper" class="prt-studio-paper has-center-guide"></div>
+      </div>
+      <div class="prt-studio-dock">
+        <span class="prt-studio-dock-note">Klik langsung elemen Kop di kertas pratinjau atau pilih chip di kanan.</span>
+        <div class="prt-studio-nudge-bar">
+          <button type="button" class="prt-studio-nudge-btn" onclick="nudgePrintStudioElement(-2, 0)" title="Geser Kiri 2px">&#9664;</button>
+          <button type="button" class="prt-studio-nudge-btn" onclick="nudgePrintStudioElement(0, -2)" title="Geser Atas 2px">&#9650;</button>
+          <button type="button" class="prt-studio-nudge-btn" onclick="nudgePrintStudioElement(0, 2)" title="Geser Bawah 2px">&#9660;</button>
+          <button type="button" class="prt-studio-nudge-btn" onclick="nudgePrintStudioElement(2, 0)" title="Geser Kanan 2px">&#9654;</button>
+          <button type="button" class="prt-studio-nudge-btn" onclick="resetPrintStudioSelectedElement()">Reset Elemen</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- INSPEKTOR KANAN (FOKUS PER ELEMEN) -->
+    <div class="prt-studio-inspector">
+      <div class="prt-insp-card">
+        <div class="prt-insp-head">
+          <strong>Pilih Elemen Header</strong>
+        </div>
+        <div id="prtStudioElChips" class="prt-el-chips">
+          <button type="button" class="prt-el-chip" data-studio-el="logo" onclick="selectPrintStudioElement('logo')">Logo</button>
+          <button type="button" class="prt-el-chip" data-studio-el="foundation" onclick="selectPrintStudioElement('foundation')">Nama Yayasan</button>
+          <button type="button" class="prt-el-chip is-active" data-studio-el="school" onclick="selectPrintStudioElement('school')">Nama Madrasah</button>
+          <button type="button" class="prt-el-chip" data-studio-el="address" onclick="selectPrintStudioElement('address')">Alamat</button>
+          <button type="button" class="prt-el-chip" data-studio-el="contact" onclick="selectPrintStudioElement('contact')">Kontak/NPSN</button>
+          <button type="button" class="prt-el-chip" data-studio-el="divider" onclick="selectPrintStudioElement('divider')">Garis Header</button>
+          <button type="button" class="prt-el-chip" data-studio-el="global" onclick="selectPrintStudioElement('global')">Semua Header</button>
+        </div>
+      </div>
+
+      <!-- INSPEKTOR LOGO -->
+      <div id="prtInsp_logo" class="prt-insp-card" style="display:none;">
+        <div class="prt-insp-head">
+          <strong>Pengaturan Logo Madrasah</strong>
+        </div>
+        <div class="prt-ctrl-row">
+          <label for="prtSt_logoSize">Ukuran Logo (px)</label>
+          <div class="prt-ctrl-pair">
+            <input type="range" id="prtSt_logoSize" class="prt-studio-range" min="40" max="130" step="2" value="64" />
+            <input type="number" id="prtSt_logoSizeNum" class="prt-ctrl-num" min="40" max="130" step="2" value="64" />
+          </div>
+        </div>
+        <div class="prt-ctrl-row">
+          <label for="prtSt_logoGap">Jarak Logo ke Teks (px)</label>
+          <div class="prt-ctrl-pair">
+            <input type="range" id="prtSt_logoGap" class="prt-studio-range" min="4" max="44" step="2" value="14" />
+            <input type="number" id="prtSt_logoGapNum" class="prt-ctrl-num" min="4" max="44" step="2" value="14" />
+          </div>
+        </div>
+        <div class="prt-two-col">
+          <div class="prt-ctrl-row">
+            <label for="prtSt_logoX">Geser Kiri/Kanan (px)</label>
+            <div class="prt-ctrl-pair">
+              <input type="range" id="prtSt_logoX" class="prt-studio-range" min="-60" max="100" step="2" value="0" />
+              <input type="number" id="prtSt_logoXNum" class="prt-ctrl-num" min="-60" max="100" step="2" value="0" />
+            </div>
+          </div>
+          <div class="prt-ctrl-row">
+            <label for="prtSt_logoY">Geser Atas/Bawah (px)</label>
+            <div class="prt-ctrl-pair">
+              <input type="range" id="prtSt_logoY" class="prt-studio-range" min="-35" max="35" step="1" value="0" />
+              <input type="number" id="prtSt_logoYNum" class="prt-ctrl-num" min="-35" max="35" step="1" value="0" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- INSPEKTOR TEKS PER BARIS (REGULAR/BOLD, FONT, JARAK HURUF, GESER, WARNA) -->
+      <div id="prtInsp_text" class="prt-insp-card">
+        <div class="prt-insp-head">
+          <strong>Tipografi &amp; Posisi Teks Terpilih</strong>
+        </div>
+        <div class="prt-ctrl-row">
+          <label for="prtSt_textContent">Isi Teks Baris Ini</label>
+          <input type="text" id="prtSt_textContent" class="prt-ctrl-input" />
+        </div>
+        <div class="prt-ctrl-row">
+          <label for="prtSt_fontFamily">Jenis Font</label>
+          <select id="prtSt_fontFamily" class="prt-ctrl-select">
+            <option value="Plus Jakarta Sans">Plus Jakarta Sans (Modern SIMATA)</option>
+            <option value="Times New Roman">Times New Roman (Surat Resmi)</option>
+            <option value="Inter">Inter</option>
+            <option value="Poppins">Poppins</option>
+            <option value="Montserrat">Montserrat</option>
+            <option value="Playfair Display">Playfair Display</option>
+            <option value="Arial">Arial</option>
+          </select>
+        </div>
+        <div class="prt-ctrl-row">
+          <label>Ketebalan &amp; Gaya Teks (Regular / Bold / Miring)</label>
+          <div class="prt-weight-bar">
+            <button type="button" class="prt-weight-btn" data-weight="400">Regular</button>
+            <button type="button" class="prt-weight-btn" data-weight="500">Medium</button>
+            <button type="button" class="prt-weight-btn" data-weight="600">SemiBold</button>
+            <button type="button" class="prt-weight-btn" data-weight="700">Bold</button>
+            <button type="button" class="prt-weight-btn" data-weight="800">ExtraBold</button>
+            <button type="button" id="prtSt_italicBtn" class="prt-style-btn" title="Miring (Italic)"><em>I</em></button>
+            <button type="button" id="prtSt_upperBtn" class="prt-style-btn" title="Huruf Kapital Semua">AA</button>
+          </div>
+        </div>
+        <div class="prt-ctrl-row">
+          <label for="prtSt_fontSizePt">Ukuran Huruf (pt)</label>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <input type="range" id="prtSt_fontSizePt" class="prt-studio-range" min="6" max="26" step="0.5" value="13.8" />
+            <input type="number" id="prtSt_fontSizePtNum" class="prt-ctrl-num" style="width:58px;" min="6" max="26" step="0.5" value="13.8" />
+            <button type="button" class="prt-studio-nudge-btn" onclick="stepStudioFontSize(-0.5)" title="Perkecil">A-</button>
+            <button type="button" class="prt-studio-nudge-btn" onclick="stepStudioFontSize(0.5)" title="Perbesar">A+</button>
+          </div>
+        </div>
+        <div class="prt-ctrl-row">
+          <label for="prtSt_letterSpacing">Jarak Antar Huruf / Letter Spacing (px)</label>
+          <div class="prt-ctrl-pair">
+            <input type="range" id="prtSt_letterSpacing" class="prt-studio-range" min="-1" max="10" step="0.2" value="0.4" />
+            <input type="number" id="prtSt_letterSpacingNum" class="prt-ctrl-num" min="-1" max="10" step="0.2" value="0.4" />
+          </div>
+        </div>
+        <div class="prt-two-col">
+          <div class="prt-ctrl-row">
+            <label for="prtSt_elOffsetX">Geser Kiri/Kanan (px)</label>
+            <div class="prt-ctrl-pair">
+              <input type="range" id="prtSt_elOffsetX" class="prt-studio-range" min="-120" max="120" step="2" value="0" />
+              <input type="number" id="prtSt_elOffsetXNum" class="prt-ctrl-num" min="-120" max="120" step="2" value="0" />
+            </div>
+          </div>
+          <div class="prt-ctrl-row">
+            <label for="prtSt_elOffsetY">Geser Atas/Bawah (px)</label>
+            <div class="prt-ctrl-pair">
+              <input type="range" id="prtSt_elOffsetY" class="prt-studio-range" min="-30" max="30" step="1" value="0" />
+              <input type="number" id="prtSt_elOffsetYNum" class="prt-ctrl-num" min="-30" max="30" step="1" value="0" />
+            </div>
+          </div>
+        </div>
+        <div class="prt-ctrl-row">
+          <label for="prtSt_color">Warna Teks</label>
+          <div class="prt-swatch-row">
+            <input type="color" id="prtSt_color" value="#0f172a" style="width:34px;height:28px;border:1px solid #cbd5e1;border-radius:6px;padding:1px;background:#fff;cursor:pointer;" />
+            <button type="button" class="prt-swatch-btn" data-st-color="#0f172a" style="background:#0f172a;" title="Hitam Slate"></button>
+            <button type="button" class="prt-swatch-btn" data-st-color="#1e293b" style="background:#1e293b;" title="Abu Tua"></button>
+            <button type="button" class="prt-swatch-btn" data-st-color="#334155" style="background:#334155;" title="Slate"></button>
+            <button type="button" class="prt-swatch-btn" data-st-color="#166534" style="background:#166534;" title="Hijau Madrasah"></button>
+            <button type="button" class="prt-swatch-btn" data-st-color="#15803d" style="background:#15803d;" title="Hijau Cerah"></button>
+            <button type="button" class="prt-swatch-btn" data-st-color="#1d4ed8" style="background:#1d4ed8;" title="Biru"></button>
+            <button type="button" class="prt-swatch-btn" data-st-color="#000000" style="background:#000000;" title="Hitam Pekat"></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- INSPEKTOR GARIS HEADER -->
+      <div id="prtInsp_divider" class="prt-insp-card" style="display:none;">
+        <div class="prt-insp-head">
+          <strong>Garis Bawah Header &amp; Jarak</strong>
+        </div>
+        <div class="prt-ctrl-row">
+          <label for="prtSt_divStyle">Model Garis Header</label>
+          <select id="prtSt_divStyle" class="prt-ctrl-select">
+            <option value="double">Garis Ganda Resmi (Standar SIMATA)</option>
+            <option value="thick_thin">Tebal-Tipis Surat Resmi</option>
+            <option value="solid">Garis Tunggal Tegas</option>
+            <option value="none">Tanpa Garis</option>
+          </select>
+        </div>
+        <div class="prt-two-col">
+          <div class="prt-ctrl-row">
+            <label for="prtSt_divThick">Tebal Garis (px)</label>
+            <div class="prt-ctrl-pair">
+              <input type="range" id="prtSt_divThick" class="prt-studio-range" min="1" max="6" step="1" value="3" />
+              <input type="number" id="prtSt_divThickNum" class="prt-ctrl-num" min="1" max="6" step="1" value="3" />
+            </div>
+          </div>
+          <div class="prt-ctrl-row">
+            <label for="prtSt_divColor">Warna Garis</label>
+            <input type="color" id="prtSt_divColor" value="#0f172a" style="width:100%;height:30px;border:1px solid #cbd5e1;border-radius:7px;padding:1px;background:#fff;cursor:pointer;" />
+          </div>
+        </div>
+        <div class="prt-ctrl-row">
+          <label for="prtSt_divTopGap">Jarak Teks ke Garis Header (px)</label>
+          <div class="prt-ctrl-pair">
+            <input type="range" id="prtSt_divTopGap" class="prt-studio-range" min="2" max="30" step="1" value="8" />
+            <input type="number" id="prtSt_divTopGapNum" class="prt-ctrl-num" min="2" max="30" step="1" value="8" />
+          </div>
+        </div>
+        <div class="prt-ctrl-row">
+          <label for="prtSt_divBotGap">Jarak Garis ke Judul Dokumen (px)</label>
+          <div class="prt-ctrl-pair">
+            <input type="range" id="prtSt_divBotGap" class="prt-studio-range" min="4" max="34" step="1" value="12" />
+            <input type="number" id="prtSt_divBotGapNum" class="prt-ctrl-num" min="4" max="34" step="1" value="12" />
+          </div>
+        </div>
+      </div>
+
+      <!-- INSPEKTOR GLOBAL HEADER -->
+      <div id="prtInsp_global" class="prt-insp-card" style="display:none;">
+        <div class="prt-insp-head">
+          <strong>Tata Letak Keseluruhan Kop Surat</strong>
+        </div>
+        <div class="prt-ctrl-row">
+          <label for="prtSt_kopAlign">Posisi Perataan Blok Teks Header</label>
+          <select id="prtSt_kopAlign" class="prt-ctrl-select">
+            <option value="center_page">Lurus Tengah Halaman (Simetris)</option>
+            <option value="center_remain">Tengah Area Samping Logo (Lebar Penuh)</option>
+            <option value="left">Rata Kiri di Samping Logo</option>
+          </select>
+        </div>
+        <div class="prt-ctrl-row">
+          <label for="prtSt_fontScale">Skala Ukuran Seluruh Header (%)</label>
+          <div class="prt-ctrl-pair">
+            <input type="range" id="prtSt_fontScale" class="prt-studio-range" min="75" max="140" step="5" value="100" />
+            <input type="number" id="prtSt_fontScaleNum" class="prt-ctrl-num" min="75" max="140" step="5" value="100" />
+          </div>
+        </div>
+        <div class="prt-ctrl-row">
+          <label for="prtSt_lineGap">Jarak Antar Baris Teks Header (px)</label>
+          <div class="prt-ctrl-pair">
+            <input type="range" id="prtSt_lineGap" class="prt-studio-range" min="0" max="16" step="1" value="2" />
+            <input type="number" id="prtSt_lineGapNum" class="prt-ctrl-num" min="0" max="16" step="1" value="2" />
+          </div>
+        </div>
+        <div class="prt-two-col">
+          <div class="prt-ctrl-row">
+            <label for="prtSt_globalX">Geser Blok Teks X (px)</label>
+            <div class="prt-ctrl-pair">
+              <input type="range" id="prtSt_globalX" class="prt-studio-range" min="-120" max="120" step="2" value="0" />
+              <input type="number" id="prtSt_globalXNum" class="prt-ctrl-num" min="-120" max="120" step="2" value="0" />
+            </div>
+          </div>
+          <div class="prt-ctrl-row">
+            <label for="prtSt_globalY">Geser Blok Teks Y (px)</label>
+            <div class="prt-ctrl-pair">
+              <input type="range" id="prtSt_globalY" class="prt-studio-range" min="-30" max="30" step="1" value="0" />
+              <input type="number" id="prtSt_globalYNum" class="prt-ctrl-num" min="-30" max="30" step="1" value="0" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="prt-studio-footer">
+    <button type="button" onclick="resetKopStyleDefaults(true)" class="kts-btn-reset-subtle" style="border:none;background:transparent;color:#64748b;font-weight:700;font-size:12.5px;cursor:pointer;">Reset Tata Letak Standar</button>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <button type="button" onclick="closePrintLayoutStudio(true)" class="login-button student-btn-cancel" style="margin:0;width:auto;">Batal</button>
+      <button type="button" onclick="testPrintSettingsPreview()" style="padding:10px 16px;border-radius:10px;border:1px solid #cbd5e1;background:#fff;color:#0f172a;font-weight:700;font-size:13px;cursor:pointer;">Uji Cetak</button>
+      <button type="button" id="prtStudioSaveBtn" class="login-button student-btn-save" onclick="savePrintSettingsFromForm('studio')" style="margin:0;width:auto;">Simpan Layout &amp; Pengaturan</button>
+    </div>
+  </div>
+</dialog>
+
 <script>
 
 function updatePageContext(viewKey, categoryLabel, pageTitle) {
@@ -8289,6 +8906,23 @@ function showToast(type, title, message) {
     if (toastTitle) toastTitle.textContent = title || "";
     if (toastMessage) toastMessage.textContent = message || "";
 
+    if (window._toastTimeout) {
+        clearTimeout(window._toastTimeout);
+        window._toastTimeout = null;
+    }
+
+    if (type === "loading") {
+        toast.classList.add("is-loading");
+        if (icon) {
+            icon.innerHTML = '<span class="toast-spinner" aria-hidden="true"></span>';
+            icon.style.background = "#ECFDF5";
+            icon.style.color = "#166534";
+        }
+        toast.classList.add("show");
+        return;
+    }
+
+    toast.classList.remove("is-loading");
     if (icon) {
         if (type === "success") {
             icon.innerHTML = "✔";
@@ -8307,13 +8941,21 @@ function showToast(type, title, message) {
 
     toast.classList.add("show");
 
-    if (window._toastTimeout) {
-        clearTimeout(window._toastTimeout);
-    }
-
     window._toastTimeout = setTimeout(function() {
         toast.classList.remove("show");
     }, 3000);
+}
+
+function hideToast() {
+    const toast = document.getElementById("toast");
+    if (window._toastTimeout) {
+        clearTimeout(window._toastTimeout);
+        window._toastTimeout = null;
+    }
+    if (toast) {
+        toast.classList.remove("show");
+        toast.classList.remove("is-loading");
+    }
 }
 
 
@@ -31000,9 +31642,57 @@ function saveTeacherAutoAlpaSettings() {
     }).updateTeacherAutoAlpaConfig(payload);
 }
 
-// === PENGATURAN CETAK & KOP SURAT RESMI (FLEXIBLE PRINT SETTINGS) ===
+// === PENGATURAN CETAK & KOP SURAT RESMI + VISUAL STUDIO EDITOR ===
+window._prtStudioDraft = null;
+window._prtStudioBackup = null;
+window._prtStudioSelectedEl = 'school';
+window._prtStudioPaperMode = 'normal';
+window._prtStudioBound = false;
+
+function getClonedPrintDefaults() {
+    const helper = window.SimataPrint;
+    const def = (helper && helper.DEFAULTS) || {};
+    const kopEls = (helper && typeof helper.cloneKopElements === 'function')
+        ? helper.cloneKopElements(def.kop_elements)
+        : JSON.parse(JSON.stringify(def.kop_elements || {}));
+    return Object.assign({}, def, { kop_elements: kopEls });
+}
+
+function getWorkingPrintDraft() {
+    const helper = window.SimataPrint;
+    if (!window._prtStudioDraft) {
+        const base = (helper && typeof helper.getSettings === 'function') ? helper.getSettings() : getClonedPrintDefaults();
+        window._prtStudioDraft = Object.assign({}, base, {
+            kop_elements: (helper && typeof helper.cloneKopElements === 'function') ? helper.cloneKopElements(base.kop_elements) : (base.kop_elements || {})
+        });
+    }
+    return window._prtStudioDraft;
+}
+
+function switchPrintSettingsTab(tabKey) {
+    const keys = ['kop', 'ttd', 'kertas'];
+    const target = keys.indexOf(tabKey) !== -1 ? tabKey : 'kop';
+    keys.forEach(function(k) {
+        const btn = document.getElementById('prtTabBtn_' + k);
+        const panel = document.getElementById('prtSubPanel_' + k);
+        const active = k === target;
+        if (btn) {
+            btn.setAttribute('aria-selected', active ? 'true' : 'false');
+            if (active) btn.setAttribute('focusgroupstart', '');
+            else btn.removeAttribute('focusgroupstart');
+        }
+        if (panel) {
+            panel.hidden = !active;
+            if (active) panel.setAttribute('tabindex', '0');
+            else panel.removeAttribute('tabindex');
+        }
+    });
+}
+
 function collectPrintSettingsFromForm() {
-    const def = (window.SimataPrint && window.SimataPrint.DEFAULTS) || {};
+    const helper = window.SimataPrint;
+    const def = getClonedPrintDefaults();
+    const draft = getWorkingPrintDraft();
     const val = function(id, fallback) {
         const el = document.getElementById(id);
         return el ? String(el.value || '').trim() : (fallback || '');
@@ -31011,32 +31701,22 @@ function collectPrintSettingsFromForm() {
         const el = document.getElementById(id);
         return el ? Boolean(el.checked) : Boolean(fallback);
     };
-    const num = function(id, min, max, fallback) {
-        const el = document.getElementById(id);
-        if (!el) return fallback;
-        const n = Number(el.value);
-        return Number.isFinite(n) ? Math.min(max, Math.max(min, Math.round(n))) : fallback;
-    };
-    const marginClamped = num('prtCfg_marginMm', 6, 20, Number(def.margin_mm || 10));
+    const marginEl = document.getElementById('prtCfg_marginMm');
+    const marginRaw = marginEl ? Number(marginEl.value) : Number(draft.margin_mm || def.margin_mm || 10);
+    const marginClamped = Number.isFinite(marginRaw) ? Math.min(20, Math.max(6, Math.round(marginRaw))) : 10;
 
-    return {
-        show_logo: chk('prtCfg_showLogo', true),
-        logo_url: val('prtCfg_logoUrl', def.logo_url || '/assets/logo.png') || '/assets/logo.png',
-        foundation_name: val('prtCfg_foundationName', def.foundation_name),
-        school_name: val('prtCfg_schoolName', def.school_name) || 'MADRASAH ALIYAH AT-TAUJIH SARANG',
-        school_address: val('prtCfg_schoolAddress', def.school_address),
-        school_contact: val('prtCfg_schoolContact', def.school_contact),
-        kop_align: val('prtCfg_kopAlign', def.kop_align || 'center_page') || 'center_page',
-        header_font_family: val('prtCfg_headerFontFamily', def.header_font_family || 'sans') === 'serif' ? 'serif' : 'sans',
-        logo_size_px: num('prtCfg_logoSizePx', 40, 130, 64),
-        logo_text_gap_px: num('prtCfg_logoTextGapPx', 4, 40, 14),
-        logo_offset_x_px: num('prtCfg_logoOffsetX', -40, 80, 0),
-        header_offset_x_px: num('prtCfg_headerOffsetX', -80, 80, 0),
-        header_font_scale_pct: num('prtCfg_headerFontScale', 75, 140, 100),
-        header_line_gap_px: num('prtCfg_headerLineGapPx', 0, 14, 2),
-        header_line_style: val('prtCfg_headerLineStyle', def.header_line_style || 'double') || 'double',
-        header_line_top_gap_px: num('prtCfg_headerLineTopGapPx', 2, 28, 8),
-        header_line_bottom_gap_px: num('prtCfg_headerLineBottomGapPx', 4, 30, 12),
+    const kopEls = (helper && typeof helper.cloneKopElements === 'function')
+        ? helper.cloneKopElements(draft.kop_elements)
+        : (draft.kop_elements || def.kop_elements);
+
+    const out = Object.assign({}, draft, {
+        show_logo: chk('prtCfg_showLogo', draft.show_logo !== false),
+        logo_url: val('prtCfg_logoUrl', draft.logo_url || '/assets/logo.png') || '/assets/logo.png',
+        foundation_name: val('prtCfg_foundationName', draft.foundation_name),
+        school_name: val('prtCfg_schoolName', draft.school_name) || 'MADRASAH ALIYAH AT-TAUJIH SARANG',
+        school_address: val('prtCfg_schoolAddress', draft.school_address),
+        school_contact: val('prtCfg_schoolContact', draft.school_contact),
+        kop_elements: kopEls,
         principal_title: val('prtCfg_principalTitle', def.principal_title) || 'Kepala Madrasah',
         principal_name: val('prtCfg_principalName', def.principal_name) || 'Moch. Iqnaul Badril Falah, S.Ag',
         principal_nip: val('prtCfg_principalNip', ''),
@@ -31049,7 +31729,9 @@ function collectPrintSettingsFromForm() {
         margin_mm: marginClamped,
         show_print_timestamp: chk('prtCfg_showTimestamp', true),
         footer_note: val('prtCfg_footerNote', def.footer_note)
-    };
+    });
+    window._prtStudioDraft = out;
+    return out;
 }
 
 function setPrintSignatureMode(mode) {
@@ -31085,21 +31767,7 @@ function renderPrintSettingsLivePreview() {
         blank: 'TTD Basah Manual'
     };
     if (badgeEl) badgeEl.textContent = modeLabels[cfg.signature_mode] || 'TTD QR Aktif';
-    if (paperBadgeEl) paperBadgeEl.textContent = cfg.default_paper_size + ' \u2022 Margin ' + cfg.margin_mm + ' mm';
-
-    const setBadge = function(id, text) {
-        const el = document.getElementById(id);
-        if (el) el.textContent = text;
-    };
-    const fmtSigned = function(n) { return (n > 0 ? '+' : '') + n + ' px'; };
-    setBadge('prtCfg_logoSizeVal', cfg.logo_size_px + ' px');
-    setBadge('prtCfg_headerFontScaleVal', cfg.header_font_scale_pct + '%');
-    setBadge('prtCfg_logoTextGapVal', cfg.logo_text_gap_px + ' px');
-    setBadge('prtCfg_headerLineGapVal', cfg.header_line_gap_px + ' px');
-    setBadge('prtCfg_logoOffsetXVal', fmtSigned(cfg.logo_offset_x_px));
-    setBadge('prtCfg_headerOffsetXVal', fmtSigned(cfg.header_offset_x_px));
-    setBadge('prtCfg_headerLineTopGapVal', cfg.header_line_top_gap_px + ' px');
-    setBadge('prtCfg_headerLineBottomGapVal', cfg.header_line_bottom_gap_px + ' px');
+    if (paperBadgeEl) paperBadgeEl.textContent = cfg.default_paper_size + ' \u2022 Margin ' + cfg.margin_mm + ' mm \u2022 Logo ' + (cfg.logo_size_px || 64) + ' px';
 
     const thumbEl = document.getElementById('prtCfg_logoThumb');
     if (thumbEl) {
@@ -31129,7 +31797,14 @@ function renderPrintSettingsLivePreview() {
 }
 
 function applyPrintSettingsToForm(cfg) {
-    const c = Object.assign({}, (window.SimataPrint && window.SimataPrint.DEFAULTS) || {}, cfg || {});
+    const helper = window.SimataPrint;
+    const def = getClonedPrintDefaults();
+    const c = Object.assign({}, def, cfg || {});
+    c.kop_elements = (helper && typeof helper.cloneKopElements === 'function')
+        ? helper.cloneKopElements(c.kop_elements)
+        : (c.kop_elements || def.kop_elements);
+    window._prtStudioDraft = c;
+
     const setVal = function(id, val) {
         const el = document.getElementById(id);
         if (el) el.value = val === undefined || val === null ? '' : String(val);
@@ -31145,17 +31820,6 @@ function applyPrintSettingsToForm(cfg) {
     setVal('prtCfg_schoolName', c.school_name);
     setVal('prtCfg_schoolAddress', c.school_address);
     setVal('prtCfg_schoolContact', c.school_contact);
-    setVal('prtCfg_kopAlign', c.kop_align || 'center_page');
-    setVal('prtCfg_headerFontFamily', c.header_font_family === 'serif' ? 'serif' : 'sans');
-    setVal('prtCfg_logoSizePx', c.logo_size_px !== undefined ? c.logo_size_px : 64);
-    setVal('prtCfg_logoTextGapPx', c.logo_text_gap_px !== undefined ? c.logo_text_gap_px : 14);
-    setVal('prtCfg_logoOffsetX', c.logo_offset_x_px !== undefined ? c.logo_offset_x_px : 0);
-    setVal('prtCfg_headerOffsetX', c.header_offset_x_px !== undefined ? c.header_offset_x_px : 0);
-    setVal('prtCfg_headerFontScale', c.header_font_scale_pct !== undefined ? c.header_font_scale_pct : 100);
-    setVal('prtCfg_headerLineGapPx', c.header_line_gap_px !== undefined ? c.header_line_gap_px : 2);
-    setVal('prtCfg_headerLineStyle', c.header_line_style || 'double');
-    setVal('prtCfg_headerLineTopGapPx', c.header_line_top_gap_px !== undefined ? c.header_line_top_gap_px : 8);
-    setVal('prtCfg_headerLineBottomGapPx', c.header_line_bottom_gap_px !== undefined ? c.header_line_bottom_gap_px : 12);
     setVal('prtCfg_principalTitle', c.principal_title);
     setVal('prtCfg_principalName', c.principal_name);
     setVal('prtCfg_principalNip', c.principal_nip);
@@ -31168,26 +31832,452 @@ function applyPrintSettingsToForm(cfg) {
     setChk('prtCfg_showTimestamp', c.show_print_timestamp !== false);
     setVal('prtCfg_footerNote', c.footer_note);
     setPrintSignatureMode(c.signature_mode || 'qr');
+
+    const dlg = document.getElementById('printLayoutStudioDialog');
+    if (dlg && dlg.open) {
+        syncStudioInspectorFromDraft();
+        renderPrintStudioStage();
+    }
 }
 
-function resetKopStyleDefaults() {
-    const def = (window.SimataPrint && window.SimataPrint.DEFAULTS) || {};
-    const setVal = function(id, val) {
-        const el = document.getElementById(id);
-        if (el) el.value = String(val);
+function syncPrtSliderFill(rangeEl) {
+    if (!rangeEl) return;
+    rangeEl.style.setProperty('--attr-min', rangeEl.min || '0');
+    rangeEl.style.setProperty('--attr-max', rangeEl.max || '100');
+    rangeEl.style.setProperty('--control-value', rangeEl.value || '0');
+    rangeEl.setAttribute('aria-valuetext', String(rangeEl.value));
+}
+
+function syncStudioPair(rangeId, numId, value) {
+    const r = document.getElementById(rangeId);
+    const n = document.getElementById(numId);
+    if (r) { r.value = String(value); syncPrtSliderFill(r); }
+    if (n) n.value = String(value);
+}
+
+function setPrintStudioPaperMode(mode) {
+    window._prtStudioPaperMode = mode === 'compact' ? 'compact' : 'normal';
+    const b1 = document.getElementById('prtStModeNormalBtn');
+    const b2 = document.getElementById('prtStModeCompactBtn');
+    if (b1) b1.classList.toggle('is-active', window._prtStudioPaperMode === 'normal');
+    if (b2) b2.classList.toggle('is-active', window._prtStudioPaperMode === 'compact');
+    renderPrintStudioStage();
+}
+
+function renderPrintStudioStage() {
+    const paperEl = document.getElementById('prtStudioPaper');
+    if (!paperEl || !window.SimataPrint) return;
+    const d = getWorkingPrintDraft();
+    const isCompact = window._prtStudioPaperMode === 'compact';
+    const guideOn = document.getElementById('prtStudioGuideToggle') ? Boolean(document.getElementById('prtStudioGuideToggle').checked) : true;
+
+    paperEl.classList.toggle('is-compact-sheet', isCompact);
+    paperEl.classList.toggle('has-center-guide', guideOn);
+
+    window.SimataPrint.preloadAssets(d).then(function() {
+        paperEl.innerHTML =
+            '<style>' + window.SimataPrint.getSharedPrintCss() + '</style>' +
+            window.SimataPrint.renderKopHtml({
+                title: 'CONTOH DOKUMEN CETAK RESMI SIMATA',
+                subtitle: 'Tahun Ajaran Aktif \u2022 Pratinjau Tata Letak Kop',
+                compact: isCompact,
+                interactive: true,
+                selectedEl: window._prtStudioSelectedEl,
+                cfg: d
+            }) +
+            '<div class="prt-studio-paper-placeholder">' +
+              '<div class="prt-studio-ph-row" style="width:94%;"></div>' +
+              '<div class="prt-studio-ph-row" style="width:82%;"></div>' +
+              '<div class="prt-studio-ph-row" style="width:89%;"></div>' +
+            '</div>' +
+            '<div style="display:flex;justify-content:flex-end;margin-top:16px;">' +
+              window.SimataPrint.renderPrincipalSigHtml({
+                  docTitle: 'Editor Layout Kop SIMATA',
+                  showCityDate: true,
+                  compact: isCompact,
+                  cfg: d
+              }) +
+            '</div>' +
+            window.SimataPrint.renderPrintFooterHtml(d);
+
+        paperEl.querySelectorAll('[data-kop-el]').forEach(function(node) {
+            node.onclick = function(ev) {
+                ev.stopPropagation();
+                selectPrintStudioElement(node.getAttribute('data-kop-el'));
+            };
+        });
+    });
+}
+
+function getStudioElementMeta(elKey) {
+    const map = {
+        logo: { label: 'Logo Madrasah', panel: 'logo' },
+        foundation: { label: 'Nama Yayasan', panel: 'text', textField: 'foundation_name', formId: 'prtCfg_foundationName' },
+        school: { label: 'Nama Madrasah', panel: 'text', textField: 'school_name', formId: 'prtCfg_schoolName' },
+        address: { label: 'Alamat Madrasah', panel: 'text', textField: 'school_address', formId: 'prtCfg_schoolAddress' },
+        contact: { label: 'Kontak / NPSN / Email', panel: 'text', textField: 'school_contact', formId: 'prtCfg_schoolContact' },
+        divider: { label: 'Garis Bawah Header', panel: 'divider' },
+        global: { label: 'Semua Header', panel: 'global' }
     };
-    setVal('prtCfg_kopAlign', def.kop_align || 'center_page');
-    setVal('prtCfg_headerFontFamily', def.header_font_family || 'sans');
-    setVal('prtCfg_logoSizePx', def.logo_size_px || 64);
-    setVal('prtCfg_logoTextGapPx', def.logo_text_gap_px || 14);
-    setVal('prtCfg_logoOffsetX', def.logo_offset_x_px || 0);
-    setVal('prtCfg_headerOffsetX', def.header_offset_x_px || 0);
-    setVal('prtCfg_headerFontScale', def.header_font_scale_pct || 100);
-    setVal('prtCfg_headerLineGapPx', def.header_line_gap_px || 2);
-    setVal('prtCfg_headerLineStyle', def.header_line_style || 'double');
-    setVal('prtCfg_headerLineTopGapPx', def.header_line_top_gap_px || 8);
-    setVal('prtCfg_headerLineBottomGapPx', def.header_line_bottom_gap_px || 12);
+    return map[elKey] || map.school;
+}
+
+function selectPrintStudioElement(elKey) {
+    const meta = getStudioElementMeta(elKey);
+    window._prtStudioSelectedEl = (elKey in { logo: 1, foundation: 1, school: 1, address: 1, contact: 1, divider: 1, global: 1 }) ? elKey : 'school';
+
+    const lblEl = document.getElementById('prtStudioActiveElLabel');
+    if (lblEl) lblEl.textContent = 'Elemen: ' + meta.label;
+
+    document.querySelectorAll('#prtStudioElChips .prt-el-chip').forEach(function(btn) {
+        btn.classList.toggle('is-active', btn.getAttribute('data-studio-el') === window._prtStudioSelectedEl);
+    });
+
+    ['logo', 'text', 'divider', 'global'].forEach(function(p) {
+        const card = document.getElementById('prtInsp_' + p);
+        if (card) card.style.display = (meta.panel === p) ? 'flex' : 'none';
+    });
+
+    syncStudioInspectorFromDraft();
+    renderPrintStudioStage();
+}
+
+function syncStudioInspectorFromDraft() {
+    const d = getWorkingPrintDraft();
+    const els = d.kop_elements || getClonedPrintDefaults().kop_elements;
+    const elKey = window._prtStudioSelectedEl || 'school';
+    const meta = getStudioElementMeta(elKey);
+
+    if (meta.panel === 'logo') {
+        syncStudioPair('prtSt_logoSize', 'prtSt_logoSizeNum', d.logo_size_px !== undefined ? d.logo_size_px : 64);
+        syncStudioPair('prtSt_logoGap', 'prtSt_logoGapNum', d.logo_text_gap_px !== undefined ? d.logo_text_gap_px : 14);
+        syncStudioPair('prtSt_logoX', 'prtSt_logoXNum', els.logo ? els.logo.offset_x : (d.logo_offset_x_px || 0));
+        syncStudioPair('prtSt_logoY', 'prtSt_logoYNum', els.logo ? els.logo.offset_y : (d.logo_offset_y_px || 0));
+    } else if (meta.panel === 'text') {
+        const tCfg = els[elKey] || getClonedPrintDefaults().kop_elements.school;
+        const txtEl = document.getElementById('prtSt_textContent');
+        const famEl = document.getElementById('prtSt_fontFamily');
+        const itEl = document.getElementById('prtSt_italicBtn');
+        const upEl = document.getElementById('prtSt_upperBtn');
+        const colEl = document.getElementById('prtSt_color');
+
+        if (txtEl) txtEl.value = d[meta.textField] || '';
+        if (famEl) famEl.value = tCfg.font_family || 'Plus Jakarta Sans';
+        if (itEl) itEl.classList.toggle('is-active', Boolean(tCfg.italic));
+        if (upEl) upEl.classList.toggle('is-active', Boolean(tCfg.uppercase));
+        if (colEl) colEl.value = tCfg.color || '#0f172a';
+
+        document.querySelectorAll('#prtInsp_text .prt-weight-btn').forEach(function(btn) {
+            btn.classList.toggle('is-active', Number(btn.getAttribute('data-weight')) === Number(tCfg.font_weight || 400));
+        });
+
+        syncStudioPair('prtSt_fontSizePt', 'prtSt_fontSizePtNum', tCfg.font_size_pt !== undefined ? tCfg.font_size_pt : 10);
+        syncStudioPair('prtSt_letterSpacing', 'prtSt_letterSpacingNum', tCfg.letter_spacing_px !== undefined ? tCfg.letter_spacing_px : 0);
+        syncStudioPair('prtSt_elOffsetX', 'prtSt_elOffsetXNum', tCfg.offset_x || 0);
+        syncStudioPair('prtSt_elOffsetY', 'prtSt_elOffsetYNum', tCfg.offset_y || 0);
+    } else if (meta.panel === 'divider') {
+        const divStyle = document.getElementById('prtSt_divStyle');
+        const divCol = document.getElementById('prtSt_divColor');
+        if (divStyle) divStyle.value = d.header_line_style || 'double';
+        if (divCol) divCol.value = (els.divider && els.divider.color) || '#0f172a';
+        syncStudioPair('prtSt_divThick', 'prtSt_divThickNum', (els.divider && els.divider.thickness_px) || 3);
+        syncStudioPair('prtSt_divTopGap', 'prtSt_divTopGapNum', d.header_line_top_gap_px !== undefined ? d.header_line_top_gap_px : 8);
+        syncStudioPair('prtSt_divBotGap', 'prtSt_divBotGapNum', d.header_line_bottom_gap_px !== undefined ? d.header_line_bottom_gap_px : 12);
+    } else if (meta.panel === 'global') {
+        const alignEl = document.getElementById('prtSt_kopAlign');
+        if (alignEl) alignEl.value = d.kop_align || 'center_page';
+        syncStudioPair('prtSt_fontScale', 'prtSt_fontScaleNum', d.header_font_scale_pct !== undefined ? d.header_font_scale_pct : 100);
+        syncStudioPair('prtSt_lineGap', 'prtSt_lineGapNum', d.header_line_gap_px !== undefined ? d.header_line_gap_px : 2);
+        syncStudioPair('prtSt_globalX', 'prtSt_globalXNum', d.header_offset_x_px || 0);
+        syncStudioPair('prtSt_globalY', 'prtSt_globalYNum', d.header_offset_y_px || 0);
+    }
+}
+
+function commitStudioDraftChange() {
+    const d = getWorkingPrintDraft();
+    const formMap = [
+        ['foundation_name', 'prtCfg_foundationName'],
+        ['school_name', 'prtCfg_schoolName'],
+        ['school_address', 'prtCfg_schoolAddress'],
+        ['school_contact', 'prtCfg_schoolContact']
+    ];
+    formMap.forEach(function(pair) {
+        const el = document.getElementById(pair[1]);
+        if (el && d[pair[0]] !== undefined) el.value = String(d[pair[0]]);
+    });
+    renderPrintStudioStage();
     renderPrintSettingsLivePreview();
+}
+
+function bindPrintStudioEvents() {
+    if (window._prtStudioBound) return;
+    window._prtStudioBound = true;
+
+    const bindPair = function(rangeId, numId, setter) {
+        const r = document.getElementById(rangeId);
+        const n = document.getElementById(numId);
+        if (r) {
+            r.addEventListener('input', function() {
+                if (n) n.value = r.value;
+                syncPrtSliderFill(r);
+                setter(Number(r.value));
+                commitStudioDraftChange();
+            });
+        }
+        if (n) {
+            n.addEventListener('input', function() {
+                const min = Number(n.min), max = Number(n.max);
+                let v = Number(n.value);
+                if (!Number.isFinite(v)) return;
+                v = Math.min(max, Math.max(min, v));
+                if (r) { r.value = String(v); syncPrtSliderFill(r); }
+                setter(v);
+                commitStudioDraftChange();
+            });
+        }
+    };
+
+    const getEls = function() { return getWorkingPrintDraft().kop_elements; };
+    const activeTextCfg = function() {
+        const k = window._prtStudioSelectedEl;
+        const els = getEls();
+        return els[k] || els.school;
+    };
+
+    // Logo
+    bindPair('prtSt_logoSize', 'prtSt_logoSizeNum', function(v) { getWorkingPrintDraft().logo_size_px = Math.round(v); });
+    bindPair('prtSt_logoGap', 'prtSt_logoGapNum', function(v) { getWorkingPrintDraft().logo_text_gap_px = Math.round(v); });
+    bindPair('prtSt_logoX', 'prtSt_logoXNum', function(v) {
+        getWorkingPrintDraft().logo_offset_x_px = Math.round(v);
+        getEls().logo.offset_x = Math.round(v);
+    });
+    bindPair('prtSt_logoY', 'prtSt_logoYNum', function(v) {
+        getWorkingPrintDraft().logo_offset_y_px = Math.round(v);
+        getEls().logo.offset_y = Math.round(v);
+    });
+
+    // Text line
+    const txtEl = document.getElementById('prtSt_textContent');
+    if (txtEl) {
+        txtEl.addEventListener('input', function() {
+            const meta = getStudioElementMeta(window._prtStudioSelectedEl);
+            if (meta.textField) {
+                getWorkingPrintDraft()[meta.textField] = txtEl.value;
+                commitStudioDraftChange();
+            }
+        });
+    }
+    const famEl = document.getElementById('prtSt_fontFamily');
+    if (famEl) {
+        famEl.addEventListener('change', function() {
+            activeTextCfg().font_family = famEl.value;
+            commitStudioDraftChange();
+        });
+    }
+    document.querySelectorAll('#prtInsp_text .prt-weight-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const w = Number(btn.getAttribute('data-weight'));
+            activeTextCfg().font_weight = w;
+            syncStudioInspectorFromDraft();
+            commitStudioDraftChange();
+        });
+    });
+    const itEl = document.getElementById('prtSt_italicBtn');
+    if (itEl) {
+        itEl.addEventListener('click', function() {
+            activeTextCfg().italic = !activeTextCfg().italic;
+            syncStudioInspectorFromDraft();
+            commitStudioDraftChange();
+        });
+    }
+    const upEl = document.getElementById('prtSt_upperBtn');
+    if (upEl) {
+        upEl.addEventListener('click', function() {
+            activeTextCfg().uppercase = !activeTextCfg().uppercase;
+            syncStudioInspectorFromDraft();
+            commitStudioDraftChange();
+        });
+    }
+    bindPair('prtSt_fontSizePt', 'prtSt_fontSizePtNum', function(v) { activeTextCfg().font_size_pt = Math.round(v * 10) / 10; });
+    bindPair('prtSt_letterSpacing', 'prtSt_letterSpacingNum', function(v) { activeTextCfg().letter_spacing_px = Math.round(v * 10) / 10; });
+    bindPair('prtSt_elOffsetX', 'prtSt_elOffsetXNum', function(v) { activeTextCfg().offset_x = Math.round(v); });
+    bindPair('prtSt_elOffsetY', 'prtSt_elOffsetYNum', function(v) { activeTextCfg().offset_y = Math.round(v); });
+
+    const colEl = document.getElementById('prtSt_color');
+    if (colEl) {
+        colEl.addEventListener('input', function() {
+            activeTextCfg().color = colEl.value;
+            commitStudioDraftChange();
+        });
+    }
+    document.querySelectorAll('#prtInsp_text .prt-swatch-btn').forEach(function(sw) {
+        sw.addEventListener('click', function() {
+            const hex = sw.getAttribute('data-st-color');
+            activeTextCfg().color = hex;
+            if (colEl) colEl.value = hex;
+            commitStudioDraftChange();
+        });
+    });
+
+    // Divider
+    const divStyle = document.getElementById('prtSt_divStyle');
+    if (divStyle) {
+        divStyle.addEventListener('change', function() {
+            getWorkingPrintDraft().header_line_style = divStyle.value;
+            commitStudioDraftChange();
+        });
+    }
+    const divCol = document.getElementById('prtSt_divColor');
+    if (divCol) {
+        divCol.addEventListener('input', function() {
+            getEls().divider.color = divCol.value;
+            commitStudioDraftChange();
+        });
+    }
+    bindPair('prtSt_divThick', 'prtSt_divThickNum', function(v) { getEls().divider.thickness_px = Math.round(v); });
+    bindPair('prtSt_divTopGap', 'prtSt_divTopGapNum', function(v) { getWorkingPrintDraft().header_line_top_gap_px = Math.round(v); });
+    bindPair('prtSt_divBotGap', 'prtSt_divBotGapNum', function(v) { getWorkingPrintDraft().header_line_bottom_gap_px = Math.round(v); });
+
+    // Global Kop
+    const kopAlignEl = document.getElementById('prtSt_kopAlign');
+    if (kopAlignEl) {
+        kopAlignEl.addEventListener('change', function() {
+            getWorkingPrintDraft().kop_align = kopAlignEl.value;
+            commitStudioDraftChange();
+        });
+    }
+    bindPair('prtSt_fontScale', 'prtSt_fontScaleNum', function(v) { getWorkingPrintDraft().header_font_scale_pct = Math.round(v); });
+    bindPair('prtSt_lineGap', 'prtSt_lineGapNum', function(v) { getWorkingPrintDraft().header_line_gap_px = Math.round(v); });
+    bindPair('prtSt_globalX', 'prtSt_globalXNum', function(v) { getWorkingPrintDraft().header_offset_x_px = Math.round(v); });
+    bindPair('prtSt_globalY', 'prtSt_globalYNum', function(v) { getWorkingPrintDraft().header_offset_y_px = Math.round(v); });
+
+    // Dialog close/cancel state reset when dismissed without saving
+    const dlg = document.getElementById('printLayoutStudioDialog');
+    if (dlg) {
+        dlg.addEventListener('close', function() {
+            const rv = dlg.returnValue;
+            dlg.returnValue = '';
+            if (rv !== 'saved' && window._prtStudioBackup) {
+                applyPrintSettingsToForm(window._prtStudioBackup);
+            }
+            window._prtStudioBackup = null;
+        });
+    }
+}
+
+function stepStudioFontSize(delta) {
+    const elKey = window._prtStudioSelectedEl;
+    const meta = getStudioElementMeta(elKey);
+    if (meta.panel !== 'text') return;
+    const tCfg = getWorkingPrintDraft().kop_elements[elKey];
+    const next = Math.min(26, Math.max(6, Math.round((Number(tCfg.font_size_pt || 10) + delta) * 10) / 10));
+    tCfg.font_size_pt = next;
+    syncStudioInspectorFromDraft();
+    commitStudioDraftChange();
+}
+
+function nudgePrintStudioElement(dx, dy) {
+    const d = getWorkingPrintDraft();
+    const els = d.kop_elements;
+    const elKey = window._prtStudioSelectedEl;
+    if (elKey === 'logo') {
+        els.logo.offset_x = Math.min(100, Math.max(-60, (els.logo.offset_x || 0) + dx));
+        els.logo.offset_y = Math.min(35, Math.max(-35, (els.logo.offset_y || 0) + dy));
+        d.logo_offset_x_px = els.logo.offset_x;
+        d.logo_offset_y_px = els.logo.offset_y;
+    } else if (elKey === 'global') {
+        d.header_offset_x_px = Math.min(120, Math.max(-120, (d.header_offset_x_px || 0) + dx));
+        d.header_offset_y_px = Math.min(30, Math.max(-30, (d.header_offset_y_px || 0) + dy));
+    } else if (els[elKey] && 'offset_x' in els[elKey]) {
+        els[elKey].offset_x = Math.min(120, Math.max(-120, (els[elKey].offset_x || 0) + dx));
+        els[elKey].offset_y = Math.min(30, Math.max(-30, (els[elKey].offset_y || 0) + dy));
+    }
+    syncStudioInspectorFromDraft();
+    commitStudioDraftChange();
+}
+
+function resetPrintStudioSelectedElement() {
+    const d = getWorkingPrintDraft();
+    const def = getClonedPrintDefaults();
+    const elKey = window._prtStudioSelectedEl;
+    if (elKey === 'logo') {
+        d.logo_size_px = def.logo_size_px;
+        d.logo_text_gap_px = def.logo_text_gap_px;
+        d.logo_offset_x_px = 0;
+        d.logo_offset_y_px = 0;
+        d.kop_elements.logo = Object.assign({}, def.kop_elements.logo);
+    } else if (elKey === 'divider') {
+        d.header_line_style = def.header_line_style;
+        d.header_line_top_gap_px = def.header_line_top_gap_px;
+        d.header_line_bottom_gap_px = def.header_line_bottom_gap_px;
+        d.kop_elements.divider = Object.assign({}, def.kop_elements.divider);
+    } else if (elKey === 'global') {
+        d.kop_align = def.kop_align;
+        d.header_font_scale_pct = def.header_font_scale_pct;
+        d.header_line_gap_px = def.header_line_gap_px;
+        d.header_offset_x_px = 0;
+        d.header_offset_y_px = 0;
+    } else if (def.kop_elements[elKey]) {
+        d.kop_elements[elKey] = Object.assign({}, def.kop_elements[elKey]);
+    }
+    syncStudioInspectorFromDraft();
+    commitStudioDraftChange();
+}
+
+function openPrintLayoutStudio(initialEl) {
+    const dlg = document.getElementById('printLayoutStudioDialog');
+    if (!dlg) return;
+    const current = collectPrintSettingsFromForm();
+    window._prtStudioBackup = JSON.parse(JSON.stringify(current));
+    window._prtStudioDraft = JSON.parse(JSON.stringify(current));
+    bindPrintStudioEvents();
+    selectPrintStudioElement(initialEl || window._prtStudioSelectedEl || 'school');
+    if (typeof dlg.showModal === 'function') {
+        dlg.showModal();
+    } else {
+        dlg.setAttribute('open', '');
+    }
+    renderPrintStudioStage();
+}
+
+function closePrintLayoutStudio(revertChanges) {
+    const dlg = document.getElementById('printLayoutStudioDialog');
+    if (!dlg) return;
+    dlg.returnValue = revertChanges ? 'cancel' : 'saved';
+    if (typeof dlg.close === 'function') {
+        dlg.close();
+    } else {
+        dlg.removeAttribute('open');
+        if (revertChanges && window._prtStudioBackup) {
+            applyPrintSettingsToForm(window._prtStudioBackup);
+        }
+        window._prtStudioBackup = null;
+    }
+}
+
+function resetKopStyleDefaults(inStudio) {
+    const def = getClonedPrintDefaults();
+    const d = getWorkingPrintDraft();
+    d.kop_align = def.kop_align;
+    d.header_font_family = def.header_font_family;
+    d.logo_size_px = def.logo_size_px;
+    d.logo_text_gap_px = def.logo_text_gap_px;
+    d.logo_offset_x_px = 0;
+    d.logo_offset_y_px = 0;
+    d.header_offset_x_px = 0;
+    d.header_offset_y_px = 0;
+    d.header_font_scale_pct = def.header_font_scale_pct;
+    d.header_line_gap_px = def.header_line_gap_px;
+    d.header_line_style = def.header_line_style;
+    d.header_line_top_gap_px = def.header_line_top_gap_px;
+    d.header_line_bottom_gap_px = def.header_line_bottom_gap_px;
+    d.kop_elements = def.kop_elements;
+
+    renderPrintSettingsLivePreview();
+    if (inStudio) {
+        syncStudioInspectorFromDraft();
+        renderPrintStudioStage();
+    }
 }
 
 function loadPrintSettingsForm() {
@@ -31262,37 +32352,57 @@ function testPrintSettingsPreview() {
     });
 }
 
-function savePrintSettingsFromForm() {
+function savePrintSettingsFromForm(source) {
     if (!isCurrentUserAdmin) return;
-    const btn = document.getElementById('prtCfg_saveBtn');
+    const isStudio = source === 'studio';
+    const btn = document.getElementById(isStudio ? 'prtStudioSaveBtn' : 'prtCfg_saveBtn');
+    const defaultBtnTxt = isStudio ? 'Simpan Layout & Pengaturan' : 'Simpan Pengaturan Cetak';
     const fbEl = document.getElementById('prtCfg_feedback');
     const payload = collectPrintSettingsFromForm();
 
     if (fbEl) fbEl.textContent = '';
-    setButtonLoading(btn, true, 'Menyimpan...', 'Simpan Pengaturan Cetak');
+    setButtonLoading(btn, true, 'Menyimpan...', defaultBtnTxt);
+    if (typeof showToast === 'function') {
+        showToast('loading', 'Menyimpan Pengaturan Cetak...', 'Menerapkan tata letak Kop & TTD QR ke seluruh cetakan SIMATA...');
+    }
+    if (typeof showModalProcessing === 'function') {
+        showModalProcessing(isStudio ? 'printLayoutStudioDialog' : 'settingsPanel_cetak', 'Menyimpan Pengaturan Cetak...', 'Mohon tunggu sebentar...');
+    }
 
     simataClient.withSuccessHandler(function(res) {
-        setButtonLoading(btn, false, '', 'Simpan Pengaturan Cetak');
+        setButtonLoading(btn, false, '', defaultBtnTxt);
+        if (typeof hideModalProcessing === 'function') {
+            hideModalProcessing(isStudio ? 'printLayoutStudioDialog' : 'settingsPanel_cetak');
+        }
         const saved = (res && res.data) || payload;
         if (window.SimataPrint) {
             window.SimataPrint.setSettings(saved);
         }
+        window._prtStudioBackup = null;
         applyPrintSettingsToForm(saved);
 
-        const msg = (res && res.message) || 'Pengaturan cetak & TTD QR berhasil disimpan.';
+        if (isStudio) {
+            closePrintLayoutStudio(false);
+        }
+
+        const msg = (res && res.message) || 'Pengaturan cetak & tata letak Kop berhasil disimpan.';
         if (fbEl) {
             fbEl.style.color = '#166534';
             fbEl.textContent = msg;
         }
         if (typeof showToast === 'function') showToast('success', 'Pengaturan Cetak Disimpan', msg);
     }).withFailureHandler(function(err) {
-        setButtonLoading(btn, false, '', 'Simpan Pengaturan Cetak');
+        setButtonLoading(btn, false, '', defaultBtnTxt);
+        if (typeof hideModalProcessing === 'function') {
+            hideModalProcessing(isStudio ? 'printLayoutStudioDialog' : 'settingsPanel_cetak');
+        }
         const msg = (err && err.message) || 'Gagal menyimpan pengaturan cetak.';
         if (fbEl) {
             fbEl.style.color = '#b91c1c';
             fbEl.textContent = msg;
         }
-        alert(msg);
+        if (typeof showToast === 'function') showToast('error', 'Gagal Menyimpan', msg);
+        else alert(msg);
     }).updatePrintSettings(payload);
 }
 

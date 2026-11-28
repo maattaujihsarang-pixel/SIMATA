@@ -351,6 +351,12 @@ border-radius:14px;
 
 }
 
+.toast.is-loading{
+
+    border-left:4px solid #166534;
+
+}
+
 .toast.show{
 
     opacity:1;
@@ -363,6 +369,7 @@ border-radius:14px;
 
     width:46px;
     height:46px;
+    flex-shrink:0;
     border-radius:50%;
     background:#E8F5E9;
     color:#2E7D32;
@@ -372,6 +379,21 @@ border-radius:14px;
     font-size:22px;
     font-weight:700;
 
+}
+
+.toast-spinner{
+
+    width:22px;
+    height:22px;
+    border-radius:50%;
+    border:3px solid #bbf7d0;
+    border-top-color:#166534;
+    animation:simataToastSpin 0.75s linear infinite;
+
+}
+
+@keyframes simataToastSpin{
+    to{ transform:rotate(360deg); }
 }
 
 .toast-title{
