@@ -19,10 +19,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100..900;1,100..900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=bug74v">
+  <link rel="stylesheet" href="/css/style.css?v=bug74w">
   <link rel="stylesheet" href="/css/notifications.css?v=bug66_notif3">
   <link rel="stylesheet" href="/css/finance.css">
-  <link rel="stylesheet" href="/css/grades.css?v=bug74v">
+  <link rel="stylesheet" href="/css/grades.css?v=bug74w">
   <style>
 /**
  * SIMATA — Mobile Responsive Stylesheet
@@ -827,10 +827,10 @@ html, body {
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
   <!-- QRCode.js: QR Code generator library for Student QR Preview & Print -->
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-  <script src="/js/simata-client.js?v=bug74v"></script>
-  <script src="/js/print-helper.js?v=bug74v"></script>
+  <script src="/js/simata-client.js?v=bug74w"></script>
+  <script src="/js/print-helper.js?v=bug74w"></script>
   <script src="/js/notifications.js?v=bug65_2"></script>
-  <script src="/js/grades-module.js?v=bug74v"></script>
+  <script src="/js/grades-module.js?v=bug74w"></script>
 </head>
 
 
@@ -3800,11 +3800,6 @@ html, body {
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
                 <span>Muat Ulang</span>
               </button>
-              <select id="schedPrintOrientation" class="sched-btn" aria-label="Orientasi Cetak Jadwal" title="Pilih Orientasi Kertas Cetak (Lanskap / Potret / Fleksibel)">
-                <option value="landscape" selected>Orientasi: Lanskap</option>
-                <option value="portrait">Orientasi: Potret</option>
-                <option value="browser">Pilih di Dialog Cetak</option>
-              </select>
               <button type="button" class="sched-btn sched-btn-primary" id="schedPrintBtn">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                 <span>Cetak Matriks PDF</span>
@@ -6905,15 +6900,6 @@ html, body {
                         <div class="prt-cfg-field">
                           <label for="prtCfg_marginMm">Margin Kertas (mm)</label>
                           <input type="number" id="prtCfg_marginMm" min="6" max="20" step="1" value="10" oninput="renderPrintSettingsLivePreview()" />
-                        </div>
-                        <div class="prt-cfg-field" style="grid-column:1 / -1;">
-                          <label for="prtCfg_orientation">Orientasi Cetak Default (Lanskap / Potret)</label>
-                          <select id="prtCfg_orientation" onchange="renderPrintSettingsLivePreview()">
-                            <option value="auto">Otomatis Sesuai Jenis Dokumen (Jadwal &amp; Leger Lanskap, Rapor Potret)</option>
-                            <option value="browser">Fleksibel (Tampilkan Pilihan Lanskap / Potret di Dialog Browser)</option>
-                            <option value="landscape">Selalu Lanskap (Mendatar)</option>
-                            <option value="portrait">Selalu Potret (Tegak)</option>
-                          </select>
                         </div>
                       </div>
                       <div class="prt-cfg-field">
@@ -16567,10 +16553,6 @@ function showSchedulesView(opts) {
                 '</div>' +
             '</div>';
 
-        const oriSel = document.getElementById('schedPrintOrientation');
-        const oriChoice = oriSel ? oriSel.value : 'landscape';
-        const effectiveOri = (oriChoice === 'portrait' || oriChoice === 'browser') ? oriChoice : 'landscape';
-
         let schedPageStyle = document.getElementById('schedDynamicPrintPageStyle');
         if (!schedPageStyle) {
             schedPageStyle = document.createElement('style');
@@ -16578,15 +16560,11 @@ function showSchedulesView(opts) {
             document.head.appendChild(schedPageStyle);
         }
         const dynPageRule = (prt && typeof prt.getPageCss === 'function')
-            ? prt.getPageCss(effectiveOri === 'portrait' ? 'portrait' : 'landscape', null, effectiveOri)
-            : (effectiveOri === 'browser'
-                ? '@page { margin: 7mm; }'
-                : ('@page { size: A4 ' + effectiveOri + '; margin: 6mm 7mm; }'));
-        const portraitLayoutCss = effectiveOri === 'portrait'
-            ? ' .sched-print-shell { grid-template-columns: 1fr !important; } .sched-print-right { break-inside: avoid; }'
-            : '';
+            ? prt.getPageCss('landscape')
+            : '@page { margin: 7mm; }';
         schedPageStyle.textContent =
-            '@media print { ' + dynPageRule + ' body.simata-printing-schedule #schedPrintSheet { page: auto !important; }' + portraitLayoutCss + ' }';
+            '@media print { ' + dynPageRule + ' body.simata-printing-schedule #schedPrintSheet { page: auto !important; } } ' +
+            '@media print and (orientation: portrait) { body.simata-printing-schedule .sched-print-shell { grid-template-columns: 1fr !important; } body.simata-printing-schedule .sched-print-right { break-inside: avoid; } }';
 
         document.body.classList.add('simata-printing-schedule');
         const cleanup = function() {
@@ -31954,7 +31932,6 @@ function collectPrintSettingsFromForm() {
         qr_verify_url: val('prtCfg_qrVerifyUrl', ''),
         show_stamp: chk('prtCfg_showStamp', false),
         default_paper_size: val('prtCfg_paperSize', 'A4') === 'F4' ? 'F4' : 'A4',
-        default_orientation: val('prtCfg_orientation', 'auto') || 'auto',
         margin_mm: marginClamped,
         show_print_timestamp: chk('prtCfg_showTimestamp', true),
         footer_note: val('prtCfg_footerNote', def.footer_note)
@@ -31995,9 +31972,8 @@ function renderPrintSettingsLivePreview() {
         physical: 'TTD Scan Gambar',
         blank: 'TTD Basah Manual'
     };
-    const oriLabels = { auto: 'Otomatis', browser: 'Fleksibel', landscape: 'Lanskap', portrait: 'Potret' };
     if (badgeEl) badgeEl.textContent = modeLabels[cfg.signature_mode] || 'TTD QR Aktif';
-    if (paperBadgeEl) paperBadgeEl.textContent = cfg.default_paper_size + ' (' + (oriLabels[cfg.default_orientation] || 'Otomatis') + ') \u2022 Margin ' + cfg.margin_mm + ' mm \u2022 Logo ' + (cfg.logo_size_px || 64) + ' px';
+    if (paperBadgeEl) paperBadgeEl.textContent = cfg.default_paper_size + ' \u2022 Margin ' + cfg.margin_mm + ' mm \u2022 Logo ' + (cfg.logo_size_px || 64) + ' px';
 
     const thumbEl = document.getElementById('prtCfg_logoThumb');
     if (thumbEl) {
@@ -32058,7 +32034,6 @@ function applyPrintSettingsToForm(cfg) {
     setVal('prtCfg_qrVerifyUrl', c.qr_verify_url);
     setChk('prtCfg_showStamp', c.show_stamp);
     setVal('prtCfg_paperSize', c.default_paper_size === 'F4' ? 'F4' : 'A4');
-    setVal('prtCfg_orientation', c.default_orientation || 'auto');
     setVal('prtCfg_marginMm', c.margin_mm || 10);
     setChk('prtCfg_showTimestamp', c.show_print_timestamp !== false);
     setVal('prtCfg_footerNote', c.footer_note);

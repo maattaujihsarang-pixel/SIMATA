@@ -102,7 +102,7 @@
     signature_img: '/assets/kts_signature.png',
     stamp_img: '/assets/kts_stamp.png',
     default_paper_size: 'A4',
-    default_orientation: 'auto',
+    default_orientation: 'browser',
     margin_mm: 10,
     show_print_timestamp: true,
     footer_note: 'Dokumen ini dicetak secara resmi melalui SIMATA \u2014 MA At-Taujih Sarang'
@@ -680,29 +680,15 @@
   function getPageCss(orientation, cfgOverride, explicitOverride) {
     const cfg = getMergedSettings(cfgOverride);
     const margin = Number.isFinite(Number(cfg.margin_mm)) ? Number(cfg.margin_mm) : 10;
-    const exp = (explicitOverride === 'landscape' || explicitOverride === 'portrait' || explicitOverride === 'browser')
+    const exp = (explicitOverride === 'landscape' || explicitOverride === 'portrait')
       ? explicitOverride
       : '';
-    const cfgOri = (cfg.default_orientation === 'landscape' || cfg.default_orientation === 'portrait' || cfg.default_orientation === 'browser')
-      ? cfg.default_orientation
-      : 'auto';
-
-    if (exp === 'browser' || (!exp && cfgOri === 'browser')) {
+    if (!exp) {
       return '@page { margin: ' + margin + 'mm; }';
     }
-
-    let ori;
-    if (exp) {
-      ori = exp;
-    } else if (cfgOri === 'landscape' || cfgOri === 'portrait') {
-      ori = cfgOri;
-    } else {
-      ori = orientation === 'landscape' ? 'landscape' : 'portrait';
-    }
-
     const sizeExpr = cfg.default_paper_size === 'F4'
-      ? (ori === 'landscape' ? '330mm 215mm' : '215mm 330mm')
-      : ('A4 ' + ori);
+      ? (exp === 'landscape' ? '330mm 215mm' : '215mm 330mm')
+      : ('A4 ' + exp);
     return '@page { size: ' + sizeExpr + '; margin: ' + margin + 'mm; }';
   }
 
@@ -722,6 +708,8 @@
       if (o.include_principal_sig !== false && (sigMode === 'qr' || sigMode === 'qr_stamp')) {
         qrDataUrl = buildQrSignatureDataUrl(o.title || 'Dokumen Resmi SIMATA', cfg, formatIndoDateNow());
       }
+      const trimmedLogoSrc = (cfg.show_logo !== false && cfg.logo_url) ? getCachedAssetSrc(cfg.logo_url, true) : '';
+      const logoPngDataUrl = (trimmedLogoSrc && trimmedLogoSrc.startsWith('data:image/png;base64,')) ? trimmedLogoSrc : '';
       const payload = {
         filename: o.filename || 'Laporan_SIMATA.xlsx',
         sheet_name: o.sheet_name || o.title || 'Laporan SIMATA',
@@ -735,6 +723,7 @@
         summary_row: o.summary_row || null,
         left_signer: o.left_signer || null,
         include_principal_sig: o.include_principal_sig !== false,
+        logo_png_data_url: logoPngDataUrl,
         qr_png_data_url: qrDataUrl
       };
       const res = await window.simataClient.exportFormattedExcel(payload);

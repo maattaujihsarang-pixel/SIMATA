@@ -1714,9 +1714,9 @@
     subjects.forEach(function () {
       columns.push({ align: 'center', type: 'decimal', width: 7.5 });
     });
-    columns.push({ align: 'center', type: 'decimal', width: 10.5 });
+    columns.push({ align: 'center', type: 'decimal', width: 10.5, bold: true });
     columns.push({ align: 'center', type: 'decimal2', width: 10.5 });
-    if (state.showRanking) columns.push({ align: 'center', type: 'int', width: 10.5 });
+    if (state.showRanking) columns.push({ align: 'center', type: 'int', width: 10.5, bold: true });
 
     const rows = matrix.map(function (r) {
       const rowArr = [r.row_no, r.nis || '', r.name || ''];

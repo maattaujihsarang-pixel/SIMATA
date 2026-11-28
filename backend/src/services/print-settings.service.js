@@ -115,7 +115,7 @@ const DEFAULT_PRINT_SETTINGS = {
   signature_img: '/assets/kts_signature.png',
   stamp_img: '/assets/kts_stamp.png',
   default_paper_size: 'A4',
-  default_orientation: 'auto',
+  default_orientation: 'browser',
   margin_mm: 10,
   show_print_timestamp: true,
   footer_note: 'Dokumen ini dicetak secara resmi melalui SIMATA \u2014 MA At-Taujih Sarang'

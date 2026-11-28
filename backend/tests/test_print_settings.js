@@ -97,7 +97,7 @@ async function runPrintSettingsTests() {
   assert.ok(html.includes('id="prtCfgLivePreview"') && html.includes('focusgroup="tablist nomemory"') && html.includes('id="printLayoutStudioDialog"'), 'dashboard.html missing redesigned print tabs or dedicated KTS-style layout studio dialog');
   assert.ok(html.includes('openPrintLayoutStudio') && html.includes('nudgePrintStudioElement') && html.includes("showToast('loading'") && html.includes('savePrintSettingsFromForm'), 'dashboard.html missing studio controls or SIMATA loading toast hook');
   assert.ok(!html.includes('Butuh Atur Ukuran Logo') && !html.includes('prt-studio-callout'), 'Redundant studio callout box must be removed from dashboard.html');
-  assert.ok(html.includes('id="schedPrintOrientation"') && html.includes('id="prtCfg_orientation"'), 'dashboard.html must provide flexible print orientation selectors for Schedule and Print Settings');
+  assert.ok(!html.includes('id="schedPrintOrientation"') && !html.includes('id="prtCfg_orientation"'), 'Orientation dropdowns must not be rendered so browser Print Dialog handles Portrait/Landscape');
   assert.ok(html.includes('Export Excel (.xlsx)') && html.includes('exportFormattedExcel') && gradesJs.includes('exportFormattedExcel') && clientJs.includes('exportFormattedExcel'), 'All SIMATA menus must route Excel exports to formatted .xlsx');
   assert.ok(html.includes("'cetak'") && html.includes('loadPrintSettingsForm()'), 'switchSettingsCategory must handle cetak tab');
 
@@ -151,11 +151,10 @@ async function runPrintSettingsTests() {
   assert.ok(schoolMatch[1].includes('font-weight:800'), `Expected compact school font-weight:800, got: ${schoolMatch[1]}`);
   assert.ok(compactDefaultHtml.includes('NSM: 131233170020'), 'Default Kop must include NSM: 131233170020');
 
-  assert.ok(sandbox.SimataPrint.getPageCss('landscape').includes('A4 landscape'), 'Auto orientation must preserve landscape when requested');
-  assert.ok(sandbox.SimataPrint.getPageCss('portrait').includes('A4 portrait'), 'Auto orientation must preserve portrait when requested');
-  assert.strictEqual(sandbox.SimataPrint.getPageCss('landscape', { default_orientation: 'browser', margin_mm: 8 }), '@page { margin: 8mm; }', 'Browser orientation mode must omit forced portrait/landscape size lock');
-  assert.ok(sandbox.SimataPrint.getPageCss('portrait', { default_orientation: 'browser' }, 'landscape').includes('A4 landscape'), 'Explicit orientation override must take precedence');
-  console.log('1b. PASS: Runtime SimataPrint.renderKopHtml & getPageCss flexible orientation verified.');
+  assert.strictEqual(sandbox.SimataPrint.getPageCss('landscape'), '@page { margin: 10mm; }', 'Default getPageCss must leave orientation unlocked so Chrome Print Dialog shows Landscape/Portrait picker');
+  assert.strictEqual(sandbox.SimataPrint.getPageCss('portrait', { margin_mm: 8 }), '@page { margin: 8mm; }', 'Browser orientation mode must omit forced portrait/landscape size lock');
+  assert.ok(sandbox.SimataPrint.getPageCss('portrait', {}, 'landscape').includes('A4 landscape'), 'Explicit orientation override must still work when requested');
+  console.log('1b. PASS: Runtime SimataPrint.renderKopHtml & browser-flexible getPageCss verified.');
 
   // 2. Backend API, RBAC, Validation & DB Persistence Tests
   await testDbEngine.reset();
@@ -197,7 +196,7 @@ async function runPrintSettingsTests() {
     assert.strictEqual(guruGet.body.data.logo_size_px, 64);
     assert.strictEqual(guruGet.body.data.kop_elements.school.font_weight, 800);
     assert.strictEqual(guruGet.body.data.kop_elements.divider.thickness_px, 3);
-    assert.strictEqual(guruGet.body.data.default_orientation, 'auto');
+    assert.strictEqual(guruGet.body.data.default_orientation, 'browser');
     assert.ok(guruGet.body.data.school_contact.includes('NSM: 131233170020'), 'Default backend school_contact must include NSM: 131233170020');
 
     // 2c. RBAC: GURU PUT denied
@@ -338,6 +337,11 @@ async function runPrintSettingsTests() {
     assert.ok(zipEntries['xl/media/image2.png'], 'Missing embedded QR TTE PNG');
 
     const sheetXml = zipEntries['xl/worksheets/sheet1.xml'].toString('utf8');
+    const drawingXml = zipEntries['xl/drawings/drawing1.xml'].toString('utf8');
+    const stylesXml = zipEntries['xl/styles.xml'].toString('utf8');
+    assert.ok(drawingXml.includes('http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing'), 'drawing1.xml must use official SpreadsheetDrawing namespace so Excel renders Logo & QR');
+    assert.ok(!drawingXml.includes('spreadsheetml/2006/drawing'), 'drawing1.xml must not use invalid spreadsheetml drawing namespace');
+    assert.ok(!stylesXml.includes('#,##0.##'), 'styles.xml must use General format instead of #,##0.## to avoid trailing comma on integers in ID locale');
     const tagPositions = [
       sheetXml.indexOf('<sheetPr>'),
       sheetXml.indexOf('<dimension '),
@@ -348,12 +352,14 @@ async function runPrintSettingsTests() {
       sheetXml.indexOf('<mergeCells '),
       sheetXml.indexOf('<pageMargins '),
       sheetXml.indexOf('<pageSetup '),
+      sheetXml.indexOf('<ignoredErrors>'),
       sheetXml.indexOf('<drawing ')
     ];
     for (let i = 0; i < tagPositions.length; i++) {
       assert.ok(tagPositions[i] > 0, `Missing OOXML element at index ${i}`);
       if (i > 0) assert.ok(tagPositions[i] > tagPositions[i - 1], `Invalid OOXML tag order at index ${i}`);
     }
+    assert.ok(sheetXml.includes('showGridLines="0"'), 'XLSX worksheet should hide background gridlines for crisp print-template look');
     assert.ok(sheetXml.includes('MADRASAH ALIYAH AT-TAUJIH'), 'XLSX must include official Kop header');
     assert.ok(sheetXml.includes('NSM: 131233170020'), 'XLSX Kop must include NSM: 131233170020');
     assert.ok(sheetXml.includes('NILAI RATA-RATA SATU KELAS / MAPEL'), 'XLSX must include Leger summary row');

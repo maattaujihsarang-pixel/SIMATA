@@ -78,7 +78,8 @@ router.post('/export-xlsx', async (req, res, next) => {
         ? cfg.default_orientation
         : reqOrientation;
 
-    const logoPngBuffer = resolveLogoPngBuffer(cfg);
+    const trimmedClientLogo = cfg.show_logo !== false ? decodePngDataUrl(body.logo_png_data_url, 450 * 1024) : null;
+    const logoPngBuffer = trimmedClientLogo || resolveLogoPngBuffer(cfg);
     const sigMode = cfg.signature_mode || 'qr';
     const qrPngBuffer = (sigMode === 'qr' || sigMode === 'qr_stamp')
       ? decodePngDataUrl(body.qr_png_data_url, 400 * 1024)

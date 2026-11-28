@@ -614,20 +614,24 @@ function buildFormattedReportXlsxBuffer(opts = {}) {
   // Build style table dynamically: static base styles (0..9) + data matrix (10..33) + summary (34..37) + sig/footer (38..41)
   const dataTypes = ['text', 'int', 'decimal', 'decimal2'];
   const dataAligns = ['left', 'center', 'right'];
-  const numFmtByType = { text: 49, int: 3, decimal: 164, decimal2: 2 };
+  const numFmtByType = { text: 49, int: 3, decimal: 0, decimal2: 2 };
   const dataStyleLookup = {};
   const dataXfs = [];
   let nextStyleId = 10;
 
-  for (const zebra of [0, 1]) {
-    const fillId = zebra ? 3 : 0;
-    for (const tp of dataTypes) {
-      const nf = numFmtByType[tp];
-      for (const al of dataAligns) {
-        dataStyleLookup[`${zebra}|${tp}|${al}`] = nextStyleId++;
-        dataXfs.push(
-          `<xf numFmtId="${nf}" fontId="0" fillId="${fillId}" borderId="3" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyNumberFormat="1" applyAlignment="1"><alignment horizontal="${al}" vertical="center" wrapText="1"/></xf>`
-        );
+  for (const isBold of [0, 1]) {
+    const fId = isBold ? 11 : 0;
+    for (const zebra of [0, 1]) {
+      const fillId = zebra ? 3 : 0;
+      for (const tp of dataTypes) {
+        const nf = numFmtByType[tp];
+        for (const al of dataAligns) {
+          dataStyleLookup[`${isBold}|${zebra}|${tp}|${al}`] = nextStyleId++;
+          const indentAttr = al === 'left' ? ' indent="1"' : '';
+          dataXfs.push(
+            `<xf numFmtId="${nf}" fontId="${fId}" fillId="${fillId}" borderId="3" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyNumberFormat="1" applyAlignment="1"><alignment horizontal="${al}" vertical="center" wrapText="1"${indentAttr}/></xf>`
+          );
+        }
       }
     }
   }
@@ -655,22 +659,22 @@ function buildFormattedReportXlsxBuffer(opts = {}) {
 
   const stylesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-  <numFmts count="2">
+  <numFmts count="1">
     <numFmt numFmtId="49" formatCode="@"/>
-    <numFmt numFmtId="164" formatCode="#,##0.##"/>
   </numFmts>
-  <fonts count="11">
+  <fonts count="12">
     <font><sz val="10"/><color rgb="FF0F172A"/><name val="Calibri"/></font>
+    <font><b/><sz val="11"/><color rgb="FF334155"/><name val="Calibri"/></font>
+    <font><b/><sz val="16"/><color rgb="FF0F172A"/><name val="Calibri"/></font>
+    <font><sz val="9.5"/><color rgb="FF334155"/><name val="Calibri"/></font>
     <font><b/><sz val="9.5"/><color rgb="FF334155"/><name val="Calibri"/></font>
-    <font><b/><sz val="14"/><color rgb="FF0F172A"/><name val="Calibri"/></font>
-    <font><sz val="8.5"/><color rgb="FF334155"/><name val="Calibri"/></font>
-    <font><b/><sz val="8.5"/><color rgb="FF334155"/><name val="Calibri"/></font>
-    <font><b/><sz val="11.5"/><color rgb="FF0F172A"/><name val="Calibri"/></font>
-    <font><b/><sz val="9.5"/><color rgb="FF334155"/><name val="Calibri"/></font>
+    <font><b/><sz val="13"/><color rgb="FF0F172A"/><name val="Calibri"/></font>
+    <font><b/><sz val="10"/><color rgb="FF334155"/><name val="Calibri"/></font>
     <font><b/><sz val="10"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font>
-    <font><b/><sz val="9.5"/><color rgb="FF065F46"/><name val="Calibri"/></font>
+    <font><b/><sz val="10"/><color rgb="FF065F46"/><name val="Calibri"/></font>
     <font><b/><u/><sz val="10"/><color rgb="FF0F172A"/><name val="Calibri"/></font>
     <font><i/><sz val="8"/><color rgb="FF64748B"/><name val="Calibri"/></font>
+    <font><b/><sz val="10"/><color rgb="FF0F172A"/><name val="Calibri"/></font>
   </fonts>
   <fills count="5">
     <fill><patternFill patternType="none"/></fill>
@@ -683,7 +687,7 @@ function buildFormattedReportXlsxBuffer(opts = {}) {
     <border><left/><right/><top/><bottom/><diagonal/></border>
     <border><left/><right/><top/><bottom style="double"><color rgb="FF0F172A"/></bottom><diagonal/></border>
     <border><left style="thin"><color rgb="FF0F172A"/></left><right style="thin"><color rgb="FF0F172A"/></right><top style="thin"><color rgb="FF0F172A"/></top><bottom style="thin"><color rgb="FF0F172A"/></bottom><diagonal/></border>
-    <border><left style="thin"><color rgb="FF94A3B8"/></left><right style="thin"><color rgb="FF94A3B8"/></right><top style="thin"><color rgb="FF94A3B8"/></top><bottom style="thin"><color rgb="FF94A3B8"/></bottom><diagonal/></border>
+    <border><left style="thin"><color rgb="FFCBD5E1"/></left><right style="thin"><color rgb="FFCBD5E1"/></right><top style="thin"><color rgb="FFCBD5E1"/></top><bottom style="thin"><color rgb="FFCBD5E1"/></bottom><diagonal/></border>
     <border><left style="thin"><color rgb="FF94A3B8"/></left><right style="thin"><color rgb="FF94A3B8"/></right><top style="medium"><color rgb="FF166534"/></top><bottom style="medium"><color rgb="FF166534"/></bottom><diagonal/></border>
   </borders>
   <cellStyleXfs count="1">
@@ -701,7 +705,7 @@ function buildFormattedReportXlsxBuffer(opts = {}) {
     <xf numFmtId="0" fontId="6" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="right" vertical="center"/></xf>
     <xf numFmtId="49" fontId="7" fillId="2" borderId="2" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyNumberFormat="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
     ${dataXfs.join('\n    ')}
-    <xf numFmtId="49" fontId="8" fillId="4" borderId="4" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyNumberFormat="1" applyAlignment="1"><alignment horizontal="left" vertical="center"/></xf>
+    <xf numFmtId="49" fontId="8" fillId="4" borderId="4" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyNumberFormat="1" applyAlignment="1"><alignment horizontal="left" vertical="center" indent="1"/></xf>
     <xf numFmtId="2" fontId="8" fillId="4" borderId="4" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyNumberFormat="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
     <xf numFmtId="3" fontId="8" fillId="4" borderId="4" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyNumberFormat="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
     <xf numFmtId="49" fontId="8" fillId="4" borderId="4" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyNumberFormat="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
@@ -741,26 +745,28 @@ function buildFormattedReportXlsxBuffer(opts = {}) {
     rNum++;
   };
 
-  // Official 4-line MA At-Taujih Kop Surat (total ~69pt height to accommodate 68px logo cleanly)
-  pushMergedRow(kopFound, S.KOP_FOUND, 16, false);
-  pushMergedRow(kopSchool, S.KOP_SCHOOL, 22, false);
-  pushMergedRow(kopAddr, S.KOP_ADDR, 15, false);
-  pushMergedRow(kopContact, S.KOP_CONTACT, 16, true);
+  // Official 4-line MA At-Taujih Kop Surat (~82pt height to frame logo cleanly)
+  pushMergedRow(kopFound, S.KOP_FOUND, 19, false);
+  pushMergedRow(kopSchool, S.KOP_SCHOOL, 26, false);
+  pushMergedRow(kopAddr, S.KOP_ADDR, 17, false);
+  pushMergedRow(kopContact, S.KOP_CONTACT, 20, true);
 
-  // Spacer
-  rowXmlList.push(`<row r="${rNum}" ht="6" customHeight="1"/>`);
+  // Spacer after Kop divider
+  rowXmlList.push(`<row r="${rNum}" ht="10" customHeight="1"/>`);
   rNum++;
 
   // Title & Subtitle
   if (opts.title) {
-    pushMergedRow(String(opts.title).toUpperCase(), S.TITLE, 20, false);
+    pushMergedRow(String(opts.title).toUpperCase(), S.TITLE, 23, false);
   }
   if (opts.subtitle) {
-    pushMergedRow(String(opts.subtitle), S.SUBTITLE, 16, false);
+    pushMergedRow(String(opts.subtitle), S.SUBTITLE, 18, false);
   }
 
   // Optional Meta rows (e.g. Kelas | Wali Kelas)
   if (Array.isArray(opts.metaRows) && opts.metaRows.length > 0) {
+    rowXmlList.push(`<row r="${rNum}" ht="6" customHeight="1"/>`);
+    rNum++;
     const splitIdx = Math.max(1, Math.floor(colCount / 2));
     const rightStart = splitIdx;
     for (const pair of opts.metaRows) {
@@ -776,14 +782,14 @@ function buildFormattedReportXlsxBuffer(opts = {}) {
         if (rightStart < colCount - 1) merges.push(`${colIndexToLetter(rightStart)}${rNum}:${lastColLetter}${rNum}`);
       }
       if (cells.length > 0) {
-        rowXmlList.push(`<row r="${rNum}" ht="17" customHeight="1">${cells.join('')}</row>`);
+        rowXmlList.push(`<row r="${rNum}" ht="19" customHeight="1">${cells.join('')}</row>`);
         rNum++;
       }
     }
   }
 
-  // Small gap before table
-  rowXmlList.push(`<row r="${rNum}" ht="6" customHeight="1"/>`);
+  // Gap before table
+  rowXmlList.push(`<row r="${rNum}" ht="7" customHeight="1"/>`);
   rNum++;
 
   // Table header
@@ -791,7 +797,7 @@ function buildFormattedReportXlsxBuffer(opts = {}) {
   for (let c = 0; c < headers.length; c++) {
     thCells.push(textCell(c, rNum, headers[c], S.TH));
   }
-  rowXmlList.push(`<row r="${rNum}" ht="26" customHeight="1">${thCells.join('')}</row>`);
+  rowXmlList.push(`<row r="${rNum}" ht="28" customHeight="1">${thCells.join('')}</row>`);
   rNum++;
 
   // Table data rows
@@ -804,14 +810,15 @@ function buildFormattedReportXlsxBuffer(opts = {}) {
       const parsed = parseAutoCellValue(rowArr[c], spec, headers[c]);
       const defaultAlign = parsed.kind === 'text' ? 'left' : 'center';
       const align = (spec.align === 'left' || spec.align === 'center' || spec.align === 'right') ? spec.align : defaultAlign;
-      const sId = dataStyleLookup[`${zebra}|${parsed.kind}|${align}`] || dataStyleLookup[`${zebra}|text|left`];
+      const isBold = spec.bold ? 1 : 0;
+      const sId = dataStyleLookup[`${isBold}|${zebra}|${parsed.kind}|${align}`] || dataStyleLookup[`0|${zebra}|text|left`];
       if (parsed.kind === 'text') {
         cells.push(textCell(c, rNum, parsed.value, sId));
       } else {
         cells.push(numCell(c, rNum, parsed.value, sId));
       }
     }
-    rowXmlList.push(`<row r="${rNum}" ht="20" customHeight="1">${cells.join('')}</row>`);
+    rowXmlList.push(`<row r="${rNum}" ht="21" customHeight="1">${cells.join('')}</row>`);
     rNum++;
   }
 
@@ -838,7 +845,7 @@ function buildFormattedReportXlsxBuffer(opts = {}) {
         cells.push(numCell(c, rNum, parsed.value, S.SUM_DEC));
       }
     }
-    rowXmlList.push(`<row r="${rNum}" ht="21" customHeight="1">${cells.join('')}</row>`);
+    rowXmlList.push(`<row r="${rNum}" ht="24" customHeight="1">${cells.join('')}</row>`);
     rNum++;
   }
 
@@ -869,7 +876,7 @@ function buildFormattedReportXlsxBuffer(opts = {}) {
       if (sigSpanCols > 1) merges.push(`${sigStartLetter}${rTop}:${lastColLetter}${rTop}`);
     }
     if (topCells.length > 0) {
-      rowXmlList.push(`<row r="${rTop}" ht="16" customHeight="1">${topCells.join('')}</row>`);
+      rowXmlList.push(`<row r="${rTop}" ht="18" customHeight="1">${topCells.join('')}</row>`);
     }
 
     const rRole = rTop + 1;
@@ -883,13 +890,13 @@ function buildFormattedReportXlsxBuffer(opts = {}) {
       if (sigSpanCols > 1) merges.push(`${sigStartLetter}${rRole}:${lastColLetter}${rRole}`);
     }
     if (roleCells.length > 0) {
-      rowXmlList.push(`<row r="${rRole}" ht="16" customHeight="1">${roleCells.join('')}</row>`);
+      rowXmlList.push(`<row r="${rRole}" ht="18" customHeight="1">${roleCells.join('')}</row>`);
     }
 
-    // 4 blank signature rows (~76pt) holding QR TTE graphic or manual space
+    // 4 blank signature rows (~84pt) holding QR TTE graphic or manual space
     qrAnchorRowZeroBased = rRole; // 0-based index of the first blank row after rRole (since rRole is 1-based)
     for (let k = 1; k <= 4; k++) {
-      rowXmlList.push(`<row r="${rRole + k}" ht="19" customHeight="1"/>`);
+      rowXmlList.push(`<row r="${rRole + k}" ht="21" customHeight="1"/>`);
     }
 
     const rName = rRole + 5;
@@ -903,13 +910,13 @@ function buildFormattedReportXlsxBuffer(opts = {}) {
       if (sigSpanCols > 1) merges.push(`${sigStartLetter}${rName}:${lastColLetter}${rName}`);
     }
     if (nameCells.length > 0) {
-      rowXmlList.push(`<row r="${rName}" ht="17" customHeight="1">${nameCells.join('')}</row>`);
+      rowXmlList.push(`<row r="${rName}" ht="19" customHeight="1">${nameCells.join('')}</row>`);
     }
 
     rNum = rName + 1;
     if (opts.includePrincipalSig !== false && printCfg.principal_nip) {
       rowXmlList.push(
-        `<row r="${rNum}" ht="15" customHeight="1">${textCell(sigStartIdx, rNum, String(printCfg.principal_nip), S.SIG_TEXT)}</row>`
+        `<row r="${rNum}" ht="16" customHeight="1">${textCell(sigStartIdx, rNum, String(printCfg.principal_nip), S.SIG_TEXT)}</row>`
       );
       if (sigSpanCols > 1) merges.push(`${sigStartLetter}${rNum}:${lastColLetter}${rNum}`);
       rNum++;
@@ -934,7 +941,7 @@ function buildFormattedReportXlsxBuffer(opts = {}) {
       footCells.push(textCell(splitIdx, rNum, footerRight, S.FOOTER_RIGHT));
       if (splitIdx < colCount - 1) merges.push(`${colIndexToLetter(splitIdx)}${rNum}:${lastColLetter}${rNum}`);
     }
-    rowXmlList.push(`<row r="${rNum}" ht="15" customHeight="1">${footCells.join('')}</row>`);
+    rowXmlList.push(`<row r="${rNum}" ht="16" customHeight="1">${footCells.join('')}</row>`);
     rNum++;
   }
 
@@ -942,19 +949,21 @@ function buildFormattedReportXlsxBuffer(opts = {}) {
   const mergeXml = merges.length > 0
     ? `<mergeCells count="${merges.length}">${merges.map(m => `<mergeCell ref="${m}"/>`).join('')}</mergeCells>`
     : '';
+  const ignoredErrXml = `<ignoredErrors><ignoredError sqref="A1:${lastColLetter}${lastRowNum}" numberStoredAsText="1"/></ignoredErrors>`;
   const drawingRefXml = hasImages ? '<drawing r:id="rId1"/>' : '';
 
   const sheetXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
   <sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>
   <dimension ref="A1:${lastColLetter}${lastRowNum}"/>
-  <sheetViews><sheetView workbookViewId="0"/></sheetViews>
+  <sheetViews><sheetView workbookViewId="0" showGridLines="0"/></sheetViews>
   <sheetFormatPr defaultRowHeight="18"/>
   <cols>${colsXml}</cols>
   <sheetData>${rowXmlList.join('')}</sheetData>
   ${mergeXml}
   <pageMargins left="0.35" right="0.35" top="0.4" bottom="0.4" header="0.2" footer="0.2"/>
   <pageSetup paperSize="${paperCode}" orientation="${orientation}" fitToWidth="1" fitToHeight="0"/>
+  ${ignoredErrXml}
   ${drawingRefXml}
 </worksheet>`;
 
@@ -1003,7 +1012,7 @@ function buildFormattedReportXlsxBuffer(opts = {}) {
 
     if (hasLogo) {
       const rId = `rId${picId}`;
-      const cx = 647700; // 68px
+      const cx = 762000; // 80px logo cleanly framed in left Kop header
       const cy = Math.round(cx * (logoDims.height / logoDims.width));
       zipEntries.push({ name: `xl/media/image${picId}.png`, data: opts.logoPngBuffer });
       drawingRels.push(
@@ -1011,7 +1020,7 @@ function buildFormattedReportXlsxBuffer(opts = {}) {
       );
       anchors.push(
         `<xdr:oneCellAnchor>` +
-          `<xdr:from><xdr:col>0</xdr:col><xdr:colOff>114300</xdr:colOff><xdr:row>0</xdr:row><xdr:rowOff>57150</xdr:rowOff></xdr:from>` +
+          `<xdr:from><xdr:col>0</xdr:col><xdr:colOff>142875</xdr:colOff><xdr:row>0</xdr:row><xdr:rowOff>66675</xdr:rowOff></xdr:from>` +
           `<xdr:ext cx="${cx}" cy="${cy}"/>` +
           `<xdr:pic>` +
             `<xdr:nvPicPr><xdr:cNvPr id="${picId}" name="Logo Madrasah"/><xdr:cNvPicPr><a:picLocks noChangeAspect="1"/></xdr:cNvPicPr></xdr:nvPicPr>` +
@@ -1026,16 +1035,27 @@ function buildFormattedReportXlsxBuffer(opts = {}) {
 
     if (hasQr && qrAnchorRowZeroBased >= 0) {
       const rId = `rId${picId}`;
-      const qrH = 857250; // 90px tall fits cleanly inside 4 * 19pt (~101px) signature space
+      const qrH = 895350; // 94px tall fits cleanly inside 4 * 21pt (~112px) signature space
       const qrW = Math.round(qrH * (qrDims.width / qrDims.height));
-      const anchorCol = Math.min(colCount - 1, sigStartIdx + Math.floor(sigSpanCols / 2));
+      // Compute horizontal center across sigStartIdx..colCount-1
+      const colWidthsEmu = colWidths.slice(sigStartIdx).map(w => Math.round(w * 7.5 * 9525));
+      const totalSigEmu = colWidthsEmu.reduce((a, b) => a + b, 0);
+      let remEmu = Math.max(0, Math.round((totalSigEmu - qrW) / 2));
+      let anchorCol = sigStartIdx;
+      for (let i = 0; i < colWidthsEmu.length; i++) {
+        if (remEmu < colWidthsEmu[i] || i === colWidthsEmu.length - 1) {
+          anchorCol = sigStartIdx + i;
+          break;
+        }
+        remEmu -= colWidthsEmu[i];
+      }
       zipEntries.push({ name: `xl/media/image${picId}.png`, data: opts.qrPngBuffer });
       drawingRels.push(
         `<Relationship Id="${rId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image${picId}.png"/>`
       );
       anchors.push(
         `<xdr:oneCellAnchor>` +
-          `<xdr:from><xdr:col>${anchorCol}</xdr:col><xdr:colOff>95250</xdr:colOff><xdr:row>${qrAnchorRowZeroBased}</xdr:row><xdr:rowOff>76200</xdr:rowOff></xdr:from>` +
+          `<xdr:from><xdr:col>${anchorCol}</xdr:col><xdr:colOff>${Math.max(0, remEmu)}</xdr:colOff><xdr:row>${qrAnchorRowZeroBased}</xdr:row><xdr:rowOff>76200</xdr:rowOff></xdr:from>` +
           `<xdr:ext cx="${qrW}" cy="${qrH}"/>` +
           `<xdr:pic>` +
             `<xdr:nvPicPr><xdr:cNvPr id="${picId}" name="TTD QR Kepala Madrasah"/><xdr:cNvPicPr><a:picLocks noChangeAspect="1"/></xdr:cNvPicPr></xdr:nvPicPr>` +
@@ -1048,7 +1068,7 @@ function buildFormattedReportXlsxBuffer(opts = {}) {
     }
 
     const drawingXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/spreadsheetml/2006/drawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
   ${anchors.join('\n  ')}
 </xdr:wsDr>`;
 
