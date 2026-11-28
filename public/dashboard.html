@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="/css/style.css?v=bug67pb">
   <link rel="stylesheet" href="/css/notifications.css?v=bug66_notif3">
   <link rel="stylesheet" href="/css/finance.css">
-  <link rel="stylesheet" href="/css/grades.css?v=bug74o">
+  <link rel="stylesheet" href="/css/grades.css?v=bug74p">
   <style>
 /**
  * SIMATA — Mobile Responsive Stylesheet
@@ -827,9 +827,10 @@ html, body {
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
   <!-- QRCode.js: QR Code generator library for Student QR Preview & Print -->
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-  <script src="/js/simata-client.js?v=bug74c"></script>
+  <script src="/js/simata-client.js?v=bug74p"></script>
+  <script src="/js/print-helper.js?v=bug74p"></script>
   <script src="/js/notifications.js?v=bug65_2"></script>
-  <script src="/js/grades-module.js?v=bug74o"></script></script></script></script></script></script></script></script>
+  <script src="/js/grades-module.js?v=bug74p"></script>
 </head>
 
 
@@ -6311,6 +6312,17 @@ html, body {
                   <small>Scheduler &amp; batas waktu</small>
                 </span>
               </button>
+
+              <!-- Tab 6: Pengaturan Cetak & Kop Surat (Admin Only) -->
+              <button id="settingsTab_cetak" class="settings-nav-item" type="button" onclick="switchSettingsCategory('cetak')" style="display:none;">
+                <span class="settings-nav-icon">
+                  <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                </span>
+                <span class="settings-nav-text">
+                  <strong>Pengaturan Cetak</strong>
+                  <small>Kop, logo &amp; TTD QR</small>
+                </span>
+              </button>
             </nav>
 
             <!-- Settings Content Panels -->
@@ -6683,6 +6695,204 @@ html, body {
                       <button type="button" id="aa_saveBtn" class="login-button" onclick="saveTeacherAutoAlpaSettings()" style="margin:0;width:auto;padding:10px 22px;">
                         Simpan Pengaturan Auto-Alpa
                       </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- PANEL F: PENGATURAN CETAK & KOP SURAT (Admin Only) -->
+              <div id="settingsPanel_cetak" class="settings-panel" style="display:none;">
+                <div class="settings-panel-card">
+                  <div class="settings-panel-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:18px;">
+                    <div style="min-width:0;flex:1 1 260px;">
+                      <h3 style="font-size:16px;font-weight:700;color:#0f172a;margin:0 0 4px 0;">Pengaturan Cetak &amp; Kop Surat Resmi</h3>
+                      <p style="font-size:13px;color:#64748b;margin:0;">Atur logo madrasah, kop surat, model tanda tangan Kepala Madrasah (QR TTE / basah), ukuran kertas, dan margin untuk seluruh cetakan di SIMATA.</p>
+                    </div>
+                    <span id="prtCfg_statusBadge" class="simata-badge simata-badge-success" style="font-size:12px;flex-shrink:0;">TTD QR Aktif</span>
+                  </div>
+
+                  <style>
+                    .prt-cfg-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+                    .prt-cfg-field { display:flex; flex-direction:column; gap:5px; }
+                    .prt-cfg-field label { font-size:12px; font-weight:700; color:#334155; }
+                    .prt-cfg-field input, .prt-cfg-field select { padding:9px 11px; border:1px solid #cbd5e1; border-radius:9px; font-size:13px; color:#0f172a; background:#fff; width:100%; box-sizing:border-box; }
+                    .prt-cfg-field input:focus, .prt-cfg-field select:focus { outline:none; border-color:#166534; box-shadow:0 0 0 3px rgba(22,101,52,0.1); }
+                    .prt-sig-mode-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+                    .prt-sig-mode-btn { display:flex; flex-direction:column; align-items:flex-start; gap:2px; padding:10px 12px; border:1.5px solid #e2e8f0; border-radius:10px; background:#fff; cursor:pointer; text-align:left; transition:all 0.15s ease; }
+                    .prt-sig-mode-btn:hover { border-color:#86efac; background:#f0fdf4; }
+                    .prt-sig-mode-btn.is-active { border-color:#166534; background:#f0fdf4; box-shadow:0 0 0 2px rgba(22,101,52,0.12); }
+                    .prt-sig-mode-btn strong { font-size:12.5px; color:#0f172a; }
+                    .prt-sig-mode-btn small { font-size:11px; color:#64748b; line-height:1.3; }
+                    .prt-preview-sheet { background:#fff; border:1px solid #cbd5e1; border-radius:10px; padding:16px 18px; box-shadow:0 2px 6px rgba(15,23,42,0.05); color:#0f172a; }
+                    @media (max-width: 720px) {
+                      .prt-cfg-grid, .prt-sig-mode-grid { grid-template-columns:1fr; }
+                    }
+                  </style>
+
+                  <div style="display:flex;flex-direction:column;gap:16px;">
+                    <!-- 1. Logo & Kop Surat -->
+                    <div style="padding:14px 16px;border-radius:12px;border:1px solid #e2e8f0;background:#f8fafc;display:flex;flex-direction:column;gap:12px;">
+                      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+                        <div>
+                          <strong style="font-size:13.5px;color:#0f172a;display:block;">1. Header / Kop Surat &amp; Logo Madrasah</strong>
+                          <small style="font-size:11.5px;color:#64748b;">Tampil seragam di seluruh cetakan PDF/Print SIMATA.</small>
+                        </div>
+                        <label style="display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;color:#166534;cursor:pointer;">
+                          <input type="checkbox" id="prtCfg_showLogo" checked onchange="renderPrintSettingsLivePreview()" style="width:16px;height:16px;accent-color:#166534;" />
+                          Tampilkan Logo di Header
+                        </label>
+                      </div>
+
+                      <div style="display:flex;align-items:center;flex-wrap:wrap;gap:14px;padding:10px 12px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;">
+                        <img id="prtCfg_logoThumb" src="/assets/logo.png" alt="Logo Madrasah" style="width:52px;height:52px;object-fit:contain;border-radius:8px;border:1px solid #e2e8f0;padding:4px;background:#fff;" />
+                        <input type="hidden" id="prtCfg_logoUrl" value="/assets/logo.png" />
+                        <div style="flex:1 1 220px;min-width:0;">
+                          <div style="font-size:12.5px;font-weight:700;color:#0f172a;">Logo Kop Madrasah</div>
+                          <div style="font-size:11.5px;color:#64748b;">Default: <code>/assets/logo.png</code> (MA At-Taujih). Bisa ganti gambar PNG/JPG bila perlu.</div>
+                        </div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                          <label for="prtCfg_logoFile" class="button-outline" style="margin:0;padding:7px 12px;font-size:12px;font-weight:600;border-radius:8px;cursor:pointer;border:1px solid #cbd5e1;background:#fff;color:#0f172a;">Ganti Logo</label>
+                          <input type="file" id="prtCfg_logoFile" accept="image/png,image/jpeg,image/webp,image/svg+xml" style="display:none;" onchange="onPrintLogoFileSelected(event)" />
+                          <button type="button" onclick="resetPrintLogoToDefault()" style="padding:7px 12px;font-size:12px;font-weight:600;border-radius:8px;border:1px solid #e2e8f0;background:#f8fafc;color:#475569;cursor:pointer;">Reset Asli</button>
+                        </div>
+                      </div>
+
+                      <div class="prt-cfg-grid">
+                        <div class="prt-cfg-field">
+                          <label for="prtCfg_foundationName">Nama Yayasan (Baris Atas Kop)</label>
+                          <input type="text" id="prtCfg_foundationName" placeholder="YAYASAN MUWAJJIHUL ULUM ASY-SYARIYYAH" oninput="renderPrintSettingsLivePreview()" />
+                        </div>
+                        <div class="prt-cfg-field">
+                          <label for="prtCfg_schoolName">Nama Madrasah / Satuan Pendidikan</label>
+                          <input type="text" id="prtCfg_schoolName" placeholder="MADRASAH ALIYAH AT-TAUJIH SARANG" oninput="renderPrintSettingsLivePreview()" />
+                        </div>
+                        <div class="prt-cfg-field">
+                          <label for="prtCfg_schoolAddress">Alamat Lengkap Madrasah</label>
+                          <input type="text" id="prtCfg_schoolAddress" placeholder="Dk. Pulorejo, Desa Bajingjowo..." oninput="renderPrintSettingsLivePreview()" />
+                        </div>
+                        <div class="prt-cfg-field">
+                          <label for="prtCfg_schoolContact">NPSN / Kontak / Email</label>
+                          <input type="text" id="prtCfg_schoolContact" placeholder="NPSN: 70033117 • Email: maattaujihsarang@gmail.com" oninput="renderPrintSettingsLivePreview()" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- 2. Tanda Tangan Kepala Madrasah & QR TTE -->
+                    <div style="padding:14px 16px;border-radius:12px;border:1px solid #e2e8f0;background:#f8fafc;display:flex;flex-direction:column;gap:12px;">
+                      <div>
+                        <strong style="font-size:13.5px;color:#0f172a;display:block;">2. Tanda Tangan Kepala Madrasah (QR TTE / Manual)</strong>
+                        <small style="font-size:11.5px;color:#64748b;">Pilih cara menampilkan tanda tangan pejabat di kolom pengesahan pada semua cetakan.</small>
+                      </div>
+
+                      <input type="hidden" id="prtCfg_signatureMode" value="qr" />
+                      <div class="prt-sig-mode-grid">
+                        <button type="button" class="prt-sig-mode-btn is-active" data-mode="qr" onclick="setPrintSignatureMode('qr')">
+                          <strong>TTD QR (Elektronik / TTE)</strong>
+                          <small>QR terverifikasi dengan logo MA At-Taujih &amp; label TTE UU ITE.</small>
+                        </button>
+                        <button type="button" class="prt-sig-mode-btn" data-mode="qr_stamp" onclick="setPrintSignatureMode('qr_stamp')">
+                          <strong>TTD QR + Stempel Madrasah</strong>
+                          <small>Gabungan kode QR elektronik dan cap stempel madrasah.</small>
+                        </button>
+                        <button type="button" class="prt-sig-mode-btn" data-mode="physical" onclick="setPrintSignatureMode('physical')">
+                          <strong>TTD Gambar Scan</strong>
+                          <small>Gunakan scan tanda tangan gambar (PNG transparan).</small>
+                        </button>
+                        <button type="button" class="prt-sig-mode-btn" data-mode="blank" onclick="setPrintSignatureMode('blank')">
+                          <strong>Ruang Kosong (TTD Basah)</strong>
+                          <small>Kosongkan area untuk ditandatangani manual dengan pena.</small>
+                        </button>
+                      </div>
+
+                      <div id="prtCfg_qrOptionsWrap" class="prt-cfg-grid">
+                        <div class="prt-cfg-field">
+                          <label for="prtCfg_qrStyle">Model Tampilan QR</label>
+                          <select id="prtCfg_qrStyle" onchange="renderPrintSettingsLivePreview()">
+                            <option value="tte_compact">QR + Bingkai &amp; Label TTE UU ITE</option>
+                            <option value="qr_only_crest">QR + Logo Tengah Saja</option>
+                          </select>
+                        </div>
+                        <div class="prt-cfg-field">
+                          <label for="prtCfg_qrVerifyUrl">Tautan Verifikasi QR (Opsional)</label>
+                          <input type="text" id="prtCfg_qrVerifyUrl" placeholder="Kosongkan untuk metadata otomatis TTE + Nama + Dokumen" oninput="renderPrintSettingsLivePreview()" />
+                        </div>
+                      </div>
+
+                      <div id="prtCfg_physicalOptionsWrap" style="display:none;">
+                        <label style="display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:#0f172a;cursor:pointer;">
+                          <input type="checkbox" id="prtCfg_showStamp" onchange="renderPrintSettingsLivePreview()" style="width:16px;height:16px;accent-color:#166534;" />
+                          Sertakan overlay gambar stempel madrasah pada TTD gambar
+                        </label>
+                      </div>
+
+                      <div class="prt-cfg-grid">
+                        <div class="prt-cfg-field">
+                          <label for="prtCfg_principalTitle">Jabatan Penandatangan</label>
+                          <input type="text" id="prtCfg_principalTitle" placeholder="Kepala Madrasah" oninput="renderPrintSettingsLivePreview()" />
+                        </div>
+                        <div class="prt-cfg-field">
+                          <label for="prtCfg_principalName">Nama Lengkap &amp; Gelar</label>
+                          <input type="text" id="prtCfg_principalName" placeholder="Moch. Iqnaul Badril Falah, S.Ag" oninput="renderPrintSettingsLivePreview()" />
+                        </div>
+                        <div class="prt-cfg-field">
+                          <label for="prtCfg_principalNip">NIP / NIY / NUPTK (Opsional)</label>
+                          <input type="text" id="prtCfg_principalNip" placeholder="Kosongkan jika tidak dicetak" oninput="renderPrintSettingsLivePreview()" />
+                        </div>
+                        <div class="prt-cfg-field">
+                          <label for="prtCfg_signCity">Kota / Tempat Cetak</label>
+                          <input type="text" id="prtCfg_signCity" placeholder="Sarang" oninput="renderPrintSettingsLivePreview()" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- 3. Kertas, Margin & Footer -->
+                    <div style="padding:14px 16px;border-radius:12px;border:1px solid #e2e8f0;background:#f8fafc;display:flex;flex-direction:column;gap:12px;">
+                      <div>
+                        <strong style="font-size:13.5px;color:#0f172a;display:block;">3. Ukuran Kertas, Margin &amp; Catatan Kaki</strong>
+                        <small style="font-size:11.5px;color:#64748b;">Diterapkan otomatis saat mencetak dari browser (Ctrl+P / Tombol Cetak).</small>
+                      </div>
+                      <div class="prt-cfg-grid">
+                        <div class="prt-cfg-field">
+                          <label for="prtCfg_paperSize">Ukuran Kertas Default</label>
+                          <select id="prtCfg_paperSize" onchange="renderPrintSettingsLivePreview()">
+                            <option value="A4">A4 Standar (210 × 297 mm)</option>
+                            <option value="F4">F4 / Folio Madrasah (215 × 330 mm)</option>
+                          </select>
+                        </div>
+                        <div class="prt-cfg-field">
+                          <label for="prtCfg_marginMm">Margin Kertas (mm)</label>
+                          <input type="number" id="prtCfg_marginMm" min="6" max="20" step="1" value="10" oninput="renderPrintSettingsLivePreview()" />
+                        </div>
+                      </div>
+                      <div class="prt-cfg-field">
+                        <label for="prtCfg_footerNote">Catatan Kaki Dokumen (Footer Cetak)</label>
+                        <input type="text" id="prtCfg_footerNote" placeholder="Dokumen ini dicetak secara resmi melalui SIMATA — MA At-Taujih Sarang" oninput="renderPrintSettingsLivePreview()" />
+                      </div>
+                      <label style="display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:#0f172a;cursor:pointer;">
+                        <input type="checkbox" id="prtCfg_showTimestamp" checked onchange="renderPrintSettingsLivePreview()" style="width:16px;height:16px;accent-color:#166534;" />
+                        Sertakan tanggal &amp; waktu cetak di baris bawah dokumen
+                      </label>
+                    </div>
+
+                    <!-- 4. Pratinjau Langsung -->
+                    <div style="padding:14px 16px;border-radius:12px;border:1px solid #bbf7d0;background:#f0fdf4;display:flex;flex-direction:column;gap:10px;">
+                      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                        <strong style="font-size:13px;color:#166534;">Pratinjau Kop Surat &amp; TTD Kepala Madrasah (Real-time)</strong>
+                        <span id="prtCfg_paperSummaryBadge" class="simata-badge simata-badge-info" style="font-size:11px;">A4 • Margin 10 mm</span>
+                      </div>
+                      <div id="prtCfgLivePreview" class="prt-preview-sheet"></div>
+                    </div>
+
+                    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding-top:6px;border-top:1px solid #f1f5f9;">
+                      <span id="prtCfg_feedback" style="font-size:12.5px;font-weight:600;color:#166534;"></span>
+                      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                        <button type="button" onclick="testPrintSettingsPreview()" style="padding:10px 16px;border-radius:10px;border:1px solid #cbd5e1;background:#fff;color:#0f172a;font-weight:700;font-size:13px;cursor:pointer;">
+                          Uji Cetak Contoh
+                        </button>
+                        <button type="button" id="prtCfg_saveBtn" class="login-button" onclick="savePrintSettingsFromForm()" style="margin:0;width:auto;padding:10px 22px;">
+                          Simpan Pengaturan Cetak
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -9045,12 +9255,26 @@ function printMasterStudentReport() {
         return '<tr>' + tds + '</tr>';
     }).join('');
 
+    const prt = window.SimataPrint;
+    const printPageCss = (prt && typeof prt.getPageCss === 'function')
+        ? prt.getPageCss(pageOrientation)
+        : '@page { size: ' + pageOrientation + '; margin: 12mm 15mm; }';
+    const sharedPrintCss = (prt && typeof prt.getSharedPrintCss === 'function') ? prt.getSharedPrintCss() : '';
+    const kopHeaderHtml = (prt && typeof prt.renderKopHtml === 'function')
+        ? prt.renderKopHtml({ title: 'DAFTAR MASTER DATA SISWA' })
+        : '<div class="report-header"><div class="report-school">SIMATA — MA AT-TAUJIH</div><div class="report-title">DAFTAR MASTER DATA SISWA</div></div>';
+    const principalSigHtml = (prt && typeof prt.renderPrincipalSigHtml === 'function')
+        ? prt.renderPrincipalSigHtml({ docTitle: 'Daftar Master Data Siswa - ' + className, showMengetahui: true })
+        : '<div class="sig-block"><div>Mengetahui,</div><div>Kepala Madrasah</div><div class="sig-space"></div><div class="sig-name">( ........................................ )</div><div>NIP. ....................................</div></div>';
+    const printFooterHtml = (prt && typeof prt.renderPrintFooterHtml === 'function') ? prt.renderPrintFooterHtml() : '';
+
     const printHtml = '<!DOCTYPE html>' +
         '<html><head><meta charset="utf-8">' +
         '<title>Cetak Data Siswa - ' + escapeHtml(className) + '</title>' +
         '<style>' +
-        '@page { size: ' + pageOrientation + '; margin: 12mm 15mm; }' +
+        printPageCss +
         'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; margin: 0; padding: 0; color: #0f172a; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }' +
+        sharedPrintCss +
         '.print-container { width: 100%; }' +
         '.report-header { text-align: center; margin-bottom: 14px; border-bottom: 2px solid #0f172a; padding-bottom: 6px; }' +
         '.report-school { font-size: 15pt; font-weight: 800; color: #0f172a; margin: 0 0 2px 0; letter-spacing: 0.5px; }' +
@@ -9063,17 +9287,14 @@ function printMasterStudentReport() {
         '.report-table th { background-color: #f1f5f9 !important; font-weight: 700; color: #0f172a; font-size: 9pt; text-align: center; }' +
         '.report-table td.col-name { text-align: left; padding-left: 8px; font-weight: 600; color: #0f172a; }' +
         '.report-table td.col-nis { font-family: monospace; font-size: 9pt; color: #334155; text-align: center; }' +
-        '.report-signatures { display: flex; justify-content: space-between; margin-top: 24px; font-size: 10pt; break-inside: avoid; page-break-inside: avoid; }' +
+        '.report-signatures { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 24px; font-size: 10pt; break-inside: avoid; page-break-inside: avoid; }' +
         '.sig-block { text-align: center; width: 220px; }' +
         '.sig-space { height: 55px; }' +
         '.sig-name { font-weight: 700; text-decoration: underline; }' +
         '@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }' +
         '</style></head><body>' +
         '<div class="print-container">' +
-          '<div class="report-header">' +
-            '<div class="report-school">SIMATA — MA AT-TAUJIH</div>' +
-            '<div class="report-title">DAFTAR MASTER DATA SISWA</div>' +
-          '</div>' +
+          kopHeaderHtml +
           '<div class="report-meta-bar">' +
             '<div><strong>Kelas:</strong> ' + escapeHtml(className) + ' | <strong>Status:</strong> ' + escapeHtml(statusLabel) + '</div>' +
             '<div><strong>Total:</strong> ' + sorted.length + ' Siswa | <strong>Tanggal Cetak:</strong> ' + escapeHtml(today) + '</div>' +
@@ -9087,13 +9308,7 @@ function printMasterStudentReport() {
             '</tbody>' +
           '</table>' +
           '<div class="report-signatures">' +
-            '<div class="sig-block">' +
-              '<div>Mengetahui,</div>' +
-              '<div>Kepala Madrasah</div>' +
-              '<div class="sig-space"></div>' +
-              '<div class="sig-name">( ........................................ )</div>' +
-              '<div>NIP. ....................................</div>' +
-            '</div>' +
+            principalSigHtml +
             '<div class="sig-block">' +
               '<div>Waka Kesiswaan</div>' +
               '<div>MA At-Taujih</div>' +
@@ -9102,6 +9317,7 @@ function printMasterStudentReport() {
               '<div>NIP. ....................................</div>' +
             '</div>' +
           '</div>' +
+          printFooterHtml +
         '</div>' +
         '<script>' +
         'window.onload = function() { window.print(); setTimeout(function() { window.close(); }, 500); };' +
@@ -11149,12 +11365,26 @@ function printMasterTeacherReport() {
         return '<tr>' + tds + '</tr>';
     }).join('');
 
+    const prt = window.SimataPrint;
+    const printPageCss = (prt && typeof prt.getPageCss === 'function')
+        ? prt.getPageCss(pageOrientation)
+        : '@page { size: ' + pageOrientation + '; margin: 12mm 15mm; }';
+    const sharedPrintCss = (prt && typeof prt.getSharedPrintCss === 'function') ? prt.getSharedPrintCss() : '';
+    const kopHeaderHtml = (prt && typeof prt.renderKopHtml === 'function')
+        ? prt.renderKopHtml({ title: 'DAFTAR MASTER DATA GURU & TENAGA PENDIDIK' })
+        : '<div class="report-header"><div class="report-school">SIMATA — MA AT-TAUJIH</div><div class="report-title">DAFTAR MASTER DATA GURU & TENAGA PENDIDIK</div></div>';
+    const principalSigHtml = (prt && typeof prt.renderPrincipalSigHtml === 'function')
+        ? prt.renderPrincipalSigHtml({ docTitle: 'Daftar Master Data Guru & Tenaga Pendidik', showMengetahui: true })
+        : '<div class="sig-block"><div>Mengetahui,</div><div>Kepala Madrasah</div><div class="sig-space"></div><div class="sig-name">( ........................................ )</div><div>NIP. ....................................</div></div>';
+    const printFooterHtml = (prt && typeof prt.renderPrintFooterHtml === 'function') ? prt.renderPrintFooterHtml() : '';
+
     const printHtml = '<!DOCTYPE html>' +
         '<html><head><meta charset="utf-8">' +
         '<title>Cetak Data Guru - SIMATA</title>' +
         '<style>' +
-        '@page { size: ' + pageOrientation + '; margin: 12mm 15mm; }' +
+        printPageCss +
         'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; margin: 0; padding: 0; color: #0f172a; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }' +
+        sharedPrintCss +
         '.print-container { width: 100%; }' +
         '.report-header { text-align: center; margin-bottom: 14px; border-bottom: 2px solid #0f172a; padding-bottom: 6px; }' +
         '.report-school { font-size: 15pt; font-weight: 800; color: #0f172a; margin: 0 0 2px 0; letter-spacing: 0.5px; }' +
@@ -11167,17 +11397,14 @@ function printMasterTeacherReport() {
         '.report-table th { background-color: #f1f5f9 !important; font-weight: 700; color: #0f172a; font-size: 9pt; text-align: center; }' +
         '.report-table td.col-name { text-align: left; padding-left: 8px; font-weight: 600; color: #0f172a; }' +
         '.report-table td.col-nik { font-family: monospace; font-size: 9pt; color: #334155; text-align: center; }' +
-        '.report-signatures { display: flex; justify-content: space-between; margin-top: 24px; font-size: 10pt; break-inside: avoid; page-break-inside: avoid; }' +
+        '.report-signatures { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 24px; font-size: 10pt; break-inside: avoid; page-break-inside: avoid; }' +
         '.sig-block { text-align: center; width: 220px; }' +
         '.sig-space { height: 55px; }' +
         '.sig-name { font-weight: 700; text-decoration: underline; }' +
         '@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }' +
         '</style></head><body>' +
         '<div class="print-container">' +
-          '<div class="report-header">' +
-            '<div class="report-school">SIMATA — MA AT-TAUJIH</div>' +
-            '<div class="report-title">DAFTAR MASTER DATA GURU & TENAGA PENDIDIK</div>' +
-          '</div>' +
+          kopHeaderHtml +
           '<div class="report-meta-bar">' +
             '<div><strong>Jabatan:</strong> ' + escapeHtml(posLabel) + ' | <strong>Mapel:</strong> ' + escapeHtml(subjLabel) + ' | <strong>Status:</strong> ' + escapeHtml(statusLabel) + '</div>' +
             '<div><strong>Total:</strong> ' + sorted.length + ' Guru | <strong>Tanggal Cetak:</strong> ' + escapeHtml(today) + '</div>' +
@@ -11191,13 +11418,7 @@ function printMasterTeacherReport() {
             '</tbody>' +
           '</table>' +
           '<div class="report-signatures">' +
-            '<div class="sig-block">' +
-              '<div>Mengetahui,</div>' +
-              '<div>Kepala Madrasah</div>' +
-              '<div class="sig-space"></div>' +
-              '<div class="sig-name">( ........................................ )</div>' +
-              '<div>NIP. ....................................</div>' +
-            '</div>' +
+            principalSigHtml +
             '<div class="sig-block">' +
               '<div>Waka Kurikulum</div>' +
               '<div>MA At-Taujih</div>' +
@@ -11206,6 +11427,7 @@ function printMasterTeacherReport() {
               '<div>NIP. ....................................</div>' +
             '</div>' +
           '</div>' +
+          printFooterHtml +
         '</div>' +
         '<script>' +
         'window.onload = function() { window.print(); setTimeout(function() { window.close(); }, 500); };' +
@@ -13890,21 +14112,39 @@ function showReportsView() {
         const bolosHeadCol = isDaysMode ? '<th class="num">Bolos (JP)</th>' : '';
         const alpaRiskHead = isDaysMode ? 'Alpa / Bolos' : 'Alpa (JP)';
 
+        const prt = window.SimataPrint;
+        const pageCss = (prt && typeof prt.getPageCss === 'function') ? prt.getPageCss('portrait') : '@page { size: A4 portrait; margin: 12mm; }';
+        const sharedCss = (prt && typeof prt.getSharedPrintCss === 'function') ? prt.getSharedPrintCss() : '';
+        const subtitleTxt = (meta.academic_year_name || '') + ' \u2022 Periode: ' + fmtIsoDateID(meta.start_date) + ' s.d. ' + fmtIsoDateID(meta.end_date) + ' \u2022 Satuan: ' + unitDesc;
+        const kopHtml = (prt && typeof prt.renderKopHtml === 'function')
+            ? prt.renderKopHtml({ title: 'RINGKASAN EKSEKUTIF LAPORAN AKADEMIK', subtitle: subtitleTxt })
+            : '<div class="kop"><div><h1>MA AT-TAUJIH SARANG &mdash; RINGKASAN LAPORAN AKADEMIK</h1><p>' + esc(subtitleTxt) + '</p></div></div>';
+        const sigHtml = (prt && typeof prt.renderPrincipalSigHtml === 'function')
+            ? prt.renderPrincipalSigHtml({ docTitle: 'Ringkasan Eksekutif Laporan Akademik', showCityDate: true })
+            : '';
+        const footHtml = (prt && typeof prt.renderPrintFooterHtml === 'function')
+            ? prt.renderPrintFooterHtml()
+            : '<div class="foot"><span>Dicetak dari SIMATA &bull; Penilaian akademik mengacu pada RDM Kemenag</span><span>Tanggal cetak: ' + esc(new Date().toLocaleString('id-ID')) + '</span></div>';
+
         const html = '<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Ringkasan Eksekutif Laporan Akademik - SIMATA</title>' +
             '<style>' +
-            'body{font-family:Arial,sans-serif;color:#0f172a;margin:28px;font-size:12.5px;line-height:1.45;}' +
+            pageCss +
+            'body{font-family:Arial,sans-serif;color:#0f172a;margin:16px 20px;font-size:12px;line-height:1.45;-webkit-print-color-adjust:exact;print-color-adjust:exact;}' +
+            sharedCss +
             '.kop{border-bottom:2.5px solid #14532d;padding-bottom:10px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:flex-end;}' +
             '.kop h1{margin:0;font-size:18px;color:#14532d;} .kop p{margin:3px 0 0;color:#475569;font-size:12px;}' +
-            '.kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px;}' +
+            '.kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}' +
             '.kpi-box{border:1px solid #cbd5e1;border-radius:8px;padding:10px;background:#f8fafc;}' +
             '.kpi-box small{color:#475569;display:block;font-size:11px;} .kpi-box strong{font-size:18px;color:#0f172a;display:block;margin-top:4px;}' +
-            'h2{font-size:14px;color:#14532d;margin:18px 0 8px;}' +
-            'table{width:100%;border-collapse:collapse;margin-bottom:16px;}' +
+            'h2{font-size:14px;color:#14532d;margin:16px 0 8px;}' +
+            'table{width:100%;border-collapse:collapse;margin-bottom:14px;}' +
             'th,td{border:1px solid #cbd5e1;padding:6px 8px;text-align:left;} th{background:#f1f5f9;font-weight:700;} .num{text-align:right;}' +
+            '.sig-row{display:flex;justify-content:flex-end;margin-top:18px;}' +
             '.foot{margin-top:20px;font-size:11px;color:#64748b;display:flex;justify-content:space-between;}' +
             '@media print{.no-print{display:none;}}' +
             '</style></head><body>' +
-            '<div class="kop"><div><h1>MA AT-TAUJIH SARANG &mdash; RINGKASAN LAPORAN AKADEMIK</h1><p>' + esc(meta.academic_year_name || '') + ' &bull; Periode: ' + esc(fmtIsoDateID(meta.start_date)) + ' s.d. ' + esc(fmtIsoDateID(meta.end_date)) + ' &bull; Satuan: ' + esc(unitDesc) + '</p></div><button class="no-print" onclick="window.print()" style="padding:7px 14px;background:#14532d;color:#fff;border:none;border-radius:6px;cursor:pointer;">Cetak</button></div>' +
+            '<div class="no-print" style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button onclick="window.print()" style="padding:7px 14px;background:#14532d;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:700;">Cetak Dokumen</button></div>' +
+            kopHtml +
             '<div class="kpi">' +
                 '<div class="kpi-box"><small>Kehadiran Siswa</small><strong>' + esc(fmtPct(stuRate)) + '</strong></div>' +
                 '<div class="kpi-box"><small>Keterlaksanaan Mengajar</small><strong>' + esc(fmtPct(ov.teacher_execution_rate)) + '</strong></div>' +
@@ -13915,7 +14155,8 @@ function showReportsView() {
             '<table><thead><tr><th>Kelas</th><th>Wali Kelas</th><th class="num">Siswa</th><th class="num">Hadir (' + unitLabel + ')</th><th class="num">Izin (' + unitLabel + ')</th><th class="num">Sakit (' + unitLabel + ')</th><th class="num">Alpa (' + unitLabel + ')</th>' + bolosHeadCol + '<th class="num">Persentase</th></tr></thead><tbody>' + classRows + '</tbody></table>' +
             '<h2>2. Daftar Prioritas Disiplin Siswa (Maks. 15)</h2>' +
             '<table><thead><tr><th>Nama Siswa</th><th>Kelas</th><th class="num">' + alpaRiskHead + '</th><th class="num">Kehadiran</th><th>Status</th></tr></thead><tbody>' + highRiskRows + '</tbody></table>' +
-            '<div class="foot"><span>Dicetak dari SIMATA &bull; Penilaian akademik mengacu pada RDM Kemenag</span><span>Tanggal cetak: ' + esc(new Date().toLocaleString('id-ID')) + '</span></div>' +
+            (sigHtml ? '<div class="sig-row">' + sigHtml + '</div>' : '') +
+            footHtml +
             '<script>setTimeout(function(){ window.print(); }, 250);<' + '/script></body></html>';
 
         win.document.open();
@@ -15363,6 +15604,8 @@ function showSchedulesView(opts) {
             }).join('');
         }).join('');
 
+        const prt = window.SimataPrint;
+        if (prt && typeof prt.ensureInlinePrintStyles === 'function') prt.ensureInlinePrintStyles();
         const kepalaTeacher = allTeachers.find(function(t) {
             return /kepala/i.test(String(t.position || ''));
         });
@@ -15371,12 +15614,41 @@ function showSchedulesView(opts) {
         const breakPeriod = periods.find(function(p) { return p.is_break; });
         const breakStr = breakPeriod ? (breakPeriod.start_time + '–' + breakPeriod.end_time + ' WIB') : '09:40–10:10 WIB';
 
-        container.innerHTML =
-            '<div class="sched-print-head">' +
+        const schedKopHtml = (prt && typeof prt.renderKopHtml === 'function')
+            ? prt.renderKopHtml({
+                title: 'JADWAL PELAJARAN SEMESTER ' + semTitle,
+                subtitle: 'TAHUN PELAJARAN ' + yearTitle,
+                compact: true
+              })
+            : '<div class="sched-print-head">' +
                 '<h2>JADWAL PELAJARAN SEMESTER ' + esc(semTitle) + '</h2>' +
                 '<div class="sp-madrasah">MA. AT-TAUJIH SARANG</div>' +
                 '<div class="sp-year">TAHUN PELAJARAN ' + esc(yearTitle) + '</div>' +
-            '</div>' +
+              '</div>';
+        const prtCfgKepala = (prt && prt.getSettings && prt.getSettings().principal_name)
+            ? {}
+            : { principal_name: kepalaName };
+        const schedSigHtml = (prt && typeof prt.renderPrincipalSigHtml === 'function')
+            ? '<div class="sched-print-sign">' +
+                prt.renderPrincipalSigHtml({
+                    docTitle: 'Jadwal Pelajaran Semester ' + semTitle + ' TP ' + yearTitle,
+                    showCityDate: true,
+                    dateText: todayId,
+                    compact: true,
+                    cfg: prtCfgKepala
+                }) +
+              '</div>'
+            : '<div class="sched-print-sign">' +
+                '<div class="sched-print-sign-box">' +
+                    '<div>Sarang, ' + esc(todayId) + '</div>' +
+                    '<div>Kepala MA. At-Taujih</div>' +
+                    '<div class="sched-print-sign-space"></div>' +
+                    '<div style="font-weight:700;text-decoration:underline;">' + esc(kepalaName) + '</div>' +
+                '</div>' +
+              '</div>';
+
+        container.innerHTML =
+            schedKopHtml +
             '<div class="sched-print-shell">' +
                 '<div class="sched-print-left">' + pairBlocksHtml + '</div>' +
                 '<div class="sched-print-right">' +
@@ -15392,14 +15664,7 @@ function showSchedulesView(opts) {
                         '<strong>Keterangan:</strong> <strong>PB</strong>: Pembelajaran Bahasa (Pembina Bahasa) &bull; ' +
                         '<strong>UPACARA</strong>: Upacara Bendera &bull; <strong>Istirahat</strong>: ' + esc(breakStr) +
                     '</div>' +
-                    '<div class="sched-print-sign">' +
-                        '<div class="sched-print-sign-box">' +
-                            '<div>Sarang, ' + esc(todayId) + '</div>' +
-                            '<div>Kepala MA. At-Taujih</div>' +
-                            '<div class="sched-print-sign-space"></div>' +
-                            '<div style="font-weight:700;text-decoration:underline;">' + esc(kepalaName) + '</div>' +
-                        '</div>' +
-                    '</div>' +
+                    schedSigHtml +
                 '</div>' +
             '</div>';
 
@@ -17954,12 +18219,24 @@ function generateStudentAttendancePrintHtml(matrixData, meta) {
         ? '<div style="font-size:8.5pt;color:#312e81;background:#eef2ff;border:1px solid #c7d2fe;padding:5px 8px;border-radius:4px;margin-bottom:12px;"><strong>Keterangan Non-KBM:</strong> PB = Pembelajaran Bahasa (dikelola Pengurus Bahasa secara terpisah, otomatis terpenuhi), UP = Upacara Bendera.</div>'
         : '';
 
+    const prt = window.SimataPrint;
+    const printPageCss = (prt && typeof prt.getPageCss === 'function') ? prt.getPageCss('landscape') : '@page { size: A4 landscape; margin: 12mm 15mm; }';
+    const sharedPrintCss = (prt && typeof prt.getSharedPrintCss === 'function') ? prt.getSharedPrintCss() : '';
+    const kopHtml = (prt && typeof prt.renderKopHtml === 'function')
+        ? prt.renderKopHtml({ title: titleText })
+        : '<div class="report-header"><div class="report-school">SIMATA — MA AT-TAUJIH</div><div class="report-title">' + escapeHtml(titleText) + '</div></div>';
+    const principalSigHtml = (prt && typeof prt.renderPrincipalSigHtml === 'function')
+        ? prt.renderPrincipalSigHtml({ docTitle: titleText + ' - ' + className + ' (' + formattedDate + ')', showMengetahui: true })
+        : '<div class="sig-block"><div>Mengetahui,</div><div>Kepala Madrasah</div><div class="sig-space"></div><div class="sig-name">( ........................................ )</div><div>NIP. ....................................</div></div>';
+    const footHtml = (prt && typeof prt.renderPrintFooterHtml === 'function') ? prt.renderPrintFooterHtml() : '';
+
     return '<!DOCTYPE html>' +
         '<html><head><meta charset="utf-8">' +
         '<title>Cetak Presensi Siswa - ' + escapeHtml(className) + '</title>' +
         '<style>' +
-        '@page { size: A4 landscape; margin: 12mm 15mm; }' +
+        printPageCss +
         'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; margin: 0; padding: 0; color: #0f172a; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }' +
+        sharedPrintCss +
         '.print-container { width: 100%; }' +
         '.print-page { break-after: page; page-break-after: always; }' +
         '.print-page:last-child { break-after: auto; page-break-after: auto; }' +
@@ -17979,7 +18256,7 @@ function generateStudentAttendancePrintHtml(matrixData, meta) {
         '.report-table td.col-status-izin { font-weight: 700; color: #1d4ed8; }' +
         '.report-table td.col-status-alpa { font-weight: 700; color: #b91c1c; }' +
         '.report-table td.col-status-nonkbm { font-weight: 800; font-size: 8.5pt; color: #3730a3; background-color: #eef2ff !important; }' +
-        '.report-signatures { display: flex; justify-content: space-between; margin-top: 24px; font-size: 10pt; break-inside: avoid; page-break-inside: avoid; }' +
+        '.report-signatures { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 24px; font-size: 10pt; break-inside: avoid; page-break-inside: avoid; }' +
         '.sig-block { text-align: center; width: 220px; }' +
         '.sig-space { height: 55px; }' +
         '.sig-name { font-weight: 700; text-decoration: underline; }' +
@@ -17987,10 +18264,7 @@ function generateStudentAttendancePrintHtml(matrixData, meta) {
         '</style></head><body>' +
         '<div class="print-container">' +
           '<div class="print-page">' +
-            '<div class="report-header">' +
-              '<div class="report-school">SIMATA — MA AT-TAUJIH</div>' +
-              '<div class="report-title">' + escapeHtml(titleText) + '</div>' +
-            '</div>' +
+            kopHtml +
             '<div class="report-meta-bar">' +
               '<div><strong>Kelas:</strong> ' + escapeHtml(className) + '</div>' +
               '<div><strong>Tanggal:</strong> ' + escapeHtml(formattedDate) + '</div>' +
@@ -18012,13 +18286,7 @@ function generateStudentAttendancePrintHtml(matrixData, meta) {
             '</table>' +
             nonKbmLegendHtml +
             '<div class="report-signatures">' +
-              '<div class="sig-block">' +
-                '<div>Mengetahui,</div>' +
-                '<div>Kepala Madrasah</div>' +
-                '<div class="sig-space"></div>' +
-                '<div class="sig-name">( ........................................ )</div>' +
-                '<div>NIP. ....................................</div>' +
-              '</div>' +
+              principalSigHtml +
               '<div class="sig-block">' +
                 '<div>Piket / Guru Kelas</div>' +
                 '<div class="sig-space"></div>' +
@@ -18026,6 +18294,7 @@ function generateStudentAttendancePrintHtml(matrixData, meta) {
                 '<div>NIP. ....................................</div>' +
               '</div>' +
             '</div>' +
+            footHtml +
           '</div>' +
         '</div>' +
         '<script>' +
@@ -19576,12 +19845,24 @@ function generateTeacherAttendancePrintHtml(attendances, meta) {
 
     const classMetaHtml = (meta && meta.className) ? '<div><strong>Kelas:</strong> ' + escapeHtml(meta.className) + '</div>' : '';
 
+    const prt = window.SimataPrint;
+    const printPageCss = (prt && typeof prt.getPageCss === 'function') ? prt.getPageCss('portrait') : '@page { size: A4 portrait; margin: 15mm 12mm; }';
+    const sharedPrintCss = (prt && typeof prt.getSharedPrintCss === 'function') ? prt.getSharedPrintCss() : '';
+    const kopHtml = (prt && typeof prt.renderKopHtml === 'function')
+        ? prt.renderKopHtml({ title: titleText })
+        : '<div class="report-header"><div class="report-school">SIMATA — MA AT-TAUJIH</div><div class="report-title">' + escapeHtml(titleText) + '</div></div>';
+    const principalSigHtml = (prt && typeof prt.renderPrincipalSigHtml === 'function')
+        ? prt.renderPrincipalSigHtml({ docTitle: titleText + ' (' + formattedDate + ')', showMengetahui: true })
+        : '<div class="sig-block"><div>Mengetahui,</div><div>Kepala Madrasah</div><div class="sig-space"></div><div class="sig-name">( ........................................ )</div><div>NIP. ....................................</div></div>';
+    const footHtml = (prt && typeof prt.renderPrintFooterHtml === 'function') ? prt.renderPrintFooterHtml() : '';
+
     return '<!DOCTYPE html>' +
         '<html><head><meta charset="utf-8">' +
         '<title>Cetak Presensi Guru - ' + escapeHtml(teacherFilterLabel) + '</title>' +
         '<style>' +
-        '@page { size: A4 portrait; margin: 15mm 12mm; }' +
+        printPageCss +
         'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; margin: 0; padding: 0; color: #0f172a; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }' +
+        sharedPrintCss +
         '.print-container { width: 100%; }' +
         '.print-page { break-after: page; page-break-after: always; }' +
         '.print-page:last-child { break-after: auto; page-break-after: auto; }' +
@@ -19597,7 +19878,7 @@ function generateTeacherAttendancePrintHtml(attendances, meta) {
         '.report-table td.col-subject { font-weight: 600; color: #0f172a; }' +
         '.report-table td.col-materi { color: #334155; }' +
         '.report-table td.col-teacher { font-weight: 600; color: #0f172a; }' +
-        '.report-signatures { display: flex; justify-content: space-between; margin-top: 24px; font-size: 10pt; break-inside: avoid; page-break-inside: avoid; }' +
+        '.report-signatures { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 24px; font-size: 10pt; break-inside: avoid; page-break-inside: avoid; }' +
         '.sig-block { text-align: center; width: 220px; }' +
         '.sig-space { height: 55px; }' +
         '.sig-name { font-weight: 700; text-decoration: underline; }' +
@@ -19605,10 +19886,7 @@ function generateTeacherAttendancePrintHtml(attendances, meta) {
         '</style></head><body>' +
         '<div class="print-container">' +
           '<div class="print-page">' +
-            '<div class="report-header">' +
-              '<div class="report-school">SIMATA — MA AT-TAUJIH</div>' +
-              '<div class="report-title">' + escapeHtml(titleText) + '</div>' +
-            '</div>' +
+            kopHtml +
             '<div class="report-meta-bar">' +
               '<div><strong>Tanggal:</strong> ' + escapeHtml(formattedDate) + '</div>' +
               classMetaHtml +
@@ -19630,13 +19908,7 @@ function generateTeacherAttendancePrintHtml(attendances, meta) {
               '</tbody>' +
             '</table>' +
             '<div class="report-signatures">' +
-              '<div class="sig-block">' +
-                '<div>Mengetahui,</div>' +
-                '<div>Kepala Madrasah</div>' +
-                '<div class="sig-space"></div>' +
-                '<div class="sig-name">( ........................................ )</div>' +
-                '<div>NIP. ....................................</div>' +
-              '</div>' +
+              principalSigHtml +
               '<div class="sig-block">' +
                 '<div>Piket / Waka Kurikulum</div>' +
                 '<div class="sig-space"></div>' +
@@ -19644,6 +19916,7 @@ function generateTeacherAttendancePrintHtml(attendances, meta) {
                 '<div>NIP. ....................................</div>' +
               '</div>' +
             '</div>' +
+            footHtml +
           '</div>' +
         '</div>' +
         '<script>' +
@@ -19722,12 +19995,24 @@ function generateJournalPrintHtml(journals, meta) {
 
     const titleText = 'JURNAL GURU / KELAS';
 
+    const prt = window.SimataPrint;
+    const printPageCss = (prt && typeof prt.getPageCss === 'function') ? prt.getPageCss('portrait') : '@page { size: A4 portrait; margin: 15mm 12mm; }';
+    const sharedPrintCss = (prt && typeof prt.getSharedPrintCss === 'function') ? prt.getSharedPrintCss() : '';
+    const kopHtml = (prt && typeof prt.renderKopHtml === 'function')
+        ? prt.renderKopHtml({ title: titleText })
+        : '<div class="report-header"><div class="report-school">SIMATA — MA AT-TAUJIH</div><div class="report-title">' + escapeHtml(titleText) + '</div></div>';
+    const principalSigHtml = (prt && typeof prt.renderPrincipalSigHtml === 'function')
+        ? prt.renderPrincipalSigHtml({ docTitle: titleText + ' - ' + classFilterLabel + ' (' + formattedDate + ')', showMengetahui: true })
+        : '<div class="sig-block"><div>Mengetahui,</div><div>Kepala Madrasah</div><div class="sig-space"></div><div class="sig-name">( ........................................ )</div><div>NIP. ....................................</div></div>';
+    const footHtml = (prt && typeof prt.renderPrintFooterHtml === 'function') ? prt.renderPrintFooterHtml() : '';
+
     return '<!DOCTYPE html>' +
         '<html><head><meta charset="utf-8">' +
         '<title>Cetak Jurnal - ' + escapeHtml(classFilterLabel) + ' - ' + escapeHtml(teacherFilterLabel) + '</title>' +
         '<style>' +
-        '@page { size: A4 portrait; margin: 15mm 12mm; }' +
+        printPageCss +
         'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; margin: 0; padding: 0; color: #0f172a; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }' +
+        sharedPrintCss +
         '.print-container { width: 100%; }' +
         '.print-page { break-after: page; page-break-after: always; }' +
         '.print-page:last-child { break-after: auto; page-break-after: auto; }' +
@@ -19743,14 +20028,15 @@ function generateJournalPrintHtml(journals, meta) {
         '.report-table td.col-subject { font-weight: 600; color: #0f172a; }' +
         '.report-table td.col-materi { color: #334155; }' +
         '.report-table td.col-teacher { font-weight: 600; color: #0f172a; }' +
+        '.report-signatures { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 24px; font-size: 10pt; break-inside: avoid; page-break-inside: avoid; }' +
+        '.sig-block { text-align: center; width: 220px; }' +
+        '.sig-space { height: 55px; }' +
+        '.sig-name { font-weight: 700; text-decoration: underline; }' +
         '@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }' +
         '</style></head><body>' +
         '<div class="print-container">' +
           '<div class="print-page">' +
-            '<div class="report-header">' +
-              '<div class="report-school">SIMATA — MA AT-TAUJIH</div>' +
-              '<div class="report-title">' + escapeHtml(titleText) + '</div>' +
-            '</div>' +
+            kopHtml +
             '<div class="report-meta-bar">' +
               '<div><strong>Tanggal:</strong> ' + escapeHtml(formattedDate) + '</div>' +
               '<div><strong>Tahun Ajaran:</strong> ' + escapeHtml(academicYear) + '</div>' +
@@ -19771,6 +20057,16 @@ function generateJournalPrintHtml(journals, meta) {
                 rowsHtml +
               '</tbody>' +
             '</table>' +
+            '<div class="report-signatures">' +
+              principalSigHtml +
+              '<div class="sig-block">' +
+                '<div>Piket / Waka Kurikulum</div>' +
+                '<div class="sig-space"></div>' +
+                '<div class="sig-name">( ........................................ )</div>' +
+                '<div>NIP. ....................................</div>' +
+              '</div>' +
+            '</div>' +
+            footHtml +
           '</div>' +
         '</div>' +
         '<script>' +
@@ -21684,10 +21980,22 @@ function buildStandardReportPrintHtml(cfg) {
         metaItemsHtml += '<div><strong>' + escapeHtml(m.label) + ':</strong> ' + escapeHtml(m.value) + '</div>';
     });
 
+    const prt = window.SimataPrint;
+    const printPageCss = (prt && typeof prt.getPageCss === 'function') ? prt.getPageCss('portrait') : '@page { size: A4 portrait; margin: 15mm 12mm; }';
+    const sharedPrintCss = (prt && typeof prt.getSharedPrintCss === 'function') ? prt.getSharedPrintCss() : '';
+    const kopHtml = (prt && typeof prt.renderKopHtml === 'function')
+        ? prt.renderKopHtml({ title: cfg.title })
+        : '<div class="report-header"><div class="report-school">SIMATA — MA AT-TAUJIH</div><div class="report-title">' + escapeHtml(cfg.title) + '</div></div>';
+    const principalSigHtml = (prt && typeof prt.renderPrincipalSigHtml === 'function')
+        ? prt.renderPrincipalSigHtml({ docTitle: cfg.title, showMengetahui: true })
+        : '<div class="sig-block"><div>Mengetahui,</div><div>Kepala Madrasah</div><div class="sig-space"></div><div class="sig-name">( ........................................ )</div><div>NIP. ....................................</div></div>';
+    const footHtml = (prt && typeof prt.renderPrintFooterHtml === 'function') ? prt.renderPrintFooterHtml() : '';
+
     return '<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><title>' + escapeHtml(cfg.title) + '</title><style>' +
-      '@page { size: A4 portrait; margin: 15mm 12mm; }' +
+      printPageCss +
       '* { box-sizing: border-box; margin: 0; padding: 0; }' +
       'body { font-family: "Times New Roman", Times, serif; font-size: 10pt; color: #000; background: #fff; line-height: 1.3; }' +
+      sharedPrintCss +
       '.print-container { width: 100%; max-width: 190mm; margin: 0 auto; }' +
       '.report-header { text-align: center; border-bottom: 2.5px double #000; padding-bottom: 8px; margin-bottom: 12px; }' +
       '.report-school { font-size: 13pt; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }' +
@@ -21698,17 +22006,14 @@ function buildStandardReportPrintHtml(cfg) {
       '.report-table tr { page-break-inside: avoid; page-break-after: auto; }' +
       '.report-table th, .report-table td { border: 1px solid #000; padding: 5px 6px; font-size: 9pt; }' +
       '.report-table th { background: #f2f2f2; text-align: center; font-weight: 700; }' +
-      '.report-signatures { display: flex; justify-content: space-between; margin-top: 24px; font-size: 9.5pt; break-inside: avoid; page-break-inside: avoid; }' +
+      '.report-signatures { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 24px; font-size: 9.5pt; break-inside: avoid; page-break-inside: avoid; }' +
       '.sig-block { text-align: center; width: 220px; }' +
       '.sig-space { height: 50px; }' +
       '.sig-name { font-weight: 700; text-decoration: underline; }' +
       '@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }' +
       '</style></head><body>' +
       '<div class="print-container">' +
-        '<div class="report-header">' +
-          '<div class="report-school">SIMATA — MA AT-TAUJIH</div>' +
-          '<div class="report-title">' + escapeHtml(cfg.title) + '</div>' +
-        '</div>' +
+        kopHtml +
         '<div class="report-meta-bar">' + metaItemsHtml + '</div>' +
         '<table class="report-table">' +
           '<thead>' + cfg.tableHeader + '</thead>' +
@@ -21716,15 +22021,13 @@ function buildStandardReportPrintHtml(cfg) {
         '</table>' +
         (cfg.summaryNote ? '<div style="font-size:9pt;margin-bottom:12px;font-style:italic;">' + escapeHtml(cfg.summaryNote) + '</div>' : '') +
         '<div class="report-signatures">' +
-          '<div class="sig-block">' +
-            '<div>Mengetahui,</div><div>Kepala Madrasah</div><div class="sig-space"></div>' +
-            '<div class="sig-name">( ........................................ )</div><div>NIP. ....................................</div>' +
-          '</div>' +
+          principalSigHtml +
           '<div class="sig-block">' +
             '<div>Piket / Wali Kelas</div><div class="sig-space"></div>' +
             '<div class="sig-name">( ........................................ )</div><div>NIP. ....................................</div>' +
           '</div>' +
         '</div>' +
+        footHtml +
       '</div>' +
       '<script>' +
         'window.onload = function() { window.print(); setTimeout(function() { window.close(); }, 500); };' +
@@ -21734,10 +22037,22 @@ function buildStandardReportPrintHtml(cfg) {
 
 // --- HELPER: BUILD DUAL TABLE PRINT HTML ---
 function buildDualTableReportPrintHtml(cfg) {
+    const prt = window.SimataPrint;
+    const printPageCss = (prt && typeof prt.getPageCss === 'function') ? prt.getPageCss('portrait') : '@page { size: A4 portrait; margin: 15mm 12mm; }';
+    const sharedPrintCss = (prt && typeof prt.getSharedPrintCss === 'function') ? prt.getSharedPrintCss() : '';
+    const kopHtml = (prt && typeof prt.renderKopHtml === 'function')
+        ? prt.renderKopHtml({ title: cfg.title })
+        : '<div class="report-header"><div class="report-school">SIMATA — MA AT-TAUJIH</div><div class="report-title">' + escapeHtml(cfg.title) + '</div></div>';
+    const principalSigHtml = (prt && typeof prt.renderPrincipalSigHtml === 'function')
+        ? prt.renderPrincipalSigHtml({ docTitle: cfg.title + ' (' + cfg.dateLabel + ')', showMengetahui: true })
+        : '<div class="sig-block"><div>Mengetahui,</div><div>Kepala Madrasah</div><div class="sig-space"></div><div class="sig-name">( ........................................ )</div><div>NIP. ....................................</div></div>';
+    const footHtml = (prt && typeof prt.renderPrintFooterHtml === 'function') ? prt.renderPrintFooterHtml() : '';
+
     return '<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><title>' + escapeHtml(cfg.title) + '</title><style>' +
-      '@page { size: A4 portrait; margin: 15mm 12mm; }' +
+      printPageCss +
       '* { box-sizing: border-box; margin: 0; padding: 0; }' +
       'body { font-family: "Times New Roman", Times, serif; font-size: 10pt; color: #000; background: #fff; line-height: 1.3; }' +
+      sharedPrintCss +
       '.print-container { width: 100%; max-width: 190mm; margin: 0 auto; }' +
       '.report-header { text-align: center; border-bottom: 2.5px double #000; padding-bottom: 8px; margin-bottom: 12px; }' +
       '.report-school { font-size: 13pt; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }' +
@@ -21749,17 +22064,14 @@ function buildDualTableReportPrintHtml(cfg) {
       '.report-table tr { page-break-inside: avoid; page-break-after: auto; }' +
       '.report-table th, .report-table td { border: 1px solid #000; padding: 5px 6px; font-size: 9pt; }' +
       '.report-table th { background: #f2f2f2; text-align: center; font-weight: 700; }' +
-      '.report-signatures { display: flex; justify-content: space-between; margin-top: 24px; font-size: 9.5pt; break-inside: avoid; page-break-inside: avoid; }' +
+      '.report-signatures { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 24px; font-size: 9.5pt; break-inside: avoid; page-break-inside: avoid; }' +
       '.sig-block { text-align: center; width: 220px; }' +
       '.sig-space { height: 50px; }' +
       '.sig-name { font-weight: 700; text-decoration: underline; }' +
       '@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }' +
       '</style></head><body>' +
       '<div class="print-container">' +
-        '<div class="report-header">' +
-          '<div class="report-school">SIMATA — MA AT-TAUJIH</div>' +
-          '<div class="report-title">' + escapeHtml(cfg.title) + '</div>' +
-        '</div>' +
+        kopHtml +
         '<div class="report-meta-bar">' +
           '<div>Periode / Tanggal: ' + escapeHtml(cfg.dateLabel) + '</div>' +
         '</div>' +
@@ -21777,15 +22089,13 @@ function buildDualTableReportPrintHtml(cfg) {
         '</table>' +
 
         '<div class="report-signatures">' +
-          '<div class="sig-block">' +
-            '<div>Mengetahui,</div><div>Kepala Madrasah</div><div class="sig-space"></div>' +
-            '<div class="sig-name">( ........................................ )</div><div>NIP. ....................................</div>' +
-          '</div>' +
+          principalSigHtml +
           '<div class="sig-block">' +
             '<div>Petugas Piket Madrasah</div><div class="sig-space"></div>' +
             '<div class="sig-name">( ........................................ )</div><div>NIP. ....................................</div>' +
           '</div>' +
         '</div>' +
+        footHtml +
       '</div>' +
       '<script>' +
         'window.onload = function() { window.print(); setTimeout(function() { window.close(); }, 500); };' +
@@ -30216,6 +30526,13 @@ function onDashboardLoaded(data) {
     if (keamananTab) {
         keamananTab.style.display = isAdmin ? '' : 'none';
     }
+    const cetakTab = document.getElementById('settingsTab_cetak');
+    if (cetakTab) {
+        cetakTab.style.display = isAdmin ? '' : 'none';
+    }
+    if (window.SimataPrint && typeof window.SimataPrint.loadSettings === 'function') {
+        window.SimataPrint.loadSettings().catch(function(){});
+    }
     const aksesAdminBox = document.getElementById('aksesAdminContainer');
     if (aksesAdminBox) {
         aksesAdminBox.style.display = isAdmin ? '' : 'none';
@@ -30391,16 +30708,19 @@ function showSettingsView(initialCategory) {
     const tabAutoAlpa = document.getElementById('settingsTab_auto_alpa');
     if (tabAutoAlpa) tabAutoAlpa.style.display = isCurrentUserAdmin ? '' : 'none';
 
+    const tabCetak = document.getElementById('settingsTab_cetak');
+    if (tabCetak) tabCetak.style.display = isCurrentUserAdmin ? '' : 'none';
+
     // Default to 'akun' or requested category (guarantees NO BLANK STATE)
     switchSettingsCategory(initialCategory || 'akun');
 }
 
 function switchSettingsCategory(catKey) {
-    const tabs = ['akun', 'akses', 'keamanan', 'bukti_foto', 'auto_alpa'];
+    const tabs = ['akun', 'akses', 'keamanan', 'bukti_foto', 'auto_alpa', 'cetak'];
     let target = (tabs.indexOf(catKey) !== -1) ? catKey : 'akun';
 
     // Role security check: Non-admin cannot access admin-only tabs
-    if (!isCurrentUserAdmin && (target === 'keamanan' || target === 'bukti_foto' || target === 'auto_alpa')) {
+    if (!isCurrentUserAdmin && (target === 'keamanan' || target === 'bukti_foto' || target === 'auto_alpa' || target === 'cetak')) {
         target = 'akun';
     }
 
@@ -30434,6 +30754,11 @@ function switchSettingsCategory(catKey) {
     // Auto-load Auto-Alpa Scheduler settings when Admin switches to 'auto_alpa'
     if (target === 'auto_alpa' && isCurrentUserAdmin) {
         loadTeacherAutoAlpaSettings();
+    }
+
+    // Auto-load Print Settings when Admin switches to 'cetak'
+    if (target === 'cetak' && isCurrentUserAdmin) {
+        loadPrintSettingsForm();
     }
 }
 
@@ -30571,6 +30896,241 @@ function saveTeacherAutoAlpaSettings() {
         }
         alert(msg);
     }).updateTeacherAutoAlpaConfig(payload);
+}
+
+// === PENGATURAN CETAK & KOP SURAT RESMI (FLEXIBLE PRINT SETTINGS) ===
+function collectPrintSettingsFromForm() {
+    const def = (window.SimataPrint && window.SimataPrint.DEFAULTS) || {};
+    const val = function(id, fallback) {
+        const el = document.getElementById(id);
+        return el ? String(el.value || '').trim() : (fallback || '');
+    };
+    const chk = function(id, fallback) {
+        const el = document.getElementById(id);
+        return el ? Boolean(el.checked) : Boolean(fallback);
+    };
+    const marginRaw = Number(val('prtCfg_marginMm', String(def.margin_mm || 10)));
+    const marginClamped = Number.isFinite(marginRaw) ? Math.min(20, Math.max(6, Math.round(marginRaw))) : 10;
+
+    return {
+        show_logo: chk('prtCfg_showLogo', true),
+        logo_url: val('prtCfg_logoUrl', def.logo_url || '/assets/logo.png') || '/assets/logo.png',
+        foundation_name: val('prtCfg_foundationName', def.foundation_name),
+        school_name: val('prtCfg_schoolName', def.school_name) || 'MADRASAH ALIYAH AT-TAUJIH SARANG',
+        school_address: val('prtCfg_schoolAddress', def.school_address),
+        school_contact: val('prtCfg_schoolContact', def.school_contact),
+        principal_title: val('prtCfg_principalTitle', def.principal_title) || 'Kepala Madrasah',
+        principal_name: val('prtCfg_principalName', def.principal_name) || 'Moch. Iqnaul Badril Falah, S.Ag',
+        principal_nip: val('prtCfg_principalNip', ''),
+        sign_city: val('prtCfg_signCity', def.sign_city) || 'Sarang',
+        signature_mode: val('prtCfg_signatureMode', 'qr') || 'qr',
+        qr_style: val('prtCfg_qrStyle', 'tte_compact') || 'tte_compact',
+        qr_verify_url: val('prtCfg_qrVerifyUrl', ''),
+        show_stamp: chk('prtCfg_showStamp', false),
+        default_paper_size: val('prtCfg_paperSize', 'A4') === 'F4' ? 'F4' : 'A4',
+        margin_mm: marginClamped,
+        show_print_timestamp: chk('prtCfg_showTimestamp', true),
+        footer_note: val('prtCfg_footerNote', def.footer_note)
+    };
+}
+
+function setPrintSignatureMode(mode) {
+    const valid = ['qr', 'qr_stamp', 'physical', 'blank'];
+    const targetMode = valid.indexOf(mode) !== -1 ? mode : 'qr';
+    const hiddenEl = document.getElementById('prtCfg_signatureMode');
+    if (hiddenEl) hiddenEl.value = targetMode;
+
+    document.querySelectorAll('#settingsPanel_cetak .prt-sig-mode-btn').forEach(function(btn) {
+        btn.classList.toggle('is-active', btn.getAttribute('data-mode') === targetMode);
+    });
+
+    const qrWrap = document.getElementById('prtCfg_qrOptionsWrap');
+    const physWrap = document.getElementById('prtCfg_physicalOptionsWrap');
+    if (qrWrap) qrWrap.style.display = (targetMode === 'qr' || targetMode === 'qr_stamp') ? 'grid' : 'none';
+    if (physWrap) physWrap.style.display = (targetMode === 'physical') ? 'block' : 'none';
+
+    renderPrintSettingsLivePreview();
+}
+
+function renderPrintSettingsLivePreview() {
+    const previewEl = document.getElementById('prtCfgLivePreview');
+    if (!previewEl || !window.SimataPrint) return;
+
+    const cfg = collectPrintSettingsFromForm();
+    const badgeEl = document.getElementById('prtCfg_statusBadge');
+    const paperBadgeEl = document.getElementById('prtCfg_paperSummaryBadge');
+
+    const modeLabels = {
+        qr: 'TTD QR Aktif',
+        qr_stamp: 'QR + Stempel Aktif',
+        physical: 'TTD Scan Gambar',
+        blank: 'TTD Basah Manual'
+    };
+    if (badgeEl) badgeEl.textContent = modeLabels[cfg.signature_mode] || 'TTD QR Aktif';
+    if (paperBadgeEl) paperBadgeEl.textContent = cfg.default_paper_size + ' \u2022 Margin ' + cfg.margin_mm + ' mm';
+
+    const thumbEl = document.getElementById('prtCfg_logoThumb');
+    if (thumbEl) {
+        thumbEl.src = cfg.logo_url || '/assets/logo.png';
+        thumbEl.style.opacity = cfg.show_logo ? '1' : '0.35';
+    }
+
+    window.SimataPrint.preloadAssets(cfg).then(function() {
+        previewEl.innerHTML =
+            '<style>' + window.SimataPrint.getSharedPrintCss() + '</style>' +
+            window.SimataPrint.renderKopHtml({
+                title: 'CONTOH HEADER DOKUMEN CETAK',
+                subtitle: 'Tahun Ajaran Aktif \u2022 Pratinjau Otomatis',
+                compact: true,
+                cfg: cfg
+            }) +
+            '<div style="display:flex;justify-content:flex-end;margin-top:12px;">' +
+              window.SimataPrint.renderPrincipalSigHtml({
+                  docTitle: 'Pratinjau Dokumen Resmi SIMATA',
+                  showCityDate: true,
+                  compact: true,
+                  cfg: cfg
+              }) +
+            '</div>' +
+            window.SimataPrint.renderPrintFooterHtml(cfg);
+    });
+}
+
+function applyPrintSettingsToForm(cfg) {
+    const c = Object.assign({}, (window.SimataPrint && window.SimataPrint.DEFAULTS) || {}, cfg || {});
+    const setVal = function(id, val) {
+        const el = document.getElementById(id);
+        if (el) el.value = val === undefined || val === null ? '' : String(val);
+    };
+    const setChk = function(id, val) {
+        const el = document.getElementById(id);
+        if (el) el.checked = Boolean(val);
+    };
+
+    setChk('prtCfg_showLogo', c.show_logo !== false);
+    setVal('prtCfg_logoUrl', c.logo_url || '/assets/logo.png');
+    setVal('prtCfg_foundationName', c.foundation_name);
+    setVal('prtCfg_schoolName', c.school_name);
+    setVal('prtCfg_schoolAddress', c.school_address);
+    setVal('prtCfg_schoolContact', c.school_contact);
+    setVal('prtCfg_principalTitle', c.principal_title);
+    setVal('prtCfg_principalName', c.principal_name);
+    setVal('prtCfg_principalNip', c.principal_nip);
+    setVal('prtCfg_signCity', c.sign_city);
+    setVal('prtCfg_qrStyle', c.qr_style || 'tte_compact');
+    setVal('prtCfg_qrVerifyUrl', c.qr_verify_url);
+    setChk('prtCfg_showStamp', c.show_stamp);
+    setVal('prtCfg_paperSize', c.default_paper_size === 'F4' ? 'F4' : 'A4');
+    setVal('prtCfg_marginMm', c.margin_mm || 10);
+    setChk('prtCfg_showTimestamp', c.show_print_timestamp !== false);
+    setVal('prtCfg_footerNote', c.footer_note);
+    setPrintSignatureMode(c.signature_mode || 'qr');
+}
+
+function loadPrintSettingsForm() {
+    if (!isCurrentUserAdmin) return;
+    const fbEl = document.getElementById('prtCfg_feedback');
+    if (fbEl) fbEl.textContent = '';
+
+    if (window.SimataPrint) {
+        applyPrintSettingsToForm(window.SimataPrint.getSettings());
+    }
+
+    if (window.simataClient && typeof window.simataClient.getPrintSettings === 'function') {
+        window.simataClient.getPrintSettings().then(function(res) {
+            if (res && res.success && res.data) {
+                if (window.SimataPrint) window.SimataPrint.setSettings(res.data);
+                applyPrintSettingsToForm(res.data);
+            }
+        }).catch(function(err) {
+            if (fbEl) {
+                fbEl.style.color = '#b91c1c';
+                fbEl.textContent = (err && err.message) || 'Gagal memuat pengaturan cetak dari server.';
+            }
+        });
+    }
+}
+
+function onPrintLogoFileSelected(event) {
+    const file = event && event.target && event.target.files && event.target.files[0];
+    if (!file) return;
+    if (!file.type || !file.type.startsWith('image/')) {
+        alert('Pilih file gambar PNG, JPG, atau WEBP untuk logo madrasah.');
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const rawData = e && e.target && e.target.result;
+        if (!rawData) return;
+        const img = new Image();
+        img.onload = function() {
+            const maxDim = 280;
+            const scale = Math.min(1, maxDim / Math.max(img.width || maxDim, img.height || maxDim));
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.max(1, Math.round((img.width || maxDim) * scale));
+            canvas.height = Math.max(1, Math.round((img.height || maxDim) * scale));
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            const compressed = canvas.toDataURL('image/png');
+            const logoInput = document.getElementById('prtCfg_logoUrl');
+            if (logoInput) logoInput.value = compressed;
+            renderPrintSettingsLivePreview();
+        };
+        img.src = rawData;
+    };
+    reader.readAsDataURL(file);
+}
+
+function resetPrintLogoToDefault() {
+    const logoInput = document.getElementById('prtCfg_logoUrl');
+    const fileInput = document.getElementById('prtCfg_logoFile');
+    if (logoInput) logoInput.value = '/assets/logo.png';
+    if (fileInput) fileInput.value = '';
+    renderPrintSettingsLivePreview();
+}
+
+function testPrintSettingsPreview() {
+    if (!window.SimataPrint) return;
+    const cfg = collectPrintSettingsFromForm();
+    window.SimataPrint.preloadAssets(cfg).then(function() {
+        window.SimataPrint.openTestPrintPreview(cfg);
+    });
+}
+
+function savePrintSettingsFromForm() {
+    if (!isCurrentUserAdmin) return;
+    const btn = document.getElementById('prtCfg_saveBtn');
+    const fbEl = document.getElementById('prtCfg_feedback');
+    const payload = collectPrintSettingsFromForm();
+
+    if (fbEl) fbEl.textContent = '';
+    setButtonLoading(btn, true, 'Menyimpan...', 'Simpan Pengaturan Cetak');
+
+    simataClient.withSuccessHandler(function(res) {
+        setButtonLoading(btn, false, '', 'Simpan Pengaturan Cetak');
+        const saved = (res && res.data) || payload;
+        if (window.SimataPrint) {
+            window.SimataPrint.setSettings(saved);
+        }
+        applyPrintSettingsToForm(saved);
+
+        const msg = (res && res.message) || 'Pengaturan cetak & TTD QR berhasil disimpan.';
+        if (fbEl) {
+            fbEl.style.color = '#166534';
+            fbEl.textContent = msg;
+        }
+        if (typeof showToast === 'function') showToast('success', 'Pengaturan Cetak Disimpan', msg);
+    }).withFailureHandler(function(err) {
+        setButtonLoading(btn, false, '', 'Simpan Pengaturan Cetak');
+        const msg = (err && err.message) || 'Gagal menyimpan pengaturan cetak.';
+        if (fbEl) {
+            fbEl.style.color = '#b91c1c';
+            fbEl.textContent = msg;
+        }
+        alert(msg);
+    }).updatePrintSettings(payload);
 }
 
 let simataAccountTeachersCache = [];
@@ -32901,12 +33461,34 @@ function printReceiptArea() {
     const printArea = document.getElementById('receiptPrintArea');
     if (!printArea) return;
 
-    const printWin = window.open('', '', 'width=800,height=600');
-    printWin.document.write('<html><head><title>Cetak Kuitansi - SIMATA</title>');
-    printWin.document.write('<style>body{font-family:Arial,sans-serif;margin:20px;padding:0;}@media print{@page{margin:10mm;}}</style>');
-    printWin.document.write('</head><body>');
-    printWin.document.write(printArea.innerHTML);
-    printWin.document.write('</body></html>');
+    const prt = window.SimataPrint;
+    const printPageCss = (prt && typeof prt.getPageCss === 'function') ? prt.getPageCss('portrait') : '@media print{@page{margin:10mm;}}';
+    const sharedPrintCss = (prt && typeof prt.getSharedPrintCss === 'function') ? prt.getSharedPrintCss() : '';
+    const rcpNum = (document.getElementById('rcp_number') && document.getElementById('rcp_number').textContent) || 'Kuitansi';
+    const kopHtml = (prt && typeof prt.renderKopHtml === 'function')
+        ? prt.renderKopHtml({ title: 'KUITANSI PEMBAYARAN RESMI', compact: true })
+        : '';
+    const sigHtml = (prt && typeof prt.renderPrincipalSigHtml === 'function')
+        ? prt.renderPrincipalSigHtml({ docTitle: 'Kuitansi Pembayaran ' + rcpNum, showMengetahui: true, compact: true })
+        : '';
+    const footHtml = (prt && typeof prt.renderPrintFooterHtml === 'function') ? prt.renderPrintFooterHtml() : '';
+
+    const printWin = window.open('', '', 'width=840,height=680');
+    if (!printWin) {
+        alert('Popup diblokir oleh browser. Izinkan popup untuk mencetak kuitansi.');
+        return;
+    }
+    printWin.document.open();
+    printWin.document.write(
+        '<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Cetak Kuitansi - SIMATA</title>' +
+        '<style>' + printPageCss + 'body{font-family:Arial,sans-serif;margin:16px;padding:0;color:#0f172a;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;}' + sharedPrintCss + '</style>' +
+        '</head><body>' +
+        kopHtml +
+        printArea.innerHTML +
+        (sigHtml ? '<div style="display:flex;justify-content:flex-start;margin-top:16px;">' + sigHtml + '</div>' : '') +
+        footHtml +
+        '</body></html>'
+    );
     printWin.document.close();
     printWin.focus();
     setTimeout(function() {

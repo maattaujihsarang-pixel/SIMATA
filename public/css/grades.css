@@ -2647,14 +2647,9 @@
 .grd-khs-note-actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 8px;
   margin-top: 10px;
-}
-
-.grd-khs-note-hint {
-  font-size: 11.5px;
-  color: var(--grd-slate-500);
 }
 
 .grd-trend-chart {

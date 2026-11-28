@@ -1282,7 +1282,6 @@
       : '<p class="grd-khs-note-subtext">Catatan pembinaan atau apresiasi untuk siswa dan orang tua.</p>' +
         '<textarea id="grdHomeroomNoteInput" class="grd-khs-note-textarea" rows="4" placeholder="Tulis catatan wali kelas...">' + esc(row.homeroom_note || '') + '</textarea>' +
         '<div class="grd-khs-note-actions">' +
-          '<span class="grd-khs-note-hint">Tampil di cetakan A4 &amp; Portal Wali</span>' +
           '<button type="button" class="grd-btn grd-btn--primary grd-btn--compact" id="grdSaveHomeroomNoteBtn">Simpan Catatan</button>' +
         '</div>';
 
@@ -1472,9 +1471,16 @@
       pageStyle.id = 'gradesDynamicPrintPageStyle';
       document.head.appendChild(pageStyle);
     }
-    pageStyle.textContent = pageOrientation === 'landscape'
-      ? '@media print { @page { size: landscape; margin: 8mm; } }'
-      : '@media print { @page { size: portrait; margin: 10mm; } }';
+    const prt = window.SimataPrint;
+    const pageRule = (prt && typeof prt.getPageCss === 'function')
+      ? prt.getPageCss(pageOrientation)
+      : (pageOrientation === 'landscape'
+        ? '@page { size: landscape; margin: 8mm; }'
+        : '@page { size: portrait; margin: 10mm; }');
+    const sharedPrintCss = (prt && typeof prt.getSharedPrintCss === 'function')
+      ? prt.getSharedPrintCss()
+      : '';
+    pageStyle.textContent = sharedPrintCss + '\n@media print { ' + pageRule + ' }';
 
     sheet.innerHTML = htmlContent;
     document.body.classList.add('printing-grades-sheet');
@@ -1495,23 +1501,55 @@
     const ov = state.overview;
     if (!ov || !ov.selected_class) return;
 
+    const prt = window.SimataPrint;
     const cls = ov.selected_class;
     const p = ov.selected_period || { print_heading: 'HASIL NILAI ASTS GANJIL' };
     const yr = (ov.active_academic_year ? ov.active_academic_year.academic_year_id : '2026/2027').replace('/', ' - ');
     const subjects = ov.subjects || [];
     const matrix = ov.matrix || [];
     const sum = ov.class_summary || {};
-    const principal = (ov.portal_settings && ov.portal_settings.principal_name) || 'Moch. Iqnaul Badril Falah, S.Ag';
+    const principalFallback = (ov.portal_settings && ov.portal_settings.principal_name) || 'Moch. Iqnaul Badril Falah, S.Ag';
     const wali = cls.homeroom_teacher_name || '-';
+    const legerTitle = p.print_heading || ('HASIL NILAI ' + (p.short_label || '').toUpperCase());
 
-    const html =
-      '<div class="grd-print-leger">' +
-        '<div class="grd-print-leger-head">' +
-          '<h1>' + esc(p.print_heading || ('HASIL NILAI ' + (p.short_label || '').toUpperCase())) + '</h1>' +
+    const kopHtml = (prt && typeof prt.renderKopHtml === 'function')
+      ? prt.renderKopHtml({
+          title: legerTitle,
+          subtitle: 'MADRASAH ALIYAH AT-TAUJIH \u2022 Tahun Ajaran ' + yr,
+          compact: true
+        })
+      : '<div class="grd-print-leger-head">' +
+          '<h1>' + esc(legerTitle) + '</h1>' +
           '<h2>MADRASAH ALIYAH AT-TAUJIH</h2>' +
           '<p>Ds. Bajingjowo Kec. Sarang Kab. Rembang</p>' +
           '<p>Tahun Ajaran ' + esc(yr) + '</p>' +
-        '</div>' +
+        '</div>';
+
+    const prtCfgPrincipal = (prt && prt.getSettings && prt.getSettings().principal_name)
+      ? {}
+      : { principal_name: principalFallback };
+    const principalSigCol = (prt && typeof prt.renderPrincipalSigHtml === 'function')
+      ? prt.renderPrincipalSigHtml({
+          docTitle: 'Leger ' + legerTitle + ' - Kelas ' + romanClassLevel(cls),
+          showMengetahui: false,
+          roleLabel: 'Kepala Madrasah MA. At-Taujih',
+          compact: true,
+          cfg: prtCfgPrincipal
+        })
+      : '<div class="grd-print-sig-col">' +
+          '<div>Kepala Madrasah</div>' +
+          '<div>MA. At-Taujih</div>' +
+          '<div class="grd-print-sig-space"></div>' +
+          '<div><strong>' + esc(principalFallback) + '</strong></div>' +
+        '</div>';
+
+    const footerHtml = (prt && typeof prt.renderPrintFooterHtml === 'function')
+      ? prt.renderPrintFooterHtml()
+      : '';
+
+    const html =
+      '<div class="grd-print-leger">' +
+        kopHtml +
         '<div class="grd-print-leger-meta">' +
           '<div>Kelas : ' + esc(romanClassLevel(cls)) + '</div>' +
           '<div>Wali Kelas : ' + esc(wali) + '</div>' +
@@ -1551,20 +1589,16 @@
             '</tr>' +
           '</tbody>' +
         '</table>' +
-        '<div class="grd-print-signatures">' +
+        '<div class="grd-print-signatures" style="align-items:flex-end;">' +
           '<div class="grd-print-sig-col">' +
             '<div>Mengetahui,</div>' +
             '<div>Wali Kelas</div>' +
             '<div class="grd-print-sig-space"></div>' +
             '<div><strong>' + esc(wali) + '</strong></div>' +
           '</div>' +
-          '<div class="grd-print-sig-col">' +
-            '<div>Kepala Madrasah</div>' +
-            '<div>MA. At-Taujih</div>' +
-            '<div class="grd-print-sig-space"></div>' +
-            '<div><strong>' + esc(principal) + '</strong></div>' +
-          '</div>' +
+          principalSigCol +
         '</div>' +
+        footerHtml +
       '</div>';
 
     triggerPrintSheet(html, 'landscape');
@@ -1573,18 +1607,44 @@
   function printStudentKhsSheet() {
     const khs = state.khsData;
     if (!khs || !khs.student_row) return;
+    const prt = window.SimataPrint;
     const st = khs.student;
     const row = khs.student_row;
-    const principal = (khs.portal_settings && khs.portal_settings.principal_name) || 'Moch. Iqnaul Badril Falah, S.Ag';
+    const principalFallback = (khs.portal_settings && khs.portal_settings.principal_name) || 'Moch. Iqnaul Badril Falah, S.Ag';
     const att = row.attendance || { sakit: 0, izin: 0, alpa: 0 };
 
-    const html =
-      '<div class="grd-print-khs">' +
-        '<div style="text-align:center;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:12px;">' +
+    const kopHtml = (prt && typeof prt.renderKopHtml === 'function')
+      ? prt.renderKopHtml({
+          title: 'LAPORAN HASIL BELAJAR — ' + (khs.selected_period.short_label || ''),
+          subtitle: 'Tahun Ajaran ' + (khs.academic_year ? khs.academic_year.academic_year_id : ''),
+          compact: true
+        })
+      : '<div style="text-align:center;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:12px;">' +
           '<div style="font-size:13pt;font-weight:700;">MADRASAH ALIYAH AT-TAUJIH SARANG</div>' +
           '<div style="font-size:9.5pt;">Ds. Bajingjowo Kec. Sarang Kab. Rembang &bull; NPSN: 70033117</div>' +
           '<div style="font-size:11pt;font-weight:700;margin-top:6px;text-transform:uppercase;">LAPORAN HASIL BELAJAR — ' + esc(khs.selected_period.short_label) + '</div>' +
-        '</div>' +
+        '</div>';
+
+    const prtCfgPrincipal = (prt && prt.getSettings && prt.getSettings().principal_name)
+      ? {}
+      : { principal_name: principalFallback };
+    const principalSigCol = (prt && typeof prt.renderPrincipalSigHtml === 'function')
+      ? prt.renderPrincipalSigHtml({
+          docTitle: 'KHS Rapor ' + (st.name || '') + ' (' + (khs.selected_period.short_label || '') + ')',
+          showMengetahui: false,
+          showCityDate: true,
+          compact: true,
+          cfg: prtCfgPrincipal
+        })
+      : '<div class="grd-print-sig-col"><div>Kepala Madrasah</div><div class="grd-print-sig-space"></div><div><strong>' + esc(principalFallback) + '</strong></div></div>';
+
+    const footerHtml = (prt && typeof prt.renderPrintFooterHtml === 'function')
+      ? prt.renderPrintFooterHtml()
+      : '';
+
+    const html =
+      '<div class="grd-print-khs">' +
+        kopHtml +
         '<table style="width:100%;font-size:9.5pt;margin-bottom:8px;">' +
           '<tr>' +
             '<td style="width:16%;">Nama Siswa</td><td style="width:42%;">: <strong>' + esc(st.name) + '</strong></td>' +
@@ -1606,7 +1666,7 @@
                 '<td style="text-align:center;">' + fmtScore(c.kkm || s.kkm, 1) + '</td>' +
                 '<td style="text-align:center;font-weight:700;">' + (c.score !== null && c.score !== undefined ? fmtScore(c.score, 2) : '-') + '</td>' +
                 '<td style="text-align:center;">' + esc(c.predicate || '-') + '</td>' +
-                '<td style="text-align:center;">' + (c.is_tuntas === true ? 'Tuntas' : (c.is_tuntas === false ? 'Remedial' : '-')) + '</td>' +
+                '<td style="text-align:center;">' + (c.is_tuntas === true ? 'Tuntas' : (c.is_tuntas === false ? 'Belum Tuntas' : '-')) + '</td>' +
                 '<td>' + esc(c.remarks || '') + '</td>' +
               '</tr>';
             }).join('') +
@@ -1620,11 +1680,12 @@
           '<div style="flex:1;border:1px solid #000;padding:6px 8px;"><strong>Ketidakhadiran (SIMATA):</strong> Sakit: ' + (att.sakit || 0) + ' hari &bull; Izin: ' + (att.izin || 0) + ' hari &bull; Tanpa Keterangan: ' + (att.alpa || 0) + ' hari</div>' +
           '<div style="flex:1.4;border:1px solid #000;padding:6px 8px;"><strong>Catatan Wali Kelas:</strong> ' + esc(row.homeroom_note || '-') + '</div>' +
         '</div>' +
-        '<div class="grd-print-signatures" style="padding:0 12px;margin-top:20px;">' +
+        '<div class="grd-print-signatures" style="padding:0 12px;margin-top:16px;align-items:flex-end;">' +
           '<div class="grd-print-sig-col"><div>Orang Tua / Wali</div><div class="grd-print-sig-space"></div><div>( ............................ )</div></div>' +
           '<div class="grd-print-sig-col"><div>Wali Kelas</div><div class="grd-print-sig-space"></div><div><strong>' + esc(st.homeroom_teacher_name) + '</strong></div></div>' +
-          '<div class="grd-print-sig-col"><div>Kepala Madrasah</div><div class="grd-print-sig-space"></div><div><strong>' + esc(principal) + '</strong></div></div>' +
+          principalSigCol +
         '</div>' +
+        footerHtml +
       '</div>';
 
     triggerPrintSheet(html, 'portrait');

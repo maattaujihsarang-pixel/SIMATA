@@ -2022,6 +2022,19 @@
         body: JSON.stringify(payload || {})
       });
       return { success: true, data: res.data || {} };
+    },
+
+    // 44. Global Flexible Print Settings
+    getPrintSettings: async function () {
+      const res = await apiFetch('/print-settings');
+      return { success: true, data: res.data || {} };
+    },
+    updatePrintSettings: async function (payload = {}) {
+      const res = await apiFetch('/print-settings', {
+        method: 'PUT',
+        body: JSON.stringify(payload)
+      });
+      return { success: true, message: res.message, data: res.data || {} };
     }
   };
 

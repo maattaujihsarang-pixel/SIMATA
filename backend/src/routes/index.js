@@ -16,6 +16,7 @@ const reportsRoutes = require('./reports.routes');
 const schedulesRoutes = require('./schedules.routes');
 const notificationsRoutes = require('./notifications.routes');
 const gradesRoutes = require('./grades.routes');
+const printSettingsRoutes = require('./print-settings.routes');
 const masterService = require('../services/master.service');
 const authMiddleware = require('../middleware/auth.middleware');
 
@@ -66,6 +67,7 @@ router.use('/reports', reportsRoutes);
 router.use('/schedules', schedulesRoutes);
 router.use('/notifications', notificationsRoutes);
 router.use('/grades', gradesRoutes);
+router.use('/print-settings', printSettingsRoutes);
 
 module.exports = router;
 
