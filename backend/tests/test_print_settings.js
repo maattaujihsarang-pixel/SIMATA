@@ -58,12 +58,14 @@ async function runPrintSettingsTests() {
 
   assert.ok(!printHelperJs.includes('DEFAULT_PRINT_SETTINGS'), 'print-helper.js must reference DEFAULTS, not undefined DEFAULT_PRINT_SETTINGS');
   assert.ok(printHelperJs.includes('window.SimataPrint') && printHelperJs.includes('buildQrSignatureDataUrl') && printHelperJs.includes('/assets/logo.png'), 'Missing core helpers in print-helper.js');
+  assert.ok(printHelperJs.includes('buildTrimmedCanvas') && printHelperJs.includes('createQrMatrixSource') && printHelperJs.includes('grid-template-columns'), 'Missing trimmed large logo, multi-level QR fallback, or symmetrical grid Kop CSS');
+  assert.ok(printHelperJs.includes('TERAKREDITASI') && printHelperJs.includes('131233170020') && printHelperJs.includes('No.AHU-00009450.AH.01.04.Tahun 2021'), 'Missing official MA At-Taujih Kop defaults in print-helper.js');
 
   assert.ok(clientJs.includes('getPrintSettings') && clientJs.includes('updatePrintSettings'), 'Missing print-settings REST methods in simata-client.js');
 
   assert.ok(html.includes('/js/print-helper.js'), 'dashboard.html must load /js/print-helper.js');
   assert.ok(html.includes('id="settingsTab_cetak"') && html.includes('id="settingsPanel_cetak"'), 'dashboard.html missing Pengaturan Cetak tab/panel');
-  assert.ok(html.includes('id="prtCfgLivePreview"') && html.includes('savePrintSettingsFromForm') && html.includes('testPrintSettingsPreview'), 'dashboard.html missing print settings controls');
+  assert.ok(html.includes('id="prtCfgLivePreview"') && html.includes('id="prtCfg_schoolAccreditation"') && html.includes('id="prtCfg_schoolAkta"') && html.includes('savePrintSettingsFromForm') && html.includes('testPrintSettingsPreview'), 'dashboard.html missing print settings controls');
   assert.ok(html.includes("'cetak'") && html.includes('loadPrintSettingsForm()'), 'switchSettingsCategory must handle cetak tab');
 
   const simataPrintRefsInDashboard = (html.match(/window\.SimataPrint/g) || []).length;
@@ -106,6 +108,8 @@ async function runPrintSettingsTests() {
     assert.strictEqual(guruGet.body.data.qr_style, 'tte_compact');
     assert.strictEqual(guruGet.body.data.default_paper_size, 'A4');
     assert.strictEqual(guruGet.body.data.margin_mm, 10);
+    assert.strictEqual(guruGet.body.data.school_nsm, '131233170020');
+    assert.strictEqual(guruGet.body.data.school_npsn, '70033117');
 
     // 2c. RBAC: GURU PUT denied
     const guruPut = await reqJson(server, 'PUT', '/api/v1/print-settings', { signature_mode: 'blank' }, guruAuth);

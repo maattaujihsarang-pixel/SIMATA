@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="/css/style.css?v=bug67pb">
   <link rel="stylesheet" href="/css/notifications.css?v=bug66_notif3">
   <link rel="stylesheet" href="/css/finance.css">
-  <link rel="stylesheet" href="/css/grades.css?v=bug74p">
+  <link rel="stylesheet" href="/css/grades.css?v=bug74q">
   <style>
 /**
  * SIMATA — Mobile Responsive Stylesheet
@@ -827,10 +827,10 @@ html, body {
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
   <!-- QRCode.js: QR Code generator library for Student QR Preview & Print -->
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-  <script src="/js/simata-client.js?v=bug74p"></script>
-  <script src="/js/print-helper.js?v=bug74p"></script>
+  <script src="/js/simata-client.js?v=bug74q"></script>
+  <script src="/js/print-helper.js?v=bug74q"></script>
   <script src="/js/notifications.js?v=bug65_2"></script>
-  <script src="/js/grades-module.js?v=bug74p"></script>
+  <script src="/js/grades-module.js?v=bug74q"></script>
 </head>
 
 
@@ -6760,19 +6760,37 @@ html, body {
                       <div class="prt-cfg-grid">
                         <div class="prt-cfg-field">
                           <label for="prtCfg_foundationName">Nama Yayasan (Baris Atas Kop)</label>
-                          <input type="text" id="prtCfg_foundationName" placeholder="YAYASAN MUWAJJIHUL ULUM ASY-SYARIYYAH" oninput="renderPrintSettingsLivePreview()" />
+                          <input type="text" id="prtCfg_foundationName" placeholder="YAYASAN MUWAJJIHUL ULUM ASY SYARIYYAH" oninput="renderPrintSettingsLivePreview()" />
                         </div>
                         <div class="prt-cfg-field">
                           <label for="prtCfg_schoolName">Nama Madrasah / Satuan Pendidikan</label>
-                          <input type="text" id="prtCfg_schoolName" placeholder="MADRASAH ALIYAH AT-TAUJIH SARANG" oninput="renderPrintSettingsLivePreview()" />
+                          <input type="text" id="prtCfg_schoolName" placeholder="MADRASAH ALIYAH AT-TAUJIH" oninput="renderPrintSettingsLivePreview()" />
+                        </div>
+                        <div class="prt-cfg-field">
+                          <label for="prtCfg_schoolAccreditation">Status Akreditasi</label>
+                          <input type="text" id="prtCfg_schoolAccreditation" placeholder="TERAKREDITASI &ldquo;A&rdquo;" oninput="renderPrintSettingsLivePreview()" />
+                        </div>
+                        <div class="prt-cfg-grid" style="gap:10px;">
+                          <div class="prt-cfg-field">
+                            <label for="prtCfg_schoolNsm">NSM</label>
+                            <input type="text" id="prtCfg_schoolNsm" placeholder="131233170020" oninput="renderPrintSettingsLivePreview()" />
+                          </div>
+                          <div class="prt-cfg-field">
+                            <label for="prtCfg_schoolNpsn">NPSN</label>
+                            <input type="text" id="prtCfg_schoolNpsn" placeholder="70033117" oninput="renderPrintSettingsLivePreview()" />
+                          </div>
+                        </div>
+                        <div class="prt-cfg-field" style="grid-column:1 / -1;">
+                          <label for="prtCfg_schoolAkta">Akta Notaris / SK Pendirian</label>
+                          <input type="text" id="prtCfg_schoolAkta" placeholder="Akta Notaris : No.AHU-00009450.AH.01.04.Tahun 2021 Tanggal 06 April 2021" oninput="renderPrintSettingsLivePreview()" />
                         </div>
                         <div class="prt-cfg-field">
                           <label for="prtCfg_schoolAddress">Alamat Lengkap Madrasah</label>
-                          <input type="text" id="prtCfg_schoolAddress" placeholder="Dk. Pulorejo, Desa Bajingjowo..." oninput="renderPrintSettingsLivePreview()" />
+                          <input type="text" id="prtCfg_schoolAddress" placeholder="Jl. Dk. Pulorejo Desa Bajingjowo Kecamatan Sarang Kabupaten Rembang 59274" oninput="renderPrintSettingsLivePreview()" />
                         </div>
                         <div class="prt-cfg-field">
-                          <label for="prtCfg_schoolContact">NPSN / Kontak / Email</label>
-                          <input type="text" id="prtCfg_schoolContact" placeholder="NPSN: 70033117 • Email: maattaujihsarang@gmail.com" oninput="renderPrintSettingsLivePreview()" />
+                          <label for="prtCfg_schoolContact">Email / Kontak Kop</label>
+                          <input type="text" id="prtCfg_schoolContact" placeholder="Email: maattaujihsarang@gmail.com" oninput="renderPrintSettingsLivePreview()" />
                         </div>
                       </div>
                     </div>
@@ -30916,7 +30934,11 @@ function collectPrintSettingsFromForm() {
         show_logo: chk('prtCfg_showLogo', true),
         logo_url: val('prtCfg_logoUrl', def.logo_url || '/assets/logo.png') || '/assets/logo.png',
         foundation_name: val('prtCfg_foundationName', def.foundation_name),
-        school_name: val('prtCfg_schoolName', def.school_name) || 'MADRASAH ALIYAH AT-TAUJIH SARANG',
+        school_name: val('prtCfg_schoolName', def.school_name) || 'MADRASAH ALIYAH AT-TAUJIH',
+        school_accreditation: val('prtCfg_schoolAccreditation', def.school_accreditation),
+        school_nsm: val('prtCfg_schoolNsm', def.school_nsm),
+        school_npsn: val('prtCfg_schoolNpsn', def.school_npsn),
+        school_akta: val('prtCfg_schoolAkta', def.school_akta),
         school_address: val('prtCfg_schoolAddress', def.school_address),
         school_contact: val('prtCfg_schoolContact', def.school_contact),
         principal_title: val('prtCfg_principalTitle', def.principal_title) || 'Kepala Madrasah',
@@ -31011,6 +31033,10 @@ function applyPrintSettingsToForm(cfg) {
     setVal('prtCfg_logoUrl', c.logo_url || '/assets/logo.png');
     setVal('prtCfg_foundationName', c.foundation_name);
     setVal('prtCfg_schoolName', c.school_name);
+    setVal('prtCfg_schoolAccreditation', c.school_accreditation);
+    setVal('prtCfg_schoolNsm', c.school_nsm);
+    setVal('prtCfg_schoolNpsn', c.school_npsn);
+    setVal('prtCfg_schoolAkta', c.school_akta);
     setVal('prtCfg_schoolAddress', c.school_address);
     setVal('prtCfg_schoolContact', c.school_contact);
     setVal('prtCfg_principalTitle', c.principal_title);

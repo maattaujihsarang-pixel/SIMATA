@@ -9,10 +9,14 @@
   const DEFAULTS = {
     show_logo: true,
     logo_url: '/assets/logo.png',
-    foundation_name: 'YAYASAN MUWAJJIHUL ULUM ASY-SYARIYYAH',
-    school_name: 'MADRASAH ALIYAH AT-TAUJIH SARANG',
-    school_address: 'Dk. Pulorejo, Desa Bajingjowo, Kec. Sarang, Kab. Rembang, Jawa Tengah (59274)',
-    school_contact: 'NPSN: 70033117 \u2022 Email: maattaujihsarang@gmail.com',
+    foundation_name: 'YAYASAN MUWAJJIHUL ULUM ASY SYARIYYAH',
+    school_name: 'MADRASAH ALIYAH AT-TAUJIH',
+    school_accreditation: 'TERAKREDITASI \u201cA\u201d',
+    school_nsm: '131233170020',
+    school_npsn: '70033117',
+    school_akta: 'Akta Notaris : No.AHU-00009450.AH.01.04.Tahun 2021 Tanggal 06 April 2021',
+    school_address: 'Jl. Dk. Pulorejo Desa Bajingjowo Kecamatan Sarang Kabupaten Rembang 59274',
+    school_contact: 'Email: maattaujihsarang@gmail.com',
     principal_title: 'Kepala Madrasah',
     principal_name: 'Moch. Iqnaul Badril Falah, S.Ag',
     principal_nip: '',
@@ -30,8 +34,8 @@
   };
 
   let currentSettings = Object.assign({}, DEFAULTS);
-  const assetDataCache = {}; // url -> dataUrl
-  const assetImgCache = {};  // url -> HTMLImageElement
+  const assetDataCache = {}; // url -> dataUrl (trimmed for logo)
+  const assetImgCache = {};  // url -> HTMLImageElement / canvas
   const qrRenderCache = {};  // cacheKey -> dataUrl
   let preloadPromise = null;
 
@@ -56,32 +60,80 @@
     }
   }
 
-  function loadImageAsset(src) {
+  /**
+   * Trims excess transparent margin around the logo crest so the emblem fills
+   * the Kop and QR badge cleanly without appearing tiny.
+   */
+  function buildTrimmedCanvas(img, trimTransparent) {
+    const w = img.naturalWidth || img.width || 256;
+    const h = img.naturalHeight || img.height || 256;
+    const raw = document.createElement('canvas');
+    raw.width = w;
+    raw.height = h;
+    const rCtx = raw.getContext('2d');
+    rCtx.drawImage(img, 0, 0);
+
+    if (!trimTransparent) return raw;
+
+    try {
+      const data = rCtx.getImageData(0, 0, w, h).data;
+      let minX = w, minY = h, maxX = -1, maxY = -1;
+      for (let y = 0; y < h; y++) {
+        const row = y * w * 4;
+        for (let x = 0; x < w; x++) {
+          if (data[row + x * 4 + 3] > 12) {
+            if (x < minX) minX = x;
+            if (y < minY) minY = y;
+            if (x > maxX) maxX = x;
+            if (y > maxY) maxY = y;
+          }
+        }
+      }
+      if (maxX > minX && maxY > minY) {
+        const cw = maxX - minX + 1;
+        const ch = maxY - minY + 1;
+        const pad = Math.round(Math.max(cw, ch) * 0.02);
+        const side = Math.max(cw, ch) + pad * 2;
+        const out = document.createElement('canvas');
+        out.width = side;
+        out.height = side;
+        const oCtx = out.getContext('2d');
+        const dx = Math.round((side - cw) / 2);
+        const dy = Math.round((side - ch) / 2);
+        oCtx.drawImage(raw, minX, minY, cw, ch, dx, dy, cw, ch);
+        return out;
+      }
+    } catch (_) {
+      // Cross-origin image fallback uses raw canvas/src
+    }
+    return raw;
+  }
+
+  function loadImageAsset(src, trimTransparent) {
     const resolved = resolveUrl(src);
     if (!resolved) return Promise.resolve(null);
-    if (assetDataCache[resolved] && assetImgCache[resolved]) {
-      return Promise.resolve({ dataUrl: assetDataCache[resolved], img: assetImgCache[resolved] });
+    const cacheKey = resolved + (trimTransparent ? '|TRIM' : '|RAW');
+    if (assetDataCache[cacheKey] && assetImgCache[cacheKey]) {
+      return Promise.resolve({ dataUrl: assetDataCache[cacheKey], img: assetImgCache[cacheKey] });
     }
     return new Promise(function (resolve) {
       if (typeof Image === 'undefined') return resolve(null);
       const img = new Image();
       if (!resolved.startsWith('data:')) img.crossOrigin = 'anonymous';
       img.onload = function () {
-        assetImgCache[resolved] = img;
-        if (resolved.startsWith('data:')) {
-          assetDataCache[resolved] = resolved;
-          return resolve({ dataUrl: resolved, img: img });
-        }
         try {
-          const canvas = document.createElement('canvas');
-          canvas.width = img.naturalWidth || img.width || 256;
-          canvas.height = img.naturalHeight || img.height || 256;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0);
+          const canvas = buildTrimmedCanvas(img, trimTransparent);
           const dataUrl = canvas.toDataURL('image/png');
+          assetDataCache[cacheKey] = dataUrl;
           assetDataCache[resolved] = dataUrl;
-          resolve({ dataUrl: dataUrl, img: img });
+          assetImgCache[cacheKey] = canvas;
+          assetImgCache[resolved] = canvas;
+          resolve({ dataUrl: dataUrl, img: canvas });
         } catch (_) {
+          assetImgCache[cacheKey] = img;
+          assetImgCache[resolved] = img;
+          assetDataCache[cacheKey] = resolved;
+          assetDataCache[resolved] = resolved;
           resolve({ dataUrl: resolved, img: img });
         }
       };
@@ -92,8 +144,12 @@
 
   function preloadAssets(cfgOverride) {
     const cfg = getMergedSettings(cfgOverride);
-    const urls = [cfg.logo_url || DEFAULTS.logo_url, cfg.signature_img, cfg.stamp_img].filter(Boolean);
-    preloadPromise = Promise.all(urls.map(loadImageAsset));
+    const jobs = [];
+    const logoUrl = cfg.logo_url || DEFAULTS.logo_url;
+    if (logoUrl) jobs.push(loadImageAsset(logoUrl, true));
+    if (cfg.signature_img) jobs.push(loadImageAsset(cfg.signature_img, false));
+    if (cfg.stamp_img) jobs.push(loadImageAsset(cfg.stamp_img, false));
+    preloadPromise = Promise.all(jobs);
     return preloadPromise;
   }
 
@@ -130,9 +186,10 @@
     return Object.assign({}, currentSettings);
   }
 
-  function getCachedAssetSrc(rawSrc) {
+  function getCachedAssetSrc(rawSrc, preferTrim) {
     if (!rawSrc) return '';
     const resolved = resolveUrl(rawSrc);
+    if (preferTrim && assetDataCache[resolved + '|TRIM']) return assetDataCache[resolved + '|TRIM'];
     return assetDataCache[resolved] || resolved;
   }
 
@@ -149,7 +206,7 @@
 
   function computeVerificationCode(docTitle, cfg) {
     const seed = [
-      '70033117',
+      String(cfg.school_npsn || '70033117'),
       String(cfg.principal_name || ''),
       String(cfg.principal_title || ''),
       String(docTitle || 'Dokumen Resmi SIMATA'),
@@ -169,58 +226,92 @@
 
   function buildQrPayload(docTitle, cfg, dateLabel) {
     const verifyUrl = String(cfg.qr_verify_url || '').trim();
-    if (verifyUrl) return verifyUrl;
+    if (verifyUrl) return verifyUrl.slice(0, 260);
+    const code = computeVerificationCode(docTitle, cfg);
     const parts = [
-      'TTE-SIMATA | ' + (cfg.school_name || 'MA AT-TAUJIH SARANG'),
-      'Kode: ' + computeVerificationCode(docTitle, cfg),
-      'Oleh: ' + (cfg.principal_name || DEFAULTS.principal_name) +
-        (cfg.principal_nip ? ' (' + cfg.principal_nip + ')' : ''),
-      'Jabatan: ' + (cfg.principal_title || 'Kepala Madrasah'),
-      'Dokumen: ' + (docTitle || 'Dokumen Resmi SIMATA')
+      'TTE MA At-Taujih (' + (cfg.school_npsn || '70033117') + ')',
+      'Kode: ' + code,
+      'Oleh: ' + String(cfg.principal_name || DEFAULTS.principal_name).slice(0, 48),
+      'Dok: ' + String(docTitle || 'Dokumen Resmi SIMATA').slice(0, 48)
     ];
-    if (dateLabel) parts.push('Tanggal: ' + dateLabel);
+    if (dateLabel) parts.push('Tgl: ' + String(dateLabel).slice(0, 24));
     return parts.join('\n');
+  }
+
+  /**
+   * Generates a QR matrix element reliably via QRCode.js, iterating through error
+   * correction levels so longer payloads never trigger a fatal code-length overflow.
+   */
+  function createQrMatrixSource(payload, fallbackCode) {
+    if (typeof document === 'undefined' || typeof window.QRCode !== 'function') {
+      return null;
+    }
+    const CL = window.QRCode.CorrectLevel || { H: 2, Q: 3, M: 0, L: 1 };
+    const levels = [CL.H, CL.Q, CL.M, CL.L];
+    const clean = String(payload || '').trim();
+    const candidates = [clean];
+    if (clean.length > 130) candidates.push(clean.slice(0, 126) + '...');
+    if (fallbackCode) candidates.push(fallbackCode);
+
+    const host = document.createElement('div');
+    host.style.position = 'fixed';
+    host.style.left = '-9999px';
+    host.style.top = '-9999px';
+    document.body.appendChild(host);
+
+    try {
+      for (let cIdx = 0; cIdx < candidates.length; cIdx++) {
+        const textVal = candidates[cIdx];
+        for (let lIdx = 0; lIdx < levels.length; lIdx++) {
+          try {
+            host.innerHTML = '';
+            new window.QRCode(host, {
+              text: textVal,
+              width: 240,
+              height: 240,
+              colorDark: '#0f172a',
+              colorLight: '#ffffff',
+              correctLevel: levels[lIdx]
+            });
+            const qrCanvas = host.querySelector('canvas');
+            const qrImg = host.querySelector('img');
+            const source = qrCanvas || qrImg;
+            if (source && ((source.width || source.naturalWidth) > 0)) {
+              const copy = document.createElement('canvas');
+              copy.width = qrCanvas ? qrCanvas.width : 240;
+              copy.height = qrCanvas ? qrCanvas.height : 240;
+              const cCtx = copy.getContext('2d');
+              cCtx.imageSmoothingEnabled = false;
+              cCtx.drawImage(source, 0, 0, copy.width, copy.height);
+              return copy;
+            }
+          } catch (_) {
+            // Retry with lower error correction level or shorter payload
+          }
+        }
+      }
+      return null;
+    } finally {
+      if (host.parentNode) host.parentNode.removeChild(host);
+    }
   }
 
   function buildQrSignatureDataUrl(docTitle, cfgOverride, dateLabel) {
     const cfg = getMergedSettings(cfgOverride);
     const style = cfg.qr_style || 'tte_compact';
     const payload = buildQrPayload(docTitle, cfg, dateLabel);
+    const shortFallback = 'TTE-SIMATA|' + computeVerificationCode(docTitle, cfg) + '|' + String(cfg.principal_name || '').slice(0, 32);
     const logoKey = cfg.logo_url || DEFAULTS.logo_url;
     const resolvedLogo = resolveUrl(logoKey);
-    const logoLoaded = Boolean(assetImgCache[resolvedLogo]);
+    const logoImg = assetImgCache[resolvedLogo + '|TRIM'] || assetImgCache[resolvedLogo] || null;
+    const logoLoaded = Boolean(logoImg);
     const cacheKey = style + '|' + payload + '|' + (logoLoaded ? 'L1' : 'L0');
     if (qrRenderCache[cacheKey]) return qrRenderCache[cacheKey];
 
-    if (typeof document === 'undefined' || typeof window.QRCode !== 'function') {
-      return '';
-    }
+    const sourceCanvas = createQrMatrixSource(payload, shortFallback);
+    if (!sourceCanvas) return '';
 
     try {
-      const host = document.createElement('div');
-      host.style.position = 'fixed';
-      host.style.left = '-9999px';
-      host.style.top = '-9999px';
-      document.body.appendChild(host);
-
-      const qrPx = 240;
-      new window.QRCode(host, {
-        text: payload,
-        width: qrPx,
-        height: qrPx,
-        colorDark: '#0f172a',
-        colorLight: '#ffffff',
-        correctLevel: window.QRCode.CorrectLevel ? window.QRCode.CorrectLevel.H : 2
-      });
-
-      const qrCanvasEl = host.querySelector('canvas');
-      const qrImgEl = host.querySelector('img');
-      const sourceEl = qrCanvasEl || qrImgEl;
-      if (!sourceEl) {
-        document.body.removeChild(host);
-        return '';
-      }
-
       const outerSize = 264;
       const capH = style === 'tte_compact' ? 38 : 0;
       const out = document.createElement('canvas');
@@ -228,34 +319,35 @@
       out.height = outerSize + capH;
       const ctx = out.getContext('2d');
 
-      // White card background + crisp subtle emerald frame
       ctx.fillStyle = '#ffffff';
       drawRoundedRect(ctx, 1, 1, out.width - 2, out.height - 2, 14);
       ctx.fill();
-      ctx.strokeStyle = style === 'tte_compact' ? 'rgba(22, 101, 52, 0.35)' : 'rgba(15, 23, 42, 0.2)';
+      ctx.strokeStyle = style === 'tte_compact' ? 'rgba(22, 101, 52, 0.38)' : 'rgba(15, 23, 42, 0.22)';
       ctx.lineWidth = 2;
       ctx.stroke();
 
       const qz = 12;
       const qrInner = outerSize - qz * 2;
       ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(sourceEl, qz, qz, qrInner, qrInner);
+      ctx.drawImage(sourceCanvas, qz, qz, qrInner, qrInner);
       ctx.imageSmoothingEnabled = true;
 
-      // Center crest emblem overlay
-      const logoImg = assetImgCache[resolvedLogo];
       if (logoImg && cfg.show_logo !== false) {
-        const badgeS = Math.round(qrInner * 0.25);
-        const bx = qz + (qrInner - badgeS) / 2;
-        const by = qz + (qrInner - badgeS) / 2;
-        ctx.fillStyle = '#ffffff';
-        drawRoundedRect(ctx, bx, by, badgeS, badgeS, Math.round(badgeS * 0.24));
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(22, 101, 52, 0.38)';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-        const pad = Math.max(3, Math.round(badgeS * 0.14));
-        ctx.drawImage(logoImg, bx + pad, by + pad, badgeS - pad * 2, badgeS - pad * 2);
+        try {
+          const badgeS = Math.round(qrInner * 0.23);
+          const bx = qz + (qrInner - badgeS) / 2;
+          const by = qz + (qrInner - badgeS) / 2;
+          ctx.fillStyle = '#ffffff';
+          drawRoundedRect(ctx, bx, by, badgeS, badgeS, Math.round(badgeS * 0.24));
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(22, 101, 52, 0.4)';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+          const pad = Math.max(2, Math.round(badgeS * 0.1));
+          ctx.drawImage(logoImg, bx + pad, by + pad, badgeS - pad * 2, badgeS - pad * 2);
+        } catch (_) {
+          // Safe fallback: QR remains intact even without crest image
+        }
       }
 
       if (style === 'tte_compact') {
@@ -271,7 +363,6 @@
         ctx.fillText('TTE \u2022 UU ITE', outerSize / 2, ribY + ribH / 2 + 1);
       }
 
-      document.body.removeChild(host);
       const dataUrl = out.toDataURL('image/png');
       qrRenderCache[cacheKey] = dataUrl;
       return dataUrl;
@@ -281,30 +372,60 @@
     }
   }
 
+  function formatEmailContactHtml(rawContact) {
+    const text = String(rawContact || '').trim();
+    if (!text) return '';
+    // Highlight email part in classic Word-style blue while keeping safe HTML escaping
+    const match = text.match(/^(Email\s*:\s*)(.+)$/i);
+    if (match) {
+      return esc(match[1]) + '<span class="simata-kop-email">' + esc(match[2].trim()) + '</span>';
+    }
+    return esc(text);
+  }
+
   function renderKopHtml(opts) {
     const o = opts || {};
     const cfg = getMergedSettings(o.cfg);
     const compact = Boolean(o.compact);
     const showLogo = cfg.show_logo !== false && Boolean(cfg.logo_url);
-    const logoSrc = showLogo ? getCachedAssetSrc(cfg.logo_url) : '';
-    const logoDim = compact ? 44 : 56;
+    const logoSrc = showLogo ? getCachedAssetSrc(cfg.logo_url, true) : '';
 
-    const logoLeftHtml = showLogo
-      ? '<div class="simata-kop-logo" style="width:' + logoDim + 'px;height:' + logoDim + 'px;"><img src="' + esc(logoSrc) + '" alt="Logo Madrasah" /></div>'
-      : '';
-    const rightSpacerHtml = showLogo
-      ? '<div class="simata-kop-spacer" style="width:' + logoDim + 'px;" aria-hidden="true"></div>'
-      : '';
-
+    // Balanced symmetrical grid track width keeps Kop text 100% centered on the same vertical axis as doc title
     const foundHtml = cfg.foundation_name
       ? '<div class="simata-kop-found">' + esc(cfg.foundation_name) + '</div>'
       : '';
-    const addrHtml = cfg.school_address
-      ? '<div class="simata-kop-addr">' + esc(cfg.school_address) + '</div>'
+    const akredHtml = cfg.school_accreditation
+      ? '<div class="simata-kop-akred">' + esc(cfg.school_accreditation) + '</div>'
       : '';
-    const contactHtml = cfg.school_contact
-      ? '<div class="simata-kop-contact">' + esc(cfg.school_contact) + '</div>'
+
+    const nsmTxt = cfg.school_nsm ? 'NSM : ' + esc(cfg.school_nsm) : '';
+    const npsnTxt = cfg.school_npsn ? 'NPSN : ' + esc(cfg.school_npsn) : '';
+    const regHtml = (nsmTxt || npsnTxt)
+      ? '<div class="simata-kop-reg">' +
+          (nsmTxt ? '<span>' + nsmTxt + '</span>' : '') +
+          (npsnTxt ? '<span>' + npsnTxt + '</span>' : '') +
+        '</div>'
       : '';
+
+    const aktaHtml = cfg.school_akta
+      ? '<div class="simata-kop-akta">' + esc(cfg.school_akta) + '</div>'
+      : '';
+
+    const leftCell = showLogo
+      ? '<div class="simata-kop-logo"><img src="' + esc(logoSrc) + '" alt="Logo MA At-Taujih" /></div>'
+      : '';
+    const rightCell = showLogo
+      ? '<div class="simata-kop-spacer" aria-hidden="true"></div>'
+      : '';
+
+    const addrTxt = cfg.school_address ? esc(cfg.school_address) : '';
+    const contactHtml = formatEmailContactHtml(cfg.school_contact);
+    const addrBarHtml = (addrTxt || contactHtml)
+      ? '<div class="simata-kop-addrbar' + (!addrTxt || !contactHtml ? ' is-single' : '') + '">' +
+          (addrTxt ? '<span class="simata-kop-addr">' + addrTxt + '</span>' : '') +
+          (contactHtml ? '<span class="simata-kop-contact">' + contactHtml + '</span>' : '') +
+        '</div>'
+      : '<div class="simata-kop-rule"></div>';
 
     const docHeadHtml = o.title
       ? '<div class="simata-doc-title-wrap' + (compact ? ' is-compact' : '') + '">' +
@@ -313,17 +434,19 @@
         '</div>'
       : '';
 
-    return '<div class="simata-kop-wrap' + (compact ? ' is-compact' : '') + '">' +
+    return '<div class="simata-kop-wrap' + (compact ? ' is-compact' : '') + (showLogo ? ' has-logo' : '') + '">' +
         '<div class="simata-kop">' +
-          logoLeftHtml +
+          leftCell +
           '<div class="simata-kop-center">' +
             foundHtml +
             '<div class="simata-kop-school">' + esc(cfg.school_name) + '</div>' +
-            addrHtml +
-            contactHtml +
+            akredHtml +
+            regHtml +
+            aktaHtml +
           '</div>' +
-          rightSpacerHtml +
+          rightCell +
         '</div>' +
+        addrBarHtml +
         docHeadHtml +
       '</div>';
   }
@@ -356,7 +479,7 @@
     let graphicHtml = '';
     if (mode === 'qr' || mode === 'qr_stamp') {
       const qrSrc = buildQrSignatureDataUrl(docTitle, cfg, dateStr);
-      const stampSrc = (mode === 'qr_stamp' && cfg.stamp_img) ? getCachedAssetSrc(cfg.stamp_img) : '';
+      const stampSrc = (mode === 'qr_stamp' && cfg.stamp_img) ? getCachedAssetSrc(cfg.stamp_img, false) : '';
       if (qrSrc) {
         graphicHtml =
           '<div class="simata-sig-graphic' + (compact ? ' is-compact' : '') + '">' +
@@ -367,8 +490,8 @@
         graphicHtml = '<div class="simata-sig-blank' + (compact ? ' is-compact' : '') + '"></div>';
       }
     } else if (mode === 'physical') {
-      const sigSrc = cfg.signature_img ? getCachedAssetSrc(cfg.signature_img) : '';
-      const stampSrc = (cfg.show_stamp && cfg.stamp_img) ? getCachedAssetSrc(cfg.stamp_img) : '';
+      const sigSrc = cfg.signature_img ? getCachedAssetSrc(cfg.signature_img, false) : '';
+      const stampSrc = (cfg.show_stamp && cfg.stamp_img) ? getCachedAssetSrc(cfg.stamp_img, false) : '';
       graphicHtml =
         '<div class="simata-sig-graphic' + (compact ? ' is-compact' : '') + '">' +
           (stampSrc ? '<img class="simata-sig-stamp-overlay" src="' + esc(stampSrc) + '" alt="Stempel" />' : '') +
@@ -411,32 +534,45 @@
 
   function getSharedPrintCss() {
     return [
-      '.simata-kop-wrap { width: 100%; margin-bottom: 10px; color: #0f172a; }',
-      '.simata-kop { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 7px; border-bottom: 2.5px double #0f172a; }',
-      '.simata-kop-wrap.is-compact .simata-kop { padding-bottom: 5px; }',
-      '.simata-kop-logo { flex-shrink: 0; display: flex; align-items: center; justify-content: center; }',
+      '.simata-kop-wrap { width: 100%; margin: 0 0 12px 0; color: #0f172a; box-sizing: border-box; }',
+      '.simata-kop-wrap * { box-sizing: border-box; }',
+      '.simata-kop { display: grid; grid-template-columns: 1fr; align-items: center; width: 100%; padding-bottom: 5px; font-family: "Times New Roman", Times, Georgia, serif; }',
+      '.simata-kop-wrap.has-logo .simata-kop { grid-template-columns: 96px minmax(0, 1fr) 96px; gap: 10px; }',
+      '.simata-kop-wrap.is-compact.has-logo .simata-kop { grid-template-columns: 78px minmax(0, 1fr) 78px; gap: 8px; }',
+      '.simata-kop-logo { width: 92px; height: 92px; display: flex; align-items: center; justify-content: center; margin: 0 auto; }',
+      '.simata-kop-wrap.is-compact .simata-kop-logo { width: 74px; height: 74px; }',
       '.simata-kop-logo img { width: 100%; height: 100%; object-fit: contain; display: block; }',
-      '.simata-kop-spacer { flex-shrink: 0; }',
-      '.simata-kop-center { flex: 1; text-align: center; line-height: 1.28; min-width: 0; }',
-      '.simata-kop-found { font-size: 8.5pt; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #334155; }',
-      '.simata-kop-school { font-size: 13.5pt; font-weight: 800; letter-spacing: 0.03em; text-transform: uppercase; color: #0f172a; margin: 1px 0; }',
-      '.simata-kop-wrap.is-compact .simata-kop-school { font-size: 12pt; }',
-      '.simata-kop-addr { font-size: 8pt; color: #334155; }',
-      '.simata-kop-contact { font-size: 8pt; font-weight: 600; color: #334155; margin-top: 1px; }',
-      '.simata-doc-title-wrap { text-align: center; margin-top: 8px; }',
-      '.simata-doc-title-wrap.is-compact { margin-top: 6px; }',
+      '.simata-kop-spacer { width: 100%; min-height: 1px; }',
+      '.simata-kop-center { width: 100%; text-align: center; line-height: 1.24; min-width: 0; color: #0f172a; }',
+      '.simata-kop-found { font-size: 11.5pt; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; color: #0f172a; }',
+      '.simata-kop-school { font-size: 14pt; font-weight: 800; letter-spacing: 0.02em; text-transform: uppercase; color: #0f172a; margin: 1px 0; }',
+      '.simata-kop-akred { font-size: 10.5pt; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; color: #0f172a; }',
+      '.simata-kop-reg { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 6px 28px; font-size: 9.5pt; font-weight: 500; color: #0f172a; margin-top: 2px; }',
+      '.simata-kop-akta { font-size: 9.2pt; font-weight: 500; color: #0f172a; margin-top: 1px; }',
+      '.simata-kop-wrap.is-compact .simata-kop-found { font-size: 9pt; }',
+      '.simata-kop-wrap.is-compact .simata-kop-school { font-size: 11pt; }',
+      '.simata-kop-wrap.is-compact .simata-kop-akred { font-size: 8.4pt; }',
+      '.simata-kop-wrap.is-compact .simata-kop-reg { font-size: 7.8pt; gap: 4px 18px; }',
+      '.simata-kop-wrap.is-compact .simata-kop-akta { font-size: 7.2pt; }',
+      '.simata-kop-addrbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px 12px; width: 100%; border: 1.6px solid #0f172a; padding: 4px 10px; margin-top: 4px; font-family: "Times New Roman", Times, Georgia, serif; font-size: 8.6pt; font-style: italic; color: #0f172a; background: #ffffff; }',
+      '.simata-kop-addrbar.is-single { justify-content: center; text-align: center; }',
+      '.simata-kop-wrap.is-compact .simata-kop-addrbar { font-size: 7.3pt; padding: 3px 8px; }',
+      '.simata-kop-email { color: #1d4ed8; font-style: italic; }',
+      '.simata-kop-rule { border-bottom: 2.5px double #0f172a; margin-top: 4px; }',
+      '.simata-doc-title-wrap { width: 100%; text-align: center; margin-top: 10px; }',
+      '.simata-doc-title-wrap.is-compact { margin-top: 8px; }',
       '.simata-doc-title { font-size: 11.5pt; font-weight: 800; text-transform: uppercase; letter-spacing: 0.02em; color: #0f172a; }',
       '.simata-doc-title-wrap.is-compact .simata-doc-title { font-size: 10.5pt; }',
       '.simata-doc-subtitle { font-size: 9pt; font-weight: 600; color: #334155; margin-top: 2px; }',
       '.simata-sig-col { text-align: center; min-width: 195px; font-size: 9.5pt; color: #0f172a; line-height: 1.3; }',
-      '.simata-sig-graphic { position: relative; height: 68px; display: flex; align-items: center; justify-content: center; margin: 4px auto; }',
-      '.simata-sig-graphic.is-compact { height: 56px; margin: 3px auto; }',
+      '.simata-sig-graphic { position: relative; height: 74px; display: flex; align-items: center; justify-content: center; margin: 4px auto; }',
+      '.simata-sig-graphic.is-compact { height: 66px; margin: 4px auto; }',
       '.simata-sig-blank { height: 52px; }',
       '.simata-sig-blank.is-compact { height: 42px; }',
-      '.simata-sig-qr { height: 64px; width: auto; display: block; position: relative; z-index: 1; }',
-      '.simata-sig-graphic.is-compact .simata-sig-qr { height: 54px; }',
+      '.simata-sig-qr { height: 72px; width: auto; display: block; position: relative; z-index: 1; }',
+      '.simata-sig-graphic.is-compact .simata-sig-qr { height: 64px; }',
       '.simata-sig-phys { max-height: 54px; max-width: 150px; object-fit: contain; display: block; position: relative; z-index: 1; }',
-      '.simata-sig-stamp-overlay { position: absolute; height: 58px; width: auto; opacity: 0.62; left: 50%; top: 50%; transform: translate(-72%, -50%); pointer-events: none; z-index: 2; }',
+      '.simata-sig-stamp-overlay { position: absolute; height: 60px; width: auto; opacity: 0.62; left: 50%; top: 50%; transform: translate(-72%, -50%); pointer-events: none; z-index: 2; }',
       '.simata-sig-name { font-weight: 700; text-decoration: underline; }',
       '.simata-sig-nip { font-size: 8.5pt; color: #334155; margin-top: 1px; }',
       '.simata-print-foot { margin-top: 14px; padding-top: 6px; border-top: 1px solid #cbd5e1; font-size: 8pt; color: #475569; display: flex; justify-content: space-between; gap: 10px; }'
@@ -476,10 +612,10 @@
         cfg: cfg
       }) +
       '<p style="font-size:10pt;color:#334155;">Berikut adalah contoh hasil cetak otomatis dengan ukuran kertas <strong>' +
-      esc(cfg.default_paper_size) + '</strong>, margin <strong>' + esc(cfg.margin_mm) + ' mm</strong>, dan mode tanda tangan <strong>' + esc(cfg.signature_mode.toUpperCase()) + '</strong>.</p>' +
+      esc(cfg.default_paper_size) + '</strong>, margin <strong>' + esc(cfg.margin_mm) + ' mm</strong>, dan mode tanda tangan <strong>' + esc(String(cfg.signature_mode || 'qr').toUpperCase()) + '</strong>.</p>' +
       '<table><thead><tr><th style="width:45px;text-align:center;">No</th><th>Uraian Pengaturan</th><th>Nilai Aktif</th></tr></thead>' +
       '<tbody>' +
-        '<tr><td style="text-align:center;">1</td><td>Logo Madrasah</td><td>' + (cfg.show_logo ? 'Ditampilkan di header cetak' : 'Disembunyikan') + '</td></tr>' +
+        '<tr><td style="text-align:center;">1</td><td>Logo Madrasah</td><td>' + (cfg.show_logo ? 'Ditampilkan besar & proporsional di Kop Surat' : 'Disembunyikan') + '</td></tr>' +
         '<tr><td style="text-align:center;">2</td><td>Pejabat Penandatangan</td><td>' + esc(cfg.principal_name) + '</td></tr>' +
         '<tr><td style="text-align:center;">3</td><td>Model Tanda Tangan</td><td>' + esc(cfg.signature_mode) + ' (' + esc(cfg.qr_style) + ')</td></tr>' +
       '</tbody></table>' +
@@ -499,7 +635,7 @@
     setSettings: setSettings,
     loadSettings: loadSettings,
     preloadAssets: preloadAssets,
-    getLogoSrc: function (cfg) { return getCachedAssetSrc((cfg && cfg.logo_url) || currentSettings.logo_url || DEFAULTS.logo_url); },
+    getLogoSrc: function (cfg) { return getCachedAssetSrc((cfg && cfg.logo_url) || currentSettings.logo_url || DEFAULTS.logo_url, true); },
     buildQrSignatureDataUrl: buildQrSignatureDataUrl,
     renderKopHtml: renderKopHtml,
     renderPrincipalSigHtml: renderPrincipalSigHtml,
