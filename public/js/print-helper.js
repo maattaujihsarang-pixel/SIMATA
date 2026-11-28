@@ -9,14 +9,21 @@
   const DEFAULTS = {
     show_logo: true,
     logo_url: '/assets/logo.png',
-    foundation_name: 'YAYASAN MUWAJJIHUL ULUM ASY SYARIYYAH',
-    school_name: 'MADRASAH ALIYAH AT-TAUJIH',
-    school_accreditation: 'TERAKREDITASI \u201cA\u201d',
-    school_nsm: '131233170020',
-    school_npsn: '70033117',
-    school_akta: 'Akta Notaris : No.AHU-00009450.AH.01.04.Tahun 2021 Tanggal 06 April 2021',
-    school_address: 'Jl. Dk. Pulorejo Desa Bajingjowo Kecamatan Sarang Kabupaten Rembang 59274',
-    school_contact: 'Email: maattaujihsarang@gmail.com',
+    foundation_name: 'YAYASAN MUWAJJIHUL ULUM ASY-SYARIYYAH',
+    school_name: 'MADRASAH ALIYAH AT-TAUJIH SARANG',
+    school_address: 'Dk. Pulorejo, Desa Bajingjowo, Kec. Sarang, Kab. Rembang, Jawa Tengah (59274)',
+    school_contact: 'NPSN: 70033117 \u2022 Email: maattaujihsarang@gmail.com',
+    kop_align: 'center_page',
+    header_font_family: 'sans',
+    logo_size_px: 64,
+    logo_text_gap_px: 14,
+    logo_offset_x_px: 0,
+    header_offset_x_px: 0,
+    header_font_scale_pct: 100,
+    header_line_gap_px: 2,
+    header_line_style: 'double',
+    header_line_top_gap_px: 8,
+    header_line_bottom_gap_px: 12,
     principal_title: 'Kepala Madrasah',
     principal_name: 'Moch. Iqnaul Badril Falah, S.Ag',
     principal_nip: '',
@@ -34,7 +41,7 @@
   };
 
   let currentSettings = Object.assign({}, DEFAULTS);
-  const assetDataCache = {}; // url -> dataUrl (trimmed for logo)
+  const assetDataCache = {}; // url -> dataUrl
   const assetImgCache = {};  // url -> HTMLImageElement / canvas
   const qrRenderCache = {};  // cacheKey -> dataUrl
   let preloadPromise = null;
@@ -49,6 +56,13 @@
       .replace(/'/g, '&#39;');
   }
 
+  function clampNum(val, min, max, fallback) {
+    if (val === undefined || val === null || val === '') return fallback;
+    const n = Number(val);
+    if (!Number.isFinite(n)) return fallback;
+    return Math.min(max, Math.max(min, Math.round(n)));
+  }
+
   function resolveUrl(src) {
     const s = String(src || '').trim();
     if (!s) return '';
@@ -60,10 +74,6 @@
     }
   }
 
-  /**
-   * Trims excess transparent margin around the logo crest so the emblem fills
-   * the Kop and QR badge cleanly without appearing tiny.
-   */
   function buildTrimmedCanvas(img, trimTransparent) {
     const w = img.naturalWidth || img.width || 256;
     const h = img.naturalHeight || img.height || 256;
@@ -104,7 +114,7 @@
         return out;
       }
     } catch (_) {
-      // Cross-origin image fallback uses raw canvas/src
+      // Cross-origin fallback
     }
     return raw;
   }
@@ -206,7 +216,7 @@
 
   function computeVerificationCode(docTitle, cfg) {
     const seed = [
-      String(cfg.school_npsn || '70033117'),
+      '70033117',
       String(cfg.principal_name || ''),
       String(cfg.principal_title || ''),
       String(docTitle || 'Dokumen Resmi SIMATA'),
@@ -229,7 +239,7 @@
     if (verifyUrl) return verifyUrl.slice(0, 260);
     const code = computeVerificationCode(docTitle, cfg);
     const parts = [
-      'TTE MA At-Taujih (' + (cfg.school_npsn || '70033117') + ')',
+      'TTE MA At-Taujih (70033117)',
       'Kode: ' + code,
       'Oleh: ' + String(cfg.principal_name || DEFAULTS.principal_name).slice(0, 48),
       'Dok: ' + String(docTitle || 'Dokumen Resmi SIMATA').slice(0, 48)
@@ -238,10 +248,6 @@
     return parts.join('\n');
   }
 
-  /**
-   * Generates a QR matrix element reliably via QRCode.js, iterating through error
-   * correction levels so longer payloads never trigger a fatal code-length overflow.
-   */
   function createQrMatrixSource(payload, fallbackCode) {
     if (typeof document === 'undefined' || typeof window.QRCode !== 'function') {
       return null;
@@ -286,7 +292,7 @@
               return copy;
             }
           } catch (_) {
-            // Retry with lower error correction level or shorter payload
+            // Retry next level
           }
         }
       }
@@ -345,9 +351,7 @@
           ctx.stroke();
           const pad = Math.max(2, Math.round(badgeS * 0.1));
           ctx.drawImage(logoImg, bx + pad, by + pad, badgeS - pad * 2, badgeS - pad * 2);
-        } catch (_) {
-          // Safe fallback: QR remains intact even without crest image
-        }
+        } catch (_) {}
       }
 
       if (style === 'tte_compact') {
@@ -372,60 +376,77 @@
     }
   }
 
-  function formatEmailContactHtml(rawContact) {
-    const text = String(rawContact || '').trim();
-    if (!text) return '';
-    // Highlight email part in classic Word-style blue while keeping safe HTML escaping
-    const match = text.match(/^(Email\s*:\s*)(.+)$/i);
-    if (match) {
-      return esc(match[1]) + '<span class="simata-kop-email">' + esc(match[2].trim()) + '</span>';
+  function renderKopDividerHtml(lineStyle, topGapPx, bottomGapPx) {
+    const mt = topGapPx;
+    const mb = bottomGapPx;
+    if (lineStyle === 'none') {
+      return '<div style="height:0;margin-top:' + mt + 'px;margin-bottom:' + mb + 'px;"></div>';
     }
-    return esc(text);
+    if (lineStyle === 'thick_thin') {
+      return '<div class="simata-kop-divider" style="border-top:2.8px solid #0f172a;border-bottom:1px solid #0f172a;height:3px;margin-top:' + mt + 'px;margin-bottom:' + mb + 'px;"></div>';
+    }
+    if (lineStyle === 'solid') {
+      return '<div class="simata-kop-divider" style="border-bottom:2px solid #0f172a;height:0;margin-top:' + mt + 'px;margin-bottom:' + mb + 'px;"></div>';
+    }
+    return '<div class="simata-kop-divider" style="border-bottom:3px double #0f172a;height:0;margin-top:' + mt + 'px;margin-bottom:' + mb + 'px;"></div>';
   }
 
   function renderKopHtml(opts) {
     const o = opts || {};
     const cfg = getMergedSettings(o.cfg);
     const compact = Boolean(o.compact);
+    const k = compact ? 0.88 : 1;
+
     const showLogo = cfg.show_logo !== false && Boolean(cfg.logo_url);
     const logoSrc = showLogo ? getCachedAssetSrc(cfg.logo_url, true) : '';
 
-    // Balanced symmetrical grid track width keeps Kop text 100% centered on the same vertical axis as doc title
-    const foundHtml = cfg.foundation_name
-      ? '<div class="simata-kop-found">' + esc(cfg.foundation_name) + '</div>'
-      : '';
-    const akredHtml = cfg.school_accreditation
-      ? '<div class="simata-kop-akred">' + esc(cfg.school_accreditation) + '</div>'
-      : '';
+    const logoPx = Math.round(clampNum(cfg.logo_size_px, 40, 130, 64) * k);
+    const gapPx = Math.round(clampNum(cfg.logo_text_gap_px, 4, 40, 14) * k);
+    const logoOffsetX = clampNum(cfg.logo_offset_x_px, -40, 80, 0);
+    const textOffsetX = clampNum(cfg.header_offset_x_px, -80, 80, 0);
+    const fontScale = clampNum(cfg.header_font_scale_pct, 75, 140, 100) / 100;
+    const lineGap = clampNum(cfg.header_line_gap_px, 0, 14, 2);
+    const lineTopGap = clampNum(cfg.header_line_top_gap_px, 2, 28, 8);
+    const lineBottomGap = clampNum(cfg.header_line_bottom_gap_px, 4, 30, 12);
+    const kopAlign = cfg.kop_align || 'center_page';
+    const fontFam = cfg.header_font_family === 'serif'
+      ? '"Times New Roman", Times, Georgia, serif'
+      : '"Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif';
 
-    const nsmTxt = cfg.school_nsm ? 'NSM : ' + esc(cfg.school_nsm) : '';
-    const npsnTxt = cfg.school_npsn ? 'NPSN : ' + esc(cfg.school_npsn) : '';
-    const regHtml = (nsmTxt || npsnTxt)
-      ? '<div class="simata-kop-reg">' +
-          (nsmTxt ? '<span>' + nsmTxt + '</span>' : '') +
-          (npsnTxt ? '<span>' + npsnTxt + '</span>' : '') +
+    const foundSize = (8.8 * k * fontScale).toFixed(2) + 'pt';
+    const schoolSize = (13.8 * k * fontScale).toFixed(2) + 'pt';
+    const addrSize = (8.2 * k * fontScale).toFixed(2) + 'pt';
+    const contactSize = (8.2 * k * fontScale).toFixed(2) + 'pt';
+
+    const textAlignCss = kopAlign === 'left' ? 'left' : 'center';
+    let gridColsCss = 'minmax(0, 1fr)';
+    if (showLogo) {
+      gridColsCss = (kopAlign === 'center_page')
+        ? (logoPx + 'px minmax(0, 1fr) ' + logoPx + 'px')
+        : (logoPx + 'px minmax(0, 1fr)');
+    }
+
+    const logoCellHtml = showLogo
+      ? '<div class="simata-kop-logo" style="width:' + logoPx + 'px;height:' + logoPx + 'px;transform:translateX(' + logoOffsetX + 'px);">' +
+          '<img src="' + esc(logoSrc) + '" alt="Logo Madrasah" />' +
         '</div>'
       : '';
-
-    const aktaHtml = cfg.school_akta
-      ? '<div class="simata-kop-akta">' + esc(cfg.school_akta) + '</div>'
-      : '';
-
-    const leftCell = showLogo
-      ? '<div class="simata-kop-logo"><img src="' + esc(logoSrc) + '" alt="Logo MA At-Taujih" /></div>'
-      : '';
-    const rightCell = showLogo
+    const spacerCellHtml = (showLogo && kopAlign === 'center_page')
       ? '<div class="simata-kop-spacer" aria-hidden="true"></div>'
       : '';
 
-    const addrTxt = cfg.school_address ? esc(cfg.school_address) : '';
-    const contactHtml = formatEmailContactHtml(cfg.school_contact);
-    const addrBarHtml = (addrTxt || contactHtml)
-      ? '<div class="simata-kop-addrbar' + (!addrTxt || !contactHtml ? ' is-single' : '') + '">' +
-          (addrTxt ? '<span class="simata-kop-addr">' + addrTxt + '</span>' : '') +
-          (contactHtml ? '<span class="simata-kop-contact">' + contactHtml + '</span>' : '') +
-        '</div>'
-      : '<div class="simata-kop-rule"></div>';
+    const foundHtml = cfg.foundation_name
+      ? '<div class="simata-kop-found" style="font-size:' + foundSize + ';">' + esc(cfg.foundation_name) + '</div>'
+      : '';
+    const schoolHtml = '<div class="simata-kop-school" style="font-size:' + schoolSize + ';">' + esc(cfg.school_name) + '</div>';
+    const addrHtml = cfg.school_address
+      ? '<div class="simata-kop-addr" style="font-size:' + addrSize + ';">' + esc(cfg.school_address) + '</div>'
+      : '';
+    const contactHtml = cfg.school_contact
+      ? '<div class="simata-kop-contact" style="font-size:' + contactSize + ';">' + esc(cfg.school_contact) + '</div>'
+      : '';
+
+    const dividerHtml = renderKopDividerHtml(cfg.header_line_style || 'double', lineTopGap, lineBottomGap);
 
     const docHeadHtml = o.title
       ? '<div class="simata-doc-title-wrap' + (compact ? ' is-compact' : '') + '">' +
@@ -434,19 +455,18 @@
         '</div>'
       : '';
 
-    return '<div class="simata-kop-wrap' + (compact ? ' is-compact' : '') + (showLogo ? ' has-logo' : '') + '">' +
-        '<div class="simata-kop">' +
-          leftCell +
-          '<div class="simata-kop-center">' +
+    return '<div class="simata-kop-wrap' + (compact ? ' is-compact' : '') + '">' +
+        '<div class="simata-kop" style="display:grid;grid-template-columns:' + gridColsCss + ';align-items:center;gap:' + gapPx + 'px;font-family:' + fontFam + ';">' +
+          logoCellHtml +
+          '<div class="simata-kop-center" style="text-align:' + textAlignCss + ';display:flex;flex-direction:column;gap:' + lineGap + 'px;transform:translateX(' + textOffsetX + 'px);">' +
             foundHtml +
-            '<div class="simata-kop-school">' + esc(cfg.school_name) + '</div>' +
-            akredHtml +
-            regHtml +
-            aktaHtml +
+            schoolHtml +
+            addrHtml +
+            contactHtml +
           '</div>' +
-          rightCell +
+          spacerCellHtml +
         '</div>' +
-        addrBarHtml +
+        dividerHtml +
         docHeadHtml +
       '</div>';
   }
@@ -534,33 +554,19 @@
 
   function getSharedPrintCss() {
     return [
-      '.simata-kop-wrap { width: 100%; margin: 0 0 12px 0; color: #0f172a; box-sizing: border-box; }',
+      '.simata-kop-wrap { width: 100%; margin: 0 0 10px 0; color: #0f172a; box-sizing: border-box; }',
       '.simata-kop-wrap * { box-sizing: border-box; }',
-      '.simata-kop { display: grid; grid-template-columns: 1fr; align-items: center; width: 100%; padding-bottom: 5px; font-family: "Times New Roman", Times, Georgia, serif; }',
-      '.simata-kop-wrap.has-logo .simata-kop { grid-template-columns: 96px minmax(0, 1fr) 96px; gap: 10px; }',
-      '.simata-kop-wrap.is-compact.has-logo .simata-kop { grid-template-columns: 78px minmax(0, 1fr) 78px; gap: 8px; }',
-      '.simata-kop-logo { width: 92px; height: 92px; display: flex; align-items: center; justify-content: center; margin: 0 auto; }',
-      '.simata-kop-wrap.is-compact .simata-kop-logo { width: 74px; height: 74px; }',
+      '.simata-kop { width: 100%; }',
+      '.simata-kop-logo { flex-shrink: 0; display: flex; align-items: center; justify-content: center; margin: 0 auto; }',
       '.simata-kop-logo img { width: 100%; height: 100%; object-fit: contain; display: block; }',
       '.simata-kop-spacer { width: 100%; min-height: 1px; }',
-      '.simata-kop-center { width: 100%; text-align: center; line-height: 1.24; min-width: 0; color: #0f172a; }',
-      '.simata-kop-found { font-size: 11.5pt; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; color: #0f172a; }',
-      '.simata-kop-school { font-size: 14pt; font-weight: 800; letter-spacing: 0.02em; text-transform: uppercase; color: #0f172a; margin: 1px 0; }',
-      '.simata-kop-akred { font-size: 10.5pt; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; color: #0f172a; }',
-      '.simata-kop-reg { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 6px 28px; font-size: 9.5pt; font-weight: 500; color: #0f172a; margin-top: 2px; }',
-      '.simata-kop-akta { font-size: 9.2pt; font-weight: 500; color: #0f172a; margin-top: 1px; }',
-      '.simata-kop-wrap.is-compact .simata-kop-found { font-size: 9pt; }',
-      '.simata-kop-wrap.is-compact .simata-kop-school { font-size: 11pt; }',
-      '.simata-kop-wrap.is-compact .simata-kop-akred { font-size: 8.4pt; }',
-      '.simata-kop-wrap.is-compact .simata-kop-reg { font-size: 7.8pt; gap: 4px 18px; }',
-      '.simata-kop-wrap.is-compact .simata-kop-akta { font-size: 7.2pt; }',
-      '.simata-kop-addrbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px 12px; width: 100%; border: 1.6px solid #0f172a; padding: 4px 10px; margin-top: 4px; font-family: "Times New Roman", Times, Georgia, serif; font-size: 8.6pt; font-style: italic; color: #0f172a; background: #ffffff; }',
-      '.simata-kop-addrbar.is-single { justify-content: center; text-align: center; }',
-      '.simata-kop-wrap.is-compact .simata-kop-addrbar { font-size: 7.3pt; padding: 3px 8px; }',
-      '.simata-kop-email { color: #1d4ed8; font-style: italic; }',
-      '.simata-kop-rule { border-bottom: 2.5px double #0f172a; margin-top: 4px; }',
-      '.simata-doc-title-wrap { width: 100%; text-align: center; margin-top: 10px; }',
-      '.simata-doc-title-wrap.is-compact { margin-top: 8px; }',
+      '.simata-kop-center { min-width: 0; line-height: 1.24; color: #0f172a; }',
+      '.simata-kop-found { font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #334155; }',
+      '.simata-kop-school { font-weight: 800; letter-spacing: 0.025em; text-transform: uppercase; color: #0f172a; }',
+      '.simata-kop-addr { color: #334155; }',
+      '.simata-kop-contact { font-weight: 600; color: #334155; }',
+      '.simata-kop-divider { width: 100%; }',
+      '.simata-doc-title-wrap { width: 100%; text-align: center; }',
       '.simata-doc-title { font-size: 11.5pt; font-weight: 800; text-transform: uppercase; letter-spacing: 0.02em; color: #0f172a; }',
       '.simata-doc-title-wrap.is-compact .simata-doc-title { font-size: 10.5pt; }',
       '.simata-doc-subtitle { font-size: 9pt; font-weight: 600; color: #334155; margin-top: 2px; }',
@@ -612,10 +618,10 @@
         cfg: cfg
       }) +
       '<p style="font-size:10pt;color:#334155;">Berikut adalah contoh hasil cetak otomatis dengan ukuran kertas <strong>' +
-      esc(cfg.default_paper_size) + '</strong>, margin <strong>' + esc(cfg.margin_mm) + ' mm</strong>, dan mode tanda tangan <strong>' + esc(String(cfg.signature_mode || 'qr').toUpperCase()) + '</strong>.</p>' +
+      esc(cfg.default_paper_size) + '</strong>, margin <strong>' + esc(cfg.margin_mm) + ' mm</strong>, logo <strong>' + esc(cfg.logo_size_px) + ' px</strong>, dan mode tanda tangan <strong>' + esc(String(cfg.signature_mode || 'qr').toUpperCase()) + '</strong>.</p>' +
       '<table><thead><tr><th style="width:45px;text-align:center;">No</th><th>Uraian Pengaturan</th><th>Nilai Aktif</th></tr></thead>' +
       '<tbody>' +
-        '<tr><td style="text-align:center;">1</td><td>Logo Madrasah</td><td>' + (cfg.show_logo ? 'Ditampilkan besar & proporsional di Kop Surat' : 'Disembunyikan') + '</td></tr>' +
+        '<tr><td style="text-align:center;">1</td><td>Logo &amp; Tata Letak Kop</td><td>' + (cfg.show_logo ? ('Logo ' + esc(cfg.logo_size_px) + 'px') : 'Logo disembunyikan') + ' &bull; ' + esc(cfg.kop_align) + ' &bull; Skala ' + esc(cfg.header_font_scale_pct) + '%</td></tr>' +
         '<tr><td style="text-align:center;">2</td><td>Pejabat Penandatangan</td><td>' + esc(cfg.principal_name) + '</td></tr>' +
         '<tr><td style="text-align:center;">3</td><td>Model Tanda Tangan</td><td>' + esc(cfg.signature_mode) + ' (' + esc(cfg.qr_style) + ')</td></tr>' +
       '</tbody></table>' +

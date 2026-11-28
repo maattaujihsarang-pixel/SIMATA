@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="/css/style.css?v=bug67pb">
   <link rel="stylesheet" href="/css/notifications.css?v=bug66_notif3">
   <link rel="stylesheet" href="/css/finance.css">
-  <link rel="stylesheet" href="/css/grades.css?v=bug74q">
+  <link rel="stylesheet" href="/css/grades.css?v=bug74r">
   <style>
 /**
  * SIMATA — Mobile Responsive Stylesheet
@@ -827,10 +827,10 @@ html, body {
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
   <!-- QRCode.js: QR Code generator library for Student QR Preview & Print -->
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-  <script src="/js/simata-client.js?v=bug74q"></script>
-  <script src="/js/print-helper.js?v=bug74q"></script>
+  <script src="/js/simata-client.js?v=bug74r"></script>
+  <script src="/js/print-helper.js?v=bug74r"></script>
   <script src="/js/notifications.js?v=bug65_2"></script>
-  <script src="/js/grades-module.js?v=bug74q"></script>
+  <script src="/js/grades-module.js?v=bug74r"></script>
 </head>
 
 
@@ -6715,15 +6715,18 @@ html, body {
                     .prt-cfg-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
                     .prt-cfg-field { display:flex; flex-direction:column; gap:5px; }
                     .prt-cfg-field label { font-size:12px; font-weight:700; color:#334155; }
-                    .prt-cfg-field input, .prt-cfg-field select { padding:9px 11px; border:1px solid #cbd5e1; border-radius:9px; font-size:13px; color:#0f172a; background:#fff; width:100%; box-sizing:border-box; }
+                    .prt-cfg-field input:not([type="range"]), .prt-cfg-field select { padding:9px 11px; border:1px solid #cbd5e1; border-radius:9px; font-size:13px; color:#0f172a; background:#fff; width:100%; box-sizing:border-box; }
                     .prt-cfg-field input:focus, .prt-cfg-field select:focus { outline:none; border-color:#166534; box-shadow:0 0 0 3px rgba(22,101,52,0.1); }
+                    .prt-range-head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+                    .prt-range-val { font-size:11.5px; font-weight:700; color:#166534; background:#dcfce7; border:1px solid #bbf7d0; padding:1px 8px; border-radius:999px; font-variant-numeric:tabular-nums; }
+                    .prt-cfg-field input[type="range"] { width:100%; accent-color:#166534; cursor:pointer; margin:2px 0; }
                     .prt-sig-mode-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
                     .prt-sig-mode-btn { display:flex; flex-direction:column; align-items:flex-start; gap:2px; padding:10px 12px; border:1.5px solid #e2e8f0; border-radius:10px; background:#fff; cursor:pointer; text-align:left; transition:all 0.15s ease; }
                     .prt-sig-mode-btn:hover { border-color:#86efac; background:#f0fdf4; }
                     .prt-sig-mode-btn.is-active { border-color:#166534; background:#f0fdf4; box-shadow:0 0 0 2px rgba(22,101,52,0.12); }
                     .prt-sig-mode-btn strong { font-size:12.5px; color:#0f172a; }
                     .prt-sig-mode-btn small { font-size:11px; color:#64748b; line-height:1.3; }
-                    .prt-preview-sheet { background:#fff; border:1px solid #cbd5e1; border-radius:10px; padding:16px 18px; box-shadow:0 2px 6px rgba(15,23,42,0.05); color:#0f172a; }
+                    .prt-preview-sheet { background:#fff; border:1px solid #cbd5e1; border-radius:10px; padding:16px 18px; box-shadow:0 2px 6px rgba(15,23,42,0.05); color:#0f172a; overflow:hidden; }
                     @media (max-width: 720px) {
                       .prt-cfg-grid, .prt-sig-mode-grid { grid-template-columns:1fr; }
                     }
@@ -6760,37 +6763,118 @@ html, body {
                       <div class="prt-cfg-grid">
                         <div class="prt-cfg-field">
                           <label for="prtCfg_foundationName">Nama Yayasan (Baris Atas Kop)</label>
-                          <input type="text" id="prtCfg_foundationName" placeholder="YAYASAN MUWAJJIHUL ULUM ASY SYARIYYAH" oninput="renderPrintSettingsLivePreview()" />
+                          <input type="text" id="prtCfg_foundationName" placeholder="YAYASAN MUWAJJIHUL ULUM ASY-SYARIYYAH" oninput="renderPrintSettingsLivePreview()" />
                         </div>
                         <div class="prt-cfg-field">
                           <label for="prtCfg_schoolName">Nama Madrasah / Satuan Pendidikan</label>
-                          <input type="text" id="prtCfg_schoolName" placeholder="MADRASAH ALIYAH AT-TAUJIH" oninput="renderPrintSettingsLivePreview()" />
-                        </div>
-                        <div class="prt-cfg-field">
-                          <label for="prtCfg_schoolAccreditation">Status Akreditasi</label>
-                          <input type="text" id="prtCfg_schoolAccreditation" placeholder="TERAKREDITASI &ldquo;A&rdquo;" oninput="renderPrintSettingsLivePreview()" />
-                        </div>
-                        <div class="prt-cfg-grid" style="gap:10px;">
-                          <div class="prt-cfg-field">
-                            <label for="prtCfg_schoolNsm">NSM</label>
-                            <input type="text" id="prtCfg_schoolNsm" placeholder="131233170020" oninput="renderPrintSettingsLivePreview()" />
-                          </div>
-                          <div class="prt-cfg-field">
-                            <label for="prtCfg_schoolNpsn">NPSN</label>
-                            <input type="text" id="prtCfg_schoolNpsn" placeholder="70033117" oninput="renderPrintSettingsLivePreview()" />
-                          </div>
-                        </div>
-                        <div class="prt-cfg-field" style="grid-column:1 / -1;">
-                          <label for="prtCfg_schoolAkta">Akta Notaris / SK Pendirian</label>
-                          <input type="text" id="prtCfg_schoolAkta" placeholder="Akta Notaris : No.AHU-00009450.AH.01.04.Tahun 2021 Tanggal 06 April 2021" oninput="renderPrintSettingsLivePreview()" />
+                          <input type="text" id="prtCfg_schoolName" placeholder="MADRASAH ALIYAH AT-TAUJIH SARANG" oninput="renderPrintSettingsLivePreview()" />
                         </div>
                         <div class="prt-cfg-field">
                           <label for="prtCfg_schoolAddress">Alamat Lengkap Madrasah</label>
-                          <input type="text" id="prtCfg_schoolAddress" placeholder="Jl. Dk. Pulorejo Desa Bajingjowo Kecamatan Sarang Kabupaten Rembang 59274" oninput="renderPrintSettingsLivePreview()" />
+                          <input type="text" id="prtCfg_schoolAddress" placeholder="Dk. Pulorejo, Desa Bajingjowo, Kec. Sarang, Kab. Rembang, Jawa Tengah (59274)" oninput="renderPrintSettingsLivePreview()" />
                         </div>
                         <div class="prt-cfg-field">
-                          <label for="prtCfg_schoolContact">Email / Kontak Kop</label>
-                          <input type="text" id="prtCfg_schoolContact" placeholder="Email: maattaujihsarang@gmail.com" oninput="renderPrintSettingsLivePreview()" />
+                          <label for="prtCfg_schoolContact">NPSN / Kontak / Email</label>
+                          <input type="text" id="prtCfg_schoolContact" placeholder="NPSN: 70033117 &bull; Email: maattaujihsarang@gmail.com" oninput="renderPrintSettingsLivePreview()" />
+                        </div>
+                      </div>
+
+                      <!-- Sub-panel Fleksibel: Ukuran Logo, Teks, Geser & Jarak Garis Header -->
+                      <div style="margin-top:4px;padding:12px 14px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;display:flex;flex-direction:column;gap:12px;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding-bottom:8px;border-bottom:1px solid #f1f5f9;">
+                          <div>
+                            <strong style="font-size:12.5px;color:#0f172a;display:block;">Tata Letak, Ukuran &amp; Jarak Header (Real-time)</strong>
+                            <small style="font-size:11px;color:#64748b;">Geser slider di bawah untuk memperbesar logo/teks, menggeser posisi, atau mengatur jarak garis kop.</small>
+                          </div>
+                          <button type="button" onclick="resetKopStyleDefaults()" style="padding:5px 11px;font-size:11.5px;font-weight:600;border-radius:8px;border:1px solid #cbd5e1;background:#f8fafc;color:#334155;cursor:pointer;">Reset Tata Letak</button>
+                        </div>
+
+                        <div class="prt-cfg-grid">
+                          <div class="prt-cfg-field">
+                            <label for="prtCfg_kopAlign">Posisi Perataan Teks Header</label>
+                            <select id="prtCfg_kopAlign" onchange="renderPrintSettingsLivePreview()">
+                              <option value="center_page">Lurus Tengah Halaman (Simetris)</option>
+                              <option value="center_remain">Tengah Area Samping Logo (Lebar Penuh)</option>
+                              <option value="left">Rata Kiri di Samping Logo</option>
+                            </select>
+                          </div>
+                          <div class="prt-cfg-field">
+                            <label for="prtCfg_headerFontFamily">Gaya Huruf Header</label>
+                            <select id="prtCfg_headerFontFamily" onchange="renderPrintSettingsLivePreview()">
+                              <option value="sans">Modern SIMATA (Sans-Serif)</option>
+                              <option value="serif">Klasik Surat Resmi (Times New Roman)</option>
+                            </select>
+                          </div>
+
+                          <div class="prt-cfg-field">
+                            <div class="prt-range-head">
+                              <label for="prtCfg_logoSizePx">Ukuran Logo Madrasah</label>
+                              <span id="prtCfg_logoSizeVal" class="prt-range-val">64 px</span>
+                            </div>
+                            <input type="range" id="prtCfg_logoSizePx" min="40" max="130" step="2" value="64" oninput="renderPrintSettingsLivePreview()" />
+                          </div>
+                          <div class="prt-cfg-field">
+                            <div class="prt-range-head">
+                              <label for="prtCfg_headerFontScale">Skala Ukuran Teks Header</label>
+                              <span id="prtCfg_headerFontScaleVal" class="prt-range-val">100%</span>
+                            </div>
+                            <input type="range" id="prtCfg_headerFontScale" min="75" max="140" step="5" value="100" oninput="renderPrintSettingsLivePreview()" />
+                          </div>
+
+                          <div class="prt-cfg-field">
+                            <div class="prt-range-head">
+                              <label for="prtCfg_logoTextGapPx">Jarak Logo ke Teks Header</label>
+                              <span id="prtCfg_logoTextGapVal" class="prt-range-val">14 px</span>
+                            </div>
+                            <input type="range" id="prtCfg_logoTextGapPx" min="4" max="40" step="2" value="14" oninput="renderPrintSettingsLivePreview()" />
+                          </div>
+                          <div class="prt-cfg-field">
+                            <div class="prt-range-head">
+                              <label for="prtCfg_headerLineGapPx">Jarak Antar Baris Teks Header</label>
+                              <span id="prtCfg_headerLineGapVal" class="prt-range-val">2 px</span>
+                            </div>
+                            <input type="range" id="prtCfg_headerLineGapPx" min="0" max="14" step="1" value="2" oninput="renderPrintSettingsLivePreview()" />
+                          </div>
+
+                          <div class="prt-cfg-field">
+                            <div class="prt-range-head">
+                              <label for="prtCfg_logoOffsetX">Geser Posisi Logo (Kiri / Kanan)</label>
+                              <span id="prtCfg_logoOffsetXVal" class="prt-range-val">0 px</span>
+                            </div>
+                            <input type="range" id="prtCfg_logoOffsetX" min="-40" max="80" step="2" value="0" oninput="renderPrintSettingsLivePreview()" />
+                          </div>
+                          <div class="prt-cfg-field">
+                            <div class="prt-range-head">
+                              <label for="prtCfg_headerOffsetX">Geser Posisi Teks Header (Kiri / Kanan)</label>
+                              <span id="prtCfg_headerOffsetXVal" class="prt-range-val">0 px</span>
+                            </div>
+                            <input type="range" id="prtCfg_headerOffsetX" min="-80" max="80" step="2" value="0" oninput="renderPrintSettingsLivePreview()" />
+                          </div>
+
+                          <div class="prt-cfg-field">
+                            <label for="prtCfg_headerLineStyle">Model Garis Bawah Header</label>
+                            <select id="prtCfg_headerLineStyle" onchange="renderPrintSettingsLivePreview()">
+                              <option value="double">Garis Ganda Resmi (Standar SIMATA)</option>
+                              <option value="thick_thin">Tebal-Tipis Surat Resmi</option>
+                              <option value="solid">Garis Tunggal Tegas</option>
+                              <option value="none">Tanpa Garis</option>
+                            </select>
+                          </div>
+                          <div class="prt-cfg-field">
+                            <div class="prt-range-head">
+                              <label for="prtCfg_headerLineTopGapPx">Jarak Teks ke Garis Header</label>
+                              <span id="prtCfg_headerLineTopGapVal" class="prt-range-val">8 px</span>
+                            </div>
+                            <input type="range" id="prtCfg_headerLineTopGapPx" min="2" max="28" step="1" value="8" oninput="renderPrintSettingsLivePreview()" />
+                          </div>
+
+                          <div class="prt-cfg-field" style="grid-column:1 / -1;">
+                            <div class="prt-range-head">
+                              <label for="prtCfg_headerLineBottomGapPx">Jarak Garis Header ke Judul Dokumen</label>
+                              <span id="prtCfg_headerLineBottomGapVal" class="prt-range-val">12 px</span>
+                            </div>
+                            <input type="range" id="prtCfg_headerLineBottomGapPx" min="4" max="30" step="1" value="12" oninput="renderPrintSettingsLivePreview()" />
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -30927,20 +31011,32 @@ function collectPrintSettingsFromForm() {
         const el = document.getElementById(id);
         return el ? Boolean(el.checked) : Boolean(fallback);
     };
-    const marginRaw = Number(val('prtCfg_marginMm', String(def.margin_mm || 10)));
-    const marginClamped = Number.isFinite(marginRaw) ? Math.min(20, Math.max(6, Math.round(marginRaw))) : 10;
+    const num = function(id, min, max, fallback) {
+        const el = document.getElementById(id);
+        if (!el) return fallback;
+        const n = Number(el.value);
+        return Number.isFinite(n) ? Math.min(max, Math.max(min, Math.round(n))) : fallback;
+    };
+    const marginClamped = num('prtCfg_marginMm', 6, 20, Number(def.margin_mm || 10));
 
     return {
         show_logo: chk('prtCfg_showLogo', true),
         logo_url: val('prtCfg_logoUrl', def.logo_url || '/assets/logo.png') || '/assets/logo.png',
         foundation_name: val('prtCfg_foundationName', def.foundation_name),
-        school_name: val('prtCfg_schoolName', def.school_name) || 'MADRASAH ALIYAH AT-TAUJIH',
-        school_accreditation: val('prtCfg_schoolAccreditation', def.school_accreditation),
-        school_nsm: val('prtCfg_schoolNsm', def.school_nsm),
-        school_npsn: val('prtCfg_schoolNpsn', def.school_npsn),
-        school_akta: val('prtCfg_schoolAkta', def.school_akta),
+        school_name: val('prtCfg_schoolName', def.school_name) || 'MADRASAH ALIYAH AT-TAUJIH SARANG',
         school_address: val('prtCfg_schoolAddress', def.school_address),
         school_contact: val('prtCfg_schoolContact', def.school_contact),
+        kop_align: val('prtCfg_kopAlign', def.kop_align || 'center_page') || 'center_page',
+        header_font_family: val('prtCfg_headerFontFamily', def.header_font_family || 'sans') === 'serif' ? 'serif' : 'sans',
+        logo_size_px: num('prtCfg_logoSizePx', 40, 130, 64),
+        logo_text_gap_px: num('prtCfg_logoTextGapPx', 4, 40, 14),
+        logo_offset_x_px: num('prtCfg_logoOffsetX', -40, 80, 0),
+        header_offset_x_px: num('prtCfg_headerOffsetX', -80, 80, 0),
+        header_font_scale_pct: num('prtCfg_headerFontScale', 75, 140, 100),
+        header_line_gap_px: num('prtCfg_headerLineGapPx', 0, 14, 2),
+        header_line_style: val('prtCfg_headerLineStyle', def.header_line_style || 'double') || 'double',
+        header_line_top_gap_px: num('prtCfg_headerLineTopGapPx', 2, 28, 8),
+        header_line_bottom_gap_px: num('prtCfg_headerLineBottomGapPx', 4, 30, 12),
         principal_title: val('prtCfg_principalTitle', def.principal_title) || 'Kepala Madrasah',
         principal_name: val('prtCfg_principalName', def.principal_name) || 'Moch. Iqnaul Badril Falah, S.Ag',
         principal_nip: val('prtCfg_principalNip', ''),
@@ -30991,6 +31087,20 @@ function renderPrintSettingsLivePreview() {
     if (badgeEl) badgeEl.textContent = modeLabels[cfg.signature_mode] || 'TTD QR Aktif';
     if (paperBadgeEl) paperBadgeEl.textContent = cfg.default_paper_size + ' \u2022 Margin ' + cfg.margin_mm + ' mm';
 
+    const setBadge = function(id, text) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = text;
+    };
+    const fmtSigned = function(n) { return (n > 0 ? '+' : '') + n + ' px'; };
+    setBadge('prtCfg_logoSizeVal', cfg.logo_size_px + ' px');
+    setBadge('prtCfg_headerFontScaleVal', cfg.header_font_scale_pct + '%');
+    setBadge('prtCfg_logoTextGapVal', cfg.logo_text_gap_px + ' px');
+    setBadge('prtCfg_headerLineGapVal', cfg.header_line_gap_px + ' px');
+    setBadge('prtCfg_logoOffsetXVal', fmtSigned(cfg.logo_offset_x_px));
+    setBadge('prtCfg_headerOffsetXVal', fmtSigned(cfg.header_offset_x_px));
+    setBadge('prtCfg_headerLineTopGapVal', cfg.header_line_top_gap_px + ' px');
+    setBadge('prtCfg_headerLineBottomGapVal', cfg.header_line_bottom_gap_px + ' px');
+
     const thumbEl = document.getElementById('prtCfg_logoThumb');
     if (thumbEl) {
         thumbEl.src = cfg.logo_url || '/assets/logo.png';
@@ -31033,12 +31143,19 @@ function applyPrintSettingsToForm(cfg) {
     setVal('prtCfg_logoUrl', c.logo_url || '/assets/logo.png');
     setVal('prtCfg_foundationName', c.foundation_name);
     setVal('prtCfg_schoolName', c.school_name);
-    setVal('prtCfg_schoolAccreditation', c.school_accreditation);
-    setVal('prtCfg_schoolNsm', c.school_nsm);
-    setVal('prtCfg_schoolNpsn', c.school_npsn);
-    setVal('prtCfg_schoolAkta', c.school_akta);
     setVal('prtCfg_schoolAddress', c.school_address);
     setVal('prtCfg_schoolContact', c.school_contact);
+    setVal('prtCfg_kopAlign', c.kop_align || 'center_page');
+    setVal('prtCfg_headerFontFamily', c.header_font_family === 'serif' ? 'serif' : 'sans');
+    setVal('prtCfg_logoSizePx', c.logo_size_px !== undefined ? c.logo_size_px : 64);
+    setVal('prtCfg_logoTextGapPx', c.logo_text_gap_px !== undefined ? c.logo_text_gap_px : 14);
+    setVal('prtCfg_logoOffsetX', c.logo_offset_x_px !== undefined ? c.logo_offset_x_px : 0);
+    setVal('prtCfg_headerOffsetX', c.header_offset_x_px !== undefined ? c.header_offset_x_px : 0);
+    setVal('prtCfg_headerFontScale', c.header_font_scale_pct !== undefined ? c.header_font_scale_pct : 100);
+    setVal('prtCfg_headerLineGapPx', c.header_line_gap_px !== undefined ? c.header_line_gap_px : 2);
+    setVal('prtCfg_headerLineStyle', c.header_line_style || 'double');
+    setVal('prtCfg_headerLineTopGapPx', c.header_line_top_gap_px !== undefined ? c.header_line_top_gap_px : 8);
+    setVal('prtCfg_headerLineBottomGapPx', c.header_line_bottom_gap_px !== undefined ? c.header_line_bottom_gap_px : 12);
     setVal('prtCfg_principalTitle', c.principal_title);
     setVal('prtCfg_principalName', c.principal_name);
     setVal('prtCfg_principalNip', c.principal_nip);
@@ -31051,6 +31168,26 @@ function applyPrintSettingsToForm(cfg) {
     setChk('prtCfg_showTimestamp', c.show_print_timestamp !== false);
     setVal('prtCfg_footerNote', c.footer_note);
     setPrintSignatureMode(c.signature_mode || 'qr');
+}
+
+function resetKopStyleDefaults() {
+    const def = (window.SimataPrint && window.SimataPrint.DEFAULTS) || {};
+    const setVal = function(id, val) {
+        const el = document.getElementById(id);
+        if (el) el.value = String(val);
+    };
+    setVal('prtCfg_kopAlign', def.kop_align || 'center_page');
+    setVal('prtCfg_headerFontFamily', def.header_font_family || 'sans');
+    setVal('prtCfg_logoSizePx', def.logo_size_px || 64);
+    setVal('prtCfg_logoTextGapPx', def.logo_text_gap_px || 14);
+    setVal('prtCfg_logoOffsetX', def.logo_offset_x_px || 0);
+    setVal('prtCfg_headerOffsetX', def.header_offset_x_px || 0);
+    setVal('prtCfg_headerFontScale', def.header_font_scale_pct || 100);
+    setVal('prtCfg_headerLineGapPx', def.header_line_gap_px || 2);
+    setVal('prtCfg_headerLineStyle', def.header_line_style || 'double');
+    setVal('prtCfg_headerLineTopGapPx', def.header_line_top_gap_px || 8);
+    setVal('prtCfg_headerLineBottomGapPx', def.header_line_bottom_gap_px || 12);
+    renderPrintSettingsLivePreview();
 }
 
 function loadPrintSettingsForm() {
