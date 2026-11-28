@@ -10,29 +10,29 @@
     logo: { offset_x: 0, offset_y: 0 },
     foundation: {
       font_family: 'Plus Jakarta Sans',
-      font_size_pt: 8.8,
+      font_size_pt: 8.5,
       font_weight: 700,
       italic: false,
       uppercase: true,
-      letter_spacing_px: 0.6,
+      letter_spacing_px: 0.4,
       color: '#334155',
       offset_x: 0,
       offset_y: 0
     },
     school: {
       font_family: 'Plus Jakarta Sans',
-      font_size_pt: 13.8,
+      font_size_pt: 13.5,
       font_weight: 800,
       italic: false,
       uppercase: true,
-      letter_spacing_px: 0.4,
+      letter_spacing_px: 0.3,
       color: '#0f172a',
       offset_x: 0,
       offset_y: 0
     },
     address: {
       font_family: 'Plus Jakarta Sans',
-      font_size_pt: 8.2,
+      font_size_pt: 8,
       font_weight: 400,
       italic: false,
       uppercase: false,
@@ -43,7 +43,7 @@
     },
     contact: {
       font_family: 'Plus Jakarta Sans',
-      font_size_pt: 8.2,
+      font_size_pt: 8,
       font_weight: 600,
       italic: false,
       uppercase: false,
@@ -86,10 +86,10 @@
     header_offset_x_px: 0,
     header_offset_y_px: 0,
     header_font_scale_pct: 100,
-    header_line_gap_px: 2,
+    header_line_gap_px: 1,
     header_line_style: 'double',
-    header_line_top_gap_px: 8,
-    header_line_bottom_gap_px: 12,
+    header_line_top_gap_px: 7,
+    header_line_bottom_gap_px: 10,
     kop_elements: cloneKopElements(DEFAULT_KOP_ELEMENTS),
     principal_title: 'Kepala Madrasah',
     principal_name: 'Moch. Iqnaul Badril Falah, S.Ag',
@@ -139,13 +139,13 @@
 
   function fontStackFor(name) {
     switch (String(name || 'Plus Jakarta Sans')) {
-      case 'Times New Roman': return '"Times New Roman", Times, Georgia, serif';
-      case 'Playfair Display': return '"Playfair Display", Georgia, serif';
-      case 'Montserrat': return '"Montserrat", "Plus Jakarta Sans", Arial, sans-serif';
-      case 'Poppins': return '"Poppins", "Plus Jakarta Sans", Arial, sans-serif';
-      case 'Inter': return '"Inter", "Segoe UI", Arial, sans-serif';
+      case 'Times New Roman': return "'Times New Roman', Times, Georgia, serif";
+      case 'Playfair Display': return "'Playfair Display', Georgia, serif";
+      case 'Montserrat': return "'Montserrat', 'Plus Jakarta Sans', Arial, sans-serif";
+      case 'Poppins': return "'Poppins', 'Plus Jakarta Sans', Arial, sans-serif";
+      case 'Inter': return "'Inter', 'Segoe UI', Arial, sans-serif";
       case 'Arial': return 'Arial, Helvetica, sans-serif';
-      default: return '"Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif';
+      default: return "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif";
     }
   }
 
@@ -506,7 +506,7 @@
     if (ox !== 0 || oy !== 0) {
       parts.push('transform:translate(' + ox + 'px,' + oy + 'px)');
     }
-    return parts.join(';') + ';';
+    return (parts.join(';') + ';').replace(/"/g, "'");
   }
 
   function renderKopHtml(opts) {

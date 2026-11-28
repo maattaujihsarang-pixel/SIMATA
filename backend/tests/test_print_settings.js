@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 const http = require('http');
+const vm = require('vm');
 const app = require('../src/app');
 const authService = require('../src/services/auth.service');
 const testDbEngine = require('./test_db_engine');
@@ -75,6 +76,52 @@ async function runPrintSettingsTests() {
   const simataPrintRefsInDashboard = (html.match(/window\.SimataPrint/g) || []).length;
   assert.ok(simataPrintRefsInDashboard >= 12, `Expected >= 12 SimataPrint hooks across dashboard.html printouts + settings, found ${simataPrintRefsInDashboard}`);
   console.log(`1. PASS: Static & print layout contracts verified (${simataPrintRefsInDashboard} SimataPrint hooks in dashboard.html).`);
+
+  // 1b. Runtime DOM/HTML attribute rendering regression test for Studio & Default Kop
+  const sandbox = {
+    location: { origin: 'https://simata-attaujih.my.id' },
+    console
+  };
+  sandbox.window = sandbox;
+  vm.runInNewContext(printHelperJs, sandbox);
+
+  const customKopHtml = sandbox.SimataPrint.renderKopHtml({
+    interactive: true,
+    selectedEl: 'school',
+    cfg: {
+      kop_elements: {
+        school: {
+          font_family: 'Plus Jakarta Sans',
+          font_size_pt: 19,
+          font_weight: 800,
+          italic: true,
+          uppercase: true,
+          letter_spacing_px: 1.6,
+          color: '#166534',
+          offset_x: 10,
+          offset_y: -4
+        }
+      }
+    }
+  });
+  assert.ok(!customKopHtml.includes('style="font-family:"'), 'Inline style must never contain unescaped double quotes closing style attribute');
+  assert.ok(!/style="[^"]*font-family:[^"]*"[A-Za-z]/.test(customKopHtml), 'style="..." attribute must remain intact across font-family declarations');
+  assert.ok(customKopHtml.includes("font-family:'Plus Jakarta Sans'"), 'Custom Kop style must use single quotes around font family names');
+  assert.ok(customKopHtml.includes('font-size:19.00pt'), 'Custom Studio font size 19pt must be rendered in style');
+  assert.ok(customKopHtml.includes('font-weight:800'), 'Custom Studio font weight 800 must be rendered in style');
+  assert.ok(customKopHtml.includes('font-style:italic'), 'Custom Studio italic style must be rendered');
+  assert.ok(customKopHtml.includes('text-transform:uppercase'), 'Custom Studio uppercase style must be rendered');
+  assert.ok(customKopHtml.includes('letter-spacing:1.6px'), 'Custom Studio letter-spacing must be rendered');
+  assert.ok(customKopHtml.includes('color:#166534'), 'Custom Studio text color must be rendered');
+  assert.ok(customKopHtml.includes('transform:translate(10px,-4px)'), 'Custom Studio X/Y nudge transform must be rendered');
+  assert.ok(customKopHtml.includes('data-kop-el="school"'), 'Interactive Studio preview must tag selected element');
+
+  const compactDefaultHtml = sandbox.SimataPrint.renderKopHtml({ compact: true });
+  const schoolMatch = compactDefaultHtml.match(/<div class="simata-kop-school" style="([^"]+)">/);
+  assert.ok(schoolMatch, 'Default compact Kop must emit intact simata-kop-school style attribute');
+  assert.ok(schoolMatch[1].includes('font-size:11.88pt'), `Expected compact school font-size:11.88pt (13.5*0.88), got: ${schoolMatch[1]}`);
+  assert.ok(schoolMatch[1].includes('font-weight:800'), `Expected compact school font-weight:800, got: ${schoolMatch[1]}`);
+  console.log('1b. PASS: Runtime SimataPrint.renderKopHtml style attributes & Studio typography verified.');
 
   // 2. Backend API, RBAC, Validation & DB Persistence Tests
   await testDbEngine.reset();
