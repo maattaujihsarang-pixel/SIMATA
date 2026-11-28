@@ -71,6 +71,7 @@ async function runPrintSettingsTests() {
   assert.ok(html.includes('id="settingsTab_cetak"') && html.includes('id="settingsPanel_cetak"'), 'dashboard.html missing Pengaturan Cetak tab/panel');
   assert.ok(html.includes('id="prtCfgLivePreview"') && html.includes('focusgroup="tablist nomemory"') && html.includes('id="printLayoutStudioDialog"'), 'dashboard.html missing redesigned print tabs or dedicated KTS-style layout studio dialog');
   assert.ok(html.includes('openPrintLayoutStudio') && html.includes('nudgePrintStudioElement') && html.includes("showToast('loading'") && html.includes('savePrintSettingsFromForm'), 'dashboard.html missing studio controls or SIMATA loading toast hook');
+  assert.ok(!html.includes('Butuh Atur Ukuran Logo') && !html.includes('prt-studio-callout'), 'Redundant studio callout box must be removed from dashboard.html');
   assert.ok(html.includes("'cetak'") && html.includes('loadPrintSettingsForm()'), 'switchSettingsCategory must handle cetak tab');
 
   const simataPrintRefsInDashboard = (html.match(/window\.SimataPrint/g) || []).length;
@@ -121,6 +122,7 @@ async function runPrintSettingsTests() {
   assert.ok(schoolMatch, 'Default compact Kop must emit intact simata-kop-school style attribute');
   assert.ok(schoolMatch[1].includes('font-size:11.88pt'), `Expected compact school font-size:11.88pt (13.5*0.88), got: ${schoolMatch[1]}`);
   assert.ok(schoolMatch[1].includes('font-weight:800'), `Expected compact school font-weight:800, got: ${schoolMatch[1]}`);
+  assert.ok(compactDefaultHtml.includes('NSM: 131233170020'), 'Default Kop must include NSM: 131233170020');
   console.log('1b. PASS: Runtime SimataPrint.renderKopHtml style attributes & Studio typography verified.');
 
   // 2. Backend API, RBAC, Validation & DB Persistence Tests
@@ -163,6 +165,7 @@ async function runPrintSettingsTests() {
     assert.strictEqual(guruGet.body.data.logo_size_px, 64);
     assert.strictEqual(guruGet.body.data.kop_elements.school.font_weight, 800);
     assert.strictEqual(guruGet.body.data.kop_elements.divider.thickness_px, 3);
+    assert.ok(guruGet.body.data.school_contact.includes('NSM: 131233170020'), 'Default backend school_contact must include NSM: 131233170020');
 
     // 2c. RBAC: GURU PUT denied
     const guruPut = await reqJson(server, 'PUT', '/api/v1/print-settings', { signature_mode: 'blank' }, guruAuth);

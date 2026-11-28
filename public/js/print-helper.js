@@ -76,7 +76,7 @@
     foundation_name: 'YAYASAN MUWAJJIHUL ULUM ASY-SYARIYYAH',
     school_name: 'MADRASAH ALIYAH AT-TAUJIH SARANG',
     school_address: 'Dk. Pulorejo, Desa Bajingjowo, Kec. Sarang, Kab. Rembang, Jawa Tengah (59274)',
-    school_contact: 'NPSN: 70033117 \u2022 Email: maattaujihsarang@gmail.com',
+    school_contact: 'NSM: 131233170020 \u2022 NPSN: 70033117 \u2022 Email: maattaujihsarang@gmail.com',
     kop_align: 'center_page',
     header_font_family: 'sans',
     logo_size_px: 64,
