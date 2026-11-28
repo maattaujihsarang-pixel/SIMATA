@@ -1487,6 +1487,7 @@
 
     const cleanup = function () {
       document.body.classList.remove('printing-grades-sheet');
+      pageStyle.textContent = '';
       window.removeEventListener('afterprint', cleanup);
     };
     window.addEventListener('afterprint', cleanup);
@@ -1694,34 +1695,91 @@
   function exportLegerCsv() {
     const ov = state.overview;
     if (!ov || !ov.selected_class) return;
+    const cls = ov.selected_class;
+    const p = ov.selected_period || { print_heading: 'HASIL NILAI ASTS GANJIL' };
+    const yr = (ov.active_academic_year ? ov.active_academic_year.academic_year_id : '2026/2027').replace('/', ' - ');
+    const wali = cls.homeroom_teacher_name || '-';
+    const legerTitle = p.print_heading || ('HASIL NILAI ' + (p.short_label || '').toUpperCase());
     const subjects = ov.subjects || [];
     const matrix = ov.matrix || [];
+    const sum = ov.class_summary || {};
     const headers = ['No', 'NIS', 'Nama Siswa'].concat(subjects.map(function (s) { return s.subject_code; }), ['Jumlah', 'Rata-Rata']);
     if (state.showRanking) headers.push('Rangking');
+
+    const columns = [
+      { align: 'center', type: 'int', width: 5.5 },
+      { align: 'center', type: 'text', width: 20 },
+      { align: 'left', type: 'text', width: 28 }
+    ];
+    subjects.forEach(function () {
+      columns.push({ align: 'center', type: 'decimal', width: 7.5 });
+    });
+    columns.push({ align: 'center', type: 'decimal', width: 10.5 });
+    columns.push({ align: 'center', type: 'decimal2', width: 10.5 });
+    if (state.showRanking) columns.push({ align: 'center', type: 'int', width: 10.5 });
+
+    const rows = matrix.map(function (r) {
+      const rowArr = [r.row_no, r.nis || '', r.name || ''];
+      subjects.forEach(function (s) {
+        const c = r.scores && r.scores[s.subject_code];
+        rowArr.push(c && c.score !== null && c.score !== undefined ? c.score : '');
+      });
+      rowArr.push(r.total_score !== null && r.total_score !== undefined ? r.total_score : '');
+      rowArr.push(r.average_score !== null && r.average_score !== undefined ? Number(Number(r.average_score).toFixed(2)) : '');
+      if (state.showRanking) rowArr.push(r.rank || '');
+      return rowArr;
+    });
+
+    const summaryValues = subjects.map(function (s) {
+      const v = ov.subject_averages ? ov.subject_averages[s.subject_code] : null;
+      return v !== null && v !== undefined ? Number(Number(v).toFixed(2)) : '';
+    });
+    summaryValues.push(sum.class_total_average !== null && sum.class_total_average !== undefined ? Number(Number(sum.class_total_average).toFixed(2)) : '');
+    summaryValues.push(sum.class_average !== null && sum.class_average !== undefined ? Number(Number(sum.class_average).toFixed(2)) : '');
+    if (state.showRanking) summaryValues.push('');
+
+    const fileBase = 'Leger_' + (cls.class_name || 'Kelas').replace(/\s+/g, '_') + '_' + state.periodCode;
+    const prt = window.SimataPrint;
+    if (prt && typeof prt.exportFormattedExcel === 'function') {
+      prt.exportFormattedExcel({
+        filename: fileBase + '.xlsx',
+        sheet_name: 'Leger ' + romanClassLevel(cls),
+        title: legerTitle,
+        subtitle: 'MADRASAH ALIYAH AT-TAUJIH \u2022 Tahun Ajaran ' + yr,
+        orientation: 'landscape',
+        meta_rows: [['Kelas : ' + romanClassLevel(cls), 'Wali Kelas : ' + wali]],
+        headers: headers,
+        columns: columns,
+        rows: rows,
+        summary_row: {
+          label: 'NILAI RATA-RATA SATU KELAS / MAPEL',
+          colspan: 3,
+          values: summaryValues
+        },
+        left_signer: {
+          top: 'Mengetahui,',
+          role: 'Wali Kelas',
+          name: wali
+        },
+        include_principal_sig: true
+      }).catch(function () {});
+      return;
+    }
 
     const csvEscape = function (v) {
       const s = String(v === null || v === undefined ? '' : v);
       if (/[",\n;]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
       return s;
     };
-
     const lines = [headers.map(csvEscape).join(',')];
-    matrix.forEach(function (r) {
-      const rowArr = [r.row_no, r.nis, r.name];
-      subjects.forEach(function (s) {
-        const c = r.scores && r.scores[s.subject_code];
-        rowArr.push(c && c.score !== null && c.score !== undefined ? c.score : '');
-      });
-      rowArr.push(r.total_score, r.average_score);
-      if (state.showRanking) rowArr.push(r.rank || '');
+    rows.forEach(function (rowArr) {
       lines.push(rowArr.map(csvEscape).join(','));
     });
-
     const blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'Leger_' + (ov.selected_class.class_name || 'Kelas').replace(/\s+/g, '_') + '_' + state.periodCode + '.csv';
+    a.download = fileBase + '.csv';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

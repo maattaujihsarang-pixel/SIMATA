@@ -19,10 +19,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100..900;1,100..900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=bug74u">
+  <link rel="stylesheet" href="/css/style.css?v=bug74v">
   <link rel="stylesheet" href="/css/notifications.css?v=bug66_notif3">
   <link rel="stylesheet" href="/css/finance.css">
-  <link rel="stylesheet" href="/css/grades.css?v=bug74u">
+  <link rel="stylesheet" href="/css/grades.css?v=bug74v">
   <style>
 /**
  * SIMATA — Mobile Responsive Stylesheet
@@ -827,10 +827,10 @@ html, body {
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
   <!-- QRCode.js: QR Code generator library for Student QR Preview & Print -->
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-  <script src="/js/simata-client.js?v=bug74u"></script>
-  <script src="/js/print-helper.js?v=bug74u"></script>
+  <script src="/js/simata-client.js?v=bug74v"></script>
+  <script src="/js/print-helper.js?v=bug74v"></script>
   <script src="/js/notifications.js?v=bug65_2"></script>
-  <script src="/js/grades-module.js?v=bug74u"></script>
+  <script src="/js/grades-module.js?v=bug74v"></script>
 </head>
 
 
@@ -2363,7 +2363,7 @@ html, body {
                   </button>
                   <button type="button" class="dropdown-menu-item" id="studentExportExcelBtn">
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                    <span>Export Excel (CSV)</span>
+                    <span>Export Excel (.xlsx)</span>
                   </button>
                 </div>
               </div>
@@ -2687,7 +2687,7 @@ html, body {
                   </button>
                   <button type="button" class="dropdown-menu-item" id="teacherExportExcelBtn">
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                    <span>Export Excel (CSV)</span>
+                    <span>Export Excel (.xlsx)</span>
                   </button>
                 </div>
               </div>
@@ -3505,7 +3505,7 @@ html, body {
               </button>
               <button type="button" class="rpt-acad-btn rpt-acad-btn-secondary" id="rptAcadExportCsvBtn">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                <span>Export CSV</span>
+                <span>Unduh Excel (.xlsx)</span>
               </button>
               <button type="button" class="rpt-acad-btn rpt-acad-btn-primary" id="rptAcadPrintBtn">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
@@ -3800,6 +3800,11 @@ html, body {
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
                 <span>Muat Ulang</span>
               </button>
+              <select id="schedPrintOrientation" class="sched-btn" aria-label="Orientasi Cetak Jadwal" title="Pilih Orientasi Kertas Cetak (Lanskap / Potret / Fleksibel)">
+                <option value="landscape" selected>Orientasi: Lanskap</option>
+                <option value="portrait">Orientasi: Potret</option>
+                <option value="browser">Pilih di Dialog Cetak</option>
+              </select>
               <button type="button" class="sched-btn sched-btn-primary" id="schedPrintBtn">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                 <span>Cetak Matriks PDF</span>
@@ -5273,7 +5278,7 @@ html, body {
                   </button>
                   <button type="button" class="dropdown-menu-item" id="masterStudentExportExcelBtn">
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                    <span>Export Excel (CSV)</span>
+                    <span>Export Excel (.xlsx)</span>
                   </button>
                 </div>
               </div>
@@ -5644,7 +5649,7 @@ html, body {
                   </button>
                   <button type="button" class="dropdown-menu-item" id="masterTeacherExportExcelBtn">
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                    <span>Export Excel (CSV)</span>
+                    <span>Export Excel (.xlsx)</span>
                   </button>
                 </div>
               </div>
@@ -6900,6 +6905,15 @@ html, body {
                         <div class="prt-cfg-field">
                           <label for="prtCfg_marginMm">Margin Kertas (mm)</label>
                           <input type="number" id="prtCfg_marginMm" min="6" max="20" step="1" value="10" oninput="renderPrintSettingsLivePreview()" />
+                        </div>
+                        <div class="prt-cfg-field" style="grid-column:1 / -1;">
+                          <label for="prtCfg_orientation">Orientasi Cetak Default (Lanskap / Potret)</label>
+                          <select id="prtCfg_orientation" onchange="renderPrintSettingsLivePreview()">
+                            <option value="auto">Otomatis Sesuai Jenis Dokumen (Jadwal &amp; Leger Lanskap, Rapor Potret)</option>
+                            <option value="browser">Fleksibel (Tampilkan Pilihan Lanskap / Potret di Dialog Browser)</option>
+                            <option value="landscape">Selalu Lanskap (Mendatar)</option>
+                            <option value="portrait">Selalu Potret (Tegak)</option>
+                          </select>
                         </div>
                       </div>
                       <div class="prt-cfg-field">
@@ -9898,6 +9912,37 @@ function exportMasterStudentData(format) {
         ];
     });
     const today = getWibTodayISODate();
+    if (format === 'excel' && window.SimataPrint && typeof window.SimataPrint.exportFormattedExcel === 'function') {
+        const classSel = document.getElementById('masterStudentClassFilter');
+        const classTxt = (classSel && classSel.selectedOptions && classSel.selectedOptions[0] && classSel.value)
+            ? classSel.selectedOptions[0].textContent.trim()
+            : 'Semua Kelas';
+        window.SimataPrint.exportFormattedExcel({
+            filename: 'Daftar_Siswa_' + today + '.xlsx',
+            sheet_name: 'Daftar Siswa',
+            title: 'DAFTAR DATA SISWA',
+            subtitle: 'Kelas: ' + classTxt + ' \u2022 Total: ' + rows.length + ' Siswa',
+            orientation: 'landscape',
+            headers: headers,
+            columns: [
+                { align: 'center', type: 'int', width: 5.5 },
+                { align: 'center', type: 'text', width: 13 },
+                { align: 'center', type: 'text', width: 20 },
+                { align: 'center', type: 'text', width: 14 },
+                { align: 'left', type: 'text', width: 27 },
+                { align: 'center', type: 'text', width: 9 },
+                { align: 'center', type: 'text', width: 12 },
+                { align: 'left', type: 'text', width: 15 },
+                { align: 'center', type: 'text', width: 15 },
+                { align: 'left', type: 'text', width: 32 },
+                { align: 'left', type: 'text', width: 18 },
+                { align: 'center', type: 'text', width: 11 }
+            ],
+            rows: rows,
+            include_principal_sig: true
+        }).catch(function() {});
+        return;
+    }
     const filename = 'Daftar_Siswa_' + today + '.csv';
     exportCsvFile(filename, headers, rows);
 }
@@ -12004,6 +12049,32 @@ function exportMasterTeacherData(format) {
         ];
     });
     const today = getWibTodayISODate();
+    if (format === 'excel' && window.SimataPrint && typeof window.SimataPrint.exportFormattedExcel === 'function') {
+        window.SimataPrint.exportFormattedExcel({
+            filename: 'Daftar_Guru_' + today + '.xlsx',
+            sheet_name: 'Daftar Guru',
+            title: 'DAFTAR DATA GURU & TENAGA KEPENDIDIKAN',
+            subtitle: 'Total: ' + rows.length + ' Guru & Tenaga Kependidikan',
+            orientation: 'landscape',
+            headers: headers,
+            columns: [
+                { align: 'center', type: 'int', width: 5.5 },
+                { align: 'center', type: 'text', width: 13 },
+                { align: 'center', type: 'text', width: 19 },
+                { align: 'center', type: 'text', width: 19 },
+                { align: 'center', type: 'text', width: 18 },
+                { align: 'left', type: 'text', width: 28 },
+                { align: 'center', type: 'text', width: 9 },
+                { align: 'left', type: 'text', width: 20 },
+                { align: 'left', type: 'text', width: 22 },
+                { align: 'center', type: 'text', width: 15 },
+                { align: 'center', type: 'text', width: 11 }
+            ],
+            rows: rows,
+            include_principal_sig: true
+        }).catch(function() {});
+        return;
+    }
     const filename = 'Daftar_Guru_' + today + '.csv';
     exportCsvFile(filename, headers, rows);
 }
@@ -14728,6 +14799,11 @@ function showReportsView() {
         const meta = state.data.meta || {};
         const suffix = (meta.start_date || 'awal') + '_sd_' + (meta.end_date || 'akhir');
         const isDaysMode = (state.unitMode !== 'jp');
+        const unitDesc = isDaysMode ? 'Rekap Harian' : 'Detail Jam Pelajaran (JP)';
+        const periodSubtitle = (meta.academic_year_name ? meta.academic_year_name + ' \u2022 ' : '') +
+            'Periode: ' + fmtIsoDateID(meta.start_date) + ' s.d. ' + fmtIsoDateID(meta.end_date) + ' \u2022 ' + unitDesc;
+        const prt = window.SimataPrint;
+        const useXlsx = Boolean(prt && typeof prt.exportFormattedExcel === 'function');
 
         if (state.activeTab === 'discipline') {
             const rows = getFilteredDisciplineRows().map(function(s) {
@@ -14773,22 +14849,92 @@ function showReportsView() {
             const headers = isDaysMode
                 ? ['NIS', 'NISN', 'Nama Siswa', 'Kelas', 'Wali Kelas', 'Hadir (Hari)', 'Izin (Hari)', 'Sakit (Hari)', 'Alpa (Hari)', 'Bolos (JP)', 'Alpa Harian (Smt)', 'Alpa Jam (7 Hr)', 'Kehadiran (%)', 'Status Disiplin', 'Alasan Pemicu', 'Riwayat Ta\u0027zir']
                 : ['NIS', 'NISN', 'Nama Siswa', 'Kelas', 'Wali Kelas', 'Hadir (JP)', 'Izin (JP)', 'Sakit (JP)', 'Alpa (JP)', 'Alpa Harian (Smt)', 'Alpa Jam (7 Hr)', 'Kehadiran (%)', 'Status Disiplin', 'Alasan Pemicu', 'Riwayat Ta\u0027zir'];
+            if (useXlsx) {
+                const cols = headers.map(function(h, idx) {
+                    if (idx === 0 || idx === 1) return { align: 'center', type: 'text', width: 17 };
+                    if (idx === 2 || idx === 4) return { align: 'left', type: 'text', width: 24 };
+                    if (idx === 3) return { align: 'center', type: 'text', width: 12 };
+                    if (/Alasan|Status/i.test(h)) return { align: 'left', type: 'text', width: 24 };
+                    if (/%/.test(h)) return { align: 'center', type: 'text', width: 13 };
+                    return { align: 'center', type: 'int', width: 12 };
+                });
+                prt.exportFormattedExcel({
+                    filename: 'Laporan_Disiplin_Siswa_' + suffix + '.xlsx',
+                    sheet_name: 'Disiplin Siswa',
+                    title: 'LAPORAN DISIPLIN & KEHADIRAN SISWA',
+                    subtitle: periodSubtitle,
+                    orientation: 'landscape',
+                    headers: headers,
+                    columns: cols,
+                    rows: rows,
+                    include_principal_sig: true
+                }).catch(function() {});
+                return;
+            }
             exportCsvFile('laporan-disiplin-siswa_' + suffix + '.csv', headers, rows);
             return;
         }
         if (state.activeTab === 'teachers') {
+            const headers = ['Nama Guru', 'Jabatan', 'Mapel', 'Target JP/Mg', 'Sesi Jurnal', 'Hadir', 'Izin', 'Sakit', 'Alpa', 'Bukti Foto', 'Materi Terakhir'];
             const rows = getFilteredTeacherRows().map(function(t) {
                 const izinTotal = Number(t.izin_logs || 0) + Number(t.tugas_luar_logs || 0);
                 return [t.name, t.position || '-', t.subject || '-', t.target_weekly_hours, t.total_logs, t.hadir_logs, izinTotal, t.sakit_logs, Number(t.alpa_logs || 0), t.verified_evidence_count, t.latest_materi || '-'];
             });
-            exportCsvFile('laporan-kinerja-guru_' + suffix + '.csv', ['Nama Guru', 'Jabatan', 'Mapel', 'Target JP/Mg', 'Sesi Jurnal', 'Hadir', 'Izin', 'Sakit', 'Alpa', 'Bukti Foto', 'Materi Terakhir'], rows);
+            if (useXlsx) {
+                prt.exportFormattedExcel({
+                    filename: 'Laporan_Kinerja_Guru_' + suffix + '.xlsx',
+                    sheet_name: 'Kinerja Guru',
+                    title: 'LAPORAN KINERJA GURU & JURNAL MENGAJAR',
+                    subtitle: periodSubtitle,
+                    orientation: 'landscape',
+                    headers: headers,
+                    columns: [
+                        { align: 'left', type: 'text', width: 26 },
+                        { align: 'left', type: 'text', width: 18 },
+                        { align: 'left', type: 'text', width: 20 },
+                        { align: 'center', type: 'int', width: 12 },
+                        { align: 'center', type: 'int', width: 11 },
+                        { align: 'center', type: 'int', width: 9 },
+                        { align: 'center', type: 'int', width: 9 },
+                        { align: 'center', type: 'int', width: 9 },
+                        { align: 'center', type: 'int', width: 9 },
+                        { align: 'center', type: 'int', width: 11 },
+                        { align: 'left', type: 'text', width: 28 }
+                    ],
+                    rows: rows,
+                    include_principal_sig: true
+                }).catch(function() {});
+                return;
+            }
+            exportCsvFile('laporan-kinerja-guru_' + suffix + '.csv', headers, rows);
             return;
         }
         if (state.activeTab === 'audit') {
+            const headers = ['Kategori', 'Nama', 'Kelas/Jabatan', 'Status', 'Item Kurang'];
             const rows = getFilteredAuditRows().map(function(r) {
                 return [r.entity_type === 'STUDENT' ? 'Siswa' : 'Guru', r.name, r.subtitle || '-', r.is_complete ? 'Lengkap' : 'Belum Lengkap', (r.missing_items || []).join('; ') || '-'];
             });
-            exportCsvFile('laporan-kelengkapan-berkas_' + suffix + '.csv', ['Kategori', 'Nama', 'Kelas/Jabatan', 'Status', 'Item Kurang'], rows);
+            if (useXlsx) {
+                prt.exportFormattedExcel({
+                    filename: 'Laporan_Kelengkapan_Berkas_' + suffix + '.xlsx',
+                    sheet_name: 'Audit Berkas',
+                    title: 'LAPORAN KELENGKAPAN BERKAS AKADEMIK',
+                    subtitle: periodSubtitle,
+                    orientation: 'landscape',
+                    headers: headers,
+                    columns: [
+                        { align: 'center', type: 'text', width: 12 },
+                        { align: 'left', type: 'text', width: 28 },
+                        { align: 'left', type: 'text', width: 22 },
+                        { align: 'center', type: 'text', width: 16 },
+                        { align: 'left', type: 'text', width: 34 }
+                    ],
+                    rows: rows,
+                    include_principal_sig: true
+                }).catch(function() {});
+                return;
+            }
+            exportCsvFile('laporan-kelengkapan-berkas_' + suffix + '.csv', headers, rows);
             return;
         }
         const perClassRows = (state.data.per_class || []).map(function(c) {
@@ -14801,6 +14947,26 @@ function showReportsView() {
         const classCsvHeaders = isDaysMode
             ? ['Kelas', 'Wali Kelas', 'Siswa Aktif', 'Hadir (Hari)', 'Izin (Hari)', 'Sakit (Hari)', 'Alpa (Hari)', 'Bolos (JP)', 'Persentase Hadir (%)']
             : ['Kelas', 'Wali Kelas', 'Siswa Aktif', 'Hadir (JP)', 'Izin (JP)', 'Sakit (JP)', 'Alpa (JP)', 'Persentase Hadir (%)'];
+        if (useXlsx) {
+            const cols = classCsvHeaders.map(function(h, idx) {
+                if (idx === 0) return { align: 'center', type: 'text', width: 14 };
+                if (idx === 1) return { align: 'left', type: 'text', width: 26 };
+                if (/%/.test(h)) return { align: 'center', type: 'text', width: 18 };
+                return { align: 'center', type: 'int', width: 13 };
+            });
+            prt.exportFormattedExcel({
+                filename: 'Laporan_Ringkasan_Akademik_' + suffix + '.xlsx',
+                sheet_name: 'Ringkasan Akademik',
+                title: 'LAPORAN RINGKASAN AKADEMIK PER KELAS',
+                subtitle: periodSubtitle,
+                orientation: 'landscape',
+                headers: classCsvHeaders,
+                columns: cols,
+                rows: perClassRows,
+                include_principal_sig: true
+            }).catch(function() {});
+            return;
+        }
         exportCsvFile('laporan-ringkasan-akademik_' + suffix + '.csv', classCsvHeaders, perClassRows);
     }
 
@@ -16401,9 +16567,31 @@ function showSchedulesView(opts) {
                 '</div>' +
             '</div>';
 
+        const oriSel = document.getElementById('schedPrintOrientation');
+        const oriChoice = oriSel ? oriSel.value : 'landscape';
+        const effectiveOri = (oriChoice === 'portrait' || oriChoice === 'browser') ? oriChoice : 'landscape';
+
+        let schedPageStyle = document.getElementById('schedDynamicPrintPageStyle');
+        if (!schedPageStyle) {
+            schedPageStyle = document.createElement('style');
+            schedPageStyle.id = 'schedDynamicPrintPageStyle';
+            document.head.appendChild(schedPageStyle);
+        }
+        const dynPageRule = (prt && typeof prt.getPageCss === 'function')
+            ? prt.getPageCss(effectiveOri === 'portrait' ? 'portrait' : 'landscape', null, effectiveOri)
+            : (effectiveOri === 'browser'
+                ? '@page { margin: 7mm; }'
+                : ('@page { size: A4 ' + effectiveOri + '; margin: 6mm 7mm; }'));
+        const portraitLayoutCss = effectiveOri === 'portrait'
+            ? ' .sched-print-shell { grid-template-columns: 1fr !important; } .sched-print-right { break-inside: avoid; }'
+            : '';
+        schedPageStyle.textContent =
+            '@media print { ' + dynPageRule + ' body.simata-printing-schedule #schedPrintSheet { page: auto !important; }' + portraitLayoutCss + ' }';
+
         document.body.classList.add('simata-printing-schedule');
         const cleanup = function() {
             document.body.classList.remove('simata-printing-schedule');
+            if (schedPageStyle) schedPageStyle.textContent = '';
             window.removeEventListener('afterprint', cleanup);
         };
         window.addEventListener('afterprint', cleanup);
@@ -18131,6 +18319,31 @@ function exportStudentAttendanceData(format) {
         ];
     });
     const today = getWibTodayISODate();
+    if (format === 'excel' && window.SimataPrint && typeof window.SimataPrint.exportFormattedExcel === 'function') {
+        window.SimataPrint.exportFormattedExcel({
+            filename: 'Presensi_Siswa_' + today + '.xlsx',
+            sheet_name: 'Presensi Siswa',
+            title: 'REKAP PRESENSI SISWA',
+            subtitle: 'Diekspor dari Menu Presensi Siswa \u2022 ' + rows.length + ' Catatan',
+            orientation: 'landscape',
+            headers: headers,
+            columns: [
+                { align: 'center', type: 'int', width: 5.5 },
+                { align: 'center', type: 'text', width: 16 },
+                { align: 'center', type: 'text', width: 14 },
+                { align: 'center', type: 'text', width: 19 },
+                { align: 'left', type: 'text', width: 27 },
+                { align: 'center', type: 'text', width: 12 },
+                { align: 'center', type: 'text', width: 11 },
+                { align: 'center', type: 'text', width: 12 },
+                { align: 'center', type: 'text', width: 10 },
+                { align: 'left', type: 'text', width: 26 }
+            ],
+            rows: rows,
+            include_principal_sig: true
+        }).catch(function() {});
+        return;
+    }
     const filename = 'Presensi_Siswa_' + today + '.csv';
     exportCsvFile(filename, headers, rows);
 }
@@ -19746,6 +19959,32 @@ function exportTeacherAttendanceData(format) {
         ];
     });
     const today = getWibTodayISODate();
+    if (format === 'excel' && window.SimataPrint && typeof window.SimataPrint.exportFormattedExcel === 'function') {
+        window.SimataPrint.exportFormattedExcel({
+            filename: 'Presensi_Guru_' + today + '.xlsx',
+            sheet_name: 'Presensi Guru',
+            title: 'REKAP PRESENSI GURU & JURNAL MENGAJAR',
+            subtitle: 'Diekspor dari Menu Presensi Guru \u2022 ' + rows.length + ' Catatan',
+            orientation: 'landscape',
+            headers: headers,
+            columns: [
+                { align: 'center', type: 'int', width: 5.5 },
+                { align: 'center', type: 'text', width: 16 },
+                { align: 'center', type: 'text', width: 14 },
+                { align: 'left', type: 'text', width: 25 },
+                { align: 'center', type: 'text', width: 12 },
+                { align: 'center', type: 'text', width: 10 },
+                { align: 'left', type: 'text', width: 20 },
+                { align: 'left', type: 'text', width: 28 },
+                { align: 'center', type: 'text', width: 12 },
+                { align: 'center', type: 'text', width: 10 },
+                { align: 'left', type: 'text', width: 22 }
+            ],
+            rows: rows,
+            include_principal_sig: true
+        }).catch(function() {});
+        return;
+    }
     const filename = 'Presensi_Guru_' + today + '.csv';
     exportCsvFile(filename, headers, rows);
 }
@@ -31715,6 +31954,7 @@ function collectPrintSettingsFromForm() {
         qr_verify_url: val('prtCfg_qrVerifyUrl', ''),
         show_stamp: chk('prtCfg_showStamp', false),
         default_paper_size: val('prtCfg_paperSize', 'A4') === 'F4' ? 'F4' : 'A4',
+        default_orientation: val('prtCfg_orientation', 'auto') || 'auto',
         margin_mm: marginClamped,
         show_print_timestamp: chk('prtCfg_showTimestamp', true),
         footer_note: val('prtCfg_footerNote', def.footer_note)
@@ -31755,8 +31995,9 @@ function renderPrintSettingsLivePreview() {
         physical: 'TTD Scan Gambar',
         blank: 'TTD Basah Manual'
     };
+    const oriLabels = { auto: 'Otomatis', browser: 'Fleksibel', landscape: 'Lanskap', portrait: 'Potret' };
     if (badgeEl) badgeEl.textContent = modeLabels[cfg.signature_mode] || 'TTD QR Aktif';
-    if (paperBadgeEl) paperBadgeEl.textContent = cfg.default_paper_size + ' \u2022 Margin ' + cfg.margin_mm + ' mm \u2022 Logo ' + (cfg.logo_size_px || 64) + ' px';
+    if (paperBadgeEl) paperBadgeEl.textContent = cfg.default_paper_size + ' (' + (oriLabels[cfg.default_orientation] || 'Otomatis') + ') \u2022 Margin ' + cfg.margin_mm + ' mm \u2022 Logo ' + (cfg.logo_size_px || 64) + ' px';
 
     const thumbEl = document.getElementById('prtCfg_logoThumb');
     if (thumbEl) {
@@ -31817,6 +32058,7 @@ function applyPrintSettingsToForm(cfg) {
     setVal('prtCfg_qrVerifyUrl', c.qr_verify_url);
     setChk('prtCfg_showStamp', c.show_stamp);
     setVal('prtCfg_paperSize', c.default_paper_size === 'F4' ? 'F4' : 'A4');
+    setVal('prtCfg_orientation', c.default_orientation || 'auto');
     setVal('prtCfg_marginMm', c.margin_mm || 10);
     setChk('prtCfg_showTimestamp', c.show_print_timestamp !== false);
     setVal('prtCfg_footerNote', c.footer_note);

@@ -102,6 +102,7 @@
     signature_img: '/assets/kts_signature.png',
     stamp_img: '/assets/kts_stamp.png',
     default_paper_size: 'A4',
+    default_orientation: 'auto',
     margin_mm: 10,
     show_print_timestamp: true,
     footer_note: 'Dokumen ini dicetak secara resmi melalui SIMATA \u2014 MA At-Taujih Sarang'
@@ -676,14 +677,80 @@
     '</div>';
   }
 
-  function getPageCss(orientation, cfgOverride) {
+  function getPageCss(orientation, cfgOverride, explicitOverride) {
     const cfg = getMergedSettings(cfgOverride);
-    const ori = orientation === 'landscape' ? 'landscape' : 'portrait';
     const margin = Number.isFinite(Number(cfg.margin_mm)) ? Number(cfg.margin_mm) : 10;
+    const exp = (explicitOverride === 'landscape' || explicitOverride === 'portrait' || explicitOverride === 'browser')
+      ? explicitOverride
+      : '';
+    const cfgOri = (cfg.default_orientation === 'landscape' || cfg.default_orientation === 'portrait' || cfg.default_orientation === 'browser')
+      ? cfg.default_orientation
+      : 'auto';
+
+    if (exp === 'browser' || (!exp && cfgOri === 'browser')) {
+      return '@page { margin: ' + margin + 'mm; }';
+    }
+
+    let ori;
+    if (exp) {
+      ori = exp;
+    } else if (cfgOri === 'landscape' || cfgOri === 'portrait') {
+      ori = cfgOri;
+    } else {
+      ori = orientation === 'landscape' ? 'landscape' : 'portrait';
+    }
+
     const sizeExpr = cfg.default_paper_size === 'F4'
       ? (ori === 'landscape' ? '330mm 215mm' : '215mm 330mm')
       : ('A4 ' + ori);
     return '@page { size: ' + sizeExpr + '; margin: ' + margin + 'mm; }';
+  }
+
+  async function exportFormattedExcel(opts) {
+    const o = opts || {};
+    const cfg = getMergedSettings(o.cfg);
+    if (!window.simataClient || typeof window.simataClient.exportFormattedExcel !== 'function') {
+      throw new Error('Layanan ekspor Excel belum tersedia.');
+    }
+    if (typeof window.showToast === 'function') {
+      window.showToast('loading', 'Menyiapkan File Excel (.xlsx)...', 'Menerapkan Kop Surat resmi & format tabel SIMATA...');
+    }
+    try {
+      await preloadAssets(cfg);
+      let qrDataUrl = '';
+      const sigMode = cfg.signature_mode || 'qr';
+      if (o.include_principal_sig !== false && (sigMode === 'qr' || sigMode === 'qr_stamp')) {
+        qrDataUrl = buildQrSignatureDataUrl(o.title || 'Dokumen Resmi SIMATA', cfg, formatIndoDateNow());
+      }
+      const payload = {
+        filename: o.filename || 'Laporan_SIMATA.xlsx',
+        sheet_name: o.sheet_name || o.title || 'Laporan SIMATA',
+        title: o.title || 'LAPORAN RESMI SIMATA',
+        subtitle: o.subtitle || '',
+        orientation: o.orientation === 'portrait' ? 'portrait' : 'landscape',
+        meta_rows: Array.isArray(o.meta_rows) ? o.meta_rows : [],
+        headers: Array.isArray(o.headers) ? o.headers : [],
+        columns: Array.isArray(o.columns) ? o.columns : [],
+        rows: Array.isArray(o.rows) ? o.rows : [],
+        summary_row: o.summary_row || null,
+        left_signer: o.left_signer || null,
+        include_principal_sig: o.include_principal_sig !== false,
+        qr_png_data_url: qrDataUrl
+      };
+      const res = await window.simataClient.exportFormattedExcel(payload);
+      if (typeof window.showToast === 'function') {
+        window.showToast('success', 'Excel (.xlsx) Berhasil Diunduh', 'File ' + (res && res.filename ? res.filename : payload.filename) + ' mengikuti Kop & format resmi SIMATA.');
+      }
+      return res;
+    } catch (err) {
+      const msg = (err && err.message) || 'Gagal mengunduh file Excel (.xlsx).';
+      if (typeof window.showToast === 'function') {
+        window.showToast('error', 'Gagal Ekspor Excel', msg);
+      } else {
+        alert(msg);
+      }
+      throw err;
+    }
   }
 
   function getSharedPrintCss() {
@@ -786,7 +853,8 @@
     getPageCss: getPageCss,
     getSharedPrintCss: getSharedPrintCss,
     ensureInlinePrintStyles: ensureInlinePrintStyles,
-    openTestPrintPreview: openTestPrintPreview
+    openTestPrintPreview: openTestPrintPreview,
+    exportFormattedExcel: exportFormattedExcel
   };
 
   if (typeof document !== 'undefined') {

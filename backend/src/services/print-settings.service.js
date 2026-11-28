@@ -7,6 +7,7 @@ const KEY_PORTAL_SETTINGS = 'grades_portal_settings';
 const VALID_SIGNATURE_MODES = new Set(['qr', 'qr_stamp', 'physical', 'blank']);
 const VALID_QR_STYLES = new Set(['tte_compact', 'qr_only_crest']);
 const VALID_PAPER_SIZES = new Set(['A4', 'F4']);
+const VALID_ORIENTATIONS = new Set(['auto', 'landscape', 'portrait', 'browser']);
 const VALID_KOP_ALIGNS = new Set(['center_page', 'center_remain', 'left']);
 const VALID_HEADER_FONTS = new Set(['sans', 'serif']);
 const VALID_LINE_STYLES = new Set(['double', 'solid', 'thick_thin', 'none']);
@@ -98,11 +99,8 @@ const DEFAULT_PRINT_SETTINGS = {
   header_offset_x_px: 0,
   header_offset_y_px: 0,
   header_font_scale_pct: 100,
-  header_line_gap_px: 2,
   header_line_gap_px: 1,
   header_line_style: 'double',
-  header_line_top_gap_px: 8,
-  header_line_bottom_gap_px: 12,
   header_line_top_gap_px: 7,
   header_line_bottom_gap_px: 10,
   kop_elements: DEFAULT_KOP_ELEMENTS,
@@ -117,6 +115,7 @@ const DEFAULT_PRINT_SETTINGS = {
   signature_img: '/assets/kts_signature.png',
   stamp_img: '/assets/kts_stamp.png',
   default_paper_size: 'A4',
+  default_orientation: 'auto',
   margin_mm: 10,
   show_print_timestamp: true,
   footer_note: 'Dokumen ini dicetak secara resmi melalui SIMATA \u2014 MA At-Taujih Sarang'
@@ -257,6 +256,7 @@ class PrintSettingsService {
       signature_img: raw.signature_img !== undefined ? String(raw.signature_img || '').trim() : DEFAULT_PRINT_SETTINGS.signature_img,
       stamp_img: raw.stamp_img !== undefined ? String(raw.stamp_img || '').trim() : DEFAULT_PRINT_SETTINGS.stamp_img,
       default_paper_size: VALID_PAPER_SIZES.has(raw.default_paper_size) ? raw.default_paper_size : DEFAULT_PRINT_SETTINGS.default_paper_size,
+      default_orientation: VALID_ORIENTATIONS.has(raw.default_orientation) ? raw.default_orientation : DEFAULT_PRINT_SETTINGS.default_orientation,
       margin_mm: clampInt(raw.margin_mm, 6, 20, DEFAULT_PRINT_SETTINGS.margin_mm),
       show_print_timestamp: raw.show_print_timestamp === undefined ? DEFAULT_PRINT_SETTINGS.show_print_timestamp : Boolean(raw.show_print_timestamp),
       footer_note: cleanStr(raw.footer_note, 220, DEFAULT_PRINT_SETTINGS.footer_note)
@@ -283,6 +283,13 @@ class PrintSettingsService {
     const paperSize = payload.default_paper_size !== undefined ? String(payload.default_paper_size).trim().toUpperCase() : current.default_paper_size;
     if (!VALID_PAPER_SIZES.has(paperSize)) {
       throw new BadRequestError('Ukuran kertas tidak valid (pilih A4 atau F4).');
+    }
+
+    const defaultOrientation = payload.default_orientation !== undefined
+      ? String(payload.default_orientation).trim().toLowerCase()
+      : current.default_orientation;
+    if (!VALID_ORIENTATIONS.has(defaultOrientation)) {
+      throw new BadRequestError('Orientasi cetak tidak valid (pilih auto, browser, landscape, atau portrait).');
     }
 
     const kopAlign = payload.kop_align !== undefined ? String(payload.kop_align).trim() : current.kop_align;
@@ -350,6 +357,7 @@ class PrintSettingsService {
       signature_img: sanitizeImageRef(payload.signature_img, current.signature_img),
       stamp_img: sanitizeImageRef(payload.stamp_img, current.stamp_img),
       default_paper_size: paperSize,
+      default_orientation: defaultOrientation,
       margin_mm: clampInt(payload.margin_mm, 6, 20, current.margin_mm),
       show_print_timestamp: payload.show_print_timestamp !== undefined ? Boolean(payload.show_print_timestamp) : current.show_print_timestamp,
       footer_note: payload.footer_note !== undefined ? cleanStr(payload.footer_note, 220, '') : current.footer_note

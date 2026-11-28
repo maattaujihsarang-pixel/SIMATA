@@ -2035,6 +2035,41 @@
         body: JSON.stringify(payload)
       });
       return { success: true, message: res.message, data: res.data || {} };
+    },
+    exportFormattedExcel: async function (payload = {}) {
+      const token = getStoredToken();
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await window.fetch(`${API_BASE}/print-settings/export-xlsx`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload || {})
+      });
+      if (!res.ok) {
+        let msg = `Gagal mengekspor Excel .xlsx (HTTP ${res.status})`;
+        try {
+          const errJson = await res.json();
+          if (errJson && errJson.message) msg = errJson.message;
+        } catch (_) {}
+        throw new Error(msg);
+      }
+      const disposition = res.headers.get('content-disposition') || '';
+      let filename = (payload && payload.filename) ? String(payload.filename) : 'Laporan_SIMATA.xlsx';
+      const match = disposition.match(/filename="?([^";]+)"?/);
+      if (match && match[1]) filename = match[1];
+      if (!filename.toLowerCase().endsWith('.xlsx')) filename += '.xlsx';
+      const blob = await res.blob();
+      const objUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        if (a.parentNode) a.parentNode.removeChild(a);
+        window.URL.revokeObjectURL(objUrl);
+      }, 350);
+      return { success: true, filename };
     }
   };
 

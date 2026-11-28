@@ -6,7 +6,32 @@ const vm = require('vm');
 const app = require('../src/app');
 const authService = require('../src/services/auth.service');
 const testDbEngine = require('./test_db_engine');
+const xlsxUtil = require('../src/utils/xlsx.util');
 const { setMockQueryHandler, setMockTransactionHandler } = require('../src/config/database');
+
+function reqRaw(server, method, reqPath, body, headers = {}) {
+  return new Promise((resolve, reject) => {
+    const raw = body !== null && body !== undefined ? JSON.stringify(body) : null;
+    const h = { ...headers };
+    if (raw) {
+      h['Content-Type'] = 'application/json';
+      h['Content-Length'] = Buffer.byteLength(raw);
+    }
+    const req = http.request(
+      { hostname: '127.0.0.1', port: server.address().port, path: reqPath, method, headers: h },
+      (res) => {
+        const chunks = [];
+        res.on('data', (c) => chunks.push(c));
+        res.on('end', () => {
+          resolve({ status: res.statusCode, headers: res.headers, buffer: Buffer.concat(chunks) });
+        });
+      }
+    );
+    req.on('error', reject);
+    if (raw) req.write(raw);
+    req.end();
+  });
+}
 
 function reqJson(server, method, reqPath, body, headers = {}) {
   return new Promise((resolve, reject) => {
@@ -72,6 +97,8 @@ async function runPrintSettingsTests() {
   assert.ok(html.includes('id="prtCfgLivePreview"') && html.includes('focusgroup="tablist nomemory"') && html.includes('id="printLayoutStudioDialog"'), 'dashboard.html missing redesigned print tabs or dedicated KTS-style layout studio dialog');
   assert.ok(html.includes('openPrintLayoutStudio') && html.includes('nudgePrintStudioElement') && html.includes("showToast('loading'") && html.includes('savePrintSettingsFromForm'), 'dashboard.html missing studio controls or SIMATA loading toast hook');
   assert.ok(!html.includes('Butuh Atur Ukuran Logo') && !html.includes('prt-studio-callout'), 'Redundant studio callout box must be removed from dashboard.html');
+  assert.ok(html.includes('id="schedPrintOrientation"') && html.includes('id="prtCfg_orientation"'), 'dashboard.html must provide flexible print orientation selectors for Schedule and Print Settings');
+  assert.ok(html.includes('Export Excel (.xlsx)') && html.includes('exportFormattedExcel') && gradesJs.includes('exportFormattedExcel') && clientJs.includes('exportFormattedExcel'), 'All SIMATA menus must route Excel exports to formatted .xlsx');
   assert.ok(html.includes("'cetak'") && html.includes('loadPrintSettingsForm()'), 'switchSettingsCategory must handle cetak tab');
 
   const simataPrintRefsInDashboard = (html.match(/window\.SimataPrint/g) || []).length;
@@ -123,7 +150,12 @@ async function runPrintSettingsTests() {
   assert.ok(schoolMatch[1].includes('font-size:11.88pt'), `Expected compact school font-size:11.88pt (13.5*0.88), got: ${schoolMatch[1]}`);
   assert.ok(schoolMatch[1].includes('font-weight:800'), `Expected compact school font-weight:800, got: ${schoolMatch[1]}`);
   assert.ok(compactDefaultHtml.includes('NSM: 131233170020'), 'Default Kop must include NSM: 131233170020');
-  console.log('1b. PASS: Runtime SimataPrint.renderKopHtml style attributes & Studio typography verified.');
+
+  assert.ok(sandbox.SimataPrint.getPageCss('landscape').includes('A4 landscape'), 'Auto orientation must preserve landscape when requested');
+  assert.ok(sandbox.SimataPrint.getPageCss('portrait').includes('A4 portrait'), 'Auto orientation must preserve portrait when requested');
+  assert.strictEqual(sandbox.SimataPrint.getPageCss('landscape', { default_orientation: 'browser', margin_mm: 8 }), '@page { margin: 8mm; }', 'Browser orientation mode must omit forced portrait/landscape size lock');
+  assert.ok(sandbox.SimataPrint.getPageCss('portrait', { default_orientation: 'browser' }, 'landscape').includes('A4 landscape'), 'Explicit orientation override must take precedence');
+  console.log('1b. PASS: Runtime SimataPrint.renderKopHtml & getPageCss flexible orientation verified.');
 
   // 2. Backend API, RBAC, Validation & DB Persistence Tests
   await testDbEngine.reset();
@@ -165,6 +197,7 @@ async function runPrintSettingsTests() {
     assert.strictEqual(guruGet.body.data.logo_size_px, 64);
     assert.strictEqual(guruGet.body.data.kop_elements.school.font_weight, 800);
     assert.strictEqual(guruGet.body.data.kop_elements.divider.thickness_px, 3);
+    assert.strictEqual(guruGet.body.data.default_orientation, 'auto');
     assert.ok(guruGet.body.data.school_contact.includes('NSM: 131233170020'), 'Default backend school_contact must include NSM: 131233170020');
 
     // 2c. RBAC: GURU PUT denied
@@ -180,6 +213,9 @@ async function runPrintSettingsTests() {
 
     const badImg = await reqJson(server, 'PUT', '/api/v1/print-settings', { logo_url: 'javascript:alert(1)' }, adminAuth);
     assert.strictEqual(badImg.status, 400, 'Expected 400 for unsafe logo_url');
+
+    const badOri = await reqJson(server, 'PUT', '/api/v1/print-settings', { default_orientation: 'diagonal' }, adminAuth);
+    assert.strictEqual(badOri.status, 400, 'Expected 400 for invalid default_orientation');
 
     // 2e. ADMIN PUT persists settings, normalizes fields & syncs grades_portal_settings
     const putRes = await reqJson(
@@ -205,6 +241,7 @@ async function runPrintSettingsTests() {
         qr_style: 'qr_only_crest',
         qr_verify_url: 'simata-attaujih.my.id/tte',
         default_paper_size: 'f4',
+        default_orientation: 'browser',
         margin_mm: 28,
         show_print_timestamp: false,
         footer_note: 'Dokumen Sahih SIMATA Uji'
@@ -226,6 +263,7 @@ async function runPrintSettingsTests() {
     assert.strictEqual(putRes.body.data.qr_style, 'qr_only_crest');
     assert.strictEqual(putRes.body.data.qr_verify_url, 'https://simata-attaujih.my.id/tte');
     assert.strictEqual(putRes.body.data.default_paper_size, 'F4');
+    assert.strictEqual(putRes.body.data.default_orientation, 'browser');
     assert.strictEqual(putRes.body.data.margin_mm, 20); // clamped to 20
     assert.strictEqual(putRes.body.data.show_print_timestamp, false);
 
@@ -243,7 +281,88 @@ async function runPrintSettingsTests() {
     const portalParsed = JSON.parse(portalRow.setting_value);
     assert.strictEqual(portalParsed.principal_name, 'K.H. M. Iqnaul Badril Falah, S.Ag., M.Pd.');
 
+    // 3. Formatted .xlsx Excel export tests (unauth 401, validation 400, OOXML workbook + Logo & QR PNG)
+    const unauthXlsx = await reqRaw(server, 'POST', '/api/v1/print-settings/export-xlsx', { headers: ['No'], rows: [[1]] });
+    assert.strictEqual(unauthXlsx.status, 401, 'Unauthenticated XLSX export must return 401');
+
+    const badXlsx = await reqJson(server, 'POST', '/api/v1/print-settings/export-xlsx', { headers: [], rows: [] }, guruAuth);
+    assert.strictEqual(badXlsx.status, 400, 'Empty headers XLSX export must return 400');
+
+    // Re-enable logo + auto orientation so generated XLSX tests embedded logo & orientation cleanly
+    await reqJson(server, 'PUT', '/api/v1/print-settings', { show_logo: true, default_orientation: 'auto', signature_mode: 'qr' }, adminAuth);
+    const samplePngB64 = fs.readFileSync(path.join(rootDir, 'public/assets/logo.png')).toString('base64');
+    const xlsxRes = await reqRaw(
+      server,
+      'POST',
+      '/api/v1/print-settings/export-xlsx',
+      {
+        filename: 'Leger_XII_ASTS_GANJIL.xlsx',
+        sheet_name: 'Leger XII',
+        title: 'HASIL NILAI ASTS GANJIL',
+        subtitle: 'MADRASAH ALIYAH AT-TAUJIH • Tahun Ajaran 2026 - 2027',
+        orientation: 'landscape',
+        meta_rows: [['Kelas : XII', 'Wali Kelas : Imam Maulana']],
+        headers: ['No', 'NIS', 'Nama Siswa', 'QH', 'Jumlah', 'Rata-Rata'],
+        columns: [
+          { align: 'center', type: 'int', width: 5.5 },
+          { align: 'center', type: 'text', width: 20 },
+          { align: 'left', type: 'text', width: 28 },
+          { align: 'center', type: 'decimal', width: 8 },
+          { align: 'center', type: 'decimal', width: 10 },
+          { align: 'center', type: 'decimal2', width: 10 }
+        ],
+        rows: [
+          [1, '131233170020240001', 'Ahmad Najibul Fahri', 85.5, 85.5, 85.5]
+        ],
+        summary_row: {
+          label: 'NILAI RATA-RATA SATU KELAS / MAPEL',
+          colspan: 3,
+          values: [85.5, 85.5, 85.5]
+        },
+        left_signer: { top: 'Mengetahui,', role: 'Wali Kelas', name: 'Imam Maulana' },
+        include_principal_sig: true,
+        qr_png_data_url: `data:image/png;base64,${samplePngB64}`
+      },
+      guruAuth
+    );
+    assert.strictEqual(xlsxRes.status, 200, `Expected 200 for formatted XLSX export, got ${xlsxRes.status}`);
+    assert.ok(String(xlsxRes.headers['content-type'] || '').includes('spreadsheetml.sheet'), 'Missing XLSX content-type');
+    assert.ok(xlsxRes.buffer.slice(0, 4).equals(Buffer.from([0x50, 0x4b, 0x03, 0x04])), 'Response must be a valid ZIP/XLSX binary');
+
+    const zipEntries = xlsxUtil.extractZipEntries(xlsxRes.buffer);
+    assert.ok(zipEntries['[Content_Types].xml'], 'Missing [Content_Types].xml');
+    assert.ok(zipEntries['xl/styles.xml'], 'Missing xl/styles.xml');
+    assert.ok(zipEntries['xl/worksheets/sheet1.xml'], 'Missing xl/worksheets/sheet1.xml');
+    assert.ok(zipEntries['xl/drawings/drawing1.xml'], 'Missing xl/drawings/drawing1.xml');
+    assert.ok(zipEntries['xl/media/image1.png'], 'Missing embedded Madrasah Logo PNG');
+    assert.ok(zipEntries['xl/media/image2.png'], 'Missing embedded QR TTE PNG');
+
+    const sheetXml = zipEntries['xl/worksheets/sheet1.xml'].toString('utf8');
+    const tagPositions = [
+      sheetXml.indexOf('<sheetPr>'),
+      sheetXml.indexOf('<dimension '),
+      sheetXml.indexOf('<sheetViews>'),
+      sheetXml.indexOf('<sheetFormatPr '),
+      sheetXml.indexOf('<cols>'),
+      sheetXml.indexOf('<sheetData>'),
+      sheetXml.indexOf('<mergeCells '),
+      sheetXml.indexOf('<pageMargins '),
+      sheetXml.indexOf('<pageSetup '),
+      sheetXml.indexOf('<drawing ')
+    ];
+    for (let i = 0; i < tagPositions.length; i++) {
+      assert.ok(tagPositions[i] > 0, `Missing OOXML element at index ${i}`);
+      if (i > 0) assert.ok(tagPositions[i] > tagPositions[i - 1], `Invalid OOXML tag order at index ${i}`);
+    }
+    assert.ok(sheetXml.includes('MADRASAH ALIYAH AT-TAUJIH'), 'XLSX must include official Kop header');
+    assert.ok(sheetXml.includes('NSM: 131233170020'), 'XLSX Kop must include NSM: 131233170020');
+    assert.ok(sheetXml.includes('NILAI RATA-RATA SATU KELAS / MAPEL'), 'XLSX must include Leger summary row');
+    assert.ok(sheetXml.includes('<t xml:space="preserve">131233170020240001</t>'), 'Long NIS must remain preserved as inlineStr text');
+    assert.ok(sheetXml.includes('<v>85.5</v>'), 'Numeric scores must be written as numeric values');
+    assert.ok(sheetXml.includes('orientation="landscape"'), 'XLSX pageSetup must enforce landscape orientation');
+
     console.log('2. PASS: API auth, RBAC (403 GURU / 200 ADMIN), validation, clamping, persistence, & portal sync verified.');
+    console.log('3. PASS: Formatted .xlsx OpenXML workbook (Kop + Logo + Borders + Typed Cells + QR TTE PNG) verified.');
     console.log('\nALL PRINT SETTINGS TESTS PASSED.');
   } finally {
     await new Promise((r) => server.close(r));
